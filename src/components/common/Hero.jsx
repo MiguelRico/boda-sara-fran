@@ -22,7 +22,7 @@ export default function Hero() {
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <PrimaryButton to="/confirmar">Confirmar asistencia</PrimaryButton>
 
-          <PrimaryButton to="#detalles" variant="secondary">
+          <PrimaryButton to="/details" variant="secondary">
             Ver detalles
           </PrimaryButton>
         </div>

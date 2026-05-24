@@ -28,7 +28,7 @@ export default function ScrollManager() {
 
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
-    }, 100);
+    }, 350);
 
     return () => clearTimeout(timeout);
   }, [location.pathname, location.search, location.hash, location.key]);
