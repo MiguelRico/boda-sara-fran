@@ -7,13 +7,11 @@ export default function FinalCTA() {
       <div className="mx-auto max-w-3xl text-center">
         <p className="section-eyebrow">Te esperamos</p>
 
-        <h2 className="section-title">
-          Nos haría mucha ilusión compartir este día contigo
-        </h2>
+        <h2 className="section-title">Queremos celebrarlo contigo</h2>
 
         <p className="section-text">
-          Muy pronto podrás confirmar asistencia, consultar horarios, transporte
-          y todos los detalles importantes de la celebración.
+          Nos ayudará mucho saber si podrás acompañarnos en este día tan
+          especial.
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">

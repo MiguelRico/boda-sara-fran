@@ -9,11 +9,17 @@ export default function Details() {
         <div className="mx-auto max-w-3xl text-center">
           <p className="section-eyebrow">Nuestra historia</p>
 
-          <h1 className="section-title">Una historia construida poco a poco</h1>
+          <h1 className="section-title">
+            Una aventura que empezó
+            <br />
+            con una casualidad
+          </h1>
 
           <p className="section-text">
-            Aquí iremos contando vuestra historia de una forma íntima, visual y
-            elegante, manteniendo la misma narrativa cálida de toda la web.
+            Nos conocimos en una pequeña cafetería durante un viaje inesperado.
+            Lo que comenzó con una conversación improvisada terminó
+            convirtiéndose en una vida llena de recuerdos, proyectos y sueños
+            compartidos.
           </p>
         </div>
       </CinematicSection>

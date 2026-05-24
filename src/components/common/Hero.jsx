@@ -11,7 +11,7 @@ export default function Hero() {
           Sara <span className="mx-2">&</span> Fran
         </h1>
 
-        <div className="mt-8 mb-8 h-px w-20 bg-[#d8c1ad]" />
+        <div className="mt-8 mb-2 h-px w-20 bg-[#d8c1ad]" />
 
         <p className="section-text">
           Después de muchos viajes, cafés improvisados y momentos compartidos,

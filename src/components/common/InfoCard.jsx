@@ -5,6 +5,7 @@ export default function InfoCard({
   subtitle,
   description,
   to,
+  emoji,
   className = "",
 }) {
   return (
@@ -20,6 +21,7 @@ export default function InfoCard({
     >
       <div className="flex h-full flex-col">
         <p className="text-xs uppercase tracking-[0.28em] text-[#9b7a61]">
+          <span className="text-xl">{emoji}</span>
           {subtitle}
         </p>
 

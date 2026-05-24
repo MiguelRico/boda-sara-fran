@@ -88,7 +88,7 @@ body {
   }
 
   .section-text {
-    @apply mx-auto max-w-2xl text-base leading-relaxed sm:text-lg;
+    @apply mx-auto mt-6 max-w-2xl text-base leading-relaxed sm:text-lg;
     color: var(--color-muted);
   }
 
