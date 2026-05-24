@@ -15,27 +15,14 @@ export default function CinematicRevealItem({
       initial={
         reduceMotion
           ? { opacity: 0 }
-          : {
-              opacity: 0,
-              y: 42,
-              scale: 0.985,
-              filter: "blur(10px)",
-            }
+          : { opacity: 0, y: 42, scale: 0.985, filter: "blur(10px)" }
       }
       whileInView={
         reduceMotion
           ? { opacity: 1 }
-          : {
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              filter: "blur(0px)",
-            }
+          : { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }
       }
-      viewport={{
-        once,
-        amount,
-      }}
+      viewport={{ once, amount }}
       transition={{
         duration: 1.15,
         delay,
