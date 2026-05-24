@@ -1,54 +1,15 @@
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import FinalCTA from "../components/common/FinalCTA";
+import HistorySection from "../components/details/HistorySection";
+import CountdownSection from "../components/details/CountdownSection";
 
 export default function Details() {
   return (
     <CinematicPage>
-      <CinematicSection id="historia" className="surface-soft">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="section-eyebrow">Nuestra historia</p>
+      <HistorySection />
 
-          <h1 className="section-title">
-            Una aventura que empezó
-            <br />
-            con una casualidad
-          </h1>
-
-          <p className="section-text">
-            Nos conocimos en una pequeña cafetería durante un viaje inesperado.
-            Lo que comenzó con una conversación improvisada terminó
-            convirtiéndose en una vida llena de recuerdos, proyectos y sueños
-            compartidos.
-          </p>
-        </div>
-      </CinematicSection>
-
-      <CinematicSection id="cuenta-atras">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="section-eyebrow">Cuenta atrás</p>
-
-          <h2 className="section-title">Cada vez queda menos</h2>
-
-          <p className="section-text">
-            En esta sección colocaremos el contador real para la fecha de la
-            boda, con una animación suave y elegante.
-          </p>
-
-          <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {["Días", "Horas", "Min", "Seg"].map((label) => (
-              <div key={label} className="premium-card text-center">
-                <span className="block font-serif text-4xl text-[#2f2a25]">
-                  00
-                </span>
-                <span className="mt-2 block text-xs uppercase tracking-[0.25em] text-[#9b7a61]">
-                  {label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CinematicSection>
+      <CountdownSection />
 
       <CinematicSection id="timeline" className="surface-soft">
         <div className="mx-auto max-w-3xl">
