@@ -6,24 +6,24 @@ const timelineEvents = [
     time: "18:00",
     title: "Ceremonia",
     description:
-      "Celebraremos el momento más especial del día en un entorno natural y cuidado.",
+      "Celebraremos el momento más especial del día en un entorno natural y cuidado",
   },
   {
     time: "20:00",
     title: "Cóctel",
     description:
-      "Un primer brindis para encontrarnos y empezar a disfrutar juntos de la celebración.",
+      "Primer brindis para encontrarnos y empezar a disfrutar la celebración",
   },
   {
     time: "22:00",
     title: "Cena",
     description:
-      "Una cena pensada para compartir, disfrutar y celebrar con las personas que queremos.",
+      "Pensada para compartir, disfrutar y celebrar con las personas que queremos",
   },
   {
     time: "00:00",
     title: "Fiesta",
-    description: "La noche continuará con música, baile y muchas sorpresas.",
+    description: "La noche continuará con música, baile y muchas sorpresas",
   },
 ];
 
@@ -91,7 +91,7 @@ function TimelineItem({ event, index, isLast }) {
             {event.title}
           </h3>
 
-          <p className="mt-4 text-sm leading-relaxed text-[#7b6b5d] sm:text-base">
+          <p className="text-sm leading-relaxed text-[#7b6b5d] sm:text-base">
             {event.description}
           </p>
         </div>
