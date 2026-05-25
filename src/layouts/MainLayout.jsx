@@ -9,7 +9,7 @@ export default function MainLayout() {
 
   return (
     <div className="app-shell">
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="wait">
         <motion.div
           key={pageKey}
           initial={{ opacity: 0, y: initialY, filter: "blur(8px)" }}
