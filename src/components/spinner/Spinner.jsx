@@ -3,7 +3,12 @@ export default function Spinner({ text = "Preparando todo..." }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#fbf7f1]/85 px-6 backdrop-blur-md">
       <div className="premium-card max-w-sm text-center">
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-[#eadccb] bg-[#f7efe6]">
-          <div className="h-10 w-10 animate-spin rounded-full border border-[#d8c1ad] border-t-[#8f6f56]" />
+          <img
+            src="/spinner/wedding-spinner.svg"
+            alt=""
+            aria-hidden="true"
+            className="h-12 w-12 animate-spinner-sway object-contain opacity-80"
+          />
         </div>
 
         <p className="section-eyebrow mb-3">Un momento</p>

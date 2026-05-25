@@ -134,3 +134,20 @@ body {
     background: var(--color-bg-warm);
   }
 }
+
+@layer utilities {
+  .animate-spinner-sway {
+    animation: spinner-sway 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes spinner-sway {
+  0%,
+  100% {
+    transform: translateX(-6px);
+  }
+
+  50% {
+    transform: translateX(6px);
+  }
+}
