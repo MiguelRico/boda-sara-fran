@@ -109,9 +109,9 @@ export default function TransportSection() {
     <CinematicSection id="transport">
       <div className="mx-auto max-w-5xl">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="section-eyebrow">Transporte</p>
+          <p className="section-eyebrow">Llegar y volver con tranquilidad</p>
 
-          <h2 className="section-title">Llegar y volver con tranquilidad</h2>
+          <h2 className="section-title">Transporte</h2>
 
           <p className="section-text">
             Los puntos de salida y regreso serán los mismos para ambos

@@ -50,9 +50,9 @@ export default function CountdownSection() {
   return (
     <CinematicSection id="countdown">
       <div className="mx-auto max-w-4xl text-center">
-        <p className="section-eyebrow">Cuenta atrás</p>
+        <p className="section-eyebrow">Cada vez queda menos</p>
 
-        <h2 className="section-title">Cada vez queda menos</h2>
+        <h2 className="section-title">Cuenta atrás</h2>
 
         <p className="section-text">
           El tiempo avanza hacia un día que queremos vivir rodeados de las

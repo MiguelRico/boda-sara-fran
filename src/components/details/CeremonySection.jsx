@@ -22,9 +22,9 @@ export default function CeremonySection() {
     <CinematicSection id="ceremony" className="surface-soft">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="section-eyebrow">Ceremonia</p>
+          <p className="section-eyebrow">Un lugar para recordar</p>
 
-          <h2 className="section-title">Un lugar para recordar</h2>
+          <h2 className="section-title">Ceremonia</h2>
 
           <p className="section-text">
             Un espacio rodeado de naturaleza y con vistas al entorno del Río

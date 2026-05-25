@@ -29,9 +29,9 @@ export default function HistorySection() {
     <CinematicSection id="history" className="surface-soft">
       <div>
         <div className="mx-auto max-w-3xl text-center">
-          <p className="section-eyebrow">Nuestra historia</p>
+          <p className="section-eyebrow">Una historia construida poco a poco</p>
 
-          <h1 className="section-title">Una historia construida poco a poco</h1>
+          <h1 className="section-title">Nuestra historia</h1>
 
           <p className="section-text">
             Entre viajes, momentos sencillos y recuerdos compartidos, llegamos

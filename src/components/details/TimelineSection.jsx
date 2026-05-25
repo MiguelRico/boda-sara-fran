@@ -6,25 +6,24 @@ const timelineEvents = [
     time: "18:00",
     title: "Ceremonia",
     description:
-      "Nos reuniremos para celebrar el momento más especial del día en un entorno natural y cuidado.",
+      "Celebraremos el momento más especial del día en un entorno natural y cuidado.",
   },
   {
     time: "20:00",
     title: "Cóctel",
     description:
-      "Un primer brindis para encontrarnos, charlar y empezar a disfrutar juntos de la celebración.",
+      "Un primer brindis para encontrarnos y empezar a disfrutar juntos de la celebración.",
   },
   {
     time: "22:00",
     title: "Cena",
     description:
-      "Una cena pensada para compartir con calma, disfrutar y celebrar rodeados de las personas que queremos.",
+      "Una cena pensada para compartir, disfrutar y celebrar con las personas que queremos.",
   },
   {
     time: "00:00",
     title: "Fiesta",
-    description:
-      "La noche continuará con música, baile y muchas ganas de vivir un recuerdo inolvidable.",
+    description: "La noche continuará con música, baile y muchas sorpresas.",
   },
 ];
 
@@ -86,13 +85,9 @@ function TimelineItem({ event, index, isLast }) {
         )}
       </div>
 
-      <div className="pb-8">
+      <div className="pb-2">
         <div className="premium-card">
-          <p className="text-xs uppercase tracking-[0.28em] text-[#9b7a61]">
-            Momento {index + 1}
-          </p>
-
-          <h3 className="mt-4 font-serif text-3xl leading-tight text-[#2f2a25]">
+          <h3 className="font-serif text-3xl leading-tight text-[#2f2a25]">
             {event.title}
           </h3>
 
@@ -110,9 +105,9 @@ export default function TimelineSection() {
     <CinematicSection id="timeline" className="surface-soft">
       <div className="mx-auto max-w-5xl">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="section-eyebrow">Timeline</p>
+          <p className="section-eyebrow">El ritmo del día</p>
 
-          <h2 className="section-title">El ritmo del día</h2>
+          <h2 className="section-title">Timeline</h2>
 
           <p className="section-text">
             Una guía sencilla para que puedas vivir cada momento con calma, sin
@@ -120,7 +115,7 @@ export default function TimelineSection() {
           </p>
         </div>
 
-        <div className="mx-auto mt-16 max-w-4xl">
+        <div className="mx-auto mt-8 max-w-4xl">
           {timelineEvents.map((event, index) => (
             <TimelineItem
               key={event.time}

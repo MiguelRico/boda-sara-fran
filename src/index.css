@@ -91,7 +91,7 @@ body {
   }
 
   .premium-card {
-    @apply rounded-[2rem] border p-7 backdrop-blur-sm transition-all duration-700 sm:p-8;
+    @apply rounded-[2rem] border p-4 backdrop-blur-sm transition-all duration-700 sm:p-8;
     border-color: var(--color-border);
     background: rgba(255, 255, 255, 0.55);
     box-shadow: var(--shadow-soft);
