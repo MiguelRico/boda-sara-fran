@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function ImageCarousel({
   images = [],
@@ -42,14 +43,20 @@ export default function ImageCarousel({
   return (
     <div className={className}>
       <div className="premium-card p-3 sm:p-4">
-        <div className="relative overflow-hidden rounded-[1.7rem]">
-          <img
-            key={currentImage.src}
-            src={currentImage.src}
-            alt={currentImage.alt}
-            className={imageClassName}
-            loading={imageLoading}
-          />
+        <div className={`relative grid overflow-hidden rounded-[1.7rem] ${imageClassName}`}>
+          <AnimatePresence initial={false}>
+            <motion.img
+              key={currentImage.src}
+              src={currentImage.src}
+              alt={currentImage.alt}
+              className="col-start-1 row-start-1 h-full w-full object-cover"
+              loading={imageLoading}
+              initial={{ opacity: 0, scale: 1.045, filter: "blur(10px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 1.018, filter: "blur(4px)" }}
+              transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </AnimatePresence>
 
           {showControls && (
             <>
@@ -89,13 +96,22 @@ export default function ImageCarousel({
             </>
           )}
 
-          {currentImage.caption && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/35 to-transparent p-5 sm:p-7">
-              <p className="max-w-xl text-sm leading-relaxed text-white/90 sm:text-base">
-                {currentImage.caption}
-              </p>
-            </div>
-          )}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/35 to-transparent p-5 sm:p-7">
+            <AnimatePresence mode="wait">
+              {currentImage.caption && (
+                <motion.p
+                  key={currentImage.caption}
+                  className="max-w-xl text-sm leading-relaxed text-white/90 sm:text-base"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {currentImage.caption}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
