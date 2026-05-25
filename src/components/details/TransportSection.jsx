@@ -89,7 +89,7 @@ function TransportCard({ route }) {
                   </div>
                 </div>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-[#7b6b5d]">
+              <p className="mt-2 text-xs leading-relaxed text-[#7b6b5d]">
                 {item.description}
               </p>
             </div>
