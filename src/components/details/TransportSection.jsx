@@ -25,13 +25,13 @@ const transportRoutes = [
     times: [
       {
         time: "03:00",
-        label: "Primera vuelta",
-        description: "Para quienes prefieran volver antes.",
+        label: "Primera",
+        description: "Volver antes.",
       },
       {
         time: "06:00",
-        label: "Última vuelta",
-        description: "Regreso al finalizar la fiesta.",
+        label: "Última",
+        description: "Fin de fiesta.",
       },
     ],
   },
@@ -65,13 +65,13 @@ function TransportCard({ route }) {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <h4 className="font-serif text-[1.65rem] leading-tight text-[#2f2a25] sm:text-2xl">
                       {item.label}
-                    </h4>{" "}
+                    </h4>
                   </div>
                 </div>
               </div>
 
               <div className="mt-3 flex flex-col items-start gap-3 sm:mt-0 sm:flex-row sm:items-start sm:gap-4">
-                <p className="text-sm leading-relaxed text-[#7b6b5d] sm:mt-2">
+                <p className="text-xs leading-relaxed text-[#7b6b5d] sm:mt-2">
                   {item.description}
                 </p>
 
