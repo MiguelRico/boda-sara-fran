@@ -8,23 +8,27 @@ const timelineEvents = [
     title: "Ceremonia",
     description:
       "Celebraremos el momento más especial del día en un entorno natural y cuidado",
+    emoji: "💍",
   },
   {
     time: "20:00",
     title: "Cóctel",
     description:
       "Primer brindis para encontrarnos y empezar a disfrutar de la celebración",
+    emoji: "🥂",
   },
   {
     time: "22:00",
     title: "Cena",
     description:
       "Pensada para compartir, disfrutar y celebrar con las personas que queremos",
+    emoji: "🍽️",
   },
   {
     time: "00:00",
     title: "Fiesta",
     description: "La noche continuará con música, baile y muchas sorpresas",
+    emoji: "🎉",
   },
 ];
 
