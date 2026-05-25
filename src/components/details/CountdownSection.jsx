@@ -59,7 +59,7 @@ export default function CountdownSection() {
           personas que más queremos.
         </p>
 
-        <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {items.map((item) => (
             <div
               key={item.label}

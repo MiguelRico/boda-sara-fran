@@ -27,15 +27,15 @@ export default function CeremonySection() {
           <h2 className="section-title">Un lugar para recordar</h2>
 
           <p className="section-text">
-            La ceremonia tendrá lugar en Aguas del Pino, un espacio rodeado de
-            naturaleza y con vistas al entorno del Río Piedras.
+            Un espacio rodeado de naturaleza y con vistas al entorno del Río
+            Piedras.
           </p>
 
-          <p className="mt-3 text-sm leading-relaxed text-[#7b6b5d]">
+          <p className="mt-4 text-sm leading-relaxed text-[#7b6b5d]">
             Aguas del Pino, Ctra. A-5052, km 4 · Punta Umbría, Huelva.
           </p>
 
-          <div className="mt-10">
+          <div className="mt-4">
             <a
               href={MAP_URL}
               target="_blank"
@@ -49,7 +49,7 @@ export default function CeremonySection() {
 
         <ImageCarousel
           images={ceremonyImages}
-          className="mx-auto mt-14 w-full max-w-4xl"
+          className="mx-auto mt-4 w-full max-w-4xl"
           imageClassName="aspect-[4/5] w-full object-cover sm:aspect-[16/10] lg:aspect-[4/3]"
         />
       </div>
