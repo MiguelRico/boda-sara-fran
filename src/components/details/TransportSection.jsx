@@ -65,33 +65,36 @@ function TransportCard({ route }) {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <h4 className="font-serif text-2xl leading-tight text-[#2f2a25]">
                       {item.label}
-                    </h4>
-
-                    {item.mapUrl && (
-                      <a
-                        href={item.mapUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="
-                        ml-auto inline-flex items-center gap-2
-                        rounded-full border border-[#eadccb]
-                        bg-white/70 px-3 py-1.5
-                        text-[0.65rem] uppercase tracking-[0.22em]
-                        text-[#8f6f56]
-                        transition-all duration-300
-                        hover:border-[#d8c1ad]
-                        hover:bg-white
-                    "
-                      >
-                        Mapa
-                      </a>
-                    )}
+                    </h4>{" "}
                   </div>
                 </div>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-[#7b6b5d]">
-                {item.description}
-              </p>
+
+              <div className="flex items-start gap-4">
+                <p className="mt-2 text-sm leading-relaxed text-[#7b6b5d]">
+                  {item.description}
+                </p>
+
+                {item.mapUrl && (
+                  <a
+                    href={item.mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="
+                    ml-auto inline-flex items-center gap-2
+                    rounded-full border border-[#eadccb]
+                    bg-white/70 px-3 py-1.5
+                    text-[0.65rem] uppercase tracking-[0.22em]
+                    text-[#8f6f56]
+                    transition-all duration-300
+                    hover:border-[#d8c1ad]
+                    hover:bg-white
+                    "
+                  >
+                    Ver mapa
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         ))}
