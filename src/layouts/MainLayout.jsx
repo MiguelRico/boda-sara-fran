@@ -4,15 +4,15 @@ import ScrollManager from "../components/common/ScrollManager";
 
 export default function MainLayout() {
   const location = useLocation();
+  const pageKey = location.pathname + location.search + location.hash;
+  const initialY = location.hash ? 0 : 24;
 
   return (
     <div className="app-shell">
-      <ScrollManager />
-
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
-          key={location.pathname + location.search + location.hash}
-          initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
+          key={pageKey}
+          initial={{ opacity: 0, y: initialY, filter: "blur(8px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, y: -24, filter: "blur(8px)" }}
           transition={{
@@ -20,6 +20,7 @@ export default function MainLayout() {
             ease: [0.22, 1, 0.36, 1],
           }}
         >
+          <ScrollManager />
           <Outlet />
         </motion.div>
       </AnimatePresence>
