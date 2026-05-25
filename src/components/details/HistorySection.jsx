@@ -1,5 +1,5 @@
 import CinematicSection from "../cinematic/CinematicSection";
-import HistoryCarousel from "./HistoryCarousel";
+import ImageCarousel from "../common/ImageCarousel";
 
 const historyImages = [
   {
@@ -39,7 +39,12 @@ export default function HistorySection() {
           </p>
         </div>
 
-        <HistoryCarousel images={historyImages} />
+        <ImageCarousel
+          images={historyImages}
+          className="mx-auto mt-14 max-w-4xl"
+          imageClassName="aspect-[4/5] w-full object-cover transition-opacity duration-700 sm:aspect-[16/10] lg:aspect-[16/9]"
+          imageLoading="eager"
+        />
       </div>
     </CinematicSection>
   );

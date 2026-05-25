@@ -44,10 +44,6 @@ function TransportCard({ route }) {
         {route.subtitle}
       </p>
 
-      <h3 className="mt-4 font-serif text-4xl leading-tight text-[#2f2a25]">
-        {route.title}
-      </h3>
-
       <div className="mt-8 space-y-5">
         {route.times.map((item) => (
           <div
@@ -59,24 +55,25 @@ function TransportCard({ route }) {
               p-5
             "
           >
-            <div className="flex items-start gap-4">
-              <span className="min-w-[4.5rem] font-serif text-3xl leading-none text-[#8f6f56]">
-                {item.time}
-              </span>
+            <div>
+              <div className="flex items-start gap-4">
+                <span className="min-w-[4.5rem] font-serif text-3xl leading-none text-[#8f6f56]">
+                  {item.time}
+                </span>
 
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h4 className="font-serif text-2xl leading-tight text-[#2f2a25]">
-                    {item.label}
-                  </h4>
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h4 className="font-serif text-2xl leading-tight text-[#2f2a25]">
+                      {item.label}
+                    </h4>
 
-                  {item.mapUrl && (
-                    <a
-                      href={item.mapUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="
-                        inline-flex items-center gap-2
+                    {item.mapUrl && (
+                      <a
+                        href={item.mapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="
+                        ml-auto inline-flex items-center gap-2
                         rounded-full border border-[#eadccb]
                         bg-white/70 px-3 py-1.5
                         text-[0.65rem] uppercase tracking-[0.22em]
@@ -85,16 +82,16 @@ function TransportCard({ route }) {
                         hover:border-[#d8c1ad]
                         hover:bg-white
                     "
-                    >
-                      Ver mapa
-                    </a>
-                  )}
+                      >
+                        Ver mapa
+                      </a>
+                    )}
+                  </div>
                 </div>
-
-                <p className="mt-2 text-sm leading-relaxed text-[#7b6b5d]">
-                  {item.description}
-                </p>
               </div>
+              <p className="mt-2 text-sm leading-relaxed text-[#7b6b5d]">
+                {item.description}
+              </p>
             </div>
           </div>
         ))}
