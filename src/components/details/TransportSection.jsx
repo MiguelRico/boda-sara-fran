@@ -44,7 +44,7 @@ function TransportCard({ route }) {
         {route.subtitle}
       </p>
 
-      <div className="mt-8 space-y-5">
+      <div className="mt-8 grid grid-cols-2 gap-4 sm:block sm:space-y-5">
         {route.times.map((item) => (
           <div
             key={`${item.time}-${item.label}`}
@@ -52,26 +52,26 @@ function TransportCard({ route }) {
               rounded-[1.5rem]
               border border-[#eadccb]
               bg-[#fbf7f1]/70
-              p-5
+              p-4 sm:p-5
             "
           >
             <div>
-              <div className="flex items-start gap-4">
-                <span className="min-w-[4.5rem] font-serif text-3xl leading-none text-[#8f6f56]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                <span className="font-serif text-3xl leading-none text-[#8f6f56] sm:min-w-[4.5rem]">
                   {item.time}
                 </span>
 
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h4 className="font-serif text-2xl leading-tight text-[#2f2a25]">
+                    <h4 className="font-serif text-[1.65rem] leading-tight text-[#2f2a25] sm:text-2xl">
                       {item.label}
                     </h4>{" "}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <p className="mt-2 text-sm leading-relaxed text-[#7b6b5d]">
+              <div className="mt-3 flex flex-col items-start gap-3 sm:mt-0 sm:flex-row sm:items-start sm:gap-4">
+                <p className="text-sm leading-relaxed text-[#7b6b5d] sm:mt-2">
                   {item.description}
                 </p>
 
@@ -81,7 +81,7 @@ function TransportCard({ route }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="
-                    ml-auto inline-flex items-center gap-2
+                    inline-flex items-center gap-2
                     rounded-full border border-[#eadccb]
                     bg-white/70 px-3 py-1.5
                     text-[0.65rem] uppercase tracking-[0.22em]
@@ -89,6 +89,7 @@ function TransportCard({ route }) {
                     transition-all duration-300
                     hover:border-[#d8c1ad]
                     hover:bg-white
+                    sm:ml-auto
                     "
                   >
                     Mapa
@@ -114,19 +115,16 @@ export default function TransportSection() {
 
           <p className="section-text">
             Hemos organizado autobuses para que puedas disfrutar de la
-            celebración sin preocuparte por el desplazamiento.
+            celebración sin preocuparte por el desplazamiento. Los puntos de
+            salida y regreso serán los mismos para ambos trayectos.
           </p>
         </div>
 
-        <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
           {transportRoutes.map((route) => (
             <TransportCard key={route.title} route={route} />
           ))}
         </div>
-
-        <p className="mx-auto mt-10 max-w-2xl text-center text-sm leading-relaxed text-[#7b6b5d]">
-          Los puntos de salida y regreso serán los mismos para ambos trayectos.
-        </p>
       </div>
     </CinematicSection>
   );
