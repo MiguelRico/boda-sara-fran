@@ -12,7 +12,7 @@ const timelineEvents = [
     time: "20:00",
     title: "Cóctel",
     description:
-      "Primer brindis para encontrarnos y empezar a disfrutar la celebración",
+      "Primer brindis para encontrarnos y empezar a disfrutar de la celebración",
   },
   {
     time: "22:00",
