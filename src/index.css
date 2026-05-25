@@ -135,19 +135,49 @@ body {
   }
 }
 
-@layer utilities {
-  .animate-spinner-sway {
-    animation: spinner-sway 1.4s ease-in-out infinite;
+.wedding-spinner {
+  --spinner-size: 96px;
+  --frame-ratio: 1.1666667; /* frame width / height: 420 / 360 */
+  --frame-count: 12;
+
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-width: calc(var(--spinner-size) * var(--frame-ratio));
+}
+
+.wedding-spinner__sprite {
+  width: calc(var(--spinner-size) * var(--frame-ratio));
+  height: var(--spinner-size);
+  display: block;
+  background-repeat: no-repeat;
+  background-size: calc(var(--frame-count) * 100%) 100%;
+  animation: wedding-dance-steps 1.05s steps(var(--frame-count)) infinite;
+  will-change: background-position;
+}
+
+.wedding-spinner__label {
+  font-size: clamp(0.75rem, 2.8vw, 0.9rem);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: currentColor;
+  opacity: 0.72;
+}
+
+@keyframes wedding-dance-steps {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 100% 0;
   }
 }
 
-@keyframes spinner-sway {
-  0%,
-  100% {
-    transform: translateX(-6px);
-  }
-
-  50% {
-    transform: translateX(6px);
+@media (prefers-reduced-motion: reduce) {
+  .wedding-spinner__sprite {
+    animation-duration: 2.8s;
   }
 }
