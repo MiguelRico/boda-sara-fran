@@ -40,7 +40,7 @@ const transportRoutes = [
 function TransportCard({ route }) {
   return (
     <article className="premium-card h-full">
-      <p className="text-xs uppercase tracking-[0.28em] text-[#9b7a61]">
+      <p className="text-xs uppercase tracking-[0.2em] text-[#9b7a61]">
         {route.subtitle}
       </p>
 
@@ -89,7 +89,7 @@ function TransportCard({ route }) {
                   </div>
                 </div>
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-[#7b6b5d]">
+              <p className="mt-2 text-sm leading-relaxed text-[#7b6b5d]">
                 {item.description}
               </p>
             </div>
