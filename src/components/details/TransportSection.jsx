@@ -14,7 +14,7 @@ const transportRoutes = [
       {
         time: "18:20",
         label: "Corrales",
-        description: "Parque Comercial Colón.",
+        description: "Comercial Colón.",
         mapUrl: "https://maps.app.goo.gl/Mz4nGyrVyjGyE5N49",
       },
     ],
