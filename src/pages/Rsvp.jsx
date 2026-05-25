@@ -2,12 +2,12 @@ import { useInView } from "framer-motion";
 import { useRef } from "react";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
-import StaggeredRevealItem from "../components/cinematic/StaggeredRevealItem";
+import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
 import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
 import SearchInvitationCard from "../components/rsvp/SearchInvitationCard";
-import Spinner from "../components/spinner/Spinner";
+import Spinner from "../components/ui/Spinner";
 import { MAX_GUESTS } from "../constants/rsvp";
 import useRsvp from "../hooks/useRsvp";
 import useSpinner from "../hooks/useSpinner.js";
@@ -33,25 +33,25 @@ export default function Rsvp() {
       >
         <div ref={rsvpRef}>
           <div className="mx-auto mb-12 max-w-3xl text-center">
-            <StaggeredRevealItem index={0} isVisible={rsvpInView}>
+            <CinematicStaggeredRevealItem index={0} isVisible={rsvpInView}>
               <p className="section-eyebrow">Sara & Fran</p>
-            </StaggeredRevealItem>
+            </CinematicStaggeredRevealItem>
 
-            <StaggeredRevealItem index={1} isVisible={rsvpInView}>
+            <CinematicStaggeredRevealItem index={1} isVisible={rsvpInView}>
               <h1 className="section-title">Confirmación de asistencia</h1>
-            </StaggeredRevealItem>
+            </CinematicStaggeredRevealItem>
 
-            <StaggeredRevealItem index={2} isVisible={rsvpInView}>
+            <CinematicStaggeredRevealItem index={2} isVisible={rsvpInView}>
               <p className="section-text">
                 Estamos deseando celebrar este día con vosotros. Podéis
                 confirmar vuestra asistencia y gestionar todos los invitados
                 desde este formulario.
               </p>
-            </StaggeredRevealItem>
+            </CinematicStaggeredRevealItem>
           </div>
 
           {!rsvp.mode && !rsvp.hasGroupId && (
-            <StaggeredRevealItem index={3} isVisible={rsvpInView}>
+            <CinematicStaggeredRevealItem index={3} isVisible={rsvpInView}>
               <SearchInvitationCard
                 email={rsvp.contact.email}
                 emailError={rsvp.errors.email}
@@ -62,21 +62,21 @@ export default function Rsvp() {
                 }
                 onSearchInvitation={rsvp.handleSearchInvitation}
               />
-            </StaggeredRevealItem>
+            </CinematicStaggeredRevealItem>
           )}
 
           {rsvp.mode === "form" && (
             <form onSubmit={rsvp.handleSubmit} className="space-y-6">
-              <StaggeredRevealItem index={3} isVisible={rsvpInView}>
+              <CinematicStaggeredRevealItem index={3} isVisible={rsvpInView}>
                 <ContactDetailsCard
                   contact={rsvp.contact}
                   errors={rsvp.errors}
                   onContactChange={rsvp.handleContactChange}
                 />
-              </StaggeredRevealItem>
+              </CinematicStaggeredRevealItem>
 
               {rsvp.guests.map((guest, index) => (
-                <StaggeredRevealItem
+                <CinematicStaggeredRevealItem
                   key={index}
                   index={4 + index}
                   isVisible={rsvpInView}
@@ -89,10 +89,10 @@ export default function Rsvp() {
                     onGuestChange={rsvp.handleGuestChange}
                     onRemoveGuest={rsvp.handleRemoveGuest}
                   />
-                </StaggeredRevealItem>
+                </CinematicStaggeredRevealItem>
               ))}
 
-              <StaggeredRevealItem
+              <CinematicStaggeredRevealItem
                 index={4 + rsvp.guests.length}
                 isVisible={rsvpInView}
               >
@@ -116,7 +116,7 @@ export default function Rsvp() {
                     Confirmar asistencia
                   </button>
                 </div>
-              </StaggeredRevealItem>
+              </CinematicStaggeredRevealItem>
             </form>
           )}
 

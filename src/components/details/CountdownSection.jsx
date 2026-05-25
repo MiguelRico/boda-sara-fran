@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
+import SectionHeader from "../ui/SectionHeader";
 
 const WEDDING_DATE = "2026-08-22T18:00:00";
 
@@ -28,6 +29,20 @@ function getTimeLeft(targetDate) {
   };
 }
 
+function CountdownCard({ label, value }) {
+  return (
+    <div className="premium-card px-4 py-8 text-center sm:px-6 sm:py-10">
+      <span className="block font-serif text-5xl leading-none text-[#2f2a25] sm:text-6xl lg:text-7xl">
+        {value}
+      </span>
+
+      <span className="mt-4 block text-[0.65rem] uppercase tracking-[0.28em] text-[#9b7a61]">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export default function CountdownSection() {
   const targetDate = useMemo(() => new Date(WEDDING_DATE), []);
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));
@@ -50,33 +65,15 @@ export default function CountdownSection() {
   return (
     <CinematicSection id="countdown">
       <div className="mx-auto max-w-4xl text-center">
-        <p className="section-eyebrow">Cada vez queda menos</p>
-
-        <h2 className="section-title">Cuenta atrás</h2>
-
-        <p className="section-text">
-          El tiempo avanza hacia un día que queremos vivir rodeados de las
-          personas que más queremos.
-        </p>
+        <SectionHeader
+          eyebrow="Cada vez queda menos"
+          title="Cuenta atrás"
+          text="El tiempo avanza hacia un día que queremos vivir rodeados de las personas que más queremos."
+        />
 
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {items.map((item) => (
-            <div
-              key={item.label}
-              className="
-                premium-card
-                px-4 py-8 text-center
-                sm:px-6 sm:py-10
-              "
-            >
-              <span className="block font-serif text-5xl leading-none text-[#2f2a25] sm:text-6xl lg:text-7xl">
-                {item.value}
-              </span>
-
-              <span className="mt-4 block text-[0.65rem] uppercase tracking-[0.28em] text-[#9b7a61]">
-                {item.label}
-              </span>
-            </div>
+            <CountdownCard key={item.label} {...item} />
           ))}
         </div>
 

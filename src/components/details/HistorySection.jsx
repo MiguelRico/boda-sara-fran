@@ -1,5 +1,6 @@
 import CinematicSection from "../cinematic/CinematicSection";
-import ImageCarousel from "../common/ImageCarousel";
+import ImageCarousel from "../ui/ImageCarousel";
+import SectionHeader from "../ui/SectionHeader";
 
 const historyImages = [
   {
@@ -28,16 +29,12 @@ export default function HistorySection() {
   return (
     <CinematicSection id="history" className="surface-soft">
       <div>
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="section-eyebrow">Una historia construida poco a poco</p>
-
-          <h1 className="section-title">Nuestra historia</h1>
-
-          <p className="section-text">
-            Entre viajes, momentos sencillos y recuerdos compartidos, llegamos
-            hasta este día con muchísima ilusión.
-          </p>
-        </div>
+        <SectionHeader
+          eyebrow="Una historia construida poco a poco"
+          title="Nuestra historia"
+          titleAs="h1"
+          text="Entre viajes, momentos sencillos y recuerdos compartidos, llegamos hasta este día con muchísima ilusión."
+        />
 
         <ImageCarousel
           images={historyImages}

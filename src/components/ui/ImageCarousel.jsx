@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function ImageCarousel({
@@ -16,17 +16,17 @@ export default function ImageCarousel({
   const hasMultipleImages = images.length > 1;
   const showControls = hasMultipleImages || showSingleImageControls;
 
-  const goToPrevious = () => {
+  const goToPrevious = useCallback(() => {
     setCurrentIndex((current) =>
       current === 0 ? images.length - 1 : current - 1,
     );
-  };
+  }, [images.length]);
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     setCurrentIndex((current) =>
       current === images.length - 1 ? 0 : current + 1,
     );
-  };
+  }, [images.length]);
 
   useEffect(() => {
     if (!autoPlay || !hasMultipleImages) return;
@@ -34,7 +34,7 @@ export default function ImageCarousel({
     const timer = window.setInterval(goToNext, interval);
 
     return () => window.clearInterval(timer);
-  }, [autoPlay, interval, hasMultipleImages, images.length]);
+  }, [autoPlay, interval, hasMultipleImages, goToNext]);
 
   if (!hasImages) return null;
 
@@ -43,7 +43,9 @@ export default function ImageCarousel({
   return (
     <div className={className}>
       <div className="premium-card p-3 sm:p-4">
-        <div className={`relative grid overflow-hidden rounded-[1.7rem] ${imageClassName}`}>
+        <div
+          className={`relative grid overflow-hidden rounded-[1.7rem] ${imageClassName}`}
+        >
           <AnimatePresence initial={false}>
             <motion.img
               key={currentImage.src}

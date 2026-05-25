@@ -3,8 +3,8 @@ import {
   FormCard,
   inputClassName,
   Label,
-} from "./RsvpFormPrimitives";
-import PrimaryButton from "../common/PrimaryButton";
+} from "../ui/FormPrimitives";
+import PrimaryButton from "../ui/PrimaryButton";
 
 export default function SearchInvitationCard({
   email,

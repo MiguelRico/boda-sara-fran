@@ -1,5 +1,6 @@
 import CinematicSection from "../cinematic/CinematicSection";
-import ImageCarousel from "../common/ImageCarousel";
+import ImageCarousel from "../ui/ImageCarousel";
+import SectionHeader from "../ui/SectionHeader";
 
 const ceremonyImages = [
   {
@@ -21,16 +22,11 @@ export default function CeremonySection() {
   return (
     <CinematicSection id="ceremony" className="surface-soft">
       <div className="mx-auto max-w-6xl">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="section-eyebrow">Un lugar para recordar</p>
-
-          <h2 className="section-title">Ceremonia</h2>
-
-          <p className="section-text">
-            Un espacio rodeado de naturaleza y con vistas al entorno del Río
-            Piedras.
-          </p>
-
+        <SectionHeader
+          eyebrow="Un lugar para recordar"
+          title="Ceremonia"
+          text="Un espacio rodeado de naturaleza y con vistas al entorno del Río Piedras."
+        >
           <p className="mt-4 text-sm leading-relaxed text-[#7b6b5d]">
             Aguas del Pino, Ctra. A-5052, km 4 · Punta Umbría, Huelva.
           </p>
@@ -45,7 +41,7 @@ export default function CeremonySection() {
               Cómo llegar
             </a>
           </div>
-        </div>
+        </SectionHeader>
 
         <ImageCarousel
           images={ceremonyImages}

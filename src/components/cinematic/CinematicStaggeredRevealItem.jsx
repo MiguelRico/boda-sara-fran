@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 
-export default function StaggeredRevealItem({
+export default function CinematicStaggeredRevealItem({
   as = "div",
   children,
   className = "",

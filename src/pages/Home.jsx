@@ -1,9 +1,9 @@
-import { motion, useReducedMotion } from "framer-motion";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import Hero from "../components/common/Hero";
 import FinalCTA from "../components/common/FinalCTA";
-import InfoCard from "../components/common/InfoCard";
+import InfoCard from "../components/ui/InfoCard";
+import RevealOnView from "../components/ui/RevealOnView";
 
 const infoCards = [
   {
@@ -33,30 +33,16 @@ const infoCards = [
 ];
 
 function AnimatedInfoCard({ card, index }) {
-  const reduceMotion = useReducedMotion();
-
   return (
-    <motion.article
-      initial={
-        reduceMotion
-          ? { opacity: 0 }
-          : { opacity: 0, y: 24, filter: "blur(8px)" }
-      }
-      whileInView={
-        reduceMotion
-          ? { opacity: 1 }
-          : { opacity: 1, y: 0, filter: "blur(0px)" }
-      }
-      viewport={{ once: true, amount: 0.7, margin: "0px 0px -12% 0px" }}
-      transition={{
-        duration: 0.8,
-        delay: index * 0.06,
-        ease: [0.22, 1, 0.36, 1],
-      }}
+    <RevealOnView
+      as="article"
+      amount={0.7}
+      margin="0px 0px -12% 0px"
+      delay={index * 0.06}
       className="h-full"
     >
       <InfoCard {...card} />
-    </motion.article>
+    </RevealOnView>
   );
 }
 

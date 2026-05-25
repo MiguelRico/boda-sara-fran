@@ -3,7 +3,7 @@ import {
   FormCard,
   inputClassName,
   Label,
-} from "./RsvpFormPrimitives";
+} from "../ui/FormPrimitives";
 
 export default function ContactDetailsCard({
   contact,
