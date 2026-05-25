@@ -1,4 +1,10 @@
-import { FieldError, FormCard, inputClassName, Label } from "./RsvpFormPrimitives";
+import {
+  FieldError,
+  FormCard,
+  inputClassName,
+  Label,
+} from "./RsvpFormPrimitives";
+import PrimaryButton from "../common/PrimaryButton";
 
 export default function SearchInvitationCard({
   email,
@@ -54,6 +60,10 @@ export default function SearchInvitationCard({
         >
           Crear nueva
         </button>
+
+        <PrimaryButton to="/" variant="secondary">
+          Volver al inicio
+        </PrimaryButton>
       </div>
     </FormCard>
   );

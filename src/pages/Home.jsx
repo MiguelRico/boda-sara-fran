@@ -1,11 +1,14 @@
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
-
+import Hero from "../components/common/Hero";
+import FinalCTA from "../components/common/FinalCTA";
 import InfoCard from "../components/common/InfoCard";
 
 export default function Home() {
   return (
     <CinematicPage>
+      <Hero />
+
       <CinematicSection id="detalles">
         <div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
@@ -36,6 +39,7 @@ export default function Home() {
         </div>
       </CinematicSection>
 
+      <FinalCTA />
     </CinematicPage>
   );
 }
