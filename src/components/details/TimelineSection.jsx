@@ -110,8 +110,7 @@ export default function TimelineSection() {
           <h2 className="section-title">Timeline</h2>
 
           <p className="section-text mt-4">
-            Una guía sencilla para que puedas vivir cada momento con calma, sin
-            prisas y disfrutando de lo importante.
+            Una guía sencilla para que puedas disfrutar cada momento.
           </p>
         </div>
 
