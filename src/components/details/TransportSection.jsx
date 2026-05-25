@@ -83,7 +83,7 @@ function TransportCard({ route }) {
                         hover:bg-white
                     "
                       >
-                        Ver mapa
+                        Mapa
                       </a>
                     )}
                   </div>
