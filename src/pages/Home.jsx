@@ -1,8 +1,6 @@
-import { useInView } from "framer-motion";
-import { useRef } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
-import StaggeredRevealItem from "../components/cinematic/StaggeredRevealItem";
 import Hero from "../components/common/Hero";
 import FinalCTA from "../components/common/FinalCTA";
 import InfoCard from "../components/common/InfoCard";
@@ -34,42 +32,47 @@ const infoCards = [
   },
 ];
 
-function AnimatedInfoCard({ card, index, isVisible }) {
+function AnimatedInfoCard({ card, index }) {
+  const reduceMotion = useReducedMotion();
+
   return (
-    <StaggeredRevealItem
-      as="article"
-      index={index}
-      isVisible={isVisible}
+    <motion.article
+      initial={
+        reduceMotion
+          ? { opacity: 0 }
+          : { opacity: 0, y: 24, filter: "blur(8px)" }
+      }
+      whileInView={
+        reduceMotion
+          ? { opacity: 1 }
+          : { opacity: 1, y: 0, filter: "blur(0px)" }
+      }
+      viewport={{ once: true, amount: 0.35 }}
+      transition={{
+        duration: 0.8,
+        delay: index * 0.06,
+        ease: [0.22, 1, 0.36, 1],
+      }}
       className="h-full"
     >
       <InfoCard {...card} />
-    </StaggeredRevealItem>
+    </motion.article>
   );
 }
 
 export default function Home() {
-  const infoGridRef = useRef(null);
-  const infoGridInView = useInView(infoGridRef, {
-    once: true,
-    amount: 0.35,
-  });
-
   return (
     <CinematicPage>
       <Hero />
 
       <CinematicSection id="detalles">
         <div>
-          <div
-            ref={infoGridRef}
-            className="grid grid-cols-1 gap-5 md:grid-cols-3"
-          >
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {infoCards.map((card, index) => (
               <AnimatedInfoCard
                 key={card.title}
                 card={card}
                 index={index}
-                isVisible={infoGridInView}
               />
             ))}
           </div>
