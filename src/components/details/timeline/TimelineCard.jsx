@@ -45,10 +45,10 @@ export default function TimelineCard({ event, index, isLast }) {
       <div className="pb-2">
         <div className="premium-card">
           <div className="flex items-center justify-between">
-            <h3 className="font-serif text-3xl leading-tight text-[#2f2a25]">
+            <h3 className="font-serif text-2xl leading-tight text-[#2f2a25]">
               {event.title}
             </h3>
-            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-[#eadccb] bg-[#fbf7f1]/70 text-xl">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[#eadccb] bg-[#fbf7f1]/70 text-lg">
               {event.emoji}
             </span>
           </div>
