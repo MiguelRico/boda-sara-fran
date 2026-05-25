@@ -8,13 +8,13 @@ const transportRoutes = [
       {
         time: "18:00",
         label: "Huelva",
-        description: "Hotel NH Luz.",
+        description: "Hotel NH Luz",
         mapUrl: "https://maps.app.goo.gl/fRcvoUKdD2bMizG6A",
       },
       {
         time: "18:20",
         label: "Corrales",
-        description: "Comercial Colón.",
+        description: "Comercial Colón",
         mapUrl: "https://maps.app.goo.gl/Mz4nGyrVyjGyE5N49",
       },
     ],
@@ -26,12 +26,12 @@ const transportRoutes = [
       {
         time: "03:00",
         label: "Primera",
-        description: "Volver antes.",
+        description: "Volver antes",
       },
       {
         time: "06:00",
         label: "Última",
-        description: "Fin de fiesta.",
+        description: "Fin de fiesta",
       },
     ],
   },
