@@ -114,9 +114,8 @@ export default function TransportSection() {
           <h2 className="section-title">Llegar y volver con tranquilidad</h2>
 
           <p className="section-text">
-            Hemos organizado autobuses para que puedas disfrutar de la
-            celebración sin preocuparte por el desplazamiento. Los puntos de
-            salida y regreso serán los mismos para ambos trayectos.
+            Los puntos de salida y regreso serán los mismos para ambos
+            trayectos.
           </p>
         </div>
 
