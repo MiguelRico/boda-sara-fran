@@ -7,7 +7,7 @@ import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
 import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
 import SearchInvitationCard from "../components/rsvp/SearchInvitationCard";
-import Spinner from "../components/ui/Spinner";
+import Spinner from "../components/spinner/Spinner";
 import { MAX_GUESTS } from "../constants/rsvp";
 import useRsvp from "../hooks/useRsvp";
 import useSpinner from "../hooks/useSpinner.js";

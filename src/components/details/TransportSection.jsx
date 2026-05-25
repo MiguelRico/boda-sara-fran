@@ -1,5 +1,5 @@
 import CinematicSection from "../cinematic/CinematicSection";
-import SectionHeader from "../ui/SectionHeader";
+import HeaderSection from "../common/HeaderSection";
 import TransportCard from "./transport/TransportCard";
 
 const transportRoutes = [
@@ -43,7 +43,7 @@ export default function TransportSection() {
   return (
     <CinematicSection id="transport">
       <div className="mx-auto max-w-5xl">
-        <SectionHeader
+        <HeaderSection
           eyebrow="Llegar y volver con tranquilidad"
           title="Transporte"
           text="Los puntos de salida y regreso serán los mismos para ambos trayectos."

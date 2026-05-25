@@ -1,6 +1,6 @@
 import CinematicSection from "../cinematic/CinematicSection";
-import ImageCarousel from "../ui/ImageCarousel";
-import SectionHeader from "../ui/SectionHeader";
+import ImageCarousel from "../common/ImageCarousel";
+import HeaderSection from "../common/HeaderSection";
 
 const ceremonyImages = [
   {
@@ -22,7 +22,7 @@ export default function CeremonySection() {
   return (
     <CinematicSection id="ceremony" className="surface-soft">
       <div className="mx-auto max-w-6xl">
-        <SectionHeader
+        <HeaderSection
           eyebrow="Un lugar para recordar"
           title="Ceremonia"
           text="Un espacio rodeado de naturaleza y con vistas al entorno del Río Piedras."
@@ -41,7 +41,7 @@ export default function CeremonySection() {
               Cómo llegar
             </a>
           </div>
-        </SectionHeader>
+        </HeaderSection>
 
         <ImageCarousel
           images={ceremonyImages}

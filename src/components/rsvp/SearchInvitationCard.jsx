@@ -3,8 +3,8 @@ import {
   FormCard,
   inputClassName,
   Label,
-} from "../ui/FormPrimitives";
-import PrimaryButton from "../ui/PrimaryButton";
+} from "./FormPrimitives";
+import PrimaryButton from "../common/PrimaryButton";
 
 export default function SearchInvitationCard({
   email,

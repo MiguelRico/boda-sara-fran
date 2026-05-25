@@ -1,4 +1,4 @@
-export default function SectionHeader({
+export default function HeaderSection({
   eyebrow,
   title,
   text,

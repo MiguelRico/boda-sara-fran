@@ -1,5 +1,5 @@
 import CinematicSection from "../cinematic/CinematicSection";
-import SectionHeader from "../ui/SectionHeader";
+import HeaderSection from "../common/HeaderSection";
 import TimelineCard from "./timeline/TimelineCard";
 
 const timelineEvents = [
@@ -32,7 +32,7 @@ export default function TimelineSection() {
   return (
     <CinematicSection id="timeline" className="surface-soft">
       <div className="mx-auto max-w-5xl">
-        <SectionHeader
+        <HeaderSection
           eyebrow="El ritmo del día"
           title="Timeline"
           text="Una guía sencilla para que puedas disfrutar cada momento."

@@ -3,7 +3,7 @@ import {
   OUTBOUND_BUS_OPTIONS,
   RETURN_BUS_OPTIONS,
 } from "../../constants/rsvp";
-import { FieldError, FormCard, inputClassName, Label } from "../ui/FormPrimitives";
+import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 
 export default function GuestCard({
   canRemove,

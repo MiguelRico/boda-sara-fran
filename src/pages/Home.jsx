@@ -1,9 +1,8 @@
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
-import Hero from "../components/common/Hero";
-import FinalCTA from "../components/common/FinalCTA";
-import InfoCard from "../components/ui/InfoCard";
-import RevealOnView from "../components/ui/RevealOnView";
+import HeroSection from "../components/home/HeroSection";
+import CtaSection from "../components/home/CtaSection";
+import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 
 const infoCards = [
   {
@@ -32,40 +31,22 @@ const infoCards = [
   },
 ];
 
-function AnimatedInfoCard({ card, index }) {
-  return (
-    <RevealOnView
-      as="article"
-      amount={0.7}
-      margin="0px 0px -12% 0px"
-      delay={index * 0.06}
-      className="h-full"
-    >
-      <InfoCard {...card} />
-    </RevealOnView>
-  );
-}
-
 export default function Home() {
   return (
     <CinematicPage>
-      <Hero />
+      <HeroSection />
 
       <CinematicSection id="detalles">
         <div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {infoCards.map((card, index) => (
-              <AnimatedInfoCard
-                key={card.title}
-                card={card}
-                index={index}
-              />
+              <AnimatedInfoCard key={card.title} card={card} index={index} />
             ))}
           </div>
         </div>
       </CinematicSection>
 
-      <FinalCTA />
+      <CtaSection />
     </CinematicPage>
   );
 }

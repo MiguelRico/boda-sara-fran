@@ -2,9 +2,9 @@ import { useInView } from "framer-motion";
 import { useRef } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../cinematic/CinematicStaggeredRevealItem";
-import PrimaryButton from "../ui/PrimaryButton";
+import PrimaryButton from "../common/PrimaryButton";
 
-export default function Hero() {
+export default function HeroSection() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, {
     once: true,

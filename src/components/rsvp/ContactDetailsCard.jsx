@@ -3,7 +3,7 @@ import {
   FormCard,
   inputClassName,
   Label,
-} from "../ui/FormPrimitives";
+} from "./FormPrimitives";
 
 export default function ContactDetailsCard({
   contact,

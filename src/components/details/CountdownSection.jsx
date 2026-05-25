@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
-import SectionHeader from "../ui/SectionHeader";
+import HeaderSection from "../common/HeaderSection";
 
 const WEDDING_DATE = "2026-08-22T18:00:00";
 
@@ -65,7 +65,7 @@ export default function CountdownSection() {
   return (
     <CinematicSection id="countdown">
       <div className="mx-auto max-w-4xl text-center">
-        <SectionHeader
+        <HeaderSection
           eyebrow="Cada vez queda menos"
           title="Cuenta atrás"
           text="El tiempo avanza hacia un día que queremos vivir rodeados de las personas que más queremos."

@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import ScrollManager from "../components/common/ScrollManager";
+import ScrollManager from "../components/ui/ScrollManager";
 
 export default function MainLayout() {
   const location = useLocation();
