@@ -14,7 +14,7 @@ const transportRoutes = [
       {
         time: "18:20",
         label: "Corrales",
-        description: "Parada intermedia para recoger invitados.",
+        description: "Parada para recoger invitados.",
         mapUrl: "https://maps.app.goo.gl/Mz4nGyrVyjGyE5N49",
       },
     ],
@@ -26,7 +26,7 @@ const transportRoutes = [
       {
         time: "03:00",
         label: "Primera vuelta",
-        description: "Regreso para quienes prefieran volver antes.",
+        description: "Para quienes prefieran volver antes.",
       },
       {
         time: "06:00",
