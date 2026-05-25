@@ -65,11 +65,11 @@ body {
   }
 
   .cinematic-section {
-    @apply relative flex min-h-[100svh] items-center justify-center px-5 py-24 sm:px-8 lg:px-12;
+    @apply relative flex min-h-[100svh] items-center justify-center px-5 sm:px-8 lg:px-12;
   }
 
   .cinematic-container {
-    @apply mx-auto w-full max-w-6xl;
+    @apply mx-auto w-full max-w-6xl py-4;
   }
 
   .section-eyebrow {
