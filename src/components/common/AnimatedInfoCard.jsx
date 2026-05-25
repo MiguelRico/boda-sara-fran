@@ -1,5 +1,5 @@
-import RevealOnView from "./RevealOnView";
-import InfoCard from "../home/InfoCard";
+import RevealOnView from "../ui/RevealOnView";
+import InfoCard from "./InfoCard";
 
 export default function AnimatedInfoCard({ card, index }) {
   return (

@@ -2,7 +2,7 @@ import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import HeroSection from "../components/home/HeroSection";
 import CtaSection from "../components/home/CtaSection";
-import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
+import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
 
 const infoCards = [
   {
