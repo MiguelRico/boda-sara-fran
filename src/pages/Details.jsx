@@ -1,6 +1,4 @@
 import CinematicPage from "../components/cinematic/CinematicPage";
-import CinematicSection from "../components/cinematic/CinematicSection";
-import FinalCTA from "../components/common/FinalCTA";
 import HistorySection from "../components/details/HistorySection";
 import CountdownSection from "../components/details/CountdownSection";
 import TimelineSection from "../components/details/TimelineSection";
@@ -19,8 +17,6 @@ export default function Details() {
       <TransportSection />
 
       <TimelineSection />
-
-      <FinalCTA />
     </CinematicPage>
   );
 }

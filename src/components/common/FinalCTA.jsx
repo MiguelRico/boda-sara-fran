@@ -17,7 +17,7 @@ export default function FinalCTA() {
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <PrimaryButton to="/confirmar">Confirmar asistencia</PrimaryButton>
 
-          <PrimaryButton to="#inicio" variant="secondary">
+          <PrimaryButton to="#init" variant="secondary">
             Volver arriba
           </PrimaryButton>
         </div>

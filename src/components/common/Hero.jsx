@@ -3,7 +3,7 @@ import PrimaryButton from "./PrimaryButton";
 
 export default function Hero() {
   return (
-    <CinematicSection className="surface-soft" reveal={false}>
+    <CinematicSection id="init" className="surface-soft" reveal={false}>
       <div className="relative mx-auto flex min-h-[calc(100svh-12rem)] max-w-5xl flex-col items-center justify-center text-center">
         <p className="section-eyebrow">22 de Agosto de 2026</p>
 
