@@ -1,9 +1,4 @@
-import {
-  FieldError,
-  FormCard,
-  inputClassName,
-  Label,
-} from "./FormPrimitives";
+import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 import PrimaryButton from "../common/PrimaryButton";
 
 export default function SearchInvitationCard({
@@ -15,17 +10,16 @@ export default function SearchInvitationCard({
   onSearchInvitation,
 }) {
   return (
-    <FormCard>
+    <FormCard className="mt-6">
       <div className="mb-8">
         <p className="section-eyebrow mb-3">Buscar invitación</p>
 
         <h2 className="font-serif text-3xl text-[#2f2a25]">
-          Busca tu confirmación
+          Modificar tu confirmación
         </h2>
 
         <p className="mt-3 text-sm leading-relaxed text-[#7b6b5d]">
-          Introduce el email asociado a tu confirmación para modificarla o
-          revisarla.
+          Introduce el email asociado a tu confirmación.
         </p>
       </div>
 
@@ -51,14 +45,6 @@ export default function SearchInvitationCard({
           className="btn-primary flex-1 disabled:opacity-50"
         >
           Buscar mi confirmación
-        </button>
-
-        <button
-          type="button"
-          onClick={onCreateNew}
-          className="btn-secondary flex-1"
-        >
-          Crear nueva
         </button>
 
         <PrimaryButton to="/" variant="secondary">

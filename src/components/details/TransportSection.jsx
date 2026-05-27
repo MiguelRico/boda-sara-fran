@@ -28,12 +28,12 @@ const transportRoutes = [
       {
         time: "03:00",
         label: "Primera",
-        description: "Volver antes",
+        description: "Corrales - Huelva",
       },
       {
         time: "06:00",
         label: "Última",
-        description: "Fin de fiesta",
+        description: "Corrales - Huelva",
       },
     ],
   },

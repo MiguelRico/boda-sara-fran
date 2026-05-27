@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../common/HeaderSection";
 
-const WEDDING_DATE = "2026-08-22T18:00:00";
+const WEDDING_DATE = "2026-08-22T19:00:00";
 
 function getTimeLeft(targetDate) {
   const difference = targetDate.getTime() - new Date().getTime();
@@ -58,8 +58,8 @@ export default function CountdownSection() {
   const items = [
     { label: "Días", value: timeLeft.days },
     { label: "Horas", value: timeLeft.hours },
-    { label: "Min", value: timeLeft.minutes },
-    { label: "Seg", value: timeLeft.seconds },
+    { label: "Minutos", value: timeLeft.minutes },
+    { label: "Segundos", value: timeLeft.seconds },
   ];
 
   return (
@@ -78,7 +78,7 @@ export default function CountdownSection() {
         </div>
 
         <p className="mt-10 text-sm leading-relaxed text-[#7b6b5d]">
-          22 de agosto de 2026 · 18:00
+          22 de agosto de 2026 · 19:00
         </p>
       </div>
     </CinematicSection>

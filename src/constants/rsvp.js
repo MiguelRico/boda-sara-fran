@@ -19,8 +19,8 @@ export const OUTBOUND_BUS_OPTIONS = [
 
 export const RETURN_BUS_OPTIONS = [
   { value: "No", label: "No necesito autobús de vuelta" },
-  { value: "3:00", label: "3:00" },
-  { value: "6:00", label: "6:00" },
+  { value: "3:00", label: "3:00 (Corrales - Huelva)" },
+  { value: "6:00", label: "6:00 (Corrales - Huelva)" },
 ];
 
 export const createEmptyGuest = () => ({

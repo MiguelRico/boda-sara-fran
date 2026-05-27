@@ -7,6 +7,7 @@ import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
 import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
 import SearchInvitationCard from "../components/rsvp/SearchInvitationCard";
+import CreateInvitationCard from "../components/rsvp/CreateInvitationCard";
 import Spinner from "../components/spinner/Spinner";
 import { MAX_GUESTS } from "../constants/rsvp";
 import useRsvp from "../hooks/useRsvp";
@@ -32,7 +33,7 @@ export default function Rsvp() {
         reveal={false}
       >
         <div ref={rsvpRef}>
-          <div className="mx-auto mb-12 max-w-3xl text-center">
+          <div className="mx-auto mb-6 max-w-3xl text-center">
             <CinematicStaggeredRevealItem index={0} isVisible={rsvpInView}>
               <p className="section-eyebrow">Sara & Fran</p>
             </CinematicStaggeredRevealItem>
@@ -52,6 +53,17 @@ export default function Rsvp() {
 
           {!rsvp.mode && !rsvp.hasGroupId && (
             <CinematicStaggeredRevealItem index={3} isVisible={rsvpInView}>
+              <CreateInvitationCard
+                email={rsvp.contact.email}
+                emailError={rsvp.errors.email}
+                loading={spinner.loading}
+                onCreateNew={rsvp.handleCreateNew}
+                onEmailChange={(value) =>
+                  rsvp.handleContactChange("email", value)
+                }
+                onSearchInvitation={rsvp.handleSearchInvitation}
+              />
+
               <SearchInvitationCard
                 email={rsvp.contact.email}
                 emailError={rsvp.errors.email}

@@ -4,7 +4,7 @@ import TimelineCard from "./timeline/TimelineCard";
 
 const timelineEvents = [
   {
-    time: "18:00",
+    time: "19:00",
     title: "Ceremonia",
     description:
       "Celebraremos el momento más especial del día en un entorno natural y cuidado",

@@ -136,18 +136,31 @@ body {
 }
 
 @layer utilities {
-  .animate-spinner-sway {
-    animation: spinner-sway 1.4s ease-in-out infinite;
+  .wedding-spinner-sprite {
+    display: block;
+    flex: none;
+
+    width: 96px;
+    height: 96px;
+
+    background-image: url("/spinner/wedding-dance-spinner-12frames-centered-192.webp");
+    background-repeat: no-repeat;
+
+    /* Sprite real: 12 frames de 192x192. Se escala visualmente a 96x96. */
+    background-size: 1152px 96px;
+    background-position: 0 0;
+
+    animation: wedding-sprite-dance 1.8s steps(12) infinite;
+    will-change: background-position;
   }
 }
 
-@keyframes spinner-sway {
-  0%,
-  100% {
-    transform: translateX(-6px);
+@keyframes wedding-sprite-dance {
+  from {
+    background-position: 0 0;
   }
 
-  50% {
-    transform: translateX(6px);
+  to {
+    background-position: -1152px 0;
   }
 }
