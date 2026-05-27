@@ -1,5 +1,5 @@
 export const inputClassName =
-  "w-full rounded-2xl border border-[#eadccb] bg-[#fbf7f1]/70 px-4 py-3 text-[#2f2a25] outline-none transition-all duration-300 placeholder:text-[#a89889] focus:border-[#8f6f56] focus:bg-white";
+  "w-full rounded-2xl border border-[#eadccb] bg-[#f5f8f2]/70 px-4 py-3 text-[#2f2a25] outline-none transition-all duration-300 placeholder:text-[#a89889] focus:border-[#8f6f56] focus:bg-white";
 
 export function FormCard({ children, className = "" }) {
   return <div className={`premium-card ${className}`}>{children}</div>;

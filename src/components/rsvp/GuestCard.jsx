@@ -83,8 +83,8 @@ export default function GuestCard({
                   flex cursor-pointer items-center justify-center rounded-2xl border px-4 py-3 text-sm transition-all duration-300
                   ${
                     checked
-                      ? "border-[#8f6f56] bg-[#8f6f56] text-white"
-                      : "border-[#eadccb] bg-[#fbf7f1]/70 text-[#7b6b5d] hover:border-[#d8c1ad] hover:bg-white"
+                      ? "border-[#8f6f56] bg-[#556b52] text-white"
+                      : "border-[#eadccb] bg-[#edf3e8]/70 text-[#7b6b5d] hover:border-[#d8c1ad] hover:bg-white"
                   }
                 `}
               >
@@ -128,7 +128,7 @@ export default function GuestCard({
         <FieldError>{errors[`guest_comments_${index}`]}</FieldError>
       </div>
 
-      <div className="mt-8 rounded-[2rem] border border-[#eadccb] bg-[#fbf7f1]/70 p-5">
+      <div className="mt-8 rounded-[2rem] border border-[#eadccb] bg-[#f5f8f2]/70 p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="font-serif text-2xl text-[#2f2a25]">
@@ -151,7 +151,7 @@ export default function GuestCard({
               className="peer sr-only"
             />
 
-            <div className="peer h-6 w-11 rounded-full bg-[#d8c1ad] transition after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#8f6f56] peer-checked:after:translate-x-full" />
+            <div className="peer h-6 w-11 rounded-full bg-[#6f8b6b] transition after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#556b52] peer-checked:after:translate-x-full" />
           </label>
         </div>
 
@@ -185,7 +185,7 @@ function BusSelect({ label, onChange, options, value }) {
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className={inputClassName}
+        className={inputClassName + " bg-white"}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

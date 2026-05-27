@@ -6,20 +6,21 @@
 }
 
 :root {
-  --color-bg: #fbf7f1;
-  --color-bg-soft: #f7efe6;
-  --color-bg-warm: #efe2d3;
+  --color-bg: #f5f8f2;
+  --color-bg-soft: #edf3e8;
+  --color-bg-warm: #dfe8d7;
 
-  --color-text: #2f2a25;
-  --color-muted: #7b6b5d;
-  --color-accent: #8f6f56;
-  --color-accent-dark: #765840;
+  --color-text: #2d332c;
+  --color-muted: #6d7669;
 
-  --color-border: #eadccb;
-  --color-border-strong: #d8c1ad;
+  --color-accent: #6f8b6b;
+  --color-accent-dark: #556b52;
 
-  --shadow-soft: 0 24px 70px rgba(77, 56, 40, 0.08);
-  --shadow-button: 0 18px 45px rgba(143, 111, 86, 0.25);
+  --color-border: #d7e2d0;
+  --color-border-strong: #bccdb5;
+
+  --shadow-soft: 0 24px 70px rgba(52, 69, 49, 0.08);
+  --shadow-button: 0 18px 45px rgba(111, 139, 107, 0.25);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

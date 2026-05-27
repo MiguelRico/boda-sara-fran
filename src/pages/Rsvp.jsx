@@ -12,6 +12,7 @@ import Spinner from "../components/spinner/Spinner";
 import { MAX_GUESTS } from "../constants/rsvp";
 import useRsvp from "../hooks/useRsvp";
 import useSpinner from "../hooks/useSpinner.js";
+import PrimaryButton from "../components/common/PrimaryButton";
 
 export default function Rsvp() {
   const spinner = useSpinner();
@@ -127,6 +128,10 @@ export default function Rsvp() {
                   >
                     Confirmar asistencia
                   </button>
+
+                  <PrimaryButton to="/" variant="secondary">
+                    Volver al inicio
+                  </PrimaryButton>
                 </div>
               </CinematicStaggeredRevealItem>
             </form>

@@ -87,7 +87,7 @@ export default function ImageCarousel({
                   absolute right-3 top-1/2 z-10
                   flex h-10 w-10 -translate-y-1/2 items-center justify-center
                   rounded-full border border-white/50 bg-white/70
-                  text-[#8f6f56] backdrop-blur-md
+                  text-[#6f8b6b] backdrop-blur-md
                   transition-all duration-300
                   hover:scale-105 hover:bg-white
                   sm:right-5 sm:h-12 sm:w-12
@@ -129,8 +129,8 @@ export default function ImageCarousel({
                 h-2.5 rounded-full transition-all duration-500
                 ${
                   index === currentIndex
-                    ? "w-8 bg-[#8f6f56]"
-                    : "w-2.5 bg-[#d8c1ad]"
+                    ? "w-8 bg-[#556b52]"
+                    : "w-2.5 bg-[#6f8b6b]"
                 }
               `}
             />
