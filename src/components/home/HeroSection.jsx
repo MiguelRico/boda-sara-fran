@@ -28,7 +28,7 @@ export default function HeroSection() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={2} isVisible={heroInView}>
-          <div className="mt-8 mb-2 h-px w-20 bg-[#d8c1ad]" />
+          <div className="mt-8 mb-2 h-px w-20 bg-[#556b52]" />
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={heroInView}>

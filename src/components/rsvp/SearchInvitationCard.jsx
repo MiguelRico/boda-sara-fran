@@ -18,7 +18,7 @@ export default function SearchInvitationCard({
           Modificar tu confirmación
         </h2>
 
-        <p className="mt-3 text-sm leading-relaxed text-[#7b6b5d]">
+        <p className="mt-3 text-sm leading-relaxed text-[#6f8b6b]">
           Introduce el email asociado a tu confirmación.
         </p>
       </div>

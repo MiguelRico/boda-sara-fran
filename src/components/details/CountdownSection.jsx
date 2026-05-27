@@ -32,11 +32,11 @@ function getTimeLeft(targetDate) {
 function CountdownCard({ label, value }) {
   return (
     <div className="premium-card px-4 py-8 text-center sm:px-6 sm:py-10">
-      <span className="block font-serif text-5xl leading-none text-[#2f2a25] sm:text-6xl lg:text-7xl">
+      <span className="block font-serif text-5xl leading-none text-[#556b52] sm:text-6xl lg:text-7xl">
         {value}
       </span>
 
-      <span className="mt-4 block text-[0.65rem] uppercase tracking-[0.28em] text-[#9b7a61]">
+      <span className="mt-4 block text-[0.65rem] uppercase tracking-[0.28em] text-[#6f8b6b]">
         {label}
       </span>
     </div>
@@ -77,7 +77,7 @@ export default function CountdownSection() {
           ))}
         </div>
 
-        <p className="mt-10 text-sm leading-relaxed text-[#7b6b5d]">
+        <p className="mt-10 text-sm leading-relaxed text-[#6f8b6b]">
           22 de agosto de 2026 · 19:00
         </p>
       </div>

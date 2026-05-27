@@ -18,7 +18,7 @@ export default function SearchInvitationCard({
           Confirmar asistencia
         </h2>
 
-        <p className="mt-3 text-sm leading-relaxed text-[#7b6b5d]">
+        <p className="mt-3 text-sm leading-relaxed text-[#6f8b6b]">
           Confirma tu asistencia y la de tu familia
         </p>
       </div>
