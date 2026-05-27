@@ -52,12 +52,12 @@ export default function HeroSection() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={5} isVisible={heroInView}>
-          <div className="mt-14 flex flex-col items-center gap-3 text-[#9b7a61]">
+          <div className="mt-14 flex flex-col items-center gap-3 text-[#556b52]">
             <span className="text-[0.65rem] uppercase tracking-[0.35em]">
               Desliza
             </span>
 
-            <span className="h-10 w-px bg-[#d8c1ad]" />
+            <span className="h-10 w-px bg-[#556b52]" />
           </div>
         </CinematicStaggeredRevealItem>
       </div>
