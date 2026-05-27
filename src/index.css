@@ -135,32 +135,49 @@ body {
   }
 }
 
-@layer utilities {
-  .wedding-spinner-sprite {
-    display: block;
-    flex: none;
+.wedding-spinner {
+  --spinner-size: 96px;
+  --frame-ratio: 1.1666667; /* frame width / height: 420 / 360 */
+  --frame-count: 12;
 
-    width: 96px;
-    height: 96px;
-
-    background-image: url("/spinner/wedding-dance-spinner-12frames-centered-192.webp");
-    background-repeat: no-repeat;
-
-    /* Sprite real: 12 frames de 192x192. Se escala visualmente a 96x96. */
-    background-size: 1152px 96px;
-    background-position: 0 0;
-
-    animation: wedding-sprite-dance 1.8s steps(12) infinite;
-    will-change: background-position;
-  }
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-width: calc(var(--spinner-size) * var(--frame-ratio));
 }
 
-@keyframes wedding-sprite-dance {
+.wedding-spinner__sprite {
+  width: calc(var(--spinner-size) * var(--frame-ratio));
+  height: var(--spinner-size);
+  display: block;
+  background-repeat: no-repeat;
+  background-size: calc(var(--frame-count) * 100%) 100%;
+  animation: wedding-dance-steps 1.05s steps(var(--frame-count)) infinite;
+  will-change: background-position;
+}
+
+.wedding-spinner__label {
+  font-size: clamp(0.75rem, 2.8vw, 0.9rem);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: currentColor;
+  opacity: 0.72;
+}
+
+@keyframes wedding-dance-steps {
   from {
     background-position: 0 0;
   }
-
   to {
-    background-position: -1152px 0;
+    background-position: 100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wedding-spinner__sprite {
+    animation-duration: 2.8s;
   }
 }
