@@ -116,7 +116,8 @@ export default function useRsvp(spinner) {
           open: true,
           type: "error",
           title: "No encontrada",
-          message: "No hemos encontrado una invitación asociada a este email.",
+          message:
+            "No hemos encontrado una confirmación asociada a este email.",
         });
         return;
       }
@@ -131,7 +132,7 @@ export default function useRsvp(spinner) {
         type: "error",
         title: "Ha ocurrido un problema",
         message:
-          "Ha ocurrido un error buscando tu confirmación. Por favor, inténtalo de nuevo en unos minutos.",
+          "Ha ocurrido un error buscando tu confirmación. Por favor, inténtalo de nuevo en unos minutos. Si el problema persiste ponte en contacto con Sara ó Fran.",
       });
     } finally {
       hide();
@@ -173,8 +174,8 @@ export default function useRsvp(spinner) {
         type: "success",
         title: "¡Confirmación recibida!",
         message: isEdition
-          ? "Hemos actualizado correctamente vuestra asistencia."
-          : "Hemos guardado correctamente vuestra asistencia.",
+          ? "Hemos actualizado correctamente vuestra confirmación."
+          : "Hemos guardado correctamente vuestra confirmación.",
       });
     } catch (error) {
       console.error(error);
@@ -184,7 +185,7 @@ export default function useRsvp(spinner) {
         type: "error",
         title: "Ha ocurrido un problema",
         message:
-          "No hemos podido guardar vuestra información. Por favor, intentadlo de nuevo en unos minutos.",
+          "No hemos podido guardar vuestra confirmación. Por favor, intentadlo de nuevo en unos minutos. Si el problema persiste ponte en contacto con Sara ó Fran.",
       });
     } finally {
       hide();
@@ -205,7 +206,7 @@ export default function useRsvp(spinner) {
             open: true,
             type: "error",
             title: "Ha ocurrido un problema",
-            message: "No se encontró la invitación.",
+            message: "No se encontró la confirmación.",
           });
 
           return;
@@ -219,7 +220,7 @@ export default function useRsvp(spinner) {
           open: true,
           type: "error",
           title: "Ha ocurrido un problema",
-          message: "Error cargando invitación.",
+          message: "Error cargando confirmación.",
         });
       } finally {
         hide();

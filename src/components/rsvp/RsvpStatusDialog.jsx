@@ -1,18 +1,35 @@
+import { createPortal } from "react-dom";
+import useViewportScrollLock from "../../hooks/useViewportScrollLock";
+
 export default function RsvpStatusDialog({ popup, onClose }) {
+  useViewportScrollLock(popup.open);
+
   if (!popup.open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-bg)]/30 px-5 backdrop-blur-sm">
-      <div className="premium-card max-w-md text-center">
+  const dialog = (
+    <div className="rsvp-dialog-overlay">
+      <div
+        className="premium-card rsvp-dialog-card"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="rsvp-dialog-title"
+        aria-describedby="rsvp-dialog-message"
+      >
         <p className="section-eyebrow mb-3">
           {popup.type === "success" ? "Confirmado" : "Aviso"}
         </p>
 
-        <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
+        <h2
+          id="rsvp-dialog-title"
+          className="font-serif text-3xl text-[var(--color-accent-dark)]"
+        >
           {popup.title}
         </h2>
 
-        <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
+        <p
+          id="rsvp-dialog-message"
+          className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]"
+        >
           {popup.message}
         </p>
 
@@ -22,4 +39,6 @@ export default function RsvpStatusDialog({ popup, onClose }) {
       </div>
     </div>
   );
+
+  return createPortal(dialog, document.body);
 }

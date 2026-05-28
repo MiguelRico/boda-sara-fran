@@ -214,6 +214,40 @@ body {
     color: var(--color-muted);
   }
 
+  .rsvp-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100dvw;
+    min-height: 100svh;
+    height: 100dvh;
+    padding: 1rem;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
+
+    background: rgba(245, 248, 242, 0.78);
+    backdrop-filter: blur(12px);
+  }
+
+  .rsvp-dialog-card {
+    width: min(100%, 448px);
+    max-height: calc(100dvh - 2rem);
+    padding: 1.5rem;
+    overflow-y: auto;
+    text-align: center;
+    transform: none;
+  }
+
+  .rsvp-dialog-card:hover {
+    transform: none;
+  }
+
   @media (min-width: 640px) {
     .spinner-overlay {
       padding: 1.5rem;
@@ -226,6 +260,15 @@ body {
 
     .spinner-circle {
       margin-bottom: 1.75rem;
+    }
+
+    .rsvp-dialog-overlay {
+      padding: 1.5rem;
+    }
+
+    .rsvp-dialog-card {
+      max-height: calc(100dvh - 3rem);
+      padding: 2rem;
     }
   }
 }
