@@ -27,7 +27,7 @@ export default function CeremonySection() {
           title="Ceremonia"
           text="Un espacio rodeado de naturaleza y con vistas al entorno del Río Piedras."
         >
-          <p className="mt-4 text-sm leading-relaxed text-[#7b6b5d]">
+          <p className="text-eyebrow mt-4">
             Aguas del Pino, Ctra. A-5052, km 4 · Punta Umbría, Huelva.
           </p>
 

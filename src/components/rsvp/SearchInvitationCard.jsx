@@ -11,19 +11,17 @@ export default function SearchInvitationCard({
 }) {
   return (
     <FormCard className="mt-6">
-      <div className="mb-8">
+      <div className="mb-4">
         <p className="section-eyebrow mb-3">Buscar invitación</p>
 
-        <h2 className="font-serif text-3xl text-[#2f2a25]">
-          Modificar tu confirmación
-        </h2>
+        <h2 className="font-serif text-3xl">Modificar tu confirmación</h2>
 
-        <p className="mt-3 text-sm leading-relaxed text-[#6f8b6b]">
+        <p className="mt-3 text-sm leading-relaxed">
           Introduce el email asociado a tu confirmación.
         </p>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <Label>Email de contacto</Label>
 
         <input

@@ -30,7 +30,7 @@ export default function CtaSection() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={ctaInView}>
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <PrimaryButton to="/rsvp#search">
               Confirmar asistencia
             </PrimaryButton>

@@ -11,19 +11,17 @@ export default function SearchInvitationCard({
 }) {
   return (
     <FormCard>
-      <div className="mb-8">
+      <div className="mb-4">
         <p className="section-eyebrow mb-3">Confirma tu invitación</p>
 
-        <h2 className="font-serif text-3xl text-[#2f2a25]">
-          Confirmar asistencia
-        </h2>
+        <h2 className="font-serif text-3xl">Confirmar asistencia</h2>
 
-        <p className="mt-3 text-sm leading-relaxed text-[#6f8b6b]">
+        <p className="mt-2 text-sm leading-relaxed">
           Confirma tu asistencia y la de tu familia
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row">
+      <div className="flex flex-col gap-4 sm:flex-row mt-4">
         <button
           type="button"
           onClick={onCreateNew}

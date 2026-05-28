@@ -32,13 +32,11 @@ function getTimeLeft(targetDate) {
 function CountdownCard({ label, value }) {
   return (
     <div className="premium-card px-4 py-8 text-center sm:px-6 sm:py-10">
-      <span className="block font-serif text-5xl leading-none text-[#556b52] sm:text-6xl lg:text-7xl">
+      <span className="block font-serif section-text text-5xl sm:text-6xl lg:text-7xl">
         {value}
       </span>
 
-      <span className="mt-4 block text-[0.65rem] uppercase tracking-[0.28em] text-[#6f8b6b]">
-        {label}
-      </span>
+      <span className="mt-4 block section-eyebrow">{label}</span>
     </div>
   );
 }
@@ -71,15 +69,13 @@ export default function CountdownSection() {
           text="El tiempo avanza hacia un día que queremos vivir rodeados de las personas que más queremos."
         />
 
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {items.map((item) => (
             <CountdownCard key={item.label} {...item} />
           ))}
         </div>
 
-        <p className="mt-10 text-sm leading-relaxed text-[#6f8b6b]">
-          22 de agosto de 2026 · 19:00
-        </p>
+        <p className="section-eyebrow mt-6">22 de agosto de 2026 · 19:00</p>
       </div>
     </CinematicSection>
   );

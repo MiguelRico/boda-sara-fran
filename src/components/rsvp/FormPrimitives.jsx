@@ -1,5 +1,5 @@
 export const inputClassName =
-  "w-full rounded-2xl border border-[#6f8b6b] bg-[#f5f8f2]/70 px-4 py-3 text-[#2f2a25] outline-none transition-all duration-300 placeholder:text-[#a89889] focus:border-[#556b52] focus:bg-white";
+  "w-full rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg)]/70 px-4 py-3 text-[var(--color-accent-dark)] outline-none transition-all duration-300 placeholder:text-[var(--color-accent)] focus:border-[var(--color-border)] focus:bg-white";
 
 export function FormCard({ children, className = "" }) {
   return <div className={`premium-card ${className}`}>{children}</div>;
@@ -13,6 +13,8 @@ export function FieldError({ children }) {
 
 export function Label({ children }) {
   return (
-    <label className="mb-2 block text-sm text-[#2f2a25]">{children}</label>
+    <label className="mb-2 block text-sm text-[var(--color-accent-dark)]">
+      {children}
+    </label>
   );
 }

@@ -49,7 +49,7 @@ export default function TransportSection() {
           text="Los puntos de salida y regreso serán los mismos para ambos trayectos."
         />
 
-        <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2">
           {transportRoutes.map((route) => (
             <TransportCard key={route.title} route={route} />
           ))}

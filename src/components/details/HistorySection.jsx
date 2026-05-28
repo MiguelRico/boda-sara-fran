@@ -38,7 +38,7 @@ export default function HistorySection() {
 
         <ImageCarousel
           images={historyImages}
-          className="mx-auto mt-14 max-w-4xl"
+          className="mx-auto mt-4 max-w-4xl"
           imageClassName="aspect-[4/5] w-full object-cover transition-opacity duration-700 sm:aspect-[16/10] lg:aspect-[16/9]"
           imageLoading="eager"
         />

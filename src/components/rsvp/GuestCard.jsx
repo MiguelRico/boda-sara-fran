@@ -15,11 +15,11 @@ export default function GuestCard({
 }) {
   return (
     <FormCard>
-      <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-4 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="section-eyebrow mb-3">Invitado {index + 1}</p>
 
-          <h3 className="font-serif text-3xl text-[#2f2a25]">
+          <h3 className="font-serif text-3xl text-[var(--color-accent-dark)]">
             Información del invitado
           </h3>
         </div>
@@ -69,7 +69,7 @@ export default function GuestCard({
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-4">
         <Label>Intolerancias o alergias</Label>
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -112,7 +112,7 @@ export default function GuestCard({
         />
       </div>
 
-      <div className="mt-8">
+      <div className="mt-2">
         <Label>Comentarios adicionales</Label>
 
         <textarea
@@ -128,14 +128,14 @@ export default function GuestCard({
         <FieldError>{errors[`guest_comments_${index}`]}</FieldError>
       </div>
 
-      <div className="mt-8 rounded-[2rem] border border-[#eadccb] bg-[#f5f8f2]/70 p-5">
+      <div className="mt-4 rounded-[2rem] border border-[var(--color-border-strong)] bg-[var(--color-bg)]/70 p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="font-serif text-2xl text-[#2f2a25]">
+            <h3 className="font-serif text-2xl text-[var(--color-accent-dark)]">
               Servicio de autobús
             </h3>
 
-            <p className="mt-2 text-sm leading-relaxed text-[#7b6b5d]">
+            <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
               Tendremos autobús para facilitar el desplazamiento de ida y
               vuelta.
             </p>
@@ -151,12 +151,12 @@ export default function GuestCard({
               className="peer sr-only"
             />
 
-            <div className="peer h-6 w-11 rounded-full bg-[#6f8b6b] transition after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#556b52] peer-checked:after:translate-x-full" />
+            <div className="peer h-6 w-11 rounded-full bg-[var(--color-border-strong)] transition after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--color-accent-dark)] peer-checked:after:translate-x-full" />
           </label>
         </div>
 
         {guest.busNeeded && (
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <div className="mt-2 grid gap-4 md:grid-cols-2">
             <BusSelect
               label="Horario ida"
               value={guest.outboundBus}

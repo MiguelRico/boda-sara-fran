@@ -42,7 +42,7 @@ export default function TimelineSection() {
           text="Una guía sencilla para que puedas disfrutar cada momento."
         />
 
-        <div className="mx-auto mt-8 max-w-4xl">
+        <div className="mx-auto mt-4 max-w-4xl">
           {timelineEvents.map((event, index) => (
             <TimelineCard
               key={event.time}

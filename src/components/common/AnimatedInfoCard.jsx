@@ -25,9 +25,7 @@ function InfoCard({ title, subtitle, description, to, emoji, className = "" }) {
             {emoji}
           </span>
 
-          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-[#6f8b6b]">
-            {subtitle}
-          </p>
+          <p className="section-eyebrow">{subtitle}</p>
         </div>
 
         <h3 className="font-serif text-3xl leading-tight text-[#556b52] sm:text-4xl">
@@ -43,7 +41,7 @@ function InfoCard({ title, subtitle, description, to, emoji, className = "" }) {
             Ver detalles
           </span>
 
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#556b52] text-[#8f6f56] transition-all duration-500 group-hover:translate-x-1 group-hover:border-[#8f6f56]">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-strong)] text-[var(--color-accent-dark)] transition-all duration-500 group-hover:translate-x-1 group-hover:border-[var(--color-accent)]">
             →
           </span>
         </div>
