@@ -1,3 +1,4 @@
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   COMMON_ALLERGIES,
   OUTBOUND_BUS_OPTIONS,
@@ -13,6 +14,14 @@ export default function GuestCard({
   onGuestChange,
   onRemoveGuest,
 }) {
+  const reduceMotion = useReducedMotion();
+  const busPanelHidden = reduceMotion
+    ? { height: 0, opacity: 0 }
+    : { height: 0, opacity: 0, y: -8, filter: "blur(4px)" };
+  const busPanelVisible = reduceMotion
+    ? { height: "auto", opacity: 1 }
+    : { height: "auto", opacity: 1, y: 0, filter: "blur(0px)" };
+
   return (
     <FormCard>
       <div className="mb-4 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -155,23 +164,41 @@ export default function GuestCard({
           </label>
         </div>
 
-        {guest.busNeeded && (
-          <div className="mt-2 grid gap-4 md:grid-cols-2">
-            <BusSelect
-              label="Horario ida"
-              value={guest.outboundBus}
-              options={OUTBOUND_BUS_OPTIONS}
-              onChange={(value) => onGuestChange(index, "outboundBus", value)}
-            />
+        <AnimatePresence initial={false}>
+          {guest.busNeeded && (
+            <motion.div
+              key="bus-options"
+              initial={busPanelHidden}
+              animate={busPanelVisible}
+              exit={busPanelHidden}
+              transition={{
+                duration: reduceMotion ? 0.18 : 0.46,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <BusSelect
+                  label="Horario ida"
+                  value={guest.outboundBus}
+                  options={OUTBOUND_BUS_OPTIONS}
+                  onChange={(value) =>
+                    onGuestChange(index, "outboundBus", value)
+                  }
+                />
 
-            <BusSelect
-              label="Horario vuelta"
-              value={guest.returnBus}
-              options={RETURN_BUS_OPTIONS}
-              onChange={(value) => onGuestChange(index, "returnBus", value)}
-            />
-          </div>
-        )}
+                <BusSelect
+                  label="Horario vuelta"
+                  value={guest.returnBus}
+                  options={RETURN_BUS_OPTIONS}
+                  onChange={(value) =>
+                    onGuestChange(index, "returnBus", value)
+                  }
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </FormCard>
   );
