@@ -138,28 +138,42 @@ body {
   .spinner-overlay {
     position: fixed;
     inset: 0;
-    z-index: 50;
+    z-index: 1000;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    padding: 1.5rem;
+    width: 100dvw;
+    min-height: 100svh;
+    height: 100dvh;
+    padding: 1rem;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
 
     background: rgba(245, 248, 242, 0.86);
     backdrop-filter: blur(12px);
   }
 
   .spinner-card {
-    width: min(92vw, 420px);
+    width: min(100%, 420px);
+    max-height: calc(100dvh - 2rem);
+    padding: 1.25rem;
     text-align: center;
+    pointer-events: auto;
+    transform: none;
+  }
+
+  .spinner-card:hover {
+    transform: none;
   }
 
   .spinner-circle {
-    width: 136px;
-    height: 136px;
+    width: clamp(112px, 34vw, 136px);
+    height: clamp(112px, 34vw, 136px);
 
-    margin: 0 auto 1.75rem;
+    margin: 0 auto 1.25rem;
 
     display: flex;
     align-items: center;
@@ -179,8 +193,8 @@ body {
   .wedding-spinner-image {
     display: block;
 
-    width: 104px;
-    height: 104px;
+    width: 76%;
+    height: 76%;
 
     object-fit: contain;
     object-position: center;
@@ -188,7 +202,7 @@ body {
 
   .spinner-title {
     font-family: var(--font-serif);
-    font-size: clamp(2rem, 5vw, 3rem);
+    font-size: clamp(1.85rem, 9vw, 3rem);
     line-height: 1;
     color: var(--color-text);
   }
@@ -198,5 +212,20 @@ body {
     font-size: 0.92rem;
     line-height: 1.8;
     color: var(--color-muted);
+  }
+
+  @media (min-width: 640px) {
+    .spinner-overlay {
+      padding: 1.5rem;
+    }
+
+    .spinner-card {
+      max-height: calc(100dvh - 3rem);
+      padding: 2rem;
+    }
+
+    .spinner-circle {
+      margin-bottom: 1.75rem;
+    }
   }
 }
