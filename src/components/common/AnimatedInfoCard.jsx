@@ -21,7 +21,7 @@ function InfoCard({ title, subtitle, description, to, emoji, className = "" }) {
 
       <div className="relative flex h-full flex-col">
         <div className="mb-8 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-[#fbf7f1]/70 text-xl">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
             {emoji}
           </span>
 

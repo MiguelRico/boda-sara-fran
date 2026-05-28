@@ -2,7 +2,7 @@ import MapLink from "./MapLink";
 
 export default function TransportTime({ item }) {
   return (
-    <div className="rounded-[1.5rem] border border-[#eadccb] bg-[#edf3e8]/70 p-4 sm:p-5">
+    <div className="rounded-[1.5rem] border border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
         <span className="font-serif text-3xl leading-none sm:min-w-[4.5rem]">
           {item.time}

@@ -92,8 +92,8 @@ export default function GuestCard({
                   flex cursor-pointer items-center justify-center rounded-2xl border px-4 py-3 text-sm transition-all duration-300
                   ${
                     checked
-                      ? "border-[#8f6f56] bg-[#556b52] text-white"
-                      : "border-[#eadccb] bg-[#edf3e8]/70 text-[#7b6b5d] hover:border-[#d8c1ad] hover:bg-white"
+                      ? "border-[var(--color-border-strong)] bg-[var(--color-accent-dark)] text-white"
+                      : "border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 text-[var(--color-text)] hover:border-[var(--color-border-hover)] hover:bg-white"
                   }
                 `}
               >
@@ -191,9 +191,7 @@ export default function GuestCard({
                   label="Horario vuelta"
                   value={guest.returnBus}
                   options={RETURN_BUS_OPTIONS}
-                  onChange={(value) =>
-                    onGuestChange(index, "returnBus", value)
-                  }
+                  onChange={(value) => onGuestChange(index, "returnBus", value)}
                 />
               </div>
             </motion.div>

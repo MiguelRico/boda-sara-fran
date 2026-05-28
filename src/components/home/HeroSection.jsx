@@ -28,7 +28,7 @@ export default function HeroSection() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={2} isVisible={heroInView}>
-          <div className="mt-8 mb-2 h-px w-20 bg-[#556b52]" />
+          <div className="mt-8 mb-2 h-px w-20 bg-[var(--color-accent-dark)]" />
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={heroInView}>
@@ -52,12 +52,12 @@ export default function HeroSection() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={5} isVisible={heroInView}>
-          <div className="mt-14 flex flex-col items-center gap-3 text-[#556b52]">
+          <div className="mt-14 flex flex-col items-center gap-3 text-[var(--color-accent-dark)]">
             <span className="text-[0.65rem] uppercase tracking-[0.35em]">
               Desliza
             </span>
 
-            <span className="h-10 w-px bg-[#556b52]" />
+            <span className="h-10 w-px bg-[var(--color-accent-dark)]" />
           </div>
         </CinematicStaggeredRevealItem>
       </div>
