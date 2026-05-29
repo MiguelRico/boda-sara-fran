@@ -10,6 +10,8 @@ import {
 import { validateRsvpEmail, validateRsvpForm } from "../utils/rsvpValidation";
 
 const createInitialPopup = () => ({
+  closeText: "Cerrar",
+  closeTo: null,
   open: false,
   type: "success",
   title: "",
@@ -113,6 +115,8 @@ export default function useRsvp(spinner) {
 
       if (!response.found) {
         setPopup({
+          closeText: "Cerrar",
+          closeTo: null,
           open: true,
           type: "error",
           title: "No encontrada",
@@ -128,6 +132,8 @@ export default function useRsvp(spinner) {
       console.error(error);
 
       setPopup({
+        closeText: "Volver al inicio",
+        closeTo: "/",
         open: true,
         type: "error",
         title: "Ha ocurrido un problema",
@@ -170,6 +176,8 @@ export default function useRsvp(spinner) {
       }
 
       setPopup({
+        closeText: "Volver al inicio",
+        closeTo: "/",
         open: true,
         type: "success",
         title: "¡Confirmación recibida!",
@@ -181,6 +189,8 @@ export default function useRsvp(spinner) {
       console.error(error);
 
       setPopup({
+        closeText: "Volver al inicio",
+        closeTo: "/",
         open: true,
         type: "error",
         title: "Ha ocurrido un problema",
@@ -203,10 +213,13 @@ export default function useRsvp(spinner) {
 
         if (!response.found) {
           setPopup({
+            closeText: "Volver al inicio",
+            closeTo: "/",
             open: true,
             type: "error",
             title: "Ha ocurrido un problema",
-            message: "No se encontró la confirmación.",
+            message:
+              "No se encontró la confirmación. Si el problema persiste ponte en contacto con Sara ó Fran.",
           });
 
           return;
@@ -217,10 +230,13 @@ export default function useRsvp(spinner) {
         console.error(error);
 
         setPopup({
+          closeText: "Volver al inicio",
+          closeTo: "/",
           open: true,
           type: "error",
           title: "Ha ocurrido un problema",
-          message: "Error cargando confirmación.",
+          message:
+            "Error cargando confirmación. Si el problema persiste ponte en contacto con Sara ó Fran.",
         });
       } finally {
         hide();

@@ -137,7 +137,16 @@ export default function Rsvp() {
             </form>
           )}
 
-          <RsvpStatusDialog popup={rsvp.popup} onClose={rsvp.closePopup} />
+          <RsvpStatusDialog
+            closeText={rsvp.popup.closeText}
+            closeTo={rsvp.popup.closeTo}
+            eyebrow={rsvp.popup.eyebrow}
+            message={rsvp.popup.message}
+            onClose={rsvp.closePopup}
+            open={rsvp.popup.open}
+            title={rsvp.popup.title}
+            type={rsvp.popup.type}
+          />
         </div>
       </CinematicSection>
     </CinematicPage>

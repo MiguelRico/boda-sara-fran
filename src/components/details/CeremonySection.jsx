@@ -46,7 +46,7 @@ export default function CeremonySection() {
         <ImageCarousel
           images={ceremonyImages}
           className="mx-auto mt-4 w-full max-w-4xl"
-          imageClassName="aspect-[4/5] w-full object-cover sm:aspect-[16/10] lg:aspect-[4/3]"
+          imageClassName="aspect-[4/5] w-full sm:aspect-[16/10] lg:aspect-[4/3]"
         />
       </div>
     </CinematicSection>

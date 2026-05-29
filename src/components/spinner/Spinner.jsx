@@ -21,13 +21,9 @@ export default function Spinner({ text = "Preparando todo..." }) {
           />
         </div>
 
-        <p className="section-eyebrow mb-3">Un momento</p>
+        <p className="section-eyebrow">Un momento</p>
 
-        <p className="spinner-title">{text}</p>
-
-        <p className="spinner-description">
-          Estamos gestionando tu confirmación con cuidado.
-        </p>
+        <p className="section-text">{text}</p>
       </div>
     </div>
   );

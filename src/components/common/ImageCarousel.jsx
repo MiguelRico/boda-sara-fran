@@ -6,7 +6,7 @@ export default function ImageCarousel({
   autoPlay = true,
   interval = 4500,
   className = "",
-  imageClassName = "aspect-[4/5] w-full object-cover sm:aspect-[16/10] lg:aspect-[16/9]",
+  imageClassName = "aspect-[4/5] w-full sm:aspect-[16/10] lg:aspect-[16/9]",
   imageLoading = "lazy",
   showSingleImageControls = false,
 }) {
@@ -44,15 +44,17 @@ export default function ImageCarousel({
     <div className={className}>
       <div className="premium-card p-3 sm:p-4">
         <div
-          className={`relative grid overflow-hidden rounded-[1.7rem] ${imageClassName}`}
+          className={`relative overflow-hidden rounded-[1.7rem] ${imageClassName}`}
         >
           <AnimatePresence initial={false}>
             <motion.img
               key={currentImage.src}
               src={currentImage.src}
               alt={currentImage.alt}
-              className="col-start-1 row-start-1 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover object-center"
               loading={imageLoading}
+              sizes="(min-width: 1024px) 896px, (min-width: 640px) calc(100vw - 6rem), calc(100vw - 2.5rem)"
+              draggable="false"
               initial={{ opacity: 0, scale: 1.045, filter: "blur(10px)" }}
               animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
               exit={{ opacity: 0, scale: 1.018, filter: "blur(4px)" }}
