@@ -7,7 +7,7 @@ import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
 const infoCards = [
   {
     title: "Ceremonia",
-    subtitle: "18:00 · Aguas del Pino",
+    subtitle: "19:00 · Aguas del Pino",
     description:
       "Una ceremonia al aire libre rodeados de naturaleza, música y una puesta de sol inolvidable.",
     to: "/details#ceremony",

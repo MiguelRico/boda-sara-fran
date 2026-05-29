@@ -98,7 +98,7 @@ export default function ImageCarousel({
             </>
           )}
 
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/35 to-transparent p-5 sm:p-7">
+          <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-t from-transparent to-black/35 p-5 sm:p-7">
             <AnimatePresence mode="wait">
               {currentImage.caption && (
                 <motion.p

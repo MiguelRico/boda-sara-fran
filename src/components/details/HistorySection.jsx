@@ -4,22 +4,32 @@ import HeaderSection from "../common/HeaderSection";
 
 const historyImages = [
   {
-    src: "/carousel/image-1.jpg",
+    src: "/carousel/image0.jpeg",
     alt: "Sara y Fran en uno de sus primeros recuerdos juntos",
     caption: "El inicio de una historia que fue creciendo poco a poco.",
   },
   {
-    src: "/carousel/image-2.jpg",
+    src: "/carousel/image1.jpeg",
     alt: "Sara y Fran compartiendo un momento especial",
     caption: "Pequeños momentos que se fueron convirtiendo en hogar.",
   },
   {
-    src: "/carousel/image-3.jpg",
+    src: "/carousel/image2.jpeg",
     alt: "Sara y Fran celebrando su historia",
     caption: "Y ahora, un nuevo capítulo que queremos vivir contigo.",
   },
   {
-    src: "/carousel/image-4.jpg",
+    src: "/carousel/image3.jpeg",
+    alt: "Sara y Fran celebrando su historia",
+    caption: "Y ahora, un nuevo capítulo que queremos vivir contigo.",
+  },
+  {
+    src: "/carousel/image4.jpeg",
+    alt: "Sara y Fran celebrando su historia",
+    caption: "Y ahora, un nuevo capítulo que queremos vivir contigo.",
+  },
+  {
+    src: "/carousel/image5.jpeg",
     alt: "Sara y Fran celebrando su historia",
     caption: "Y ahora, un nuevo capítulo que queremos vivir contigo.",
   },
