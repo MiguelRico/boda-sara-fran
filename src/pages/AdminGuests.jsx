@@ -1,10 +1,10 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRef } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import {
   AlertTriangle,
-  ArrowLeft,
+  ChevronDown,
   Download,
   Pencil,
   Plus,
@@ -19,6 +19,7 @@ import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
+import HeaderSection from "../components/common/HeaderSection";
 import {
   COMMON_ALLERGIES,
   createEmptyGuest,
@@ -31,7 +32,11 @@ import {
   findAllGroups,
   saveAdminGroup,
 } from "../services/rsvpService";
-import { FieldError, inputClassName, Label } from "../components/rsvp/FormPrimitives";
+import {
+  FieldError,
+  inputClassName,
+  Label,
+} from "../components/rsvp/FormPrimitives";
 
 const pageSize = 8;
 const filters = [
@@ -48,7 +53,6 @@ const emptyState = {
 };
 
 export default function AdminGuests() {
-  const navigate = useNavigate();
   const guestsRef = useRef(null);
   const guestsInView = useInView(guestsRef, {
     once: true,
@@ -158,60 +162,13 @@ export default function AdminGuests() {
       >
         <div ref={guestsRef}>
           <CinematicStaggeredRevealItem index={0} isVisible={guestsInView}>
-            <div className="mb-7 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <button
-                  className="mb-5 inline-flex items-center gap-2 text-sm text-[var(--color-accent-dark)] transition hover:text-[var(--color-text)]"
-                  onClick={() => navigate("/admin")}
-                  type="button"
-                >
-                  <ArrowLeft size={17} strokeWidth={1.8} />
-                  Volver al panel
-                </button>
-
-                <p className="section-eyebrow mb-2">Panel privado</p>
-                <h1 className="section-title">Invitados</h1>
-                <p className="section-text mx-0 max-w-3xl text-left">
-                  Gestion de confirmaciones, datos de contacto, alergias y
-                  transporte.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={!rows.length}
-                  onClick={() => downloadCsv(rows)}
-                  type="button"
-                >
-                  <Download size={16} strokeWidth={1.8} />
-                  CSV
-                </button>
-
-                <button
-                  className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={state.loading}
-                  onClick={loadGuests}
-                  type="button"
-                >
-                  <RefreshCw
-                    className={state.loading ? "animate-spin" : ""}
-                    size={16}
-                    strokeWidth={1.8}
-                  />
-                  Actualizar
-                </button>
-
-                <button
-                  className="btn-primary gap-2"
-                  onClick={() => setEditingGroup(createDraftGroup())}
-                  type="button"
-                >
-                  <Plus size={16} strokeWidth={1.8} />
-                  Crear
-                </button>
-              </div>
-            </div>
+            <HeaderSection
+              eyebrow="Gestiona tus confirmaciones"
+              title="Lista de invitados"
+              titleAs="h1"
+              text="Gestion de confirmaciones, datos de contacto, alergias y
+                  transporte"
+            />
           </CinematicStaggeredRevealItem>
 
           {state.error && (
@@ -227,94 +184,117 @@ export default function AdminGuests() {
           )}
 
           <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
-            <div className="premium-card mb-5">
-              <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-                <label className="relative block">
-                  <Search
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
-                    size={18}
-                    strokeWidth={1.8}
-                  />
-                  <input
-                    className={`${inputClassName} pl-12`}
-                    onChange={(event) => {
-                      setQuery(event.target.value);
-                      setPage(1);
-                    }}
-                    placeholder="Buscar por email, telefono, nombre o apellidos"
-                    type="search"
-                    value={query}
-                  />
-                </label>
-
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {filters.map((item) => (
-                    <button
-                      className={`shrink-0 rounded-full border px-4 py-3 text-xs uppercase tracking-[0.16em] transition ${
-                        filter === item.value
-                          ? "border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-white"
-                          : "border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)]"
-                      }`}
-                      key={item.value}
-                      onClick={() => {
-                        setFilter(item.value);
-                        setPage(1);
-                      }}
-                      type="button"
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <FiltersCard
+              filter={filter}
+              onFilterChange={(value) => {
+                setFilter(value);
+                setPage(1);
+              }}
+              onQueryChange={(value) => {
+                setQuery(value);
+                setPage(1);
+              }}
+              query={query}
+            />
           </CinematicStaggeredRevealItem>
 
-          {state.loading ? (
-            <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
-              <GuestsSkeleton />
-            </CinematicStaggeredRevealItem>
-          ) : (
-            <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
-              <>
-                <DesktopTable
-                  onDelete={setDeleteTarget}
-                  onEdit={(group) => setEditingGroup(createDraftGroup(group))}
-                  rows={pagedRows}
-                />
+          <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
+            <section className="premium-card">
+              <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="section-eyebrow mb-2">Invitados</p>
+                  <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+                    Confirmaciones
+                  </h2>
+                  <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
+                    {visibleRows.length} de {rows.length} invitados visibles
+                  </p>
+                </div>
 
-                <MobileList
-                  onDelete={setDeleteTarget}
-                  onEdit={(group) => setEditingGroup(createDraftGroup(group))}
-                  rows={pagedRows}
-                />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <button
+                    className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!rows.length}
+                    onClick={() => downloadCsv(rows)}
+                    type="button"
+                  >
+                    <Download size={16} strokeWidth={1.8} />
+                    Exportar
+                  </button>
 
-                {!visibleRows.length && (
-                  <div className="premium-card text-center">
-                    <UsersRound
-                      className="mx-auto text-[var(--color-accent-dark)]"
-                      size={28}
-                      strokeWidth={1.7}
+                  <button
+                    className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={state.loading}
+                    onClick={loadGuests}
+                    type="button"
+                  >
+                    <RefreshCw
+                      className={state.loading ? "animate-spin" : ""}
+                      size={16}
+                      strokeWidth={1.8}
                     />
-                    <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
-                      Sin resultados
-                    </p>
-                    <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-                      Prueba con otra busqueda o cambia el filtro seleccionado.
-                    </p>
-                  </div>
-                )}
+                    Actualizar
+                  </button>
 
-                <Pagination
-                  page={page}
-                  total={visibleRows.length}
-                  totalPages={totalPages}
-                  onNext={() => setPage((current) => Math.min(current + 1, totalPages))}
-                  onPrev={() => setPage((current) => Math.max(current - 1, 1))}
-                />
-              </>
-            </CinematicStaggeredRevealItem>
-          )}
+                  <button
+                    className="btn-primary gap-2"
+                    onClick={() => setEditingGroup(createDraftGroup())}
+                    type="button"
+                  >
+                    <Plus size={16} strokeWidth={1.8} />
+                    Crear
+                  </button>
+                </div>
+              </div>
+
+              {state.loading ? (
+                <GuestsSkeleton />
+              ) : (
+                <>
+                  <DesktopTable
+                    onDelete={setDeleteTarget}
+                    onEdit={(group) => setEditingGroup(createDraftGroup(group))}
+                    rows={pagedRows}
+                  />
+
+                  <MobileList
+                    onDelete={setDeleteTarget}
+                    onEdit={(group) => setEditingGroup(createDraftGroup(group))}
+                    rows={pagedRows}
+                  />
+
+                  {!visibleRows.length && (
+                    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
+                      <UsersRound
+                        className="mx-auto text-[var(--color-accent-dark)]"
+                        size={28}
+                        strokeWidth={1.7}
+                      />
+                      <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
+                        Sin resultados
+                      </p>
+                      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+                        Prueba con otra busqueda o cambia el filtro
+                        seleccionado.
+                      </p>
+                    </div>
+                  )}
+
+                  <Pagination
+                    page={page}
+                    total={visibleRows.length}
+                    totalPages={totalPages}
+                    onNext={() =>
+                      setPage((current) => Math.min(current + 1, totalPages))
+                    }
+                    onPrev={() =>
+                      setPage((current) => Math.max(current - 1, 1))
+                    }
+                  />
+                </>
+              )}
+            </section>
+          </CinematicStaggeredRevealItem>
         </div>
       </CinematicSection>
 
@@ -337,9 +317,59 @@ export default function AdminGuests() {
   );
 }
 
+function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
+  return (
+    <section className="premium-card mt-4 mb-5">
+      <p className="section-eyebrow mb-4">Filtros</p>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_18rem] lg:items-end">
+        <div>
+          <Label>Busqueda</Label>
+          <label className="relative block">
+            <Search
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
+              size={18}
+              strokeWidth={1.8}
+            />
+            <input
+              className={`${inputClassName} pl-12`}
+              onChange={(event) => onQueryChange(event.target.value)}
+              placeholder="Email, telefono, nombre o apellidos"
+              type="search"
+              value={query}
+            />
+          </label>
+        </div>
+
+        <div>
+          <Label>Mostrar</Label>
+          <div className="relative">
+            <select
+              className={`${inputClassName} appearance-none bg-white pr-11`}
+              onChange={(event) => onFilterChange(event.target.value)}
+              value={filter}
+            >
+              {filters.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
+              size={18}
+              strokeWidth={1.8}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function DesktopTable({ onDelete, onEdit, rows }) {
   return (
-    <div className="premium-card hidden overflow-x-auto p-0 md:block">
+    <div className="hidden overflow-x-auto rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 md:block">
       <table className="w-full min-w-[920px] border-collapse text-left">
         <thead>
           <tr className="border-b border-[var(--color-border)] text-xs uppercase tracking-[0.16em] text-[var(--color-accent)]">
@@ -401,7 +431,10 @@ function MobileList({ onDelete, onEdit, rows }) {
   return (
     <div className="space-y-4 md:hidden">
       {rows.map((row) => (
-        <article className="premium-card" key={row.rowId}>
+        <article
+          className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4"
+          key={row.rowId}
+        >
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
@@ -627,7 +660,9 @@ function GroupEditor({ group, onClose, onSave }) {
                         <input
                           checked={checked}
                           className="hidden"
-                          onChange={() => updateGuest(index, "allergies", allergy)}
+                          onChange={() =>
+                            updateGuest(index, "allergies", allergy)
+                          }
                           type="checkbox"
                         />
                         {allergy}
@@ -751,10 +786,18 @@ function DeleteDialog({ group, onCancel, onConfirm }) {
           accion no se puede deshacer desde el panel.
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <button className="btn-secondary flex-1" onClick={onCancel} type="button">
+          <button
+            className="btn-secondary flex-1"
+            onClick={onCancel}
+            type="button"
+          >
             Cancelar
           </button>
-          <button className="btn-primary flex-1 bg-red-500" onClick={onConfirm} type="button">
+          <button
+            className="btn-primary flex-1 bg-red-500"
+            onClick={onConfirm}
+            type="button"
+          >
             Eliminar
           </button>
         </div>
@@ -815,7 +858,9 @@ function InfoLine({ label, value }) {
   return (
     <div className="flex justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-white/40 p-3">
       <span className="text-[var(--color-accent)]">{label}</span>
-      <span className="text-right text-[var(--color-accent-dark)]">{value}</span>
+      <span className="text-right text-[var(--color-accent-dark)]">
+        {value}
+      </span>
     </div>
   );
 }
@@ -837,7 +882,10 @@ function GuestsSkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div className="premium-card min-h-24 animate-pulse" key={index}>
+        <div
+          className="min-h-24 animate-pulse rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 sm:p-5"
+          key={index}
+        >
           <div className="h-4 w-40 rounded-full bg-[var(--color-border)]" />
           <div className="mt-4 h-3 w-64 max-w-full rounded-full bg-[var(--color-border)]" />
         </div>
@@ -954,16 +1002,16 @@ function buildAllergyText(guest) {
 function hasBus(guest) {
   return Boolean(
     guest.busNeeded ||
-      (guest.outboundBus && guest.outboundBus !== "No") ||
-      (guest.returnBus && guest.returnBus !== "No"),
+    (guest.outboundBus && guest.outboundBus !== "No") ||
+    (guest.returnBus && guest.returnBus !== "No"),
   );
 }
 
 function hasReview(guest) {
   return Boolean(
     guest.otherAllergies?.trim() ||
-      guest.comments?.trim() ||
-      (hasBus(guest) && (!guest.outboundBus || !guest.returnBus)),
+    guest.comments?.trim() ||
+    (hasBus(guest) && (!guest.outboundBus || !guest.returnBus)),
   );
 }
 
