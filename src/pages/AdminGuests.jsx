@@ -21,13 +21,9 @@ import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import HeaderSection from "../components/common/HeaderSection";
-import {
-  COMMON_ALLERGIES,
-  createEmptyGuest,
-  MAX_GUESTS,
-  OUTBOUND_BUS_OPTIONS,
-  RETURN_BUS_OPTIONS,
-} from "../constants/rsvp";
+import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
+import GuestCard from "../components/rsvp/GuestCard";
+import { createEmptyGuest, MAX_GUESTS } from "../constants/rsvp";
 import {
   deleteAdminGroup,
   findAllGroups,
@@ -105,7 +101,7 @@ export default function AdminGuests() {
     return () => window.clearTimeout(timeoutId);
   }, [isAuthenticated, loadGuests]);
 
-  const rows = useMemo(() => buildGuestRows(state.groups), [state.groups]);
+  const rows = useMemo(() => buildGroupRows(state.groups), [state.groups]);
   const visibleRows = useMemo(
     () => filterRows(rows, query, filter),
     [filter, query, rows],
@@ -209,7 +205,7 @@ export default function AdminGuests() {
                     Confirmaciones
                   </h2>
                   <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-                    {visibleRows.length} de {rows.length} invitados visibles
+                    {visibleRows.length} de {rows.length} grupos visibles
                   </p>
                 </div>
 
@@ -375,7 +371,7 @@ function DesktopTable({ onDelete, onEdit, rows }) {
       <table className="w-full min-w-[920px] border-collapse text-left">
         <thead>
           <tr className="border-b border-[var(--color-border)] text-xs uppercase tracking-[0.16em] text-[var(--color-accent)]">
-            <th className="px-5 py-4 font-medium">Invitado</th>
+            <th className="px-5 py-4 font-medium">Grupo</th>
             <th className="px-5 py-4 font-medium">Contacto</th>
             <th className="px-5 py-4 font-medium">Alergias</th>
             <th className="px-5 py-4 font-medium">Transporte</th>
@@ -390,10 +386,10 @@ function DesktopTable({ onDelete, onEdit, rows }) {
             >
               <td className="px-5 py-4">
                 <p className="font-medium text-[var(--color-accent-dark)]">
-                  {row.fullName}
+                  {row.groupName || "Grupo sin nombre"}
                 </p>
                 <p className="mt-1 text-xs text-[var(--color-muted)]">
-                  {row.groupName || `Grupo de ${row.groupSize}`}
+                  {row.groupSize} {row.groupSize === 1 ? "persona" : "personas"}
                 </p>
               </td>
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
@@ -404,8 +400,7 @@ function DesktopTable({ onDelete, onEdit, rows }) {
                 {row.allergyText}
               </td>
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
-                <p>Ida: {row.outboundBus || "No"}</p>
-                <p className="mt-1">Vuelta: {row.returnBus || "No"}</p>
+                {row.transportText}
               </td>
               <td className="px-5 py-4">
                 <div className="flex min-w-10 flex-wrap justify-end gap-2">
@@ -440,10 +435,10 @@ function MobileList({ onDelete, onEdit, rows }) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-                {row.fullName}
+                {row.groupName || "Grupo sin nombre"}
               </p>
               <p className="mt-2 text-sm text-[var(--color-muted)]">
-                {row.groupName || `Grupo de ${row.groupSize}`}
+                {row.groupSize} {row.groupSize === 1 ? "persona" : "personas"}
               </p>
               <p className="mt-1 text-sm text-[var(--color-muted)]">
                 {row.email || "-"}
@@ -469,8 +464,7 @@ function MobileList({ onDelete, onEdit, rows }) {
 
           <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
             <InfoLine label="Alergias" value={row.allergyText} />
-            <InfoLine label="Ida" value={row.outboundBus || "No"} />
-            <InfoLine label="Vuelta" value={row.returnBus || "No"} />
+            <InfoLine label="Transporte" value={row.transportText} />
           </div>
         </article>
       ))}
@@ -587,173 +581,24 @@ function GroupEditor({ group, onClose, onSave }) {
           </IconButton>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label>Email</Label>
-            <input
-              className={inputClassName}
-              onChange={(event) => updateContact("email", event.target.value)}
-              type="email"
-              value={draft.email}
-            />
-          </div>
-
-          <div>
-            <Label>Nombre de grupo</Label>
-            <input
-              className={inputClassName}
-              onChange={(event) =>
-                updateContact("groupName", event.target.value)
-              }
-              value={draft.groupName}
-            />
-          </div>
-
-          <div>
-            <Label>Telefono</Label>
-            <input
-              className={inputClassName}
-              onChange={(event) => updateContact("phone", event.target.value)}
-              type="tel"
-              value={draft.phone}
-            />
-          </div>
-        </div>
+        <ContactDetailsCard
+          contact={draft}
+          disableFilledFields={true}
+          errors={{}}
+          onContactChange={updateContact}
+        />
 
         <div className="mt-6 space-y-4">
           {draft.guests.map((guest, index) => (
-            <div
-              className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4"
+            <GuestCard
+              canRemove={draft.guests.length > 1}
+              errors={{}}
+              guest={guest}
+              index={index}
               key={index}
-            >
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <p className="font-serif text-3xl text-[var(--color-accent-dark)]">
-                  Invitado {index + 1}
-                </p>
-
-                {draft.guests.length > 1 && (
-                  <IconButton
-                    label="Quitar invitado"
-                    onClick={() => removeGuest(index)}
-                    tone="danger"
-                  >
-                    <Trash2 size={16} strokeWidth={1.8} />
-                  </IconButton>
-                )}
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label>Nombre</Label>
-                  <input
-                    className={inputClassName}
-                    onChange={(event) =>
-                      updateGuest(index, "name", event.target.value)
-                    }
-                    value={guest.name}
-                  />
-                </div>
-
-                <div>
-                  <Label>Apellidos</Label>
-                  <input
-                    className={inputClassName}
-                    onChange={(event) =>
-                      updateGuest(index, "lastname", event.target.value)
-                    }
-                    value={guest.lastname}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <Label>Alergias</Label>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {COMMON_ALLERGIES.map((allergy) => {
-                    const checked = guest.allergies?.includes(allergy);
-
-                    return (
-                      <label
-                        className={`flex cursor-pointer items-center justify-center rounded-2xl border px-3 py-3 text-sm transition ${
-                          checked
-                            ? "border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-white"
-                            : "border-[var(--color-border-strong)] bg-[var(--color-bg)]/70 text-[var(--color-muted)]"
-                        }`}
-                        key={allergy}
-                      >
-                        <input
-                          checked={checked}
-                          className="hidden"
-                          onChange={() =>
-                            updateGuest(index, "allergies", allergy)
-                          }
-                          type="checkbox"
-                        />
-                        {allergy}
-                      </label>
-                    );
-                  })}
-                </div>
-
-                <textarea
-                  className={`${inputClassName} mt-3 resize-none`}
-                  onChange={(event) =>
-                    updateGuest(index, "otherAllergies", event.target.value)
-                  }
-                  placeholder="Otras alergias"
-                  rows={2}
-                  value={guest.otherAllergies}
-                />
-              </div>
-
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label>Bus ida</Label>
-                  <select
-                    className={`${inputClassName} bg-white`}
-                    onChange={(event) =>
-                      updateGuest(index, "outboundBus", event.target.value)
-                    }
-                    value={guest.outboundBus || "No"}
-                  >
-                    {OUTBOUND_BUS_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <Label>Bus vuelta</Label>
-                  <select
-                    className={`${inputClassName} bg-white`}
-                    onChange={(event) =>
-                      updateGuest(index, "returnBus", event.target.value)
-                    }
-                    value={guest.returnBus || "No"}
-                  >
-                    {RETURN_BUS_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <Label>Comentarios</Label>
-                <textarea
-                  className={`${inputClassName} resize-none`}
-                  onChange={(event) =>
-                    updateGuest(index, "comments", event.target.value)
-                  }
-                  rows={3}
-                  value={guest.comments}
-                />
-              </div>
-            </div>
+              onGuestChange={updateGuest}
+              onRemoveGuest={removeGuest}
+            />
           ))}
         </div>
 
@@ -950,31 +795,34 @@ function normalizeGroupsResponse(response) {
   }));
 }
 
-function buildGuestRows(groups) {
-  return groups.flatMap((group) =>
-    group.guests.map((guest, guestIndex) => {
-      const allergyText = buildAllergyText(guest);
+function buildGroupRows(groups) {
+  return groups.map((group, index) => {
+    const guests = Array.isArray(group.guests) ? group.guests : [];
 
-      return {
-        allergyText,
-        email: group.email,
-        fullName: `${guest.name || "Invitado"} ${guest.lastname || ""}`.trim(),
-        group,
-        groupId: group.groupId || group.email,
-        groupName: group.groupName,
-        groupSize: group.guests.length,
-        guest,
-        guestIndex,
-        hasAllergies: allergyText !== "No",
-        needsReview: hasReview(guest),
-        outboundBus: guest.outboundBus,
-        phone: group.phone,
-        returnBus: guest.returnBus,
-        rowId: `${group.groupId || group.email}-${guestIndex}`,
-        usesBus: hasBus(guest),
-      };
-    }),
-  );
+    return {
+      allergyText: buildGroupRateText(
+        guests.filter((guest) => buildAllergyText(guest) !== "No").length,
+        guests.length,
+      ),
+      commentsText: buildGroupCommentsText(guests),
+      email: group.email,
+      group,
+      groupId: group.groupId || group.email,
+      groupName: group.groupName,
+      groupSize: guests.length,
+      guestNames: buildGuestNames(guests),
+      guests,
+      hasAllergies: guests.some((guest) => buildAllergyText(guest) !== "No"),
+      needsReview: guests.some(hasReview),
+      phone: group.phone,
+      rowId: `${group.groupId || group.email || "group"}-${index}`,
+      transportText: buildGroupRateText(
+        guests.filter(hasBus).length,
+        guests.length,
+      ),
+      usesBus: guests.some(hasBus),
+    };
+  });
 }
 
 function filterRows(rows, query, filter) {
@@ -984,7 +832,7 @@ function filterRows(rows, query, filter) {
     const matchesQuery =
       !normalizedQuery ||
       normalizeText(
-        `${row.email} ${row.phone} ${row.groupName} ${row.guest.name} ${row.guest.lastname}`,
+        `${row.email} ${row.phone} ${row.groupName} ${row.guestNames}`,
       ).includes(normalizedQuery);
     const matchesFilter =
       filter === "all" ||
@@ -1046,6 +894,37 @@ function buildAllergyText(guest) {
   return values.length ? values.join(", ") : "No";
 }
 
+function buildGuestNames(guests) {
+  if (!guests.length) return "Sin invitados";
+
+  return guests
+    .map((guest, index) =>
+      `${guest.name || `Invitado ${index + 1}`} ${guest.lastname || ""}`.trim(),
+    )
+    .join(", ");
+}
+
+function buildGroupCommentsText(guests) {
+  const values = guests
+    .map((guest, index) => {
+      if (!guest.comments?.trim()) return "";
+
+      const name =
+        `${guest.name || `Invitado ${index + 1}`} ${guest.lastname || ""}`.trim();
+
+      return `${name}: ${guest.comments.trim()}`;
+    })
+    .filter(Boolean);
+
+  return values.length ? values.join(" | ") : "";
+}
+
+function buildGroupRateText(value, total) {
+  const rate = total ? Math.round((value / total) * 100) : 0;
+
+  return `${rate}% · ${value} de ${total} personas`;
+}
+
 function hasBus(guest) {
   return Boolean(
     guest.busNeeded ||
@@ -1075,11 +954,9 @@ function downloadCsv(rows) {
     "email",
     "telefono",
     "nombre_grupo",
-    "nombre",
-    "apellidos",
+    "total_invitados",
     "alergias",
-    "bus_ida",
-    "bus_vuelta",
+    "transporte",
     "comentarios",
   ];
   const lines = rows.map((row) =>
@@ -1087,12 +964,10 @@ function downloadCsv(rows) {
       row.email,
       row.phone,
       row.groupName,
-      row.guest.name,
-      row.guest.lastname,
+      row.groupSize,
       row.allergyText,
-      row.outboundBus || "No",
-      row.returnBus || "No",
-      row.guest.comments || "",
+      row.transportText,
+      row.commentsText,
     ]
       .map(escapeCsvValue)
       .join(","),
@@ -1103,7 +978,7 @@ function downloadCsv(rows) {
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = "invitados.csv";
+  link.download = "grupos-invitados.csv";
   link.click();
   URL.revokeObjectURL(url);
 }
