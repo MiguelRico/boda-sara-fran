@@ -13,7 +13,24 @@ export default function ContactDetailsCard({
         Datos de contacto
       </h2>
 
-      <div className="mt-4 grid gap-5 md:grid-cols-2">
+      <div className="mt-4 grid gap-5 md:grid-cols-3">
+        <div>
+          <Label>Nombre de grupo *</Label>
+
+          <input
+            type="text"
+            value={contact.groupName}
+            onChange={(event) =>
+              onContactChange("groupName", event.target.value)
+            }
+            className={inputClassName}
+            placeholder="Ej: Familia Garcia"
+            disabled={Boolean(contact.groupName)}
+          />
+
+          <FieldError>{errors.groupName}</FieldError>
+        </div>
+
         <div>
           <Label>Email de contacto *</Label>
 

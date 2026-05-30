@@ -30,6 +30,7 @@ export default function useRsvp(spinner) {
   const [groupId, setGroupId] = useState(null);
   const [contact, setContact] = useState({
     email: "",
+    groupName: "",
     phone: "",
   });
   const [guests, setGuests] = useState([createEmptyGuest()]);
@@ -49,6 +50,7 @@ export default function useRsvp(spinner) {
     setGroupId(response.email);
     setContact({
       email: response.email,
+      groupName: response.groupName || response.nombre_grupo || "",
       phone: response.phone,
     });
     setGuests(response.guests);
@@ -163,6 +165,7 @@ export default function useRsvp(spinner) {
       const payload = {
         groupId: contact.email,
         email: contact.email,
+        groupName: contact.groupName,
         phone: contact.phone,
         guests,
       };

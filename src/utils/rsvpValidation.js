@@ -23,6 +23,10 @@ export const validateRsvpForm = ({ contact, guests }) => {
     errors.email = emailError;
   }
 
+  if (!contact.groupName?.trim()) {
+    errors.groupName = "El nombre de grupo es obligatorio";
+  }
+
   if (!contact.phone.trim()) {
     errors.phone = "El teléfono es obligatorio";
   } else if (!isValidPhone(contact.phone)) {
