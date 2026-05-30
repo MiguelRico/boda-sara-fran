@@ -5,6 +5,8 @@ import Home from "../pages/Home";
 import Details from "../pages/Details";
 import Rsvp from "../pages/Rsvp";
 import Admin from "../pages/Admin";
+import AdminStats from "../pages/AdminStats";
+import AdminGuests from "../pages/AdminGuests";
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +28,14 @@ export const router = createBrowserRouter([
       {
         path: "admin",
         element: <Admin />,
+      },
+      {
+        path: "admin/estadisticas",
+        element: <AdminStats />,
+      },
+      {
+        path: "admin/invitados",
+        element: <AdminGuests />,
       },
     ],
   },

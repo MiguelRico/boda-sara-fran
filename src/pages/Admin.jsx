@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { BarChart3, LockKeyhole, LogOut, UsersRound } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import PrimaryButton from "../components/common/PrimaryButton";
@@ -19,6 +20,7 @@ const adminSections = [
 ];
 
 export default function Admin() {
+  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -62,7 +64,7 @@ export default function Admin() {
         </div>
 
         {isAuthenticated ? (
-          <AdminDashboard onLogout={handleLogout} />
+          <AdminDashboard onLogout={handleLogout} onNavigate={navigate} />
         ) : (
           <AdminLogin
             canSubmit={canSubmit}
@@ -127,7 +129,7 @@ function AdminLogin({ canSubmit, error, onPasswordChange, onSubmit, password }) 
   );
 }
 
-function AdminDashboard({ onLogout }) {
+function AdminDashboard({ onLogout, onNavigate }) {
   return (
     <div className="mx-auto w-full max-w-4xl">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -149,6 +151,15 @@ function AdminDashboard({ onLogout }) {
           <button
             className="premium-card group min-h-56 text-left"
             key={section.title}
+            onClick={() => {
+              if (section.title === "Invitados") {
+                onNavigate("/admin/invitados");
+              }
+
+              if (section.title === "Estadisticas") {
+                onNavigate("/admin/estadisticas");
+              }
+            }}
             type="button"
           >
             <div className="flex h-full flex-col justify-between gap-8">
