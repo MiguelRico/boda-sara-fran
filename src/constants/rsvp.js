@@ -1,6 +1,7 @@
 export const MAX_GUESTS = 10;
 
 export const COMMON_ALLERGIES = [
+  "Vegetariano",
   "Gluten",
   "Lactosa",
   "Frutos secos",
@@ -8,7 +9,6 @@ export const COMMON_ALLERGIES = [
   "Huevo",
   "Soja",
   "Pescado",
-  "Mostaza",
 ];
 
 export const OUTBOUND_BUS_OPTIONS = [
