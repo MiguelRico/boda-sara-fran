@@ -30,11 +30,11 @@ export const router = createBrowserRouter([
         element: <Admin />,
       },
       {
-        path: "admin/estadisticas",
+        path: "admin/stats",
         element: <AdminStats />,
       },
       {
-        path: "admin/invitados",
+        path: "admin/guests",
         element: <AdminGuests />,
       },
     ],

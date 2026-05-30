@@ -26,7 +26,7 @@ const adminCards = [
     subtitle: "Gestiona la lista",
     description:
       "Gestionar confirmaciones, datos de contacto, alergias y transporte.",
-    to: "/admin/invitados",
+    to: "/admin/guests",
     emoji: "📋",
   },
 
@@ -35,7 +35,7 @@ const adminCards = [
     subtitle: "Todo en un vistazo",
     description:
       "Consultar totales, asistencia, alergias y horarios de autobus.",
-    to: "/admin/estadisticas",
+    to: "/admin/stats",
     emoji: "📊",
   },
 ];
