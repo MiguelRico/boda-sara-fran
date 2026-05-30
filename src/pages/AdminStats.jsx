@@ -1,4 +1,6 @@
+import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRef } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -10,6 +12,9 @@ import {
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import CinematicPage from "../components/cinematic/CinematicPage";
+import CinematicSection from "../components/cinematic/CinematicSection";
+import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import {
   COMMON_ALLERGIES,
   OUTBOUND_BUS_OPTIONS,
@@ -25,6 +30,11 @@ const emptyState = {
 
 export default function AdminStats() {
   const navigate = useNavigate();
+  const statsRef = useRef(null);
+  const statsInView = useInView(statsRef, {
+    once: true,
+    amount: 0.2,
+  });
   const isAuthenticated =
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   const [state, setState] = useState(emptyState);
@@ -72,74 +82,92 @@ export default function AdminStats() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--color-bg-soft)] px-5 py-6 sm:px-8 lg:px-12">
-      <section className="mx-auto w-full max-w-6xl">
-        <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <button
-              className="mb-5 inline-flex items-center gap-2 text-sm text-[var(--color-accent-dark)] transition hover:text-[var(--color-text)]"
-              onClick={() => navigate("/admin")}
-              type="button"
-            >
-              <ArrowLeft size={17} strokeWidth={1.8} />
-              Volver al panel
-            </button>
+    <CinematicPage>
+      <CinematicSection
+        className="surface-soft"
+        innerClassName="max-w-6xl py-6"
+        reveal={false}
+      >
+        <div ref={statsRef}>
+          <CinematicStaggeredRevealItem index={0} isVisible={statsInView}>
+            <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <button
+                  className="mb-5 inline-flex items-center gap-2 text-sm text-[var(--color-accent-dark)] transition hover:text-[var(--color-text)]"
+                  onClick={() => navigate("/admin")}
+                  type="button"
+                >
+                  <ArrowLeft size={17} strokeWidth={1.8} />
+                  Volver al panel
+                </button>
 
-            <p className="section-eyebrow mb-2">Panel privado</p>
-            <h1 className="section-title">Estadisticas</h1>
-            <p className="section-text mx-0 max-w-3xl text-left">
-              Resumen de confirmaciones, alergias y transporte para preparar la
-              organizacion de la boda.
-            </p>
-          </div>
+                <p className="section-eyebrow mb-2">Panel privado</p>
+                <h1 className="section-title">Estadisticas</h1>
+                <p className="section-text mx-0 max-w-3xl text-left">
+                  Resumen de confirmaciones, alergias y transporte para preparar la
+                  organizacion de la boda.
+                </p>
+              </div>
 
-          <button
-            className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={state.loading}
-            onClick={loadStats}
-            type="button"
-          >
-            <RefreshCw
-              className={state.loading ? "animate-spin" : ""}
-              size={16}
-              strokeWidth={1.8}
-            />
-            Actualizar
-          </button>
+              <button
+                className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={state.loading}
+                onClick={loadStats}
+                type="button"
+              >
+                <RefreshCw
+                  className={state.loading ? "animate-spin" : ""}
+                  size={16}
+                  strokeWidth={1.8}
+                />
+                Actualizar
+              </button>
+            </div>
+          </CinematicStaggeredRevealItem>
+
+          {state.error && (
+            <CinematicStaggeredRevealItem index={1} isVisible={statsInView}>
+              <div className="premium-card mb-5 flex items-start gap-4 border-red-200 bg-red-50/70 text-red-700">
+                <AlertTriangle className="mt-1 shrink-0" size={20} />
+                <p className="text-sm leading-relaxed">{state.error}</p>
+              </div>
+            </CinematicStaggeredRevealItem>
+          )}
+
+          {state.loading ? (
+            <CinematicStaggeredRevealItem index={2} isVisible={statsInView}>
+              <StatsSkeleton />
+            </CinematicStaggeredRevealItem>
+          ) : (
+            <div className="space-y-5">
+              <CinematicStaggeredRevealItem index={2} isVisible={statsInView}>
+                <SummaryGrid stats={stats} />
+              </CinematicStaggeredRevealItem>
+
+              <CinematicStaggeredRevealItem index={3} isVisible={statsInView}>
+                <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+                  <AttendanceCard stats={stats} />
+                  <ReviewCard stats={stats} />
+                </div>
+              </CinematicStaggeredRevealItem>
+
+              <CinematicStaggeredRevealItem index={4} isVisible={statsInView}>
+                <div className="grid gap-5 lg:grid-cols-2">
+                  <BarListCard
+                    emptyText="Sin alergias registradas"
+                    icon={Salad}
+                    items={stats.allergiesByType}
+                    title="Alergias por tipo"
+                  />
+
+                  <TransportCard stats={stats} />
+                </div>
+              </CinematicStaggeredRevealItem>
+            </div>
+          )}
         </div>
-
-        {state.error && (
-          <div className="premium-card mb-5 flex items-start gap-4 border-red-200 bg-red-50/70 text-red-700">
-            <AlertTriangle className="mt-1 shrink-0" size={20} />
-            <p className="text-sm leading-relaxed">{state.error}</p>
-          </div>
-        )}
-
-        {state.loading ? (
-          <StatsSkeleton />
-        ) : (
-          <div className="space-y-5">
-            <SummaryGrid stats={stats} />
-
-            <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-              <AttendanceCard stats={stats} />
-              <ReviewCard stats={stats} />
-            </div>
-
-            <div className="grid gap-5 lg:grid-cols-2">
-              <BarListCard
-                emptyText="Sin alergias registradas"
-                icon={Salad}
-                items={stats.allergiesByType}
-                title="Alergias por tipo"
-              />
-
-              <TransportCard stats={stats} />
-            </div>
-          </div>
-        )}
-      </section>
-    </main>
+      </CinematicSection>
+    </CinematicPage>
   );
 }
 

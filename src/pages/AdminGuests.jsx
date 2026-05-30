@@ -1,4 +1,6 @@
+import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRef } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -14,6 +16,9 @@ import {
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import CinematicPage from "../components/cinematic/CinematicPage";
+import CinematicSection from "../components/cinematic/CinematicSection";
+import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import {
   COMMON_ALLERGIES,
   createEmptyGuest,
@@ -44,6 +49,11 @@ const emptyState = {
 
 export default function AdminGuests() {
   const navigate = useNavigate();
+  const guestsRef = useRef(null);
+  const guestsInView = useInView(guestsRef, {
+    once: true,
+    amount: 0.18,
+  });
   const isAuthenticated =
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   const [state, setState] = useState(emptyState);
@@ -140,153 +150,173 @@ export default function AdminGuests() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--color-bg-soft)] px-5 py-6 sm:px-8 lg:px-12">
-      <section className="mx-auto w-full max-w-7xl">
-        <div className="mb-7 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <button
-              className="mb-5 inline-flex items-center gap-2 text-sm text-[var(--color-accent-dark)] transition hover:text-[var(--color-text)]"
-              onClick={() => navigate("/admin")}
-              type="button"
-            >
-              <ArrowLeft size={17} strokeWidth={1.8} />
-              Volver al panel
-            </button>
-
-            <p className="section-eyebrow mb-2">Panel privado</p>
-            <h1 className="section-title">Invitados</h1>
-            <p className="section-text mx-0 max-w-3xl text-left">
-              Gestion de confirmaciones, datos de contacto, alergias y
-              transporte.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!rows.length}
-              onClick={() => downloadCsv(rows)}
-              type="button"
-            >
-              <Download size={16} strokeWidth={1.8} />
-              CSV
-            </button>
-
-            <button
-              className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={state.loading}
-              onClick={loadGuests}
-              type="button"
-            >
-              <RefreshCw
-                className={state.loading ? "animate-spin" : ""}
-                size={16}
-                strokeWidth={1.8}
-              />
-              Actualizar
-            </button>
-
-            <button
-              className="btn-primary gap-2"
-              onClick={() => setEditingGroup(createDraftGroup())}
-              type="button"
-            >
-              <Plus size={16} strokeWidth={1.8} />
-              Crear
-            </button>
-          </div>
-        </div>
-
-        {state.error && (
-          <Notice tone="error">{state.error}</Notice>
-        )}
-
-        {feedback && <Notice>{feedback}</Notice>}
-
-        <div className="premium-card mb-5">
-          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-            <label className="relative block">
-              <Search
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
-                size={18}
-                strokeWidth={1.8}
-              />
-              <input
-                className={`${inputClassName} pl-12`}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(1);
-                }}
-                placeholder="Buscar por email, telefono, nombre o apellidos"
-                type="search"
-                value={query}
-              />
-            </label>
-
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {filters.map((item) => (
+    <CinematicPage>
+      <CinematicSection
+        className="surface-soft"
+        innerClassName="max-w-7xl py-6"
+        reveal={false}
+      >
+        <div ref={guestsRef}>
+          <CinematicStaggeredRevealItem index={0} isVisible={guestsInView}>
+            <div className="mb-7 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
                 <button
-                  className={`shrink-0 rounded-full border px-4 py-3 text-xs uppercase tracking-[0.16em] transition ${
-                    filter === item.value
-                      ? "border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-white"
-                      : "border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)]"
-                  }`}
-                  key={item.value}
-                  onClick={() => {
-                    setFilter(item.value);
-                    setPage(1);
-                  }}
+                  className="mb-5 inline-flex items-center gap-2 text-sm text-[var(--color-accent-dark)] transition hover:text-[var(--color-text)]"
+                  onClick={() => navigate("/admin")}
                   type="button"
                 >
-                  {item.label}
+                  <ArrowLeft size={17} strokeWidth={1.8} />
+                  Volver al panel
                 </button>
-              ))}
-            </div>
-          </div>
-        </div>
 
-        {state.loading ? (
-          <GuestsSkeleton />
-        ) : (
-          <>
-            <DesktopTable
-              onDelete={setDeleteTarget}
-              onEdit={(group) => setEditingGroup(createDraftGroup(group))}
-              rows={pagedRows}
-            />
-
-            <MobileList
-              onDelete={setDeleteTarget}
-              onEdit={(group) => setEditingGroup(createDraftGroup(group))}
-              rows={pagedRows}
-            />
-
-            {!visibleRows.length && (
-              <div className="premium-card text-center">
-                <UsersRound
-                  className="mx-auto text-[var(--color-accent-dark)]"
-                  size={28}
-                  strokeWidth={1.7}
-                />
-                <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
-                  Sin resultados
-                </p>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-                  Prueba con otra busqueda o cambia el filtro seleccionado.
+                <p className="section-eyebrow mb-2">Panel privado</p>
+                <h1 className="section-title">Invitados</h1>
+                <p className="section-text mx-0 max-w-3xl text-left">
+                  Gestion de confirmaciones, datos de contacto, alergias y
+                  transporte.
                 </p>
               </div>
-            )}
 
-            <Pagination
-              page={page}
-              total={visibleRows.length}
-              totalPages={totalPages}
-              onNext={() => setPage((current) => Math.min(current + 1, totalPages))}
-              onPrev={() => setPage((current) => Math.max(current - 1, 1))}
-            />
-          </>
-        )}
-      </section>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!rows.length}
+                  onClick={() => downloadCsv(rows)}
+                  type="button"
+                >
+                  <Download size={16} strokeWidth={1.8} />
+                  CSV
+                </button>
+
+                <button
+                  className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={state.loading}
+                  onClick={loadGuests}
+                  type="button"
+                >
+                  <RefreshCw
+                    className={state.loading ? "animate-spin" : ""}
+                    size={16}
+                    strokeWidth={1.8}
+                  />
+                  Actualizar
+                </button>
+
+                <button
+                  className="btn-primary gap-2"
+                  onClick={() => setEditingGroup(createDraftGroup())}
+                  type="button"
+                >
+                  <Plus size={16} strokeWidth={1.8} />
+                  Crear
+                </button>
+              </div>
+            </div>
+          </CinematicStaggeredRevealItem>
+
+          {state.error && (
+            <CinematicStaggeredRevealItem index={1} isVisible={guestsInView}>
+              <Notice tone="error">{state.error}</Notice>
+            </CinematicStaggeredRevealItem>
+          )}
+
+          {feedback && (
+            <CinematicStaggeredRevealItem index={1} isVisible={guestsInView}>
+              <Notice>{feedback}</Notice>
+            </CinematicStaggeredRevealItem>
+          )}
+
+          <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
+            <div className="premium-card mb-5">
+              <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                <label className="relative block">
+                  <Search
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
+                    size={18}
+                    strokeWidth={1.8}
+                  />
+                  <input
+                    className={`${inputClassName} pl-12`}
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="Buscar por email, telefono, nombre o apellidos"
+                    type="search"
+                    value={query}
+                  />
+                </label>
+
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {filters.map((item) => (
+                    <button
+                      className={`shrink-0 rounded-full border px-4 py-3 text-xs uppercase tracking-[0.16em] transition ${
+                        filter === item.value
+                          ? "border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-white"
+                          : "border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)]"
+                      }`}
+                      key={item.value}
+                      onClick={() => {
+                        setFilter(item.value);
+                        setPage(1);
+                      }}
+                      type="button"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CinematicStaggeredRevealItem>
+
+          {state.loading ? (
+            <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
+              <GuestsSkeleton />
+            </CinematicStaggeredRevealItem>
+          ) : (
+            <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
+              <>
+                <DesktopTable
+                  onDelete={setDeleteTarget}
+                  onEdit={(group) => setEditingGroup(createDraftGroup(group))}
+                  rows={pagedRows}
+                />
+
+                <MobileList
+                  onDelete={setDeleteTarget}
+                  onEdit={(group) => setEditingGroup(createDraftGroup(group))}
+                  rows={pagedRows}
+                />
+
+                {!visibleRows.length && (
+                  <div className="premium-card text-center">
+                    <UsersRound
+                      className="mx-auto text-[var(--color-accent-dark)]"
+                      size={28}
+                      strokeWidth={1.7}
+                    />
+                    <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
+                      Sin resultados
+                    </p>
+                    <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+                      Prueba con otra busqueda o cambia el filtro seleccionado.
+                    </p>
+                  </div>
+                )}
+
+                <Pagination
+                  page={page}
+                  total={visibleRows.length}
+                  totalPages={totalPages}
+                  onNext={() => setPage((current) => Math.min(current + 1, totalPages))}
+                  onPrev={() => setPage((current) => Math.max(current - 1, 1))}
+                />
+              </>
+            </CinematicStaggeredRevealItem>
+          )}
+        </div>
+      </CinematicSection>
 
       {editingGroup && (
         <GroupEditor
@@ -303,7 +333,7 @@ export default function AdminGuests() {
           onConfirm={handleDeleteGroup}
         />
       )}
-    </main>
+    </CinematicPage>
   );
 }
 

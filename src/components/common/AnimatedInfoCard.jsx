@@ -25,7 +25,7 @@ function InfoCard({ title, subtitle, description, to, emoji, className = "" }) {
             {emoji}
           </span>
 
-          <p className="section-eyebrow">{subtitle}</p>
+          <p className="section-eyebrow mb-0">{subtitle}</p>
         </div>
 
         <h3 className="font-serif text-3xl leading-tight text-[var(--color-text)] sm:text-4xl">

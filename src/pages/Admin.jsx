@@ -1,26 +1,49 @@
-import { useMemo, useState } from "react";
+import { useInView } from "framer-motion";
+import { useMemo, useRef, useState } from "react";
 import { BarChart3, LockKeyhole, LogOut, UsersRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import CinematicPage from "../components/cinematic/CinematicPage";
+import CinematicSection from "../components/cinematic/CinematicSection";
+import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
+import HeaderSection from "../components/common/HeaderSection";
 import PrimaryButton from "../components/common/PrimaryButton";
-import { FieldError, FormCard, inputClassName, Label } from "../components/rsvp/FormPrimitives";
+import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
+import {
+  FieldError,
+  FormCard,
+  inputClassName,
+  Label,
+} from "../components/rsvp/FormPrimitives";
 
-const adminSections = [
+const adminCards = [
   {
     title: "Invitados",
-    description: "Gestionar confirmaciones, datos de contacto, alergias y transporte.",
-    icon: UsersRound,
+    subtitle: "Gestiona la lista",
+    description:
+      "Gestionar confirmaciones, datos de contacto, alergias y transporte.",
+    to: "/admin/invitados",
+    emoji: "📋",
   },
+
   {
-    title: "Estadisticas",
-    description: "Consultar totales, asistencia, alergias y horarios de autobus.",
-    icon: BarChart3,
+    title: "Resumen",
+    subtitle: "Todo en un vistazo",
+    description:
+      "Consultar totales, asistencia, alergias y horarios de autobus.",
+    to: "/admin/estadisticas",
+    emoji: "📊",
   },
 ];
 
 export default function Admin() {
   const navigate = useNavigate();
+  const adminRef = useRef(null);
+  const adminInView = useInView(adminRef, {
+    once: true,
+    amount: 0.35,
+  });
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -51,35 +74,48 @@ export default function Admin() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--color-bg-soft)] px-5 py-6 sm:px-8 lg:px-12">
-      <section className="mx-auto flex min-h-[calc(100svh-3rem)] w-full max-w-5xl flex-col justify-center">
-        <div className="mb-8 text-center">
-          <p className="section-eyebrow">Panel privado</p>
+    <CinematicPage>
+      <CinematicSection
+        className="surface-soft"
+        innerClassName="max-w-5xl"
+        reveal={false}
+      >
+        <div ref={adminRef}>
+          <CinematicStaggeredRevealItem index={0} isVisible={adminInView}>
+            <HeaderSection
+              className="mb-8"
+              eyebrow="Panel privado"
+              text="Acceso reservado para revisar y organizar las confirmaciones de la boda."
+              title="Sara & Fran"
+            />
+          </CinematicStaggeredRevealItem>
 
-          <h1 className="section-title">Sara & Fran</h1>
-
-          <p className="section-text">
-            Acceso reservado para revisar y organizar las confirmaciones de la boda.
-          </p>
+          <CinematicStaggeredRevealItem index={1} isVisible={adminInView}>
+            {isAuthenticated ? (
+              <AdminDashboard onLogout={handleLogout} onNavigate={navigate} />
+            ) : (
+              <AdminLogin
+                canSubmit={canSubmit}
+                error={error}
+                onPasswordChange={setPassword}
+                onSubmit={handleSubmit}
+                password={password}
+              />
+            )}
+          </CinematicStaggeredRevealItem>
         </div>
-
-        {isAuthenticated ? (
-          <AdminDashboard onLogout={handleLogout} onNavigate={navigate} />
-        ) : (
-          <AdminLogin
-            canSubmit={canSubmit}
-            error={error}
-            onPasswordChange={setPassword}
-            onSubmit={handleSubmit}
-            password={password}
-          />
-        )}
-      </section>
-    </main>
+      </CinematicSection>
+    </CinematicPage>
   );
 }
 
-function AdminLogin({ canSubmit, error, onPasswordChange, onSubmit, password }) {
+function AdminLogin({
+  canSubmit,
+  error,
+  onPasswordChange,
+  onSubmit,
+  password,
+}) {
   return (
     <FormCard className="mx-auto w-full max-w-md">
       <form onSubmit={onSubmit}>
@@ -116,7 +152,11 @@ function AdminLogin({ canSubmit, error, onPasswordChange, onSubmit, password }) 
         <FieldError>{error}</FieldError>
 
         <div className="mt-6 flex flex-col gap-3">
-          <button className="btn-primary disabled:cursor-not-allowed disabled:opacity-50" disabled={!canSubmit} type="submit">
+          <button
+            className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!canSubmit}
+            type="submit"
+          >
             Entrar
           </button>
 
@@ -132,52 +172,28 @@ function AdminLogin({ canSubmit, error, onPasswordChange, onSubmit, password }) 
 function AdminDashboard({ onLogout, onNavigate }) {
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/*
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="section-eyebrow mb-2">Gestion</p>
           <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)] sm:text-5xl">
             Panel de invitados
           </h2>
         </div>
-
-        <button className="btn-secondary gap-2" onClick={onLogout} type="button">
+        <button
+          className="btn-secondary gap-2"
+          onClick={onLogout}
+          type="button"
+        >
           <LogOut size={16} strokeWidth={1.8} />
           Salir
         </button>
       </div>
 
+        */}
       <div className="grid gap-4 sm:grid-cols-2">
-        {adminSections.map((section) => (
-          <button
-            className="premium-card group min-h-56 text-left"
-            key={section.title}
-            onClick={() => {
-              if (section.title === "Invitados") {
-                onNavigate("/admin/invitados");
-              }
-
-              if (section.title === "Estadisticas") {
-                onNavigate("/admin/estadisticas");
-              }
-            }}
-            type="button"
-          >
-            <div className="flex h-full flex-col justify-between gap-8">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)] transition group-hover:bg-white">
-                <section.icon size={21} strokeWidth={1.7} />
-              </div>
-
-              <div>
-                <h3 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-                  {section.title}
-                </h3>
-
-                <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
-                  {section.description}
-                </p>
-              </div>
-            </div>
-          </button>
+        {adminCards.map((card, index) => (
+          <AnimatedInfoCard key={card.title} card={card} index={index} />
         ))}
       </div>
     </div>
