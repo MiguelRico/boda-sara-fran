@@ -1,6 +1,7 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 import { Navigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -37,6 +38,7 @@ import {
   inputClassName,
   Label,
 } from "../components/rsvp/FormPrimitives";
+import useViewportScrollLock from "../hooks/useViewportScrollLock";
 
 const pageSize = 8;
 const filters = [
@@ -163,7 +165,7 @@ export default function AdminGuests() {
         <div ref={guestsRef}>
           <CinematicStaggeredRevealItem index={0} isVisible={guestsInView}>
             <HeaderSection
-              eyebrow="Gestiona tus confirmaciones"
+              eyebrow="Panel privado"
               title="Lista de invitados"
               titleAs="h1"
               text="Gestion de confirmaciones, datos de contacto, alergias y
@@ -481,6 +483,8 @@ function GroupEditor({ group, onClose, onSave }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  useViewportScrollLock(true);
+
   const updateContact = (field, value) => {
     setDraft((current) => ({
       ...current,
@@ -558,16 +562,22 @@ function GroupEditor({ group, onClose, onSave }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-[rgba(45,51,44,0.28)] px-4 py-4 backdrop-blur-sm sm:items-center">
+  const dialog = (
+    <div className="rsvp-dialog-overlay">
       <form
-        className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto p-5 sm:p-7"
+        aria-labelledby="group-editor-title"
+        aria-modal="true"
+        className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-7"
         onSubmit={handleSubmit}
+        role="dialog"
       >
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="section-eyebrow mb-2">Confirmacion</p>
-            <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+            <h2
+              className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
+              id="group-editor-title"
+            >
               Editar grupo
             </h2>
           </div>
@@ -781,21 +791,37 @@ function GroupEditor({ group, onClose, onSave }) {
       </form>
     </div>
   );
+
+  return createPortal(dialog, document.body);
 }
 
 function DeleteDialog({ group, onCancel, onConfirm }) {
-  return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(45,51,44,0.28)] px-4 py-4 backdrop-blur-sm">
-      <div className="premium-card w-full max-w-md text-center">
+  useViewportScrollLock(true);
+
+  const dialog = (
+    <div className="rsvp-dialog-overlay">
+      <div
+        aria-describedby="delete-dialog-message"
+        aria-labelledby="delete-dialog-title"
+        aria-modal="true"
+        className="premium-card rsvp-dialog-card"
+        role="alertdialog"
+      >
         <AlertTriangle
           className="mx-auto text-red-500"
           size={30}
           strokeWidth={1.7}
         />
-        <h2 className="mt-4 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+        <h2
+          className="mt-4 font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
+          id="delete-dialog-title"
+        >
           Eliminar confirmacion
         </h2>
-        <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
+        <p
+          className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]"
+          id="delete-dialog-message"
+        >
           Se eliminara el grupo asociado a {group.email || group.groupId}. Esta
           accion no se puede deshacer desde el panel.
         </p>
@@ -818,6 +844,8 @@ function DeleteDialog({ group, onCancel, onConfirm }) {
       </div>
     </div>
   );
+
+  return createPortal(dialog, document.body);
 }
 
 function Pagination({ onNext, onPrev, page, total, totalPages }) {

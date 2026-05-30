@@ -2,10 +2,7 @@ import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRef } from "react";
 import { Navigate } from "react-router-dom";
-import {
-  AlertTriangle,
-  RefreshCw,
-} from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
@@ -100,9 +97,9 @@ export default function AdminStats() {
           <CinematicStaggeredRevealItem index={0} isVisible={statsInView}>
             <HeaderSection
               eyebrow="Panel privado"
-              title="Estadisticas"
+              title="Resumen"
               titleAs="h1"
-              text="Resumen de confirmaciones, alergias y transporte para preparar la organizacion de la boda."
+              text="Resumen de confirmaciones y datos de interés"
             />
           </CinematicStaggeredRevealItem>
 
@@ -154,7 +151,7 @@ export default function AdminStats() {
 
 function StatsOverview({ loading, onRefresh, stats }) {
   return (
-    <section className="premium-card mb-5">
+    <section className="premium-card mt-4 mb-5">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="section-eyebrow mb-2">Resumen</p>
@@ -562,7 +559,11 @@ function buildStats(groups) {
     completeGuestRate: getRate(completeGuests, totalGuests),
     guestsUsingBus,
     guestsWithAllergies,
-    outboundBusStats: buildBusStats(guests, OUTBOUND_BUS_OPTIONS, "outboundBus"),
+    outboundBusStats: buildBusStats(
+      guests,
+      OUTBOUND_BUS_OPTIONS,
+      "outboundBus",
+    ),
     returnBusStats: buildBusStats(guests, RETURN_BUS_OPTIONS, "returnBus"),
     reviewItems,
     totalGroups,
@@ -633,7 +634,7 @@ function hasAllergies(guest) {
 function usesBus(guest) {
   return Boolean(
     guest.busNeeded ||
-      (guest.outboundBus && guest.outboundBus !== "No") ||
-      (guest.returnBus && guest.returnBus !== "No"),
+    (guest.outboundBus && guest.outboundBus !== "No") ||
+    (guest.returnBus && guest.returnBus !== "No"),
   );
 }
