@@ -1,20 +1,20 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRef } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import {
   AlertTriangle,
-  ArrowLeft,
   Bus,
   RefreshCw,
   Salad,
-  UsersRound,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
+import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
+import HeaderSection from "../components/common/HeaderSection";
 import {
   COMMON_ALLERGIES,
   OUTBOUND_BUS_OPTIONS,
@@ -29,7 +29,6 @@ const emptyState = {
 };
 
 export default function AdminStats() {
-  const navigate = useNavigate();
   const statsRef = useRef(null);
   const statsInView = useInView(statsRef, {
     once: true,
@@ -90,39 +89,12 @@ export default function AdminStats() {
       >
         <div ref={statsRef}>
           <CinematicStaggeredRevealItem index={0} isVisible={statsInView}>
-            <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <button
-                  className="mb-5 inline-flex items-center gap-2 text-sm text-[var(--color-accent-dark)] transition hover:text-[var(--color-text)]"
-                  onClick={() => navigate("/admin")}
-                  type="button"
-                >
-                  <ArrowLeft size={17} strokeWidth={1.8} />
-                  Volver al panel
-                </button>
-
-                <p className="section-eyebrow mb-2">Panel privado</p>
-                <h1 className="section-title">Estadisticas</h1>
-                <p className="section-text mx-0 max-w-3xl text-left">
-                  Resumen de confirmaciones, alergias y transporte para preparar la
-                  organizacion de la boda.
-                </p>
-              </div>
-
-              <button
-                className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={state.loading}
-                onClick={loadStats}
-                type="button"
-              >
-                <RefreshCw
-                  className={state.loading ? "animate-spin" : ""}
-                  size={16}
-                  strokeWidth={1.8}
-                />
-                Actualizar
-              </button>
-            </div>
+            <HeaderSection
+              eyebrow="Panel privado"
+              title="Estadisticas"
+              titleAs="h1"
+              text="Resumen de confirmaciones, alergias y transporte para preparar la organizacion de la boda."
+            />
           </CinematicStaggeredRevealItem>
 
           {state.error && (
@@ -134,16 +106,16 @@ export default function AdminStats() {
             </CinematicStaggeredRevealItem>
           )}
 
-          {state.loading ? (
-            <CinematicStaggeredRevealItem index={2} isVisible={statsInView}>
-              <StatsSkeleton />
-            </CinematicStaggeredRevealItem>
-          ) : (
-            <div className="space-y-5">
-              <CinematicStaggeredRevealItem index={2} isVisible={statsInView}>
-                <SummaryGrid stats={stats} />
-              </CinematicStaggeredRevealItem>
+          <CinematicStaggeredRevealItem index={2} isVisible={statsInView}>
+            <StatsOverview
+              loading={state.loading}
+              onRefresh={loadStats}
+              stats={stats}
+            />
+          </CinematicStaggeredRevealItem>
 
+          {!state.loading && (
+            <div className="space-y-5">
               <CinematicStaggeredRevealItem index={3} isVisible={statsInView}>
                 <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
                   <AttendanceCard stats={stats} />
@@ -171,50 +143,84 @@ export default function AdminStats() {
   );
 }
 
+function StatsOverview({ loading, onRefresh, stats }) {
+  return (
+    <section className="premium-card mb-5">
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="section-eyebrow mb-2">Resumen</p>
+          <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+            Vision general
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
+            {stats.totalGuests} invitados en {stats.totalGroups} confirmaciones
+          </p>
+        </div>
+
+        <button
+          className="btn-secondary w-full gap-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          disabled={loading}
+          onClick={onRefresh}
+          type="button"
+        >
+          <RefreshCw
+            className={loading ? "animate-spin" : ""}
+            size={16}
+            strokeWidth={1.8}
+          />
+          Actualizar
+        </button>
+      </div>
+
+      {loading ? <StatsSkeleton /> : <SummaryGrid stats={stats} />}
+    </section>
+  );
+}
+
 function SummaryGrid({ stats }) {
   const items = [
     {
       label: "Invitados",
       value: stats.totalGuests,
       detail: `${stats.totalGroups} confirmaciones`,
-      icon: UsersRound,
+      emoji: "👥",
     },
     {
       label: "Con alergias",
       value: stats.guestsWithAllergies,
       detail: `${stats.allergyRate}% del total`,
-      icon: Salad,
+      emoji: "🥗",
     },
     {
       label: "Usan transporte",
       value: stats.guestsUsingBus,
       detail: `${stats.busRate}% del total`,
-      icon: Bus,
+      emoji: "🚌",
     },
     {
       label: "Revision",
       value: stats.reviewItems.length,
       detail: "comentarios y casos a revisar",
-      icon: AlertTriangle,
+      emoji: "!",
     },
   ];
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {items.map((item) => (
-        <article className="premium-card" key={item.label}>
-          <div className="mb-7 flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
-            <item.icon size={19} strokeWidth={1.7} />
-          </div>
-
-          <p className="text-sm text-[var(--color-muted)]">{item.label}</p>
-          <p className="mt-2 font-serif text-5xl leading-none text-[var(--color-accent-dark)]">
-            {item.value}
-          </p>
-          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-[var(--color-accent)]">
-            {item.detail}
-          </p>
-        </article>
+      {items.map((item, index) => (
+        <AnimatedInfoCard
+          card={{
+            className:
+              "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-4 sm:p-5",
+            description: item.detail,
+            emoji: item.emoji,
+            showAction: false,
+            subtitle: item.label,
+            title: String(item.value),
+          }}
+          index={index}
+          key={item.label}
+        />
       ))}
     </div>
   );
@@ -229,9 +235,27 @@ function AttendanceCard({ stats }) {
       </h2>
 
       <div className="mt-7 grid gap-4 sm:grid-cols-3">
-        <MiniMetric label="Grupos" value={stats.totalGroups} />
-        <MiniMetric label="Invitados" value={stats.totalGuests} />
-        <MiniMetric label="Media grupo" value={stats.averageGroupSize} />
+        <MiniMetric
+          detail="confirmaciones recibidas"
+          emoji="✉"
+          index={0}
+          label="Grupos"
+          value={stats.totalGroups}
+        />
+        <MiniMetric
+          detail="personas confirmadas"
+          emoji="👥"
+          index={1}
+          label="Invitados"
+          value={stats.totalGuests}
+        />
+        <MiniMetric
+          detail="invitados por grupo"
+          emoji="#"
+          index={2}
+          label="Media grupo"
+          value={stats.averageGroupSize}
+        />
       </div>
 
       <div className="mt-7">
@@ -373,16 +397,20 @@ function BarRow({ item, max }) {
   );
 }
 
-function MiniMetric({ label, value }) {
+function MiniMetric({ detail, emoji, index, label, value }) {
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-white/45 p-4">
-      <p className="text-xs uppercase tracking-[0.18em] text-[var(--color-accent)]">
-        {label}
-      </p>
-      <p className="mt-3 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-        {value}
-      </p>
-    </div>
+    <AnimatedInfoCard
+      card={{
+        className:
+          "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-4 sm:p-5",
+        description: detail,
+        emoji,
+        showAction: false,
+        subtitle: label,
+        title: String(value),
+      }}
+      index={index}
+    />
   );
 }
 
@@ -390,7 +418,10 @@ function StatsSkeleton() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div className="premium-card min-h-48 animate-pulse" key={index}>
+        <div
+          className="min-h-48 animate-pulse rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 sm:p-5"
+          key={index}
+        >
           <div className="h-11 w-11 rounded-full bg-[var(--color-border)]" />
           <div className="mt-8 h-4 w-24 rounded-full bg-[var(--color-border)]" />
           <div className="mt-4 h-12 w-20 rounded-full bg-[var(--color-border)]" />

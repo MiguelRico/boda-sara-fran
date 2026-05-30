@@ -1,17 +1,29 @@
 import { Link } from "react-router-dom";
 import RevealOnView from "../ui/RevealOnView";
 
-function InfoCard({ title, subtitle, description, to, emoji, className = "" }) {
+function InfoCard({
+  title,
+  subtitle,
+  description,
+  to,
+  emoji,
+  className = "",
+  showAction = Boolean(to),
+}) {
+  const Component = to ? Link : "div";
+  const componentProps = to ? { to } : {};
+
   return (
-    <Link
-      to={to}
+    <Component
+      {...componentProps}
       className={`
-        group relative block h-full cursor-pointer overflow-hidden
+        group relative block h-full overflow-hidden
         rounded-[2rem] border border-[var(--color-border-strong)]
         bg-white/55 p-7 shadow-[0_24px_70px_rgba(77,56,40,0.08)]
         backdrop-blur-sm transition-all duration-700
         hover:-translate-y-1 hover:border-[var(--color-border)] hover:bg-white/80
         sm:p-8
+        ${to ? "cursor-pointer" : ""}
         ${className}
       `}
     >
@@ -36,17 +48,19 @@ function InfoCard({ title, subtitle, description, to, emoji, className = "" }) {
           {description}
         </p>
 
-        <div className="mt-10 flex items-center justify-between">
-          <span className="text-xs uppercase tracking-[0.22em] text-[var(--color-accent-dark)]">
-            Ver detalles
-          </span>
+        {showAction && (
+          <div className="mt-10 flex items-center justify-between">
+            <span className="text-xs uppercase tracking-[0.22em] text-[var(--color-accent-dark)]">
+              Ver detalles
+            </span>
 
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-strong)] text-[var(--color-accent-dark)] transition-all duration-500 group-hover:translate-x-1 group-hover:border-[var(--color-border)]">
-            →
-          </span>
-        </div>
+            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-strong)] text-[var(--color-accent-dark)] transition-all duration-500 group-hover:translate-x-1 group-hover:border-[var(--color-border)]">
+              {">"}
+            </span>
+          </div>
+        )}
       </div>
-    </Link>
+    </Component>
   );
 }
 
