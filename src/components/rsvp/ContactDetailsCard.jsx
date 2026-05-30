@@ -2,6 +2,7 @@ import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 
 export default function ContactDetailsCard({
   contact,
+  disableFilledFields = true,
   errors,
   onContactChange,
 }) {
@@ -25,7 +26,7 @@ export default function ContactDetailsCard({
             }
             className={inputClassName}
             placeholder="Ej: Familia Garcia"
-            disabled={Boolean(contact.groupName)}
+            disabled={disableFilledFields && Boolean(contact.groupName)}
           />
 
           <FieldError>{errors.groupName}</FieldError>
@@ -40,7 +41,7 @@ export default function ContactDetailsCard({
             onChange={(event) => onContactChange("email", event.target.value)}
             className={inputClassName}
             placeholder="Ej: ejemplo@email.com"
-            disabled={Boolean(contact.email)}
+            disabled={disableFilledFields && Boolean(contact.email)}
           />
 
           <FieldError>{errors.email}</FieldError>
@@ -55,7 +56,7 @@ export default function ContactDetailsCard({
             onChange={(event) => onContactChange("phone", event.target.value)}
             className={inputClassName}
             placeholder="Ej: 600123456"
-            disabled={Boolean(contact.phone)}
+            disabled={disableFilledFields && Boolean(contact.phone)}
           />
 
           <FieldError>{errors.phone}</FieldError>
