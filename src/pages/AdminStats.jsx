@@ -218,6 +218,7 @@ function SummaryGrid({ stats }) {
               "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-4 sm:p-5",
             description: item.detail,
             emoji: item.emoji,
+            inlineTitleDescription: true,
             showAction: false,
             subtitle: item.label,
             title: String(item.value),

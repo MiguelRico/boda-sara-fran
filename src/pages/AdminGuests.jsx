@@ -408,7 +408,7 @@ function DesktopTable({ onDelete, onEdit, rows }) {
                 <p className="mt-1">Vuelta: {row.returnBus || "No"}</p>
               </td>
               <td className="px-5 py-4">
-                <div className="flex justify-end gap-2">
+                <div className="flex min-w-10 flex-wrap justify-end gap-2">
                   <IconButton label="Editar" onClick={() => onEdit(row.group)}>
                     <Pencil size={16} strokeWidth={1.8} />
                   </IconButton>
@@ -453,7 +453,7 @@ function MobileList({ onDelete, onEdit, rows }) {
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex min-w-10 flex-wrap justify-end gap-2">
               <IconButton label="Editar" onClick={() => onEdit(row.group)}>
                 <Pencil size={16} strokeWidth={1.8} />
               </IconButton>

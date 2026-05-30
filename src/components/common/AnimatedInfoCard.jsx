@@ -8,6 +8,7 @@ function InfoCard({
   to,
   emoji,
   className = "",
+  inlineTitleDescription = false,
   showAction = Boolean(to),
 }) {
   const Component = to ? Link : "div";
@@ -32,7 +33,7 @@ function InfoCard({
       </div>
 
       <div className="relative flex h-full flex-col">
-        <div className="mb-8 flex items-center gap-3">
+        <div className="mb-4 flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
             {emoji}
           </span>
@@ -40,13 +41,27 @@ function InfoCard({
           <p className="section-eyebrow mb-0">{subtitle}</p>
         </div>
 
-        <h3 className="font-serif text-3xl leading-tight text-[var(--color-text)] sm:text-4xl">
-          {title}
-        </h3>
+        {inlineTitleDescription ? (
+          <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
+            <h3 className="font-serif text-3xl leading-tight text-[var(--color-text)] sm:text-4xl">
+              {title}
+            </h3>
 
-        <p className="mt-5 flex-1 text-sm leading-relaxed text-[var(--color-accent)] sm:text-base">
-          {description}
-        </p>
+            <p className="text-sm leading-relaxed text-[var(--color-accent)] sm:text-base">
+              {description}
+            </p>
+          </div>
+        ) : (
+          <>
+            <h3 className="font-serif text-3xl leading-tight text-[var(--color-text)] sm:text-4xl">
+              {title}
+            </h3>
+
+            <p className="mt-5 flex-1 text-sm leading-relaxed text-[var(--color-accent)] sm:text-base">
+              {description}
+            </p>
+          </>
+        )}
 
         {showAction && (
           <div className="mt-10 flex items-center justify-between">
