@@ -449,6 +449,7 @@ function buildStats(groups) {
     group.guests.map((guest) => ({
       ...guest,
       email: group.email,
+      groupName: group.groupName,
       phone: group.phone,
     })),
   );

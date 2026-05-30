@@ -334,7 +334,7 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
             <input
               className={`${inputClassName} pl-12`}
               onChange={(event) => onQueryChange(event.target.value)}
-              placeholder="Email, telefono, nombre o apellidos"
+              placeholder="Email, telefono, grupo, nombre o apellidos"
               type="search"
               value={query}
             />
@@ -391,7 +391,7 @@ function DesktopTable({ onDelete, onEdit, rows }) {
                   {row.fullName}
                 </p>
                 <p className="mt-1 text-xs text-[var(--color-muted)]">
-                  Grupo de {row.groupSize}
+                  {row.groupName || `Grupo de ${row.groupSize}`}
                 </p>
               </td>
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
@@ -441,6 +441,9 @@ function MobileList({ onDelete, onEdit, rows }) {
                 {row.fullName}
               </p>
               <p className="mt-2 text-sm text-[var(--color-muted)]">
+                {row.groupName || `Grupo de ${row.groupSize}`}
+              </p>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
                 {row.email || "-"}
               </p>
               <p className="mt-1 text-sm text-[var(--color-muted)]">
@@ -582,6 +585,17 @@ function GroupEditor({ group, onClose, onSave }) {
               onChange={(event) => updateContact("email", event.target.value)}
               type="email"
               value={draft.email}
+            />
+          </div>
+
+          <div>
+            <Label>Nombre de grupo</Label>
+            <input
+              className={inputClassName}
+              onChange={(event) =>
+                updateContact("groupName", event.target.value)
+              }
+              value={draft.groupName}
             />
           </div>
 
@@ -902,6 +916,7 @@ function normalizeGroupsResponse(response) {
   return groups.map((group) => ({
     groupId: group.groupId || group.email || "",
     email: group.email || group.groupId || "",
+    groupName: group.groupName || group.nombre_grupo || "",
     phone: group.phone || "",
     guests: Array.isArray(group.guests) ? group.guests : [],
   }));
@@ -918,6 +933,7 @@ function buildGuestRows(groups) {
         fullName: `${guest.name || "Invitado"} ${guest.lastname || ""}`.trim(),
         group,
         groupId: group.groupId || group.email,
+        groupName: group.groupName,
         groupSize: group.guests.length,
         guest,
         guestIndex,
@@ -940,7 +956,7 @@ function filterRows(rows, query, filter) {
     const matchesQuery =
       !normalizedQuery ||
       normalizeText(
-        `${row.email} ${row.phone} ${row.guest.name} ${row.guest.lastname}`,
+        `${row.email} ${row.phone} ${row.groupName} ${row.guest.name} ${row.guest.lastname}`,
       ).includes(normalizedQuery);
     const matchesFilter =
       filter === "all" ||
@@ -957,6 +973,7 @@ function createDraftGroup(group) {
     return {
       groupId: "",
       email: "",
+      groupName: "",
       phone: "",
       guests: [createEmptyGuest()],
     };
@@ -965,6 +982,7 @@ function createDraftGroup(group) {
   return {
     groupId: group.groupId || group.email || "",
     email: group.email || "",
+    groupName: group.groupName || "",
     phone: group.phone || "",
     guests: group.guests.map((guest) => ({
       ...createEmptyGuest(),
@@ -977,6 +995,7 @@ function createDraftGroup(group) {
 
 function validateGroup(group) {
   if (!group.email.trim()) return "El email es obligatorio.";
+  if (!group.groupName?.trim()) return "El nombre de grupo es obligatorio.";
   if (!group.phone.trim()) return "El telefono es obligatorio.";
   if (!group.guests.length) return "Debe haber al menos un invitado.";
 
@@ -1027,6 +1046,7 @@ function downloadCsv(rows) {
   const headers = [
     "email",
     "telefono",
+    "nombre_grupo",
     "nombre",
     "apellidos",
     "alergias",
@@ -1038,6 +1058,7 @@ function downloadCsv(rows) {
     [
       row.email,
       row.phone,
+      row.groupName,
       row.guest.name,
       row.guest.lastname,
       row.allergyText,
