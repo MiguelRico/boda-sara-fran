@@ -4,9 +4,7 @@ import { useRef } from "react";
 import { Navigate } from "react-router-dom";
 import {
   AlertTriangle,
-  Bus,
   RefreshCw,
-  Salad,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -21,6 +19,17 @@ import {
   RETURN_BUS_OPTIONS,
 } from "../constants/rsvp";
 import { findAllGroups } from "../services/rsvpService";
+
+const DONUT_COLORS = [
+  "#556b52",
+  "#6f8b6b",
+  "#9caf88",
+  "#bccdb5",
+  "#dfe8d7",
+  "#879d7e",
+  "#c7d4bf",
+  "#71816d",
+];
 
 const emptyState = {
   groups: [],
@@ -125,9 +134,9 @@ export default function AdminStats() {
 
               <CinematicStaggeredRevealItem index={4} isVisible={statsInView}>
                 <div className="grid gap-5 lg:grid-cols-2">
-                  <BarListCard
+                  <DonutStatsCard
                     emptyText="Sin alergias registradas"
-                    icon={Salad}
+                    emoji="🥗"
                     items={stats.allergiesByType}
                     title="Alergias por tipo"
                   />
@@ -308,25 +317,15 @@ function ReviewCard({ stats }) {
   );
 }
 
-function BarListCard({ emptyText, icon: Icon, items, title }) {
-  const max = Math.max(...items.map((item) => item.value), 1);
-
+function DonutStatsCard({ emptyText, emoji, items, title }) {
   return (
-    <article className="premium-card">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
-          <Icon size={18} strokeWidth={1.7} />
-        </div>
-        <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-          {title}
-        </h2>
-      </div>
+    <article className="premium-card relative overflow-hidden">
+      <CardHeader emoji={emoji} title={title} />
 
       {items.length ? (
-        <div className="space-y-4">
-          {items.map((item) => (
-            <BarRow item={item} key={item.label} max={max} />
-          ))}
+        <div className="grid items-center gap-6 sm:grid-cols-[minmax(168px,0.8fr)_1fr]">
+          <DonutChart items={items} />
+          <ChartLegend items={items} />
         </div>
       ) : (
         <p className="rounded-2xl border border-[var(--color-border)] bg-white/45 p-4 text-sm text-[var(--color-muted)]">
@@ -339,15 +338,8 @@ function BarListCard({ emptyText, icon: Icon, items, title }) {
 
 function TransportCard({ stats }) {
   return (
-    <article className="premium-card">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
-          <Bus size={18} strokeWidth={1.7} />
-        </div>
-        <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-          Transporte
-        </h2>
-      </div>
+    <article className="premium-card relative overflow-hidden">
+      <CardHeader emoji="🚌" title="Transporte" />
 
       <div className="grid gap-5 sm:grid-cols-2">
         <TransportGroup items={stats.outboundBusStats} title="Ida" />
@@ -358,41 +350,138 @@ function TransportCard({ stats }) {
 }
 
 function TransportGroup({ items, title }) {
-  const max = Math.max(...items.map((item) => item.value), 1);
-
   return (
-    <div>
-      <p className="mb-4 text-sm font-medium text-[var(--color-accent-dark)]">
+    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+      <p className="mb-4 text-sm font-medium uppercase tracking-[0.16em] text-[var(--color-accent-dark)]">
         {title}
       </p>
 
-      <div className="space-y-4">
-        {items.map((item) => (
-          <BarRow item={item} key={item.label} max={max} />
-        ))}
+      <div className="grid items-center gap-4">
+        <DonutChart items={items} size="sm" />
+        <ChartLegend compact items={items} />
       </div>
     </div>
   );
 }
 
-function BarRow({ item, max }) {
-  const width = Math.round((item.value / max) * 100);
+function CardHeader({ emoji, title }) {
+  return (
+    <div className="relative mb-6 flex items-center gap-3">
+      <div className="pointer-events-none absolute -right-2 -top-5 text-6xl opacity-[0.08]">
+        {emoji}
+      </div>
+
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
+        {emoji}
+      </span>
+
+      <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+function DonutChart({ items, size = "md" }) {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  const visibleItems = items.filter((item) => item.value > 0);
+  const dimensions = size === "sm" ? "h-40 w-40" : "h-48 w-48";
+  const segments = visibleItems.reduce(
+    (acc, item, index) => {
+      const percent = total ? (item.value / total) * 100 : 0;
+
+      return {
+        offset: acc.offset + percent,
+        values: [
+          ...acc.values,
+          {
+            color: DONUT_COLORS[index % DONUT_COLORS.length],
+            label: item.label,
+            offset: acc.offset,
+            percent,
+          },
+        ],
+      };
+    },
+    { offset: 0, values: [] },
+  ).values;
 
   return (
-    <div>
-      <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-        <span className="text-[var(--color-muted)]">{item.label}</span>
-        <span className="font-medium text-[var(--color-accent-dark)]">
-          {item.value}
+    <div className="flex justify-center">
+      <div className={`relative ${dimensions}`}>
+        <svg
+          aria-hidden="true"
+          className="h-full w-full -rotate-90"
+          viewBox="0 0 100 100"
+        >
+          <circle
+            cx="50"
+            cy="50"
+            fill="none"
+            r="38"
+            stroke="var(--color-border)"
+            strokeWidth="12"
+          />
+
+          {segments.map((segment) => (
+            <circle
+              cx="50"
+              cy="50"
+              fill="none"
+              key={segment.label}
+              pathLength="100"
+              r="38"
+              stroke={segment.color}
+              strokeDasharray={`${segment.percent} ${100 - segment.percent}`}
+              strokeDashoffset={-segment.offset}
+              strokeLinecap="round"
+              strokeWidth="12"
+            />
+          ))}
+        </svg>
+
+        <span className="absolute inset-0 flex flex-col items-center justify-center rounded-full text-center">
+          <span className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+            {total}
+          </span>
+          <span className="mt-1 text-[0.62rem] uppercase tracking-[0.2em] text-[var(--color-muted)]">
+            total
+          </span>
         </span>
       </div>
+    </div>
+  );
+}
 
-      <div className="h-2 overflow-hidden rounded-full bg-[var(--color-border)]">
+function ChartLegend({ compact = false, items }) {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+
+  return (
+    <div className={compact ? "space-y-2" : "space-y-3"}>
+      {items.map((item, index) => (
         <div
-          className="h-full rounded-full bg-[var(--color-accent-dark)]"
-          style={{ width: `${width}%` }}
-        />
-      </div>
+          className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm"
+          key={item.label}
+        >
+          <span
+            className="h-3 w-3 rounded-full"
+            style={{
+              backgroundColor: DONUT_COLORS[index % DONUT_COLORS.length],
+            }}
+          />
+          <span className="min-w-0 leading-snug text-[var(--color-muted)]">
+            {item.label}
+          </span>
+          <span className="font-medium text-[var(--color-accent-dark)]">
+            {item.value}
+            {total > 0 && (
+              <span className="ml-1 text-xs font-normal text-[var(--color-muted)]">
+                {Math.round((item.value / total) * 100)}%
+              </span>
+            )}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
