@@ -1,9 +1,12 @@
 import { useInView } from "framer-motion";
-import { useMemo, useRef, useState } from "react";
-import { BarChart3, LockKeyhole, LogOut, UsersRound } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { LockKeyhole } from "lucide-react";
 
-import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import {
+  ADMIN_AUTH_EVENT,
+  ADMIN_PASSWORD,
+  ADMIN_SESSION_KEY,
+} from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
@@ -38,7 +41,6 @@ const adminCards = [
 ];
 
 export default function Admin() {
-  const navigate = useNavigate();
   const adminRef = useRef(null);
   const adminInView = useInView(adminRef, {
     once: true,
@@ -52,11 +54,26 @@ export default function Admin() {
 
   const canSubmit = useMemo(() => password.trim().length > 0, [password]);
 
+  useEffect(() => {
+    const syncAuthState = () => {
+      setIsAuthenticated(
+        window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true",
+      );
+    };
+
+    window.addEventListener(ADMIN_AUTH_EVENT, syncAuthState);
+
+    return () => {
+      window.removeEventListener(ADMIN_AUTH_EVENT, syncAuthState);
+    };
+  }, []);
+
   const handleSubmit = (event) => {
     event.preventDefault();
 
     if (password === ADMIN_PASSWORD) {
       window.sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+      window.dispatchEvent(new Event(ADMIN_AUTH_EVENT));
       setIsAuthenticated(true);
       setError("");
       setPassword("");
@@ -64,13 +81,6 @@ export default function Admin() {
     }
 
     setError("La contraseña no es correcta.");
-  };
-
-  const handleLogout = () => {
-    window.sessionStorage.removeItem(ADMIN_SESSION_KEY);
-    setIsAuthenticated(false);
-    setPassword("");
-    setError("");
   };
 
   return (
@@ -92,7 +102,7 @@ export default function Admin() {
 
           <CinematicStaggeredRevealItem index={1} isVisible={adminInView}>
             {isAuthenticated ? (
-              <AdminDashboard onLogout={handleLogout} onNavigate={navigate} />
+              <AdminDashboard />
             ) : (
               <AdminLogin
                 canSubmit={canSubmit}
@@ -169,7 +179,7 @@ function AdminLogin({
   );
 }
 
-function AdminDashboard({ onLogout, onNavigate }) {
+function AdminDashboard() {
   return (
     <div className="mx-auto w-full max-w-4xl">
       {/*

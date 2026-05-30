@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import AdminAccessButton from "../components/admin/AdminAccessButton";
 import ScrollManager from "../components/ui/ScrollManager";
 
 export default function MainLayout() {
@@ -9,6 +10,8 @@ export default function MainLayout() {
 
   return (
     <div className="app-shell">
+      <AdminAccessButton />
+
       <AnimatePresence mode="wait">
         <motion.div
           key={pageKey}
