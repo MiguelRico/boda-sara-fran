@@ -1,6 +1,5 @@
 import { useInView } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
@@ -121,27 +120,18 @@ export default function AdminStats() {
           </CinematicStaggeredRevealItem>
 
           {!state.loading && (
-            <div className="space-y-5">
-              <CinematicStaggeredRevealItem index={3} isVisible={statsInView}>
-                <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-                  <ResponsesCard stats={stats} />
-                  <ReviewCard stats={stats} />
-                </div>
-              </CinematicStaggeredRevealItem>
+            <CinematicStaggeredRevealItem index={3} isVisible={statsInView}>
+              <div className="grid gap-5 lg:grid-cols-2">
+                <DonutStatsCard
+                  emptyText="Sin alergias registradas"
+                  emoji="🥗"
+                  items={stats.allergiesByType}
+                  title="Alergias por tipo"
+                />
 
-              <CinematicStaggeredRevealItem index={4} isVisible={statsInView}>
-                <div className="grid gap-5 lg:grid-cols-2">
-                  <DonutStatsCard
-                    emptyText="Sin alergias registradas"
-                    emoji="🥗"
-                    items={stats.allergiesByType}
-                    title="Alergias por tipo"
-                  />
-
-                  <TransportCard stats={stats} />
-                </div>
-              </CinematicStaggeredRevealItem>
-            </div>
+                <TransportCard stats={stats} />
+              </div>
+            </CinematicStaggeredRevealItem>
           )}
         </div>
       </CinematicSection>
@@ -154,13 +144,9 @@ function StatsOverview({ loading, onRefresh, stats }) {
     <section className="premium-card mt-4 mb-5">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="section-eyebrow mb-2">Resumen</p>
           <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
             Vision operativa
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-            {stats.totalGuests} personas registradas en {stats.totalGroups} respuestas
-          </p>
         </div>
 
         <button
@@ -186,33 +172,45 @@ function StatsOverview({ loading, onRefresh, stats }) {
 function SummaryGrid({ stats }) {
   const items = [
     {
-      label: "Respuestas",
+      label: "Total confirmaciones",
       value: stats.totalGroups,
       detail: "confirmaciones registradas",
       emoji: "👥",
     },
     {
-      label: "Personas",
+      label: "Total de personas",
       value: stats.totalGuests,
       detail: "incluidas en las respuestas",
       emoji: "+",
     },
     {
-      label: "Con alergias",
-      value: stats.guestsWithAllergies,
-      detail: `${stats.allergyRate}% de las personas registradas`,
+      label: "Personas con alergias",
+      value: `${stats.allergyRate}%`,
+      detail: `${stats.guestsWithAllergies} de ${stats.totalGuests} personas`,
       emoji: "🥗",
     },
     {
+      label: "Con otras alergias",
+      value: `${stats.otherAllergyRate}%`,
+      detail: `${stats.guestsWithOtherAllergies} de ${stats.totalGuests} personas`,
+      emoji: "!",
+    },
+    {
+      label: "Con comentarios",
+      value: `${stats.commentsRate}%`,
+      detail: `${stats.guestsWithComments} de ${stats.totalGuests} personas`,
+      emoji: "...",
+    },
+    {
       label: "Usan transporte",
-      value: stats.guestsUsingBus,
-      detail: `${stats.busRate}% de las personas registradas`,
+      value: `${stats.busRate}%`,
+      detail: `${stats.guestsUsingBus} de ${stats.totalGuests} personas`,
       emoji: "🚌",
     },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {items.map((item, index) => (
         <AnimatedInfoCard
           card={{
@@ -229,104 +227,6 @@ function SummaryGrid({ stats }) {
         />
       ))}
     </div>
-  );
-}
-
-function ResponsesCard({ stats }) {
-  return (
-    <article className="premium-card">
-      <p className="section-eyebrow mb-3">Respuestas</p>
-      <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-        Registro abierto
-      </h2>
-      <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-        Los totales reflejan solo lo recibido hasta ahora, sin compararlo con
-        una lista cerrada de invitados.
-      </p>
-
-      <div className="mt-7 grid gap-4 sm:grid-cols-3">
-        <MiniMetric
-          detail="respuestas recibidas"
-          emoji="✉"
-          index={0}
-          label="Respuestas"
-          value={stats.totalGroups}
-        />
-        <MiniMetric
-          detail="personas registradas"
-          emoji="👥"
-          index={1}
-          label="Personas"
-          value={stats.totalGuests}
-        />
-        <MiniMetric
-          detail="personas por respuesta"
-          emoji="#"
-          index={2}
-          label="Media"
-          value={stats.averageGroupSize}
-        />
-      </div>
-
-      <div className="mt-7 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-[var(--color-border)] bg-white/45 p-4">
-          <p className="text-sm font-medium text-[var(--color-accent-dark)]">
-            Contactos con telefono
-          </p>
-          <p className="mt-2 font-serif text-3xl leading-none text-[var(--color-text)]">
-            {stats.groupsWithPhone}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-            de {stats.totalGroups} respuestas recibidas
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-[var(--color-border)] bg-white/45 p-4">
-          <p className="text-sm font-medium text-[var(--color-accent-dark)]">
-            Con notas o comentarios
-          </p>
-          <p className="mt-2 font-serif text-3xl leading-none text-[var(--color-text)]">
-            {stats.guestsWithComments}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-            personas con informacion adicional
-          </p>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function ReviewCard({ stats }) {
-  return (
-    <article className="premium-card">
-      <p className="section-eyebrow mb-3">Necesita revision</p>
-      <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-        Puntos sensibles
-      </h2>
-
-      <div className="mt-6 space-y-3">
-        {stats.reviewItems.length ? (
-          stats.reviewItems.slice(0, 6).map((item) => (
-            <div
-              className="rounded-2xl border border-[var(--color-border)] bg-white/45 p-4"
-              key={`${item.name}-${item.reason}`}
-            >
-              <p className="text-sm font-medium text-[var(--color-accent-dark)]">
-                {item.name}
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--color-muted)]">
-                {item.reason}
-              </p>
-            </div>
-          ))
-        ) : (
-          <p className="rounded-2xl border border-[var(--color-border)] bg-white/45 p-4 text-sm text-[var(--color-muted)]">
-            No hay comentarios pendientes, alergias abiertas ni transporte incompleto.
-          </p>
-        )}
-      </div>
-    </article>
   );
 }
 
@@ -499,27 +399,10 @@ function ChartLegend({ compact = false, items }) {
   );
 }
 
-function MiniMetric({ detail, emoji, index, label, value }) {
-  return (
-    <AnimatedInfoCard
-      card={{
-        className:
-          "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-4 sm:p-5",
-        description: detail,
-        emoji,
-        showAction: false,
-        subtitle: label,
-        title: String(value),
-      }}
-      index={index}
-    />
-  );
-}
-
 function StatsSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {Array.from({ length: 4 }).map((_, index) => (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      {Array.from({ length: 6 }).map((_, index) => (
         <div
           className="min-h-48 animate-pulse rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 sm:p-5"
           key={index}
@@ -559,33 +442,30 @@ function buildStats(groups) {
   const totalGuests = guests.length;
   const totalGroups = normalizedGroups.length;
   const guestsWithAllergies = guests.filter(hasAllergies).length;
-  const guestsUsingBus = guests.filter(usesBus).length;
-  const groupsWithPhone = normalizedGroups.filter((group) =>
-    group.phone?.trim(),
+  const guestsWithOtherAllergies = guests.filter((guest) =>
+    guest.otherAllergies?.trim(),
   ).length;
+  const guestsUsingBus = guests.filter(usesBus).length;
   const guestsWithComments = guests.filter((guest) =>
     guest.comments?.trim(),
   ).length;
-  const reviewItems = buildReviewItems(guests);
 
   return {
     allergyRate: getRate(guestsWithAllergies, totalGuests),
     allergiesByType: buildAllergyStats(guests),
-    averageGroupSize: totalGroups
-      ? Number((totalGuests / totalGroups).toFixed(1))
-      : 0,
     busRate: getRate(guestsUsingBus, totalGuests),
-    groupsWithPhone,
-    guestsWithComments,
-    guestsUsingBus,
+    commentsRate: getRate(guestsWithComments, totalGuests),
     guestsWithAllergies,
+    guestsWithComments,
+    guestsWithOtherAllergies,
+    guestsUsingBus,
+    otherAllergyRate: getRate(guestsWithOtherAllergies, totalGuests),
     outboundBusStats: buildBusStats(
       guests,
       OUTBOUND_BUS_OPTIONS,
       "outboundBus",
     ),
     returnBusStats: buildBusStats(guests, RETURN_BUS_OPTIONS, "returnBus"),
-    reviewItems,
     totalGroups,
     totalGuests,
   };
@@ -609,38 +489,6 @@ function buildBusStats(guests, options, field) {
   }));
 }
 
-function buildReviewItems(guests) {
-  return guests
-    .flatMap((guest) => {
-      const name = `${guest.name || "Invitado"} ${guest.lastname || ""}`.trim();
-      const items = [];
-
-      if (guest.otherAllergies?.trim()) {
-        items.push({
-          name,
-          reason: `Otras alergias: ${guest.otherAllergies}`,
-        });
-      }
-
-      if (guest.comments?.trim()) {
-        items.push({
-          name,
-          reason: `Comentario: ${guest.comments}`,
-        });
-      }
-
-      if (guest.busNeeded && (!guest.outboundBus || !guest.returnBus)) {
-        items.push({
-          name,
-          reason: "Ha marcado transporte, pero falta algun horario.",
-        });
-      }
-
-      return items;
-    })
-    .slice(0, 20);
-}
-
 function getRate(value, total) {
   if (!total) return 0;
 
@@ -648,13 +496,9 @@ function getRate(value, total) {
 }
 
 function hasAllergies(guest) {
-  return Boolean(guest.allergies?.length || guest.otherAllergies?.trim());
+  return Boolean(guest.allergies?.length && guest.allergies != "No");
 }
 
 function usesBus(guest) {
-  return Boolean(
-    guest.busNeeded ||
-    (guest.outboundBus && guest.outboundBus !== "No") ||
-    (guest.returnBus && guest.returnBus !== "No"),
-  );
+  return Boolean(guest.busNeeded);
 }
