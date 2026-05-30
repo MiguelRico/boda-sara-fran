@@ -99,7 +99,7 @@ export default function AdminStats() {
               eyebrow="Panel privado"
               title="Resumen"
               titleAs="h1"
-              text="Resumen de confirmaciones y datos de interés"
+              text="Seguimiento de respuestas recibidas y datos operativos"
             />
           </CinematicStaggeredRevealItem>
 
@@ -124,7 +124,7 @@ export default function AdminStats() {
             <div className="space-y-5">
               <CinematicStaggeredRevealItem index={3} isVisible={statsInView}>
                 <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-                  <AttendanceCard stats={stats} />
+                  <ResponsesCard stats={stats} />
                   <ReviewCard stats={stats} />
                 </div>
               </CinematicStaggeredRevealItem>
@@ -156,10 +156,10 @@ function StatsOverview({ loading, onRefresh, stats }) {
         <div>
           <p className="section-eyebrow mb-2">Resumen</p>
           <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-            Vision general
+            Vision operativa
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-            {stats.totalGuests} invitados en {stats.totalGroups} confirmaciones
+            {stats.totalGuests} personas registradas en {stats.totalGroups} respuestas
           </p>
         </div>
 
@@ -186,28 +186,28 @@ function StatsOverview({ loading, onRefresh, stats }) {
 function SummaryGrid({ stats }) {
   const items = [
     {
-      label: "Invitados",
-      value: stats.totalGuests,
-      detail: `${stats.totalGroups} confirmaciones`,
+      label: "Respuestas",
+      value: stats.totalGroups,
+      detail: "confirmaciones registradas",
       emoji: "👥",
+    },
+    {
+      label: "Personas",
+      value: stats.totalGuests,
+      detail: "incluidas en las respuestas",
+      emoji: "+",
     },
     {
       label: "Con alergias",
       value: stats.guestsWithAllergies,
-      detail: `${stats.allergyRate}% del total`,
+      detail: `${stats.allergyRate}% de las personas registradas`,
       emoji: "🥗",
     },
     {
       label: "Usan transporte",
       value: stats.guestsUsingBus,
-      detail: `${stats.busRate}% del total`,
+      detail: `${stats.busRate}% de las personas registradas`,
       emoji: "🚌",
-    },
-    {
-      label: "Revision",
-      value: stats.reviewItems.length,
-      detail: "comentarios y casos a revisar",
-      emoji: "!",
     },
   ];
 
@@ -232,49 +232,65 @@ function SummaryGrid({ stats }) {
   );
 }
 
-function AttendanceCard({ stats }) {
+function ResponsesCard({ stats }) {
   return (
     <article className="premium-card">
-      <p className="section-eyebrow mb-3">Asistencia</p>
+      <p className="section-eyebrow mb-3">Respuestas</p>
       <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-        Confirmaciones recibidas
+        Registro abierto
       </h2>
+      <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
+        Los totales reflejan solo lo recibido hasta ahora, sin compararlo con
+        una lista cerrada de invitados.
+      </p>
 
       <div className="mt-7 grid gap-4 sm:grid-cols-3">
         <MiniMetric
-          detail="confirmaciones recibidas"
+          detail="respuestas recibidas"
           emoji="✉"
           index={0}
-          label="Grupos"
+          label="Respuestas"
           value={stats.totalGroups}
         />
         <MiniMetric
-          detail="personas confirmadas"
+          detail="personas registradas"
           emoji="👥"
           index={1}
-          label="Invitados"
+          label="Personas"
           value={stats.totalGuests}
         />
         <MiniMetric
-          detail="invitados por grupo"
+          detail="personas por respuesta"
           emoji="#"
           index={2}
-          label="Media grupo"
+          label="Media"
           value={stats.averageGroupSize}
         />
       </div>
 
-      <div className="mt-7">
-        <div className="mb-3 flex items-center justify-between text-sm text-[var(--color-muted)]">
-          <span>Invitados con datos completos</span>
-          <span>{stats.completeGuestRate}%</span>
+      <div className="mt-7 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-[var(--color-border)] bg-white/45 p-4">
+          <p className="text-sm font-medium text-[var(--color-accent-dark)]">
+            Contactos con telefono
+          </p>
+          <p className="mt-2 font-serif text-3xl leading-none text-[var(--color-text)]">
+            {stats.groupsWithPhone}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
+            de {stats.totalGroups} respuestas recibidas
+          </p>
         </div>
 
-        <div className="h-3 overflow-hidden rounded-full bg-[var(--color-border)]">
-          <div
-            className="h-full rounded-full bg-[var(--color-accent-dark)]"
-            style={{ width: `${stats.completeGuestRate}%` }}
-          />
+        <div className="rounded-2xl border border-[var(--color-border)] bg-white/45 p-4">
+          <p className="text-sm font-medium text-[var(--color-accent-dark)]">
+            Con notas o comentarios
+          </p>
+          <p className="mt-2 font-serif text-3xl leading-none text-[var(--color-text)]">
+            {stats.guestsWithComments}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
+            personas con informacion adicional
+          </p>
         </div>
       </div>
     </article>
@@ -306,7 +322,7 @@ function ReviewCard({ stats }) {
           ))
         ) : (
           <p className="rounded-2xl border border-[var(--color-border)] bg-white/45 p-4 text-sm text-[var(--color-muted)]">
-            No hay comentarios, alergias abiertas ni transporte incompleto.
+            No hay comentarios pendientes, alergias abiertas ni transporte incompleto.
           </p>
         )}
       </div>
@@ -544,8 +560,11 @@ function buildStats(groups) {
   const totalGroups = normalizedGroups.length;
   const guestsWithAllergies = guests.filter(hasAllergies).length;
   const guestsUsingBus = guests.filter(usesBus).length;
-  const completeGuests = guests.filter(
-    (guest) => guest.name?.trim() && guest.lastname?.trim(),
+  const groupsWithPhone = normalizedGroups.filter((group) =>
+    group.phone?.trim(),
+  ).length;
+  const guestsWithComments = guests.filter((guest) =>
+    guest.comments?.trim(),
   ).length;
   const reviewItems = buildReviewItems(guests);
 
@@ -556,7 +575,8 @@ function buildStats(groups) {
       ? Number((totalGuests / totalGroups).toFixed(1))
       : 0,
     busRate: getRate(guestsUsingBus, totalGuests),
-    completeGuestRate: getRate(completeGuests, totalGuests),
+    groupsWithPhone,
+    guestsWithComments,
     guestsUsingBus,
     guestsWithAllergies,
     outboundBusStats: buildBusStats(
