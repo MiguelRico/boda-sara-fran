@@ -29,7 +29,6 @@ export const createEmptyGuest = () => ({
   allergies: [],
   otherAllergies: "",
   comments: "",
-  busNeeded: false,
-  outboundBus: "",
-  returnBus: "",
+  outboundBus: "18:00",
+  returnBus: "3:00",
 });

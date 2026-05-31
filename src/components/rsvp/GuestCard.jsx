@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import IconButton from "../ui/IconButton";
 import {
@@ -17,6 +18,7 @@ export default function GuestCard({
   onRemoveGuest,
 }) {
   const reduceMotion = useReducedMotion();
+  const [showBusPanel, setShowBusPanel] = useState(true);
   const busPanelHidden = reduceMotion
     ? { height: 0, opacity: 0 }
     : { height: 0, opacity: 0, y: -8, filter: "blur(4px)" };
@@ -150,10 +152,8 @@ export default function GuestCard({
           <label className="relative inline-flex cursor-pointer items-center">
             <input
               type="checkbox"
-              checked={guest.busNeeded}
-              onChange={(event) =>
-                onGuestChange(index, "busNeeded", event.target.checked)
-              }
+              checked={showBusPanel}
+              onChange={(event) => setShowBusPanel(event.target.checked)}
               className="peer sr-only"
             />
 
@@ -162,7 +162,7 @@ export default function GuestCard({
         </div>
 
         <AnimatePresence initial={false}>
-          {guest.busNeeded && (
+          {showBusPanel && (
             <motion.div
               key="bus-options"
               initial={busPanelHidden}
@@ -218,4 +218,3 @@ function BusSelect({ label, onChange, options, value }) {
     </div>
   );
 }
-

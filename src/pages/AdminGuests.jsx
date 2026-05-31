@@ -1,4 +1,9 @@
-import { useInView } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useReducedMotion,
+} from "framer-motion";
 import {
   useCallback,
   useEffect,
@@ -17,7 +22,6 @@ import {
   Pencil,
   Plus,
   RefreshCw,
-  Save,
   Search,
   Trash2,
   UsersRound,
@@ -31,30 +35,27 @@ import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStagg
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
 import DeleteDialog from "../components/ui/DeleteDialog";
-import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
-import GuestCard from "../components/rsvp/GuestCard";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
+import RsvpForm from "../forms/RsvpForm";
 import { createEmptyGuest, MAX_GUESTS } from "../constants/rsvp";
 import {
   deleteAdminGroup,
   findAllGroups,
   saveAdminGroup,
 } from "../services/rsvpService";
-import {
-  FieldError,
-  inputClassName,
-  Label,
-} from "../components/rsvp/FormPrimitives";
+import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
 import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
 import { normalizeAdminGroups } from "../utils/rsvpGroups";
 
-const pageSize = 8;
+const desktopPageSize = 8;
+const mobilePageSize = 1;
 const pageDataSwapDelay = 680;
 const pageRevealDelay = 160;
 const pageScrollDuration = 680;
 const pageScrollOffset = 12;
+const mobilePageHeightLockDelay = 560;
 const mobileGroupNameBaseFontSize = 30;
 const mobileGroupNameMinFontSize = 10;
 const mobileDetailBaseFontSize = 14;
@@ -111,6 +112,8 @@ export default function AdminGuests() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [pageDirection, setPageDirection] = useState(1);
+  const [isMobileList, setIsMobileList] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageLoadingMinHeight, setPageLoadingMinHeight] = useState(null);
   const [editingGroup, setEditingGroup] = useState(null);
@@ -170,13 +173,30 @@ export default function AdminGuests() {
     };
   }, []);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateIsMobileList = () => setIsMobileList(mediaQuery.matches);
+
+    updateIsMobileList();
+    mediaQuery.addEventListener("change", updateIsMobileList);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateIsMobileList);
+    };
+  }, []);
+
   const rows = useMemo(() => buildGroupRows(state.groups), [state.groups]);
   const visibleRows = useMemo(
     () => filterRows(rows, query, filter),
     [filter, query, rows],
   );
+  const pageSize = isMobileList ? mobilePageSize : desktopPageSize;
   const totalPages = Math.max(Math.ceil(visibleRows.length / pageSize), 1);
-  const pagedRows = visibleRows.slice((page - 1) * pageSize, page * pageSize);
+  const currentPage = Math.min(page, totalPages);
+  const pagedRows = visibleRows.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
   const pagedGroupCount = pagedRows.length;
   const pagedGuestCount = pagedRows.reduce(
     (total, row) => total + row.groupSize,
@@ -209,7 +229,7 @@ export default function AdminGuests() {
   const handlePageChange = (nextPage) => {
     const clampedPage = Math.min(Math.max(nextPage, 1), totalPages);
 
-    if (clampedPage === page || pageLoading) return;
+    if (clampedPage === currentPage || pageLoading) return;
 
     const tableCardElement = tableCardRef.current;
     const tableCardRect = tableCardElement?.getBoundingClientRect();
@@ -219,8 +239,29 @@ export default function AdminGuests() {
       ? Math.max(0, tableCardRect.top + window.scrollY - pageScrollOffset)
       : window.scrollY;
     const tableHeight = tableRect?.height || null;
+    const direction = clampedPage > currentPage ? 1 : -1;
 
     cancelPageLoading();
+
+    if (isMobileList) {
+      setPageLoadingMinHeight(tableHeight);
+      setPageDirection(direction);
+      setPage(clampedPage);
+      pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
+        pageScrollStartFrameRef.current = null;
+        pageScrollCancelRef.current = scrollToY(tableCardTop, {
+          duration: pageScrollDuration,
+        });
+      });
+      pageRevealTimeoutRef.current = window.setTimeout(() => {
+        setPageLoadingMinHeight(null);
+        pageRevealTimeoutRef.current = null;
+      }, mobilePageHeightLockDelay);
+
+      return;
+    }
+
+    setPageDirection(direction);
     setPageLoadingMinHeight(tableHeight);
     setPageLoading(true);
     pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
@@ -446,10 +487,12 @@ export default function AdminGuests() {
                         />
 
                         <MobileList
+                          direction={pageDirection}
                           onDelete={setDeleteTarget}
                           onEdit={(group) =>
                             setEditingGroup(createDraftGroup(group))
                           }
+                          page={currentPage}
                           rows={pagedRows}
                         />
 
@@ -479,10 +522,11 @@ export default function AdminGuests() {
                     </div>
 
                     <Pagination
-                      page={page}
+                      isMobileList={isMobileList}
+                      page={currentPage}
                       totalPages={totalPages}
-                      onNext={() => handlePageChange(page + 1)}
-                      onPrev={() => handlePageChange(page - 1)}
+                      onNext={() => handlePageChange(currentPage + 1)}
+                      onPrev={() => handlePageChange(currentPage - 1)}
                     />
                   </>
                 )}
@@ -647,8 +691,11 @@ function DesktopTable({ onDelete, onEdit, rows }) {
   );
 }
 
-function MobileList({ onDelete, onEdit, rows }) {
+function MobileList({ direction, onDelete, onEdit, page, rows }) {
+  const reduceMotion = useReducedMotion();
+  const cardRef = useRef(null);
   const groupNameRefs = useRef([]);
+  const [cardMinHeight, setCardMinHeight] = useState(null);
   const [groupNameFontSize, setGroupNameFontSize] = useState(
     mobileGroupNameBaseFontSize,
   );
@@ -710,57 +757,135 @@ function MobileList({ onDelete, onEdit, rows }) {
     };
   }, [rows]);
 
-  return (
-    <div className="space-y-4 md:hidden">
-      {rows.map((row, index) => (
-        <article
-          className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4"
-          key={row.rowId}
-        >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 flex-1">
-              <p
-                className="overflow-hidden whitespace-nowrap font-serif leading-none text-[var(--color-accent-dark)]"
-                ref={(node) => {
-                  groupNameRefs.current[index] = node;
-                }}
-                style={{ fontSize: `${groupNameFontSize}px` }}
-              >
-                {row.groupName || "Grupo sin nombre"}
-              </p>
-              <p
-                className="mt-2 break-words text-[var(--color-muted)] [overflow-wrap:anywhere]"
-                style={detailTextStyle}
-              >
-                {row.email || "-"}
-              </p>
-              <p
-                className="mt-1 hidden break-words text-[var(--color-muted)] [overflow-wrap:anywhere] sm:block"
-                style={detailTextStyle}
-              >
-                {row.phone || "-"}
-              </p>
-              <p
-                className="mt-2 hidden text-[var(--color-muted)] sm:block"
-                style={detailTextStyle}
-              >
-                {row.groupSize} {row.groupSize === 1 ? "persona" : "personas"}
-              </p>
+  useLayoutEffect(() => {
+    const node = cardRef.current;
 
-              <div className="mt-3 flex items-center justify-between gap-3 sm:hidden">
-                <div
-                  className="min-w-0 text-[var(--color-muted)]"
+    if (!node) return undefined;
+
+    const updateCardHeight = () => {
+      setCardMinHeight((currentHeight) => {
+        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+        const stableHeight = Math.max(currentHeight || 0, nextHeight);
+
+        return Math.abs((currentHeight || 0) - stableHeight) < 1
+          ? currentHeight
+          : stableHeight;
+      });
+    };
+
+    updateCardHeight();
+
+    if (!window.ResizeObserver) {
+      window.addEventListener("resize", updateCardHeight);
+
+      return () => window.removeEventListener("resize", updateCardHeight);
+    }
+
+    const resizeObserver = new ResizeObserver(updateCardHeight);
+
+    resizeObserver.observe(node);
+
+    return () => resizeObserver.disconnect();
+  }, [page, rows]);
+
+  const variants = reduceMotion
+    ? {
+        enter: { opacity: 0 },
+        center: { opacity: 1 },
+        exit: { opacity: 0 },
+      }
+    : {
+        enter: (pageDirection) => ({
+          opacity: 0,
+          x: pageDirection > 0 ? 72 : -72,
+          filter: "blur(6px)",
+        }),
+        center: {
+          opacity: 1,
+          x: 0,
+          filter: "blur(0px)",
+        },
+        exit: (pageDirection) => ({
+          opacity: 0,
+          x: pageDirection > 0 ? -72 : 72,
+          filter: "blur(6px)",
+        }),
+      };
+
+  return (
+    <div
+      className="relative overflow-hidden md:hidden"
+      style={cardMinHeight ? { height: `${cardMinHeight}px` } : undefined}
+    >
+      <AnimatePresence custom={direction} initial={false}>
+        {rows.map((row, index) => (
+          <motion.article
+            animate="center"
+            className="absolute inset-x-0 top-0 rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 shadow-[0_18px_45px_rgba(52,69,49,0.06)]"
+            custom={direction}
+            exit="exit"
+            initial="enter"
+            key={`${row.rowId}-${page}`}
+            ref={cardRef}
+            transition={{
+              duration: reduceMotion ? 0.18 : 0.48,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            variants={variants}
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1">
+                <p
+                  className="overflow-hidden whitespace-nowrap font-serif leading-none text-[var(--color-accent-dark)]"
+                  ref={(node) => {
+                    groupNameRefs.current[index] = node;
+                  }}
+                  style={{ fontSize: `${groupNameFontSize}px` }}
+                >
+                  {row.groupName || "Grupo sin nombre"}
+                </p>
+                <p
+                  className="mt-2 break-words text-[var(--color-muted)] [overflow-wrap:anywhere]"
                   style={detailTextStyle}
                 >
-                  <p className="break-words [overflow-wrap:anywhere]">
-                    {row.phone || "-"}
-                  </p>
-                  <p className="mt-1">
-                    {row.groupSize}{" "}
-                    {row.groupSize === 1 ? "persona" : "personas"}
-                  </p>
-                </div>
+                  {row.email || "-"}
+                </p>
+                <p
+                  className="mt-1 hidden break-words text-[var(--color-muted)] [overflow-wrap:anywhere] sm:block"
+                  style={detailTextStyle}
+                >
+                  {row.phone || "-"}
+                </p>
+                <p
+                  className="mt-2 hidden text-[var(--color-muted)] sm:block"
+                  style={detailTextStyle}
+                >
+                  {row.groupSize}{" "}
+                  {row.groupSize === 1 ? "persona" : "personas"}
+                </p>
 
+                <div className="mt-3 flex items-center justify-between gap-3 sm:hidden">
+                  <div
+                    className="min-w-0 text-[var(--color-muted)]"
+                    style={detailTextStyle}
+                  >
+                    <p className="break-words [overflow-wrap:anywhere]">
+                      {row.phone || "-"}
+                    </p>
+                    <p className="mt-1">
+                      {row.groupSize}{" "}
+                      {row.groupSize === 1 ? "persona" : "personas"}
+                    </p>
+                  </div>
+
+                  <MobileRowActions
+                    onDelete={() => onDelete(row.group)}
+                    onEdit={() => onEdit(row.group)}
+                  />
+                </div>
+              </div>
+
+              <div className="hidden sm:block">
                 <MobileRowActions
                   onDelete={() => onDelete(row.group)}
                   onEdit={() => onEdit(row.group)}
@@ -768,20 +893,13 @@ function MobileList({ onDelete, onEdit, rows }) {
               </div>
             </div>
 
-            <div className="hidden sm:block">
-              <MobileRowActions
-                onDelete={() => onDelete(row.group)}
-                onEdit={() => onEdit(row.group)}
-              />
+            <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
+              <InfoLine label="Alergias" value={row.allergyText} />
+              <InfoLine label="Transporte" value={row.transportText} />
             </div>
-          </div>
-
-          <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
-            <InfoLine label="Alergias" value={row.allergyText} />
-            <InfoLine label="Transporte" value={row.transportText} />
-          </div>
-        </article>
-      ))}
+          </motion.article>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }
@@ -847,12 +965,11 @@ function GroupEditor({ group, onClose, onSave }) {
   const [draft, setDraft] = useState(group);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
-  const guestDeleteName = guestDeleteTarget
-    ? [guestDeleteTarget.guest.name, guestDeleteTarget.guest.lastname]
-        .filter(Boolean)
-        .join(" ")
-    : "";
+  const renderFormItem = (index, children) => (
+    <CinematicStaggeredRevealItem index={index} isVisible key={index}>
+      {children}
+    </CinematicStaggeredRevealItem>
+  );
 
   useViewportScrollLock(true);
 
@@ -914,13 +1031,6 @@ function GroupEditor({ group, onClose, onSave }) {
     });
   };
 
-  const confirmRemoveGuest = () => {
-    if (!guestDeleteTarget) return;
-
-    removeGuest(guestDeleteTarget.index);
-    setGuestDeleteTarget(null);
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     const validationError = validateGroup(draft);
@@ -942,11 +1052,10 @@ function GroupEditor({ group, onClose, onSave }) {
 
   const dialog = (
     <div className="rsvp-dialog-overlay">
-      <form
+      <div
         aria-labelledby="group-editor-title"
         aria-modal="true"
         className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-7"
-        onSubmit={handleSubmit}
         role="dialog"
       >
         <div className="mb-6 flex items-start justify-between gap-4">
@@ -965,97 +1074,38 @@ function GroupEditor({ group, onClose, onSave }) {
           </IconButton>
         </div>
 
-        <ContactDetailsCard
+        <RsvpForm
+          addText="Invitado"
+          cancelText="Cancelar"
           contact={draft}
-          disableFilledFields={false}
+          deleteContextText="editor"
+          disableContactFields={false}
           errors={{}}
+          formError={error}
+          guests={draft.guests}
+          loading={saving}
+          onAddGuest={addGuest}
+          onCancel={onClose}
           onContactChange={updateContact}
+          onGuestChange={updateGuest}
+          onRemoveGuest={removeGuest}
+          onSubmit={handleSubmit}
+          renderItem={renderFormItem}
+          submitText="Guardar"
+          variant="admin"
         />
-
-        <div className="mt-6 space-y-4">
-          {draft.guests.map((guest, index) => (
-            <GuestCard
-              canRemove={draft.guests.length > 1}
-              errors={{}}
-              guest={guest}
-              index={index}
-              key={index}
-              onGuestChange={updateGuest}
-              onRemoveGuest={() => setGuestDeleteTarget({ guest, index })}
-            />
-          ))}
-        </div>
-
-        <FieldError>{error}</FieldError>
-
-        <div className="mt-6 flex flex-col gap-3 sm:grid sm:grid-cols-3">
-          <IconButton
-            disabled={draft.guests.length >= MAX_GUESTS || saving}
-            icon={<Plus size={16} strokeWidth={1.8} />}
-            label="Invitado"
-            showText="always"
-            tone="secondary"
-            onClick={addGuest}
-            type="button"
-          >
-            Invitado
-          </IconButton>
-
-          <IconButton
-            disabled={saving}
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label="Guardar"
-            showText="always"
-            tone="primary"
-            type="submit"
-          >
-            Guardar
-          </IconButton>
-          <IconButton
-            disabled={saving}
-            icon={<X size={16} strokeWidth={1.8} />}
-            label="Cancelar"
-            onClick={onClose}
-            showText="always"
-            tone="secondary"
-            type="button"
-          >
-            Cancelar
-          </IconButton>
-        </div>
-      </form>
+      </div>
     </div>
   );
 
-  return (
-    <>
-      {createPortal(dialog, document.body)}
-
-      {guestDeleteTarget && (
-        <DeleteDialog
-          message={
-            <>
-              Se eliminará{" "}
-              {guestDeleteName
-                ? `a ${guestDeleteName}`
-                : `el invitado ${guestDeleteTarget.index + 1}`}
-              . Esta acción no se puede deshacer desde el editor.
-            </>
-          }
-          onCancel={() => setGuestDeleteTarget(null)}
-          onConfirm={confirmRemoveGuest}
-          title="Eliminar invitado"
-        />
-      )}
-    </>
-  );
+  return createPortal(dialog, document.body);
 }
 
-function Pagination({ onNext, onPrev, page, totalPages }) {
+function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
   return (
     <div className="mt-5 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
       <p className="text-center">
-        Página {page} de {totalPages}
+        {isMobileList ? "Confirmación" : "Página"} {page} de {totalPages}
       </p>
 
       <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
@@ -1182,9 +1232,13 @@ function createDraftGroup(group) {
     phone: group.phone || "",
     guests: group.guests.map((guest) => ({
       ...createEmptyGuest(),
-      ...guest,
+      name: guest.name || "",
+      lastname: guest.lastname || "",
       allergies: Array.isArray(guest.allergies) ? guest.allergies : [],
-      busNeeded: hasBus(guest),
+      otherAllergies: guest.otherAllergies || "",
+      comments: guest.comments || "",
+      outboundBus: guest.outboundBus || createEmptyGuest().outboundBus,
+      returnBus: guest.returnBus || createEmptyGuest().returnBus,
     })),
   };
 }
@@ -1245,9 +1299,8 @@ function buildGroupRateText(value, total) {
 
 function hasBus(guest) {
   return Boolean(
-    guest.busNeeded ||
     (guest.outboundBus && guest.outboundBus !== "No") ||
-    (guest.returnBus && guest.returnBus !== "No"),
+      (guest.returnBus && guest.returnBus !== "No"),
   );
 }
 

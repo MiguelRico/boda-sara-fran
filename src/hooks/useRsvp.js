@@ -20,11 +20,15 @@ const createInitialPopup = () => ({
 
 const hasValidationErrors = (errors) => Object.keys(errors).length > 0;
 
-const normalizeGuest = (guest) => ({
+const normalizeGuest = (guest = {}) => ({
   ...createEmptyGuest(),
-  ...guest,
-  allergies: Array.isArray(guest?.allergies) ? guest.allergies : [],
-  busNeeded: Boolean(guest?.busNeeded),
+  name: guest.name || "",
+  lastname: guest.lastname || "",
+  allergies: Array.isArray(guest.allergies) ? guest.allergies : [],
+  otherAllergies: guest.otherAllergies || "",
+  comments: guest.comments || "",
+  outboundBus: guest.outboundBus || createEmptyGuest().outboundBus,
+  returnBus: guest.returnBus || createEmptyGuest().returnBus,
 });
 
 const normalizeGuests = (guests) =>
