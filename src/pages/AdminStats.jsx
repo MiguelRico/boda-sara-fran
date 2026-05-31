@@ -1,7 +1,7 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
@@ -9,12 +9,14 @@ import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
 import HeaderSection from "../components/common/HeaderSection";
+import StatusNotice from "../components/common/StatusNotice";
 import {
   COMMON_ALLERGIES,
   OUTBOUND_BUS_OPTIONS,
   RETURN_BUS_OPTIONS,
 } from "../constants/rsvp";
 import { findAllGroups } from "../services/rsvpService";
+import { getGroupsFromResponse } from "../utils/rsvpGroups";
 
 const DONUT_COLORS = [
   "#556b52",
@@ -50,7 +52,7 @@ export default function AdminStats() {
 
     try {
       const response = await findAllGroups({ password: ADMIN_PASSWORD });
-      const groups = normalizeGroupsResponse(response);
+      const groups = getGroupsFromResponse(response);
 
       setState({
         groups,
@@ -64,7 +66,7 @@ export default function AdminStats() {
         groups: [],
         loading: false,
         error:
-          "No se pudieron cargar las estadisticas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
+          "No se pudieron cargar las estadísticas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
       });
     }
   }, []);
@@ -104,10 +106,7 @@ export default function AdminStats() {
 
           {state.error && (
             <CinematicStaggeredRevealItem index={1} isVisible={statsInView}>
-              <div className="premium-card mb-5 flex items-start gap-4 border-red-200 bg-red-50/70 text-red-700">
-                <AlertTriangle className="mt-1 shrink-0" size={20} />
-                <p className="text-sm leading-relaxed">{state.error}</p>
-              </div>
+              <StatusNotice tone="error">{state.error}</StatusNotice>
             </CinematicStaggeredRevealItem>
           )}
 
@@ -415,15 +414,6 @@ function StatsSkeleton() {
       ))}
     </div>
   );
-}
-
-function normalizeGroupsResponse(response) {
-  if (Array.isArray(response)) return response;
-  if (Array.isArray(response?.groups)) return response.groups;
-  if (Array.isArray(response?.data)) return response.data;
-  if (Array.isArray(response?.items)) return response.items;
-
-  return [];
 }
 
 function buildStats(groups) {

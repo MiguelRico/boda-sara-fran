@@ -1,50 +1,35 @@
 import CinematicSection from "../cinematic/CinematicSection";
-import ImageCarousel from "../common/ImageCarousel";
 import HeaderSection from "../common/HeaderSection";
-
-const ceremonyImages = [
-  {
-    src: "/carousel/aguas-del-pino-1.jpg",
-    alt: "Exterior de Aguas del Pino",
-    caption: "Un entorno natural con vistas al Río Piedras.",
-  },
-  {
-    src: "/carousel/aguas-del-pino-2.jpg",
-    alt: "Ceremonia exterior en Aguas del Pino",
-    caption: "Una ceremonia al aire libre, rodeada de luz y naturaleza.",
-  },
-];
-
-const MAP_URL =
-  "https://www.google.com/maps/search/?api=1&query=Aguas%20del%20Pino%2C%20Ctra%20A-5052%2C%20km%204%2C%20Punta%20Umbr%C3%ADa%2C%20Huelva";
+import ImageCarousel from "../common/ImageCarousel";
+import { siteContent } from "../../config/siteContent";
 
 export default function CeremonySection() {
+  const { ceremony } = siteContent.details;
+
   return (
     <CinematicSection id="ceremony" className="surface-soft">
       <div className="mx-auto max-w-6xl">
         <HeaderSection
-          eyebrow="Un lugar para recordar"
-          title="Ceremonia"
-          text="Un espacio rodeado de naturaleza y con vistas al entorno del Río Piedras."
+          eyebrow={ceremony.eyebrow}
+          title={ceremony.title}
+          text={ceremony.text}
         >
-          <p className="text-eyebrow mt-4">
-            Aguas del Pino, Ctra. A-5052, km 4 · Punta Umbría, Huelva.
-          </p>
+          <p className="text-eyebrow mt-4">{ceremony.address}</p>
 
           <div className="mt-4">
             <a
-              href={MAP_URL}
+              href={ceremony.mapUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary"
             >
-              Cómo llegar
+              {ceremony.mapLabel}
             </a>
           </div>
         </HeaderSection>
 
         <ImageCarousel
-          images={ceremonyImages}
+          images={ceremony.images}
           className="mx-auto mt-4 w-full max-w-4xl"
           imageClassName="aspect-[4/5] w-full sm:aspect-[16/10] lg:aspect-[4/3]"
         />

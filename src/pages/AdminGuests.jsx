@@ -27,6 +27,8 @@ import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import HeaderSection from "../components/common/HeaderSection";
+import IconButton from "../components/common/IconButton";
+import StatusNotice from "../components/common/StatusNotice";
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
 import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
@@ -44,6 +46,7 @@ import {
 } from "../components/rsvp/FormPrimitives";
 import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
+import { normalizeAdminGroups } from "../utils/rsvpGroups";
 
 const pageSize = 8;
 const pageDataSwapDelay = 680;
@@ -75,6 +78,16 @@ const createInitialPopup = () => ({
   open: false,
   title: "",
   type: "success",
+});
+
+const createAdminPopup = ({ message, title, type = "success" }) => ({
+  closeText: "Cerrar",
+  closeTo: null,
+  eyebrow: type === "success" ? "Confirmación" : "Aviso",
+  message,
+  open: true,
+  title,
+  type,
 });
 
 export default function AdminGuests() {
@@ -111,7 +124,7 @@ export default function AdminGuests() {
       const response = await findAllGroups({ password: ADMIN_PASSWORD });
 
       setState({
-        groups: normalizeGroupsResponse(response),
+        groups: normalizeAdminGroups(response),
         loading: false,
         error: "",
       });
@@ -242,7 +255,7 @@ export default function AdminGuests() {
 
     try {
       spinner.show(
-        isCreation ? "Creando confirmacion..." : "Guardando confirmacion...",
+        isCreation ? "Creando confirmación..." : "Guardando confirmación...",
       );
 
       await saveAdminGroup({
@@ -252,29 +265,24 @@ export default function AdminGuests() {
 
       setEditingGroup(null);
       await loadGuests({ showLoading: false });
-      setPopup({
-        closeText: "Cerrar",
-        closeTo: null,
-        eyebrow: "Confirmacion",
-        message: isCreation
-          ? "La confirmacion se ha creado correctamente."
-          : "La confirmacion se ha actualizado correctamente.",
-        open: true,
-        title: isCreation ? "Confirmacion creada" : "Cambios guardados",
-        type: "success",
-      });
+      setPopup(
+        createAdminPopup({
+          message: isCreation
+            ? "La confirmación se ha creado correctamente."
+            : "La confirmación se ha actualizado correctamente.",
+          title: isCreation ? "Confirmación creada" : "Cambios guardados",
+        }),
+      );
     } catch (error) {
       console.error(error);
-      setPopup({
-        closeText: "Cerrar",
-        closeTo: null,
-        eyebrow: "Aviso",
-        message:
-          "No se ha podido guardar la confirmacion. Revisa los datos e intentalo de nuevo.",
-        open: true,
-        title: "Ha ocurrido un problema",
-        type: "error",
-      });
+      setPopup(
+        createAdminPopup({
+          message:
+            "No se ha podido guardar la confirmación. Revisa los datos e inténtalo de nuevo.",
+          title: "Ha ocurrido un problema",
+          type: "error",
+        }),
+      );
     } finally {
       spinner.hide();
     }
@@ -284,7 +292,7 @@ export default function AdminGuests() {
     if (!deleteTarget) return;
 
     try {
-      spinner.show("Eliminando confirmacion...");
+      spinner.show("Eliminando confirmación...");
 
       await deleteAdminGroup({
         groupId: deleteTarget.groupId,
@@ -293,27 +301,22 @@ export default function AdminGuests() {
 
       setDeleteTarget(null);
       await loadGuests({ showLoading: false });
-      setPopup({
-        closeText: "Cerrar",
-        closeTo: null,
-        eyebrow: "Confirmacion",
-        message: "La confirmacion se ha eliminado correctamente.",
-        open: true,
-        title: "Confirmacion eliminada",
-        type: "success",
-      });
+      setPopup(
+        createAdminPopup({
+          message: "La confirmación se ha eliminado correctamente.",
+          title: "Confirmación eliminada",
+        }),
+      );
     } catch (error) {
       console.error(error);
-      setPopup({
-        closeText: "Cerrar",
-        closeTo: null,
-        eyebrow: "Aviso",
-        message:
-          "No se ha podido eliminar la confirmacion. Intentalo de nuevo en unos minutos.",
-        open: true,
-        title: "Ha ocurrido un problema",
-        type: "error",
-      });
+      setPopup(
+        createAdminPopup({
+          message:
+            "No se ha podido eliminar la confirmación. Inténtalo de nuevo en unos minutos.",
+          title: "Ha ocurrido un problema",
+          type: "error",
+        }),
+      );
     } finally {
       spinner.hide();
     }
@@ -338,14 +341,14 @@ export default function AdminGuests() {
               eyebrow="Panel privado"
               title="Lista de invitados"
               titleAs="h1"
-              text="Gestion de confirmaciones, datos de contacto, alergias y
+              text="Gestión de confirmaciones, datos de contacto, alergias y
                   transporte"
             />
           </CinematicStaggeredRevealItem>
 
           {state.error && (
             <CinematicStaggeredRevealItem index={1} isVisible={guestsInView}>
-              <Notice tone="error">{state.error}</Notice>
+              <StatusNotice tone="error">{state.error}</StatusNotice>
             </CinematicStaggeredRevealItem>
           )}
 
@@ -376,7 +379,7 @@ export default function AdminGuests() {
                   </h2>
                   <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
                     {pagedGroupCount}{" "}
-                    {pagedGroupCount === 1 ? "grupo" : "grupos"} en esta pagina
+                    {pagedGroupCount === 1 ? "grupo" : "grupos"} en esta página
                     · {pagedGuestCount}{" "}
                     {pagedGuestCount === 1 ? "persona" : "personas"}
                   </p>
@@ -465,7 +468,7 @@ export default function AdminGuests() {
                               Sin resultados
                             </p>
                             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-                              Prueba con otra busqueda o cambia el filtro
+                        Prueba con otra búsqueda o cambia el filtro
                               seleccionado.
                             </p>
                           </div>
@@ -540,7 +543,7 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
             <input
               className={`${inputClassName} pl-12`}
               onChange={(event) => onQueryChange(event.target.value)}
-              placeholder="Email, telefono, grupo, nombre o apellidos"
+              placeholder="Email, teléfono, grupo, nombre o apellidos"
               type="search"
               value={query}
             />
@@ -923,7 +926,7 @@ function GroupEditor({ group, onClose, onSave }) {
       >
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <p className="section-eyebrow mb-2">Confirmacion</p>
+            <p className="section-eyebrow mb-2">Confirmación</p>
             <h2
               className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
               id="group-editor-title"
@@ -1015,14 +1018,14 @@ function DeleteDialog({ group, onCancel, onConfirm }) {
           className="mt-4 font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
           id="delete-dialog-title"
         >
-          Eliminar confirmacion
+          Eliminar confirmación
         </h2>
         <p
           className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]"
           id="delete-dialog-message"
         >
           Se eliminara el grupo asociado a {group.email || group.groupId}. Esta
-          accion no se puede deshacer desde el panel.
+          acción no se puede deshacer desde el panel.
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
@@ -1051,7 +1054,7 @@ function Pagination({ onNext, onPrev, page, totalPages }) {
   return (
     <div className="mt-5 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
       <p className="text-center">
-        Pagina {page} de {totalPages}
+        Página {page} de {totalPages}
       </p>
 
       <div className="flex gap-3">
@@ -1076,25 +1079,6 @@ function Pagination({ onNext, onPrev, page, totalPages }) {
   );
 }
 
-function IconButton({ children, label, onClick, tone = "default" }) {
-  const toneClass =
-    tone === "danger"
-      ? "border-red-200 bg-red-50 text-red-500 hover:bg-red-100"
-      : "border-[var(--color-border-strong)] bg-white/55 text-[var(--color-accent-dark)] hover:bg-white";
-
-  return (
-    <button
-      aria-label={label}
-      className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${toneClass}`}
-      onClick={onClick}
-      title={label}
-      type="button"
-    >
-      {children}
-    </button>
-  );
-}
-
 function InfoLine({ label, value }) {
   return (
     <div className="flex justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-white/40 p-3">
@@ -1102,19 +1086,6 @@ function InfoLine({ label, value }) {
       <span className="text-right text-[var(--color-accent-dark)]">
         {value}
       </span>
-    </div>
-  );
-}
-
-function Notice({ children, tone = "success" }) {
-  const toneClass =
-    tone === "error"
-      ? "border-red-200 bg-red-50/70 text-red-700"
-      : "border-[var(--color-border)] bg-white/55 text-[var(--color-accent-dark)]";
-
-  return (
-    <div className={`premium-card mb-5 text-sm leading-relaxed ${toneClass}`}>
-      {children}
     </div>
   );
 }
@@ -1133,20 +1104,6 @@ function GuestsSkeleton() {
       ))}
     </div>
   );
-}
-
-function normalizeGroupsResponse(response) {
-  const groups = Array.isArray(response)
-    ? response
-    : response?.groups || response?.data || response?.items || [];
-
-  return groups.map((group) => ({
-    groupId: group.groupId || group.email || "",
-    email: group.email || group.groupId || "",
-    groupName: group.groupName || group.nombre_grupo || "",
-    phone: group.phone || "",
-    guests: Array.isArray(group.guests) ? group.guests : [],
-  }));
 }
 
 function buildGroupRows(groups) {
@@ -1226,7 +1183,7 @@ function createDraftGroup(group) {
 function validateGroup(group) {
   if (!group.email.trim()) return "El email es obligatorio.";
   if (!group.groupName?.trim()) return "El nombre de grupo es obligatorio.";
-  if (!group.phone.trim()) return "El telefono es obligatorio.";
+  if (!group.phone.trim()) return "El teléfono es obligatorio.";
   if (!group.guests.length) return "Debe haber al menos un invitado.";
 
   const invalidGuest = group.guests.find(
@@ -1304,7 +1261,7 @@ function normalizeText(value) {
 function downloadCsv(rows) {
   const headers = [
     "email",
-    "telefono",
+    "teléfono",
     "nombre_grupo",
     "total_invitados",
     "alergias",

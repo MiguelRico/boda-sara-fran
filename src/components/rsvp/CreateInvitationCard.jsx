@@ -1,14 +1,6 @@
-import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
-import PrimaryButton from "../common/PrimaryButton";
+import { FormCard } from "./FormPrimitives";
 
-export default function SearchInvitationCard({
-  email,
-  emailError,
-  loading,
-  onCreateNew,
-  onEmailChange,
-  onSearchInvitation,
-}) {
+export default function CreateInvitationCard({ onCreateNew }) {
   return (
     <FormCard>
       <div className="mb-4">
@@ -17,11 +9,11 @@ export default function SearchInvitationCard({
         <h2 className="font-serif text-3xl">Confirmar asistencia</h2>
 
         <p className="mt-2 text-sm leading-relaxed">
-          Confirma tu asistencia y la de tu familia
+          Confirma tu asistencia y la de tu familia.
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row mt-4">
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row">
         <button
           type="button"
           onClick={onCreateNew}
