@@ -30,7 +30,6 @@ import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
-import StatusNotice from "../components/ui/StatusNotice";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
@@ -349,12 +348,6 @@ export default function AdminGuests() {
             />
           </CinematicStaggeredRevealItem>
 
-          {state.error && (
-            <CinematicStaggeredRevealItem index={1} isVisible={guestsInView}>
-              <StatusNotice tone="error">{state.error}</StatusNotice>
-            </CinematicStaggeredRevealItem>
-          )}
-
           <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
             <FiltersCard
               filter={filter}
@@ -531,6 +524,15 @@ export default function AdminGuests() {
         open={popup.open}
         title={popup.title}
         type={popup.type}
+      />
+
+      <StatusDialog
+        eyebrow="Aviso"
+        message={state.error}
+        onClose={() => setState((current) => ({ ...current, error: "" }))}
+        open={Boolean(state.error)}
+        title="Ha ocurrido un problema"
+        type="error"
       />
     </CinematicPage>
   );

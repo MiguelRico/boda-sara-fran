@@ -10,7 +10,7 @@ import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStagg
 import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
-import StatusNotice from "../components/ui/StatusNotice";
+import StatusDialog from "../components/ui/StatusDialog";
 import { COMMON_ALLERGIES } from "../constants/rsvp";
 import { findAllGroups } from "../services/rsvpService";
 import { getGroupsFromResponse } from "../utils/rsvpGroups";
@@ -116,12 +116,6 @@ export default function AdminStats() {
             />
           </CinematicStaggeredRevealItem>
 
-          {state.error && (
-            <CinematicStaggeredRevealItem index={1} isVisible={statsInView}>
-              <StatusNotice tone="error">{state.error}</StatusNotice>
-            </CinematicStaggeredRevealItem>
-          )}
-
           <CinematicStaggeredRevealItem index={2} isVisible={statsInView}>
             <StatsOverview
               loading={state.loading}
@@ -146,6 +140,15 @@ export default function AdminStats() {
           )}
         </div>
       </CinematicSection>
+
+      <StatusDialog
+        eyebrow="Aviso"
+        message={state.error}
+        onClose={() => setState((current) => ({ ...current, error: "" }))}
+        open={Boolean(state.error)}
+        title="Ha ocurrido un problema"
+        type="error"
+      />
     </CinematicPage>
   );
 }
