@@ -5,12 +5,14 @@ import PrimaryButton from "../common/PrimaryButton";
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 
 export default function RsvpStatusDialog({
+  children,
   closeText = "Cerrar",
   closeTo,
   eyebrow,
   message,
   onClose,
   open,
+  role = "alertdialog",
   title,
   type = "success",
 }) {
@@ -32,7 +34,7 @@ export default function RsvpStatusDialog({
     <div className="rsvp-dialog-overlay">
       <div
         className="premium-card rsvp-dialog-card"
-        role="alertdialog"
+        role={role}
         aria-modal="true"
         aria-labelledby="rsvp-dialog-title"
         aria-describedby="rsvp-dialog-message"
@@ -54,6 +56,8 @@ export default function RsvpStatusDialog({
         >
           {message}
         </p>
+
+        {children}
 
         <PrimaryButton
           className="mt-8"
