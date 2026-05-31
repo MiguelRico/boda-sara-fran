@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CircleHelp, Mail, Phone } from "lucide-react";
 
 import IconButton from "../ui/IconButton";
-import RsvpStatusDialog from "../rsvp/RsvpStatusDialog";
+import StatusDialog from "../ui/StatusDialog";
 import { siteContent } from "../../config/siteContent";
 
 function formatPhoneHref(phone) {
@@ -29,7 +29,7 @@ export default function HelpAccessButton() {
         </IconButton>
       </div>
 
-      <RsvpStatusDialog
+      <StatusDialog
         closeText="Cerrar"
         eyebrow={help.eyebrow}
         message={help.text}
@@ -76,7 +76,7 @@ export default function HelpAccessButton() {
             </div>
           ))}
         </div>
-      </RsvpStatusDialog>
+      </StatusDialog>
     </>
   );
 }

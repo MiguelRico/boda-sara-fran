@@ -6,7 +6,7 @@ import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import HeaderSection from "../components/ui/HeaderSection";
 import CreateInvitationCard from "../components/rsvp/CreateInvitationCard";
-import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
+import StatusDialog from "../components/ui/StatusDialog";
 import SearchInvitationCard from "../components/rsvp/SearchInvitationCard";
 import Spinner from "../components/ui/Spinner";
 import { siteContent } from "../config/siteContent";
@@ -86,7 +86,7 @@ export function RsvpPageShell({ children, spinner, wrapperRef }) {
 
 export function RsvpStatus({ closePopup, popup }) {
   return (
-    <RsvpStatusDialog
+    <StatusDialog
       closeText={popup.closeText}
       closeTo={popup.closeTo}
       eyebrow={popup.eyebrow}

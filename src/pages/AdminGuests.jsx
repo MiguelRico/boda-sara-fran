@@ -34,7 +34,7 @@ import StatusNotice from "../components/ui/StatusNotice";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
-import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
+import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import { createEmptyGuest, MAX_GUESTS } from "../constants/rsvp";
 import {
@@ -522,7 +522,7 @@ export default function AdminGuests() {
         />
       )}
 
-      <RsvpStatusDialog
+      <StatusDialog
         closeText={popup.closeText}
         closeTo={popup.closeTo}
         eyebrow={popup.eyebrow}

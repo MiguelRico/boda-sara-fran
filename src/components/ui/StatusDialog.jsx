@@ -1,10 +1,11 @@
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
-import IconButton from "../ui/IconButton";
-import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 
-export default function RsvpStatusDialog({
+import useViewportScrollLock from "../../hooks/useViewportScrollLock";
+import IconButton from "./IconButton";
+
+export default function StatusDialog({
   children,
   closeText = "Cerrar",
   closeTo,
@@ -36,22 +37,22 @@ export default function RsvpStatusDialog({
         className="premium-card rsvp-dialog-card"
         role={role}
         aria-modal="true"
-        aria-labelledby="rsvp-dialog-title"
-        aria-describedby="rsvp-dialog-message"
+        aria-labelledby="status-dialog-title"
+        aria-describedby="status-dialog-message"
       >
         <p className="section-eyebrow mb-3">
           {eyebrow ?? (type === "success" ? "Confirmado" : "Aviso")}
         </p>
 
         <h2
-          id="rsvp-dialog-title"
+          id="status-dialog-title"
           className="font-serif text-3xl text-[var(--color-accent-dark)]"
         >
           {title}
         </h2>
 
         <p
-          id="rsvp-dialog-message"
+          id="status-dialog-message"
           className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]"
         >
           {message}
