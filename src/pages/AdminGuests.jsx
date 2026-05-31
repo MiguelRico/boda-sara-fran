@@ -29,6 +29,8 @@ import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStagg
 import HeaderSection from "../components/common/HeaderSection";
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
+import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
+import Spinner from "../components/spinner/Spinner";
 import { createEmptyGuest, MAX_GUESTS } from "../constants/rsvp";
 import {
   deleteAdminGroup,
@@ -40,6 +42,7 @@ import {
   inputClassName,
   Label,
 } from "../components/rsvp/FormPrimitives";
+import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
 
 const pageSize = 8;
@@ -64,7 +67,18 @@ const emptyState = {
   error: "",
 };
 
+const createInitialPopup = () => ({
+  closeText: "Cerrar",
+  closeTo: null,
+  eyebrow: "",
+  message: "",
+  open: false,
+  title: "",
+  type: "success",
+});
+
 export default function AdminGuests() {
+  const spinner = useSpinner();
   const guestsRef = useRef(null);
   const tableCardRef = useRef(null);
   const tableStartRef = useRef(null);
@@ -86,7 +100,7 @@ export default function AdminGuests() {
   const [pageLoadingMinHeight, setPageLoadingMinHeight] = useState(null);
   const [editingGroup, setEditingGroup] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [feedback, setFeedback] = useState("");
+  const [popup, setPopup] = useState(createInitialPopup);
 
   const loadGuests = useCallback(async ({ showLoading = true } = {}) => {
     if (showLoading) {
@@ -216,41 +230,92 @@ export default function AdminGuests() {
     });
   };
 
+  const closePopup = () => {
+    setPopup((current) => ({
+      ...current,
+      open: false,
+    }));
+  };
+
   const handleSaveGroup = async (group) => {
-    setFeedback("");
+    const isCreation = !editingGroup?.groupId;
 
     try {
+      spinner.show(
+        isCreation ? "Creando confirmacion..." : "Guardando confirmacion...",
+      );
+
       await saveAdminGroup({
         group,
         password: ADMIN_PASSWORD,
       });
 
       setEditingGroup(null);
-      setFeedback("Confirmacion guardada correctamente.");
-      await loadGuests();
+      await loadGuests({ showLoading: false });
+      setPopup({
+        closeText: "Cerrar",
+        closeTo: null,
+        eyebrow: "Confirmacion",
+        message: isCreation
+          ? "La confirmacion se ha creado correctamente."
+          : "La confirmacion se ha actualizado correctamente.",
+        open: true,
+        title: isCreation ? "Confirmacion creada" : "Cambios guardados",
+        type: "success",
+      });
     } catch (error) {
       console.error(error);
-      setFeedback("No se pudo guardar la confirmacion.");
+      setPopup({
+        closeText: "Cerrar",
+        closeTo: null,
+        eyebrow: "Aviso",
+        message:
+          "No se ha podido guardar la confirmacion. Revisa los datos e intentalo de nuevo.",
+        open: true,
+        title: "Ha ocurrido un problema",
+        type: "error",
+      });
+    } finally {
+      spinner.hide();
     }
   };
 
   const handleDeleteGroup = async () => {
     if (!deleteTarget) return;
 
-    setFeedback("");
-
     try {
+      spinner.show("Eliminando confirmacion...");
+
       await deleteAdminGroup({
         groupId: deleteTarget.groupId,
         password: ADMIN_PASSWORD,
       });
 
       setDeleteTarget(null);
-      setFeedback("Confirmacion eliminada correctamente.");
-      await loadGuests();
+      await loadGuests({ showLoading: false });
+      setPopup({
+        closeText: "Cerrar",
+        closeTo: null,
+        eyebrow: "Confirmacion",
+        message: "La confirmacion se ha eliminado correctamente.",
+        open: true,
+        title: "Confirmacion eliminada",
+        type: "success",
+      });
     } catch (error) {
       console.error(error);
-      setFeedback("No se pudo eliminar la confirmacion.");
+      setPopup({
+        closeText: "Cerrar",
+        closeTo: null,
+        eyebrow: "Aviso",
+        message:
+          "No se ha podido eliminar la confirmacion. Intentalo de nuevo en unos minutos.",
+        open: true,
+        title: "Ha ocurrido un problema",
+        type: "error",
+      });
+    } finally {
+      spinner.hide();
     }
   };
 
@@ -260,6 +325,8 @@ export default function AdminGuests() {
 
   return (
     <CinematicPage>
+      {spinner.loading && <Spinner text={spinner.text} />}
+
       <CinematicSection
         className="surface-soft"
         innerClassName="max-w-7xl py-6"
@@ -279,12 +346,6 @@ export default function AdminGuests() {
           {state.error && (
             <CinematicStaggeredRevealItem index={1} isVisible={guestsInView}>
               <Notice tone="error">{state.error}</Notice>
-            </CinematicStaggeredRevealItem>
-          )}
-
-          {feedback && (
-            <CinematicStaggeredRevealItem index={1} isVisible={guestsInView}>
-              <Notice>{feedback}</Notice>
             </CinematicStaggeredRevealItem>
           )}
 
@@ -420,7 +481,6 @@ export default function AdminGuests() {
 
                     <Pagination
                       page={page}
-                      total={pagedGroupCount}
                       totalPages={totalPages}
                       onNext={() => handlePageChange(page + 1)}
                       onPrev={() => handlePageChange(page - 1)}
@@ -448,6 +508,17 @@ export default function AdminGuests() {
           onConfirm={handleDeleteGroup}
         />
       )}
+
+      <RsvpStatusDialog
+        closeText={popup.closeText}
+        closeTo={popup.closeTo}
+        eyebrow={popup.eyebrow}
+        message={popup.message}
+        onClose={closePopup}
+        open={popup.open}
+        title={popup.title}
+        type={popup.type}
+      />
     </CinematicPage>
   );
 }
@@ -889,7 +960,7 @@ function GroupEditor({ group, onClose, onSave }) {
 
         <FieldError>{error}</FieldError>
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-between">
+        <div className="mt-6 flex flex-col gap-3 sm:grid sm:grid-cols-3">
           <button
             className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={draft.guests.length >= MAX_GUESTS || saving}
@@ -900,23 +971,21 @@ function GroupEditor({ group, onClose, onSave }) {
             Invitado
           </button>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={saving}
-              type="submit"
-            >
-              Guardar
-            </button>
-            <button
-              className="btn-secondary"
-              disabled={saving}
-              onClick={onClose}
-              type="button"
-            >
-              Cancelar
-            </button>
-          </div>
+          <button
+            className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={saving}
+            type="submit"
+          >
+            Guardar
+          </button>
+          <button
+            className="btn-secondary"
+            disabled={saving}
+            onClick={onClose}
+            type="button"
+          >
+            Cancelar
+          </button>
         </div>
       </form>
     </div>
@@ -978,7 +1047,7 @@ function DeleteDialog({ group, onCancel, onConfirm }) {
   return createPortal(dialog, document.body);
 }
 
-function Pagination({ onNext, onPrev, page, total, totalPages }) {
+function Pagination({ onNext, onPrev, page, totalPages }) {
   return (
     <div className="mt-5 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
       <p className="text-center">

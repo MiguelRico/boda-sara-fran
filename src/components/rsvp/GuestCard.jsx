@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Trash2 } from "lucide-react";
 import {
   COMMON_ALLERGIES,
   OUTBOUND_BUS_OPTIONS,
@@ -24,22 +25,20 @@ export default function GuestCard({
 
   return (
     <FormCard>
-      <div className="mb-4 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="section-eyebrow mb-3">Invitado {index + 1}</p>
-
-          <h3 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-            Información del invitado
-          </h3>
-        </div>
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <h3 className="font-serif text-3xl text-[var(--color-accent-dark)]">
+          Invitado {index + 1}
+        </h3>
 
         {canRemove && (
           <button
             type="button"
             onClick={() => onRemoveGuest(index)}
-            className="rounded-full border border-red-200 bg-red-50 px-5 py-3 text-xs uppercase tracking-[0.18em] text-red-500 transition hover:bg-red-100"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-500 transition hover:bg-red-100"
+            aria-label={`Eliminar invitado ${index + 1}`}
+            title="Eliminar"
           >
-            Eliminar
+            <Trash2 size={16} strokeWidth={1.8} />
           </button>
         )}
       </div>
