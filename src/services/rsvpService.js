@@ -69,7 +69,10 @@ export const findAllGroups = async ({ password } = {}) => {
 };
 
 export const saveGroup = async (payload) => {
-  await sendToRsvpApi(payload);
+  await sendToRsvpApi({
+    ...payload,
+    action: "save",
+  });
 
   return {
     success: true,

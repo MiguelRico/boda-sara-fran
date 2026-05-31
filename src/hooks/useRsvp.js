@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { createEmptyGuest, MAX_GUESTS } from "../constants/rsvp";
 import {
@@ -18,22 +18,42 @@ const createInitialPopup = () => ({
   message: "",
 });
 
-export default function useRsvp(spinner) {
+const hasValidationErrors = (errors) => Object.keys(errors).length > 0;
+
+const normalizeGuest = (guest) => ({
+  ...createEmptyGuest(),
+  ...guest,
+  allergies: Array.isArray(guest?.allergies) ? guest.allergies : [],
+  busNeeded: Boolean(guest?.busNeeded),
+});
+
+const normalizeGuests = (guests) =>
+  Array.isArray(guests) && guests.length
+    ? guests.map(normalizeGuest)
+    : [createEmptyGuest()];
+
+export default function useRsvp(spinner, { mode = "search" } = {}) {
   const { hide, show } = spinner;
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
   const groupIdFromUrl = searchParams.get("groupId");
-  const hasGroupId = Boolean(groupIdFromUrl);
+  const isEdition = mode === "edit";
+  const navigationGroup =
+    isEdition && location.state?.group?.email === groupIdFromUrl
+      ? location.state.group
+      : null;
 
-  const [mode, setMode] = useState(null);
-  const [isEdition, setIsEdition] = useState(false);
-  const [groupId, setGroupId] = useState(null);
-  const [contact, setContact] = useState({
-    email: "",
-    groupName: "",
-    phone: "",
-  });
-  const [guests, setGuests] = useState([createEmptyGuest()]);
+  const [groupId, setGroupId] = useState(() => navigationGroup?.email || null);
+  const [contact, setContact] = useState(() => ({
+    email: navigationGroup?.email || "",
+    groupName:
+      navigationGroup?.groupName || navigationGroup?.nombre_grupo || "",
+    phone: navigationGroup?.phone || "",
+  }));
+  const [guests, setGuests] = useState(() =>
+    normalizeGuests(navigationGroup?.guests),
+  );
   const [errors, setErrors] = useState({});
   const [popup, setPopup] = useState(createInitialPopup);
 
@@ -53,9 +73,7 @@ export default function useRsvp(spinner) {
       groupName: response.groupName || response.nombre_grupo || "",
       phone: response.phone,
     });
-    setGuests(response.guests);
-    setMode("form");
-    setIsEdition(true);
+    setGuests(normalizeGuests(response.guests));
   }, []);
 
   const handleGuestChange = (index, field, value) => {
@@ -102,13 +120,18 @@ export default function useRsvp(spinner) {
     }));
   };
 
+  const handleCreateNew = () => {
+    navigate("/rsvp/create");
+  };
+
   const handleSearchInvitation = async () => {
     const emailError = validateRsvpEmail(contact.email);
     const validationErrors = emailError ? { email: emailError } : {};
+    let keepSpinnerUntilNavigation = false;
 
     setErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length > 0) return;
+    if (hasValidationErrors(validationErrors)) return;
 
     try {
       show("Buscando confirmación...");
@@ -128,8 +151,10 @@ export default function useRsvp(spinner) {
         return;
       }
 
-      loadFoundGroup(response);
-      window.history.replaceState(null, "", `/rsvp?groupId=${response.email}`);
+      navigate(`/rsvp/edit?groupId=${encodeURIComponent(response.email)}`, {
+        state: { group: response },
+      });
+      keepSpinnerUntilNavigation = true;
     } catch (error) {
       console.error(error);
 
@@ -140,17 +165,13 @@ export default function useRsvp(spinner) {
         type: "error",
         title: "Ha ocurrido un problema",
         message:
-          "Ha ocurrido un error buscando tu confirmación. Por favor, inténtalo de nuevo en unos minutos. Si el problema persiste ponte en contacto con Sara ó Fran.",
+          "Ha ocurrido un error buscando tu confirmación. Por favor, inténtalo de nuevo en unos minutos. Si el problema persiste ponte en contacto con Sara o Fran.",
       });
     } finally {
-      hide();
+      if (!keepSpinnerUntilNavigation) {
+        hide();
+      }
     }
-  };
-
-  const handleCreateNew = () => {
-    setMode("form");
-    setGroupId(null);
-    setIsEdition(false);
   };
 
   const handleSubmit = async (event) => {
@@ -159,11 +180,22 @@ export default function useRsvp(spinner) {
     const validationErrors = validateRsvpForm({ contact, guests });
     setErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length > 0) return;
+    if (hasValidationErrors(validationErrors)) {
+      setPopup({
+        closeText: "Cerrar",
+        closeTo: null,
+        open: true,
+        type: "error",
+        title: "Revisa la confirmación",
+        message:
+          "Hay campos obligatorios o con formato incorrecto. Corrígelos antes de enviar la confirmación.",
+      });
+      return;
+    }
 
     try {
       const payload = {
-        groupId: contact.email,
+        groupId: groupId || contact.email,
         email: contact.email,
         groupName: contact.groupName,
         phone: contact.phone,
@@ -198,7 +230,7 @@ export default function useRsvp(spinner) {
         type: "error",
         title: "Ha ocurrido un problema",
         message:
-          "No hemos podido guardar vuestra confirmación. Por favor, intentadlo de nuevo en unos minutos. Si el problema persiste ponte en contacto con Sara ó Fran.",
+          "No hemos podido guardar vuestra confirmación. Por favor, intentadlo de nuevo en unos minutos. Si el problema persiste ponte en contacto con Sara o Fran.",
       });
     } finally {
       hide();
@@ -207,7 +239,8 @@ export default function useRsvp(spinner) {
 
   useEffect(() => {
     const loadGroup = async () => {
-      if (!groupIdFromUrl) return;
+      if (!isEdition || !groupIdFromUrl) return;
+      if (navigationGroup) return;
 
       try {
         show("Cargando confirmación...");
@@ -222,7 +255,7 @@ export default function useRsvp(spinner) {
             type: "error",
             title: "Ha ocurrido un problema",
             message:
-              "No se encontró la confirmación. Si el problema persiste ponte en contacto con Sara ó Fran.",
+              "No se encontró la confirmación. Si el problema persiste ponte en contacto con Sara o Fran.",
           });
 
           return;
@@ -239,7 +272,7 @@ export default function useRsvp(spinner) {
           type: "error",
           title: "Ha ocurrido un problema",
           message:
-            "Error cargando confirmación. Si el problema persiste ponte en contacto con Sara ó Fran.",
+            "Error cargando confirmación. Si el problema persiste ponte en contacto con Sara o Fran.",
         });
       } finally {
         hide();
@@ -247,7 +280,7 @@ export default function useRsvp(spinner) {
     };
 
     loadGroup();
-  }, [groupIdFromUrl, hide, loadFoundGroup, show]);
+  }, [groupIdFromUrl, hide, isEdition, loadFoundGroup, navigationGroup, show]);
 
   return {
     closePopup,
@@ -262,8 +295,7 @@ export default function useRsvp(spinner) {
     handleRemoveGuest,
     handleSearchInvitation,
     handleSubmit,
-    hasGroupId,
-    mode,
+    isEdition,
     popup,
     totalGuests,
   };

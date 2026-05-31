@@ -10,24 +10,35 @@ import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStagg
 import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
 import HeaderSection from "../components/common/HeaderSection";
 import StatusNotice from "../components/common/StatusNotice";
-import {
-  COMMON_ALLERGIES,
-  OUTBOUND_BUS_OPTIONS,
-  RETURN_BUS_OPTIONS,
-} from "../constants/rsvp";
+import { COMMON_ALLERGIES } from "../constants/rsvp";
 import { findAllGroups } from "../services/rsvpService";
 import { getGroupsFromResponse } from "../utils/rsvpGroups";
 
+const ADMIN_OUTBOUND_BUS_OPTIONS = [
+  { value: "No", label: "No" },
+  { value: "18:00", label: "18:00" },
+  { value: "18:20", label: "18:20" },
+];
+
+const ADMIN_RETURN_BUS_OPTIONS = [
+  { value: "No", label: "No" },
+  { value: "3:00", label: "3:00" },
+  { value: "6:00", label: "6:00" },
+];
+
 const DONUT_COLORS = [
+  "#344531",
   "#556b52",
   "#6f8b6b",
-  "#9caf88",
-  "#bccdb5",
-  "#dfe8d7",
   "#879d7e",
+  "#bccdb5",
   "#c7d4bf",
+  "#9caf88",
   "#71816d",
+  "#dfe8d7",
 ];
+
+const TRANSPORT_DONUT_COLORS = ["#344531", "#6f8b6b", "#bccdb5"];
 
 const emptyState = {
   groups: [],
@@ -231,14 +242,27 @@ function SummaryGrid({ stats }) {
 }
 
 function DonutStatsCard({ emptyText, emoji, items, title }) {
+  const [hoveredLabel, setHoveredLabel] = useState("");
+  const [selectedLabel, setSelectedLabel] = useState("");
+  const activeLabel = hoveredLabel || selectedLabel;
+
   return (
     <article className="premium-card relative overflow-hidden">
       <CardHeader emoji={emoji} title={title} />
 
       {items.length ? (
         <div className="grid items-center gap-6 sm:grid-cols-[minmax(168px,0.8fr)_1fr]">
-          <DonutChart items={items} />
-          <ChartLegend items={items} />
+          <DonutChart
+            activeLabel={activeLabel}
+            items={items}
+            onHoverLabel={setHoveredLabel}
+            onSelectLabel={setSelectedLabel}
+          />
+          <ChartLegend
+            activeLabel={activeLabel}
+            items={items}
+            onHoverLabel={setHoveredLabel}
+          />
         </div>
       ) : (
         <p className="rounded-2xl border border-[var(--color-border)] bg-white/45 p-4 text-sm text-[var(--color-muted)]">
@@ -263,6 +287,10 @@ function TransportCard({ stats }) {
 }
 
 function TransportGroup({ items, title }) {
+  const [hoveredLabel, setHoveredLabel] = useState("");
+  const [selectedLabel, setSelectedLabel] = useState("");
+  const activeLabel = hoveredLabel || selectedLabel;
+
   return (
     <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
       <p className="mb-4 text-sm font-medium uppercase tracking-[0.16em] text-[var(--color-accent-dark)]">
@@ -270,8 +298,21 @@ function TransportGroup({ items, title }) {
       </p>
 
       <div className="grid items-center gap-4">
-        <DonutChart items={items} size="sm" />
-        <ChartLegend compact items={items} />
+        <DonutChart
+          activeLabel={activeLabel}
+          colors={TRANSPORT_DONUT_COLORS}
+          items={items}
+          onHoverLabel={setHoveredLabel}
+          onSelectLabel={setSelectedLabel}
+          size="sm"
+        />
+        <ChartLegend
+          activeLabel={activeLabel}
+          compact
+          colors={TRANSPORT_DONUT_COLORS}
+          items={items}
+          onHoverLabel={setHoveredLabel}
+        />
       </div>
     </div>
   );
@@ -295,10 +336,19 @@ function CardHeader({ emoji, title }) {
   );
 }
 
-function DonutChart({ items, size = "md" }) {
+function DonutChart({
+  activeLabel,
+  colors = DONUT_COLORS,
+  items,
+  onHoverLabel,
+  onSelectLabel,
+  size = "md",
+}) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
   const visibleItems = items.filter((item) => item.value > 0);
   const dimensions = size === "sm" ? "h-40 w-40" : "h-48 w-48";
+  const valueSize = size === "sm" ? "text-3xl" : "text-4xl";
+  const activeItem = visibleItems.find((item) => item.label === activeLabel);
   const segments = visibleItems.reduce(
     (acc, item, index) => {
       const percent = total ? (item.value / total) * 100 : 0;
@@ -308,10 +358,11 @@ function DonutChart({ items, size = "md" }) {
         values: [
           ...acc.values,
           {
-            color: DONUT_COLORS[index % DONUT_COLORS.length],
+            color: colors[index % colors.length],
             label: item.label,
             offset: acc.offset,
             percent,
+            value: item.value,
           },
         ],
       };
@@ -323,8 +374,9 @@ function DonutChart({ items, size = "md" }) {
     <div className="flex justify-center">
       <div className={`relative ${dimensions}`}>
         <svg
-          aria-hidden="true"
+          aria-label="Gráfica de tipo donut"
           className="h-full w-full -rotate-90"
+          role="img"
           viewBox="0 0 100 100"
         >
           <circle
@@ -338,63 +390,121 @@ function DonutChart({ items, size = "md" }) {
 
           {segments.map((segment) => (
             <circle
+              aria-label={`${segment.label}: ${segment.value}`}
+              className="cursor-pointer transition-all duration-200 focus:outline-none"
               cx="50"
               cy="50"
               fill="none"
               key={segment.label}
+              onClick={() =>
+                onSelectLabel((currentLabel) =>
+                  currentLabel === segment.label ? "" : segment.label,
+                )
+              }
+              onMouseEnter={() => onHoverLabel(segment.label)}
+              onMouseLeave={() => onHoverLabel("")}
               pathLength="100"
               r="38"
+              role="button"
               stroke={segment.color}
               strokeDasharray={`${segment.percent} ${100 - segment.percent}`}
               strokeDashoffset={-segment.offset}
               strokeLinecap="round"
               strokeWidth="12"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onSelectLabel((currentLabel) =>
+                    currentLabel === segment.label ? "" : segment.label,
+                  );
+                }
+              }}
+              style={{
+                filter:
+                  activeLabel === segment.label
+                    ? "drop-shadow(0 3px 5px rgba(85, 107, 82, 0.28))"
+                    : "none",
+                opacity:
+                  activeItem && activeItem.label !== segment.label ? 0.38 : 1,
+              }}
             />
           ))}
         </svg>
 
-        <span className="absolute inset-0 flex flex-col items-center justify-center rounded-full text-center">
-          <span className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-            {total}
+        <span className="absolute inset-0 flex flex-col items-center justify-center rounded-full px-4 text-center transition-all duration-200">
+          <span
+            className={`max-w-full truncate font-serif ${valueSize} leading-none text-[var(--color-accent-dark)]`}
+          >
+            {activeItem ? activeItem.value : total}
           </span>
-          <span className="mt-1 text-[0.62rem] uppercase tracking-[0.2em] text-[var(--color-muted)]">
-            total
+          <span className="mt-1 max-w-full truncate text-[0.62rem] uppercase tracking-[0.2em] text-[var(--color-muted)]">
+            {activeItem ? activeItem.label : "total"}
           </span>
+          {activeItem && total > 0 && (
+            <span className="mt-1 text-xs font-medium text-[var(--color-accent-dark)]">
+              {Math.round((activeItem.value / total) * 100)}%
+            </span>
+          )}
         </span>
       </div>
     </div>
   );
 }
 
-function ChartLegend({ compact = false, items }) {
+function ChartLegend({
+  activeLabel,
+  colors = DONUT_COLORS,
+  compact = false,
+  items,
+  onHoverLabel,
+}) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
-      {items.map((item, index) => (
-        <div
-          className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm"
-          key={item.label}
-        >
-          <span
-            className="h-3 w-3 rounded-full"
-            style={{
-              backgroundColor: DONUT_COLORS[index % DONUT_COLORS.length],
-            }}
-          />
-          <span className="min-w-0 leading-snug text-[var(--color-muted)]">
-            {item.label}
-          </span>
-          <span className="font-medium text-[var(--color-accent-dark)]">
-            {item.value}
-            {total > 0 && (
-              <span className="ml-1 text-xs font-normal text-[var(--color-muted)]">
-                {Math.round((item.value / total) * 100)}%
-              </span>
-            )}
-          </span>
-        </div>
-      ))}
+      {items.map((item, index) => {
+        const color = colors[index % colors.length];
+        const isActive = activeLabel === item.label;
+
+        return (
+          <div
+            className={`grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl px-2 py-1.5 text-sm transition-all duration-200 ${
+              isActive ? "bg-white/55 shadow-sm" : ""
+            }`}
+            key={item.label}
+            onMouseEnter={() => onHoverLabel(item.label)}
+            onMouseLeave={() => onHoverLabel("")}
+          >
+            <span
+              className={`h-3 w-3 rounded-full transition-all duration-200 ${
+                isActive ? "scale-125 shadow-sm" : ""
+              }`}
+              style={{
+                backgroundColor: color,
+                boxShadow: isActive ? `0 0 0 4px ${color}22` : undefined,
+              }}
+            />
+            <span
+              className={`min-w-0 leading-snug transition-colors duration-200 ${
+                isActive
+                  ? "font-medium text-[var(--color-accent-dark)]"
+                  : "text-[var(--color-muted)]"
+              }`}
+            >
+              {item.label}
+            </span>
+            <span className="font-medium text-[var(--color-accent-dark)]">
+              {item.value}
+              {total > 0 && (
+                <span className="ml-1 text-xs font-normal text-[var(--color-muted)]">
+                  {Math.round((item.value / total) * 100)}%
+                </span>
+              )}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -453,10 +563,14 @@ function buildStats(groups) {
     otherAllergyRate: getRate(guestsWithOtherAllergies, totalGuests),
     outboundBusStats: buildBusStats(
       guests,
-      OUTBOUND_BUS_OPTIONS,
+      ADMIN_OUTBOUND_BUS_OPTIONS,
       "outboundBus",
     ),
-    returnBusStats: buildBusStats(guests, RETURN_BUS_OPTIONS, "returnBus"),
+    returnBusStats: buildBusStats(
+      guests,
+      ADMIN_RETURN_BUS_OPTIONS,
+      "returnBus",
+    ),
     totalGroups,
     totalGuests,
   };
@@ -470,14 +584,16 @@ function buildAllergyStats(guests) {
 }
 
 function buildBusStats(guests, options, field) {
-  return options.map((option) => ({
-    label: option.label,
-    value: guests.filter((guest) => {
-      const selectedValue = guest[field] || "No";
+  return options
+    .filter((option) => option.value !== "No")
+    .map((option) => ({
+      label: option.label,
+      value: guests.filter((guest) => {
+        const selectedValue = guest[field] || "No";
 
-      return selectedValue === option.value;
-    }).length,
-  }));
+        return selectedValue === option.value;
+      }).length,
+    }));
 }
 
 function getRate(value, total) {
@@ -491,5 +607,8 @@ function hasAllergies(guest) {
 }
 
 function usesBus(guest) {
-  return Boolean(guest.busNeeded);
+  return Boolean(
+    (guest.outboundBus && guest.outboundBus !== "No") ||
+    (guest.returnBus && guest.returnBus !== "No"),
+  );
 }

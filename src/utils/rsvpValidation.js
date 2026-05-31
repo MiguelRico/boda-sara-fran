@@ -38,15 +38,15 @@ export const validateRsvpForm = ({ contact, guests }) => {
   }
 
   guests.forEach((guest, index) => {
-    if (!guest.name.trim()) {
+    if (!guest.name?.trim()) {
       errors[`guest_name_${index}`] = "El nombre es obligatorio";
     }
 
-    if (!guest.lastname.trim()) {
+    if (!guest.lastname?.trim()) {
       errors[`guest_lastname_${index}`] = "Los apellidos son obligatorios";
     }
 
-    if (guest.comments.length > 300) {
+    if ((guest.comments || "").length > 300) {
       errors[`guest_comments_${index}`] = "Máximo 300 caracteres";
     }
   });

@@ -46,6 +46,11 @@ export const siteContent = {
       secondaryAction: "Volver al inicio",
     },
   },
+  rsvp: {
+    eyebrow: "Sara & Fran",
+    title: "Confirmación de asistencia",
+    text: "Estamos deseando celebrar este día con vosotros. Podéis confirmar vuestra asistencia y gestionar todos los invitados desde este formulario.",
+  },
   details: {
     history: {
       eyebrow: "Una historia construida poco a poco",
