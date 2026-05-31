@@ -10,7 +10,6 @@ import { useRef } from "react";
 import { createPortal } from "react-dom";
 import { Navigate } from "react-router-dom";
 import {
-  AlertTriangle,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -32,6 +31,7 @@ import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStagg
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
 import StatusNotice from "../components/ui/StatusNotice";
+import DeleteDialog from "../components/ui/DeleteDialog";
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
 import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
@@ -509,9 +509,16 @@ export default function AdminGuests() {
 
       {deleteTarget && (
         <DeleteDialog
-          group={deleteTarget}
+          message={
+            <>
+              Se eliminará el grupo asociado a{" "}
+              {deleteTarget.email || deleteTarget.groupId}. Esta acción no se
+              puede deshacer desde el panel.
+            </>
+          }
           onCancel={() => setDeleteTarget(null)}
           onConfirm={handleDeleteGroup}
+          title="Eliminar confirmación"
         />
       )}
 
@@ -838,6 +845,12 @@ function GroupEditor({ group, onClose, onSave }) {
   const [draft, setDraft] = useState(group);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
+  const guestDeleteName = guestDeleteTarget
+    ? [guestDeleteTarget.guest.name, guestDeleteTarget.guest.lastname]
+        .filter(Boolean)
+        .join(" ")
+    : "";
 
   useViewportScrollLock(true);
 
@@ -897,6 +910,13 @@ function GroupEditor({ group, onClose, onSave }) {
         guests: current.guests.filter((_, itemIndex) => itemIndex !== index),
       };
     });
+  };
+
+  const confirmRemoveGuest = () => {
+    if (!guestDeleteTarget) return;
+
+    removeGuest(guestDeleteTarget.index);
+    setGuestDeleteTarget(null);
   };
 
   const handleSubmit = async (event) => {
@@ -959,7 +979,7 @@ function GroupEditor({ group, onClose, onSave }) {
               index={index}
               key={index}
               onGuestChange={updateGuest}
-              onRemoveGuest={removeGuest}
+              onRemoveGuest={() => setGuestDeleteTarget({ guest, index })}
             />
           ))}
         </div>
@@ -971,7 +991,7 @@ function GroupEditor({ group, onClose, onSave }) {
             disabled={draft.guests.length >= MAX_GUESTS || saving}
             icon={<Plus size={16} strokeWidth={1.8} />}
             label="Invitado"
-            showText
+            showText="always"
             tone="secondary"
             onClick={addGuest}
             type="button"
@@ -983,7 +1003,7 @@ function GroupEditor({ group, onClose, onSave }) {
             disabled={saving}
             icon={<Save size={16} strokeWidth={1.8} />}
             label="Guardar"
-            showText
+            showText="always"
             tone="primary"
             type="submit"
           >
@@ -994,7 +1014,7 @@ function GroupEditor({ group, onClose, onSave }) {
             icon={<X size={16} strokeWidth={1.8} />}
             label="Cancelar"
             onClick={onClose}
-            showText
+            showText="always"
             tone="secondary"
             type="button"
           >
@@ -1005,68 +1025,28 @@ function GroupEditor({ group, onClose, onSave }) {
     </div>
   );
 
-  return createPortal(dialog, document.body);
-}
+  return (
+    <>
+      {createPortal(dialog, document.body)}
 
-function DeleteDialog({ group, onCancel, onConfirm }) {
-  useViewportScrollLock(true);
-
-  const dialog = (
-    <div className="rsvp-dialog-overlay">
-      <div
-        aria-describedby="delete-dialog-message"
-        aria-labelledby="delete-dialog-title"
-        aria-modal="true"
-        className="premium-card rsvp-dialog-card"
-        role="alertdialog"
-      >
-        <AlertTriangle
-          className="mx-auto text-red-500"
-          size={30}
-          strokeWidth={1.7}
+      {guestDeleteTarget && (
+        <DeleteDialog
+          message={
+            <>
+              Se eliminará{" "}
+              {guestDeleteName
+                ? `a ${guestDeleteName}`
+                : `el invitado ${guestDeleteTarget.index + 1}`}
+              . Esta acción no se puede deshacer desde el editor.
+            </>
+          }
+          onCancel={() => setGuestDeleteTarget(null)}
+          onConfirm={confirmRemoveGuest}
+          title="Eliminar invitado"
         />
-        <h2
-          className="mt-4 font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
-          id="delete-dialog-title"
-        >
-          Eliminar confirmación
-        </h2>
-        <p
-          className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]"
-          id="delete-dialog-message"
-        >
-          Se eliminara el grupo asociado a {group.email || group.groupId}. Esta
-          acción no se puede deshacer desde el panel.
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <IconButton
-            className="flex-1"
-            icon={<X size={16} strokeWidth={1.8} />}
-            label="Cancelar"
-            onClick={onCancel}
-            showText
-            tone="secondary"
-            type="button"
-          >
-            Cancelar
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label="Eliminar"
-            onClick={onConfirm}
-            showText
-            tone="danger"
-            type="button"
-          >
-            Eliminar
-          </IconButton>
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
-
-  return createPortal(dialog, document.body);
 }
 
 function Pagination({ onNext, onPrev, page, totalPages }) {
@@ -1322,4 +1302,3 @@ function downloadCsv(rows) {
 function escapeCsvValue(value) {
   return `"${String(value || "").replaceAll('"', '""')}"`;
 }
-

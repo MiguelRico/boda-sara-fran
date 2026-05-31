@@ -24,16 +24,20 @@ export default function IconButton({
   ...props
 }) {
   const accessibleLabel = label || (typeof children === "string" ? children : "");
-  const hasText = Boolean(children && showText);
+  const hasText = Boolean(
+    showText && (typeof children === "string" || typeof children === "number"),
+  );
   const textClass =
     showText === "always"
       ? "inline"
       : "hidden sm:inline";
   const content = (
     <>
-      <span className="inline-flex shrink-0 items-center justify-center">
-        {icon || children}
-      </span>
+      {(icon || !hasText) && (
+        <span className="inline-flex shrink-0 items-center justify-center">
+          {icon || children}
+        </span>
+      )}
       {hasText && (
         <span
           className={`${textClass} truncate text-[0.68rem] uppercase tracking-[0.22em] sm:text-xs`}

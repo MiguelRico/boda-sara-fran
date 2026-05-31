@@ -199,14 +199,14 @@ function SummaryGrid({ stats }) {
     },
     {
       label: "Personas con alergias",
-      value: `${stats.allergyRate}%`,
-      detail: `${stats.guestsWithAllergies} de ${stats.totalGuests} personas`,
+      value: stats.guestsWithAllergies,
+      detail: `${stats.allergyRate}% del total`,
       emoji: "🥗",
     },
     {
       label: "Con otras alergias",
-      value: `${stats.otherAllergyRate}%`,
-      detail: `${stats.guestsWithOtherAllergies} de ${stats.totalGuests} personas`,
+      value: stats.guestsWithOtherAllergies,
+      detail: `${stats.otherAllergyRate}% del total`,
       emoji: "!",
     },
     {
@@ -249,6 +249,10 @@ function DonutStatsCard({ emptyText, emoji, items, title }) {
   const [hoveredLabel, setHoveredLabel] = useState("");
   const [selectedLabel, setSelectedLabel] = useState("");
   const activeLabel = hoveredLabel || selectedLabel;
+  const handleSelectLabel = useCallback((label) => {
+    setHoveredLabel("");
+    setSelectedLabel((currentLabel) => (currentLabel === label ? "" : label));
+  }, []);
 
   return (
     <article className="premium-card relative overflow-hidden">
@@ -260,12 +264,15 @@ function DonutStatsCard({ emptyText, emoji, items, title }) {
             activeLabel={activeLabel}
             items={items}
             onHoverLabel={setHoveredLabel}
-            onSelectLabel={setSelectedLabel}
+            onSelectLabel={handleSelectLabel}
+            selectedLabel={selectedLabel}
           />
           <ChartLegend
             activeLabel={activeLabel}
             items={items}
             onHoverLabel={setHoveredLabel}
+            onSelectLabel={handleSelectLabel}
+            selectedLabel={selectedLabel}
           />
         </div>
       ) : (
@@ -294,6 +301,10 @@ function TransportGroup({ items, title }) {
   const [hoveredLabel, setHoveredLabel] = useState("");
   const [selectedLabel, setSelectedLabel] = useState("");
   const activeLabel = hoveredLabel || selectedLabel;
+  const handleSelectLabel = useCallback((label) => {
+    setHoveredLabel("");
+    setSelectedLabel((currentLabel) => (currentLabel === label ? "" : label));
+  }, []);
 
   return (
     <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
@@ -307,7 +318,8 @@ function TransportGroup({ items, title }) {
           colors={TRANSPORT_DONUT_COLORS}
           items={items}
           onHoverLabel={setHoveredLabel}
-          onSelectLabel={setSelectedLabel}
+          onSelectLabel={handleSelectLabel}
+          selectedLabel={selectedLabel}
           size="sm"
         />
         <ChartLegend
@@ -316,6 +328,8 @@ function TransportGroup({ items, title }) {
           colors={TRANSPORT_DONUT_COLORS}
           items={items}
           onHoverLabel={setHoveredLabel}
+          onSelectLabel={handleSelectLabel}
+          selectedLabel={selectedLabel}
         />
       </div>
     </div>
@@ -340,12 +354,20 @@ function CardHeader({ emoji, title }) {
   );
 }
 
+function supportsHoverPointer() {
+  return Boolean(
+    typeof window !== "undefined" &&
+      window.matchMedia?.("(hover: hover) and (pointer: fine)").matches,
+  );
+}
+
 function DonutChart({
   activeLabel,
   colors = DONUT_COLORS,
   items,
   onHoverLabel,
   onSelectLabel,
+  selectedLabel,
   size = "md",
 }) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
@@ -353,6 +375,16 @@ function DonutChart({
   const dimensions = size === "sm" ? "h-40 w-40" : "h-48 w-48";
   const valueSize = size === "sm" ? "text-3xl" : "text-4xl";
   const activeItem = visibleItems.find((item) => item.label === activeLabel);
+  const handleHoverLabel = (label) => {
+    if (supportsHoverPointer()) {
+      onHoverLabel(label);
+    }
+  };
+  const handleSelectLabel = (label) => {
+    if (supportsHoverPointer()) {
+      onSelectLabel(label);
+    }
+  };
   const segments = visibleItems.reduce(
     (acc, item, index) => {
       const percent = total ? (item.value / total) * 100 : 0;
@@ -375,11 +407,11 @@ function DonutChart({
   ).values;
 
   return (
-    <div className="flex justify-center">
+    <div className="flex select-none justify-center">
       <div className={`relative ${dimensions}`}>
         <svg
           aria-label="Gráfica de tipo donut"
-          className="h-full w-full -rotate-90"
+          className="h-full w-full -rotate-90 select-none"
           role="img"
           viewBox="0 0 100 100"
         >
@@ -400,13 +432,10 @@ function DonutChart({
               cy="50"
               fill="none"
               key={segment.label}
-              onClick={() =>
-                onSelectLabel((currentLabel) =>
-                  currentLabel === segment.label ? "" : segment.label,
-                )
-              }
-              onMouseEnter={() => onHoverLabel(segment.label)}
-              onMouseLeave={() => onHoverLabel("")}
+              onClick={() => handleSelectLabel(segment.label)}
+              onMouseEnter={() => handleHoverLabel(segment.label)}
+              onMouseLeave={() => handleHoverLabel("")}
+              onMouseDown={(event) => event.preventDefault()}
               pathLength="100"
               r="38"
               role="button"
@@ -419,24 +448,23 @@ function DonutChart({
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  onSelectLabel((currentLabel) =>
-                    currentLabel === segment.label ? "" : segment.label,
-                  );
+                  onSelectLabel(segment.label);
                 }
               }}
               style={{
                 filter:
                   activeLabel === segment.label
-                    ? "drop-shadow(0 3px 5px rgba(85, 107, 82, 0.28))"
+                    ? "drop-shadow(0 3px 5px rgba(85, 107, 82, 0.34))"
                     : "none",
                 opacity:
                   activeItem && activeItem.label !== segment.label ? 0.38 : 1,
+                strokeWidth: selectedLabel === segment.label ? 14 : 12,
               }}
             />
           ))}
         </svg>
 
-        <span className="absolute inset-0 flex flex-col items-center justify-center rounded-full px-4 text-center transition-all duration-200">
+        <span className="absolute inset-0 flex select-none flex-col items-center justify-center rounded-full px-4 text-center transition-all duration-200">
           <span
             className={`max-w-full truncate font-serif ${valueSize} leading-none text-[var(--color-accent-dark)]`}
           >
@@ -462,37 +490,62 @@ function ChartLegend({
   compact = false,
   items,
   onHoverLabel,
+  onSelectLabel,
+  selectedLabel,
 }) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
+  const handleHoverLabel = (label) => {
+    if (supportsHoverPointer()) {
+      onHoverLabel(label);
+    }
+  };
 
   return (
-    <div className={compact ? "space-y-2" : "space-y-3"}>
+    <div className={`select-none ${compact ? "space-y-2" : "space-y-3"}`}>
       {items.map((item, index) => {
         const color = colors[index % colors.length];
         const isActive = activeLabel === item.label;
+        const isSelected = selectedLabel === item.label;
 
         return (
-          <div
-            className={`grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl px-2 py-1.5 text-sm transition-all duration-200 ${
-              isActive ? "bg-white/55 shadow-sm" : ""
+          <button
+            className={`grid w-full cursor-pointer select-none grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl px-2 py-1.5 text-left text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-dark)]/35 ${
+              isSelected
+                ? "bg-white/75 shadow-md ring-1 ring-[var(--color-border-strong)]"
+                : isActive
+                  ? "bg-white/55 shadow-sm"
+                  : ""
             }`}
             key={item.label}
-            onMouseEnter={() => onHoverLabel(item.label)}
-            onMouseLeave={() => onHoverLabel("")}
+            onClick={() => onSelectLabel(item.label)}
+            onMouseEnter={() => handleHoverLabel(item.label)}
+            onMouseLeave={() => handleHoverLabel("")}
+            onMouseDown={(event) => event.preventDefault()}
+            type="button"
           >
             <span
               className={`h-3 w-3 rounded-full transition-all duration-200 ${
-                isActive ? "scale-125 shadow-sm" : ""
+                isSelected
+                  ? "scale-150 shadow-md"
+                  : isActive
+                    ? "scale-125 shadow-sm"
+                    : ""
               }`}
               style={{
                 backgroundColor: color,
-                boxShadow: isActive ? `0 0 0 4px ${color}22` : undefined,
+                boxShadow: isSelected
+                  ? `0 0 0 5px ${color}33`
+                  : isActive
+                    ? `0 0 0 4px ${color}22`
+                    : undefined,
               }}
             />
             <span
               className={`min-w-0 leading-snug transition-colors duration-200 ${
-                isActive
-                  ? "font-medium text-[var(--color-accent-dark)]"
+                isSelected
+                  ? "font-semibold text-[var(--color-accent-dark)]"
+                  : isActive
+                    ? "font-medium text-[var(--color-accent-dark)]"
                   : "text-[var(--color-muted)]"
               }`}
             >
@@ -506,7 +559,7 @@ function ChartLegend({
                 </span>
               )}
             </span>
-          </div>
+          </button>
         );
       })}
     </div>

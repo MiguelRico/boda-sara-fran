@@ -1,9 +1,10 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useInView } from "framer-motion";
 import { ArrowLeft, Check, UserPlus } from "lucide-react";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
+import DeleteDialog from "../components/ui/DeleteDialog";
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
 import { siteContent } from "../config/siteContent";
@@ -34,10 +35,22 @@ export function RsvpFormPage({
   disableFilledFields = true,
 }) {
   const rsvpRef = useRef(null);
+  const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
   const rsvpInView = useInView(rsvpRef, {
     once: true,
     amount: 0.01,
   });
+  const guestDeleteName = guestDeleteTarget
+    ? [guestDeleteTarget.guest.name, guestDeleteTarget.guest.lastname]
+        .filter(Boolean)
+        .join(" ")
+    : "";
+  const handleConfirmGuestDelete = () => {
+    if (!guestDeleteTarget) return;
+
+    rsvp.handleRemoveGuest(guestDeleteTarget.index);
+    setGuestDeleteTarget(null);
+  };
 
   return (
     <RsvpPageShell spinner={spinner} wrapperRef={rsvpRef}>
@@ -72,7 +85,7 @@ export function RsvpFormPage({
               guest={guest}
               index={index}
               onGuestChange={rsvp.handleGuestChange}
-              onRemoveGuest={rsvp.handleRemoveGuest}
+              onRemoveGuest={() => setGuestDeleteTarget({ guest, index })}
             />
           </CinematicStaggeredRevealItem>
         ))}
@@ -117,6 +130,23 @@ export function RsvpFormPage({
           </div>
         </CinematicStaggeredRevealItem>
       </form>
+
+      {guestDeleteTarget && (
+        <DeleteDialog
+          message={
+            <>
+              Se eliminará{" "}
+              {guestDeleteName
+                ? `a ${guestDeleteName}`
+                : `el invitado ${guestDeleteTarget.index + 1}`}
+              . Esta acción no se puede deshacer desde el formulario.
+            </>
+          }
+          onCancel={() => setGuestDeleteTarget(null)}
+          onConfirm={handleConfirmGuestDelete}
+          title="Eliminar invitado"
+        />
+      )}
 
       <RsvpStatus closePopup={rsvp.closePopup} popup={rsvp.popup} />
     </RsvpPageShell>
