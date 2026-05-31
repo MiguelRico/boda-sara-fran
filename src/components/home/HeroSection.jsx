@@ -4,6 +4,7 @@ import CinematicSection from "../cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../cinematic/CinematicStaggeredRevealItem";
 import PrimaryButton from "../common/PrimaryButton";
 import { siteContent } from "../../config/siteContent";
+import { CalendarCheck, Map } from "lucide-react";
 
 export default function HeroSection() {
   const heroRef = useRef(null);
@@ -37,11 +38,18 @@ export default function HeroSection() {
 
         <CinematicStaggeredRevealItem index={4} isVisible={heroInView}>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <PrimaryButton to="/rsvp">
+            <PrimaryButton
+              icon={<CalendarCheck size={16} strokeWidth={1.8} />}
+              to="/rsvp"
+            >
               {home.hero.primaryAction}
             </PrimaryButton>
 
-            <PrimaryButton to="/details#history" variant="secondary">
+            <PrimaryButton
+              icon={<Map size={16} strokeWidth={1.8} />}
+              to="/details#history"
+              variant="secondary"
+            >
               {home.hero.secondaryAction}
             </PrimaryButton>
           </div>

@@ -12,10 +12,13 @@ import { Navigate } from "react-router-dom";
 import {
   AlertTriangle,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Download,
   Pencil,
   Plus,
   RefreshCw,
+  Save,
   Search,
   Trash2,
   UsersRound,
@@ -371,53 +374,53 @@ export default function AdminGuests() {
 
           <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
             <section className="premium-card" ref={tableCardRef}>
-              <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="mb-5">
                 <div>
                   <p className="section-eyebrow mb-2">Invitados</p>
                   <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
                     Confirmaciones
                   </h2>
-                  <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-                    {pagedGroupCount}{" "}
-                    {pagedGroupCount === 1 ? "grupo" : "grupos"} en esta página
-                    · {pagedGuestCount}{" "}
-                    {pagedGuestCount === 1 ? "persona" : "personas"}
-                  </p>
-                </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <button
-                    className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!rows.length}
-                    onClick={() => downloadCsv(rows)}
-                    type="button"
-                  >
-                    <Download size={16} strokeWidth={1.8} />
-                    Exportar
-                  </button>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+                      {pagedGroupCount}{" "}
+                      {pagedGroupCount === 1 ? "grupo" : "grupos"} en esta
+                      página · {pagedGuestCount}{" "}
+                      {pagedGuestCount === 1 ? "persona" : "personas"}
+                    </p>
 
-                  <button
-                    className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={state.loading}
-                    onClick={loadGuests}
-                    type="button"
-                  >
-                    <RefreshCw
-                      className={state.loading ? "animate-spin" : ""}
-                      size={16}
-                      strokeWidth={1.8}
-                    />
-                    Actualizar
-                  </button>
+                    <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
+                      <IconButton
+                        className="!w-full sm:!w-10 [var(--color-accent)]"
+                        disabled={!rows.length}
+                        label="Exportar"
+                        onClick={() => downloadCsv(rows)}
+                      >
+                        <Download size={16} strokeWidth={1.8} />
+                      </IconButton>
 
-                  <button
-                    className="btn-primary gap-2"
-                    onClick={() => setEditingGroup(createDraftGroup())}
-                    type="button"
-                  >
-                    <Plus size={16} strokeWidth={1.8} />
-                    Crear
-                  </button>
+                      <IconButton
+                        className="!w-full sm:!w-10 [var(--color-accent)]"
+                        disabled={state.loading}
+                        label="Actualizar"
+                        onClick={loadGuests}
+                      >
+                        <RefreshCw
+                          className={state.loading ? "animate-spin" : ""}
+                          size={16}
+                          strokeWidth={1.8}
+                        />
+                      </IconButton>
+
+                      <IconButton
+                        className="!w-full border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] sm:!w-10"
+                        label="Crear"
+                        onClick={() => setEditingGroup(createDraftGroup())}
+                      >
+                        <Plus size={18} strokeWidth={2.4} />
+                      </IconButton>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -468,7 +471,7 @@ export default function AdminGuests() {
                               Sin resultados
                             </p>
                             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-                        Prueba con otra búsqueda o cambia el filtro
+                              Prueba con otra búsqueda o cambia el filtro
                               seleccionado.
                             </p>
                           </div>
@@ -942,7 +945,7 @@ function GroupEditor({ group, onClose, onSave }) {
 
         <ContactDetailsCard
           contact={draft}
-          disableFilledFields={true}
+          disableFilledFields={false}
           errors={{}}
           onContactChange={updateContact}
         />
@@ -964,31 +967,39 @@ function GroupEditor({ group, onClose, onSave }) {
         <FieldError>{error}</FieldError>
 
         <div className="mt-6 flex flex-col gap-3 sm:grid sm:grid-cols-3">
-          <button
-            className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+          <IconButton
             disabled={draft.guests.length >= MAX_GUESTS || saving}
+            icon={<Plus size={16} strokeWidth={1.8} />}
+            label="Invitado"
+            showText
+            tone="secondary"
             onClick={addGuest}
             type="button"
           >
-            <Plus size={16} strokeWidth={1.8} />
             Invitado
-          </button>
+          </IconButton>
 
-          <button
-            className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+          <IconButton
             disabled={saving}
+            icon={<Save size={16} strokeWidth={1.8} />}
+            label="Guardar"
+            showText
+            tone="primary"
             type="submit"
           >
             Guardar
-          </button>
-          <button
-            className="btn-secondary"
+          </IconButton>
+          <IconButton
             disabled={saving}
+            icon={<X size={16} strokeWidth={1.8} />}
+            label="Cancelar"
             onClick={onClose}
+            showText
+            tone="secondary"
             type="button"
           >
             Cancelar
-          </button>
+          </IconButton>
         </div>
       </form>
     </div>
@@ -1028,20 +1039,28 @@ function DeleteDialog({ group, onCancel, onConfirm }) {
           acción no se puede deshacer desde el panel.
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <button
-            className="btn-secondary flex-1"
+          <IconButton
+            className="flex-1"
+            icon={<X size={16} strokeWidth={1.8} />}
+            label="Cancelar"
             onClick={onCancel}
+            showText
+            tone="secondary"
             type="button"
           >
             Cancelar
-          </button>
-          <button
-            className="btn-primary flex-1 bg-red-500"
+          </IconButton>
+          <IconButton
+            className="flex-1"
+            icon={<Trash2 size={16} strokeWidth={1.8} />}
+            label="Eliminar"
             onClick={onConfirm}
+            showText
+            tone="danger"
             type="button"
           >
             Eliminar
-          </button>
+          </IconButton>
         </div>
       </div>
     </div>
@@ -1057,23 +1076,31 @@ function Pagination({ onNext, onPrev, page, totalPages }) {
         Página {page} de {totalPages}
       </p>
 
-      <div className="flex gap-3">
-        <button
-          className="btn-secondary disabled:cursor-not-allowed disabled:opacity-50"
+      <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
+        <IconButton
+          className="w-full sm:w-auto"
           disabled={page === 1}
+          icon={<ChevronLeft size={16} strokeWidth={1.8} />}
+          label="Anterior"
           onClick={onPrev}
+          showText
+          tone="secondary"
           type="button"
         >
           Anterior
-        </button>
-        <button
-          className="btn-secondary disabled:cursor-not-allowed disabled:opacity-50"
+        </IconButton>
+        <IconButton
+          className="w-full sm:w-auto"
           disabled={page === totalPages}
+          icon={<ChevronRight size={16} strokeWidth={1.8} />}
+          label="Siguiente"
           onClick={onNext}
+          showText
+          tone="secondary"
           type="button"
         >
           Siguiente
-        </button>
+        </IconButton>
       </div>
     </div>
   );

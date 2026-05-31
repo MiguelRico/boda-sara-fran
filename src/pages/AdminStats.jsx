@@ -9,6 +9,7 @@ import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
 import HeaderSection from "../components/common/HeaderSection";
+import IconButton from "../components/common/IconButton";
 import StatusNotice from "../components/common/StatusNotice";
 import { COMMON_ALLERGIES } from "../constants/rsvp";
 import { findAllGroups } from "../services/rsvpService";
@@ -159,19 +160,22 @@ function StatsOverview({ loading, onRefresh, stats }) {
           </h2>
         </div>
 
-        <button
-          className="btn-secondary w-full gap-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        <IconButton
+          className="w-full sm:w-auto"
           disabled={loading}
+          icon={
+            <RefreshCw
+              className={loading ? "animate-spin" : ""}
+              size={16}
+              strokeWidth={1.8}
+            />
+          }
+          label="Actualizar"
           onClick={onRefresh}
-          type="button"
+          showText
         >
-          <RefreshCw
-            className={loading ? "animate-spin" : ""}
-            size={16}
-            strokeWidth={1.8}
-          />
           Actualizar
-        </button>
+        </IconButton>
       </div>
 
       {loading ? <StatsSkeleton /> : <SummaryGrid stats={stats} />}

@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { useInView } from "framer-motion";
+import { ArrowLeft, Check, UserPlus } from "lucide-react";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import HeaderSection from "../components/common/HeaderSection";
 import PrimaryButton from "../components/common/PrimaryButton";
@@ -25,7 +26,13 @@ export default function RsvpCreate() {
   );
 }
 
-export function RsvpFormPage({ rsvp, spinner, text, title }) {
+export function RsvpFormPage({
+  rsvp,
+  spinner,
+  text,
+  title,
+  disableFilledFields = true,
+}) {
   const rsvpRef = useRef(null);
   const rsvpInView = useInView(rsvpRef, {
     once: true,
@@ -47,7 +54,7 @@ export function RsvpFormPage({ rsvp, spinner, text, title }) {
         <CinematicStaggeredRevealItem index={1} isVisible={rsvpInView}>
           <ContactDetailsCard
             contact={rsvp.contact}
-            disableFilledFields={false}
+            disableFilledFields={disableFilledFields}
             errors={rsvp.errors}
             onContactChange={rsvp.handleContactChange}
           />
@@ -76,26 +83,31 @@ export function RsvpFormPage({ rsvp, spinner, text, title }) {
         >
           <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
             {rsvp.totalGuests < MAX_GUESTS && (
-              <button
+              <PrimaryButton
+                icon={<UserPlus size={16} strokeWidth={1.8} />}
+                variant="secondary"
                 type="button"
                 disabled={spinner.loading}
                 onClick={rsvp.handleAddGuest}
-                className="btn-secondary disabled:opacity-50"
               >
-                Añadir invitado
-              </button>
+                Añadir
+              </PrimaryButton>
             )}
 
-            <button
+            <PrimaryButton
+              icon={<Check size={16} strokeWidth={1.8} />}
               type="button"
               onClick={rsvp.handleSubmit}
               disabled={spinner.loading}
-              className="btn-primary disabled:opacity-50"
             >
-              Confirmar asistencia
-            </button>
+              Confirmar
+            </PrimaryButton>
 
-            <PrimaryButton to="/rsvp" variant="secondary">
+            <PrimaryButton
+              icon={<ArrowLeft size={16} strokeWidth={1.8} />}
+              to="/rsvp"
+              variant="secondary"
+            >
               Volver
             </PrimaryButton>
           </div>

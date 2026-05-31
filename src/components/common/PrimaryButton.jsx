@@ -1,25 +1,20 @@
-import { Link } from "react-router-dom";
+import IconButton from "./IconButton";
 
 export default function PrimaryButton({
   children,
-  to,
+  icon,
+  showText = true,
   variant = "primary",
-  className = "",
   ...props
 }) {
-  const buttonClass = variant === "secondary" ? "btn-secondary" : "btn-primary";
-
-  if (to) {
-    return (
-      <Link to={to} className={`${buttonClass} ${className}`} {...props}>
-        {children}
-      </Link>
-    );
-  }
-
   return (
-    <button className={`${buttonClass} ${className}`} {...props}>
+    <IconButton
+      icon={icon}
+      showText={showText}
+      tone={variant === "secondary" ? "secondary" : "primary"}
+      {...props}
+    >
       {children}
-    </button>
+    </IconButton>
   );
 }

@@ -1,6 +1,6 @@
 import { useInView } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LockKeyhole } from "lucide-react";
+import { Home, LockKeyhole, LogIn } from "lucide-react";
 
 import {
   ADMIN_AUTH_EVENT,
@@ -143,15 +143,19 @@ function AdminLogin({
         <FieldError>{error}</FieldError>
 
         <div className="mt-6 flex flex-col gap-3">
-          <button
-            className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+          <PrimaryButton
             disabled={!canSubmit}
+            icon={<LogIn size={16} strokeWidth={1.8} />}
             type="submit"
           >
             Entrar
-          </button>
+          </PrimaryButton>
 
-          <PrimaryButton to="/" variant="secondary">
+          <PrimaryButton
+            icon={<Home size={16} strokeWidth={1.8} />}
+            to="/"
+            variant="secondary"
+          >
             Volver al inicio
           </PrimaryButton>
         </div>

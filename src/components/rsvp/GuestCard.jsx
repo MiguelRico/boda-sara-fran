@@ -26,10 +26,10 @@ export default function GuestCard({
 
   return (
     <FormCard>
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <h3 className="font-serif text-3xl text-[var(--color-accent-dark)]">
+      <div className="flex items-center justify-between gap-4">
+        <p className={`section-eyebrow ${canRemove ? "mb-0" : ""}`}>
           Invitado {index + 1}
-        </h3>
+        </p>
 
         {canRemove && (
           <IconButton
