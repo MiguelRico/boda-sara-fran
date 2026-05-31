@@ -7,38 +7,19 @@ import {
   ADMIN_PASSWORD,
   ADMIN_SESSION_KEY,
 } from "../constants/admin";
+import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
+import HeaderSection from "../components/common/HeaderSection";
+import PrimaryButton from "../components/common/PrimaryButton";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import HeaderSection from "../components/common/HeaderSection";
-import PrimaryButton from "../components/common/PrimaryButton";
-import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
 import {
   FieldError,
   FormCard,
   inputClassName,
   Label,
 } from "../components/rsvp/FormPrimitives";
-
-const adminCards = [
-  {
-    title: "Invitados",
-    subtitle: "Gestiona la lista",
-    description:
-      "Gestionar confirmaciones, datos de contacto, alergias y transporte.",
-    to: "/admin/guests",
-    emoji: "📋",
-  },
-
-  {
-    title: "Resumen",
-    subtitle: "Todo en un vistazo",
-    description:
-      "Consultar totales, asistencia, alergias y horarios de autobus.",
-    to: "/admin/stats",
-    emoji: "📊",
-  },
-];
+import { siteContent } from "../config/siteContent";
 
 export default function Admin() {
   const adminRef = useRef(null);
@@ -95,8 +76,8 @@ export default function Admin() {
             <HeaderSection
               className="mb-8"
               eyebrow="Panel privado"
-              text="Acceso reservado para revisar y organizar las confirmaciones de la boda."
-              title="Sara & Fran"
+              text="Acceso reservado para revisar y organizar las confirmaciones."
+              title={siteContent.coupleName}
             />
           </CinematicStaggeredRevealItem>
 
@@ -140,7 +121,7 @@ function AdminLogin({
             </h2>
 
             <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-              Introduce la contraseña para entrar al panel de gestion.
+              Introduce la contraseña para entrar al panel de gestión.
             </p>
           </div>
         </div>
@@ -183,7 +164,7 @@ function AdminDashboard() {
   return (
     <div className="mx-auto w-full max-w-4xl">
       <div className="grid gap-4 sm:grid-cols-2">
-        {adminCards.map((card, index) => (
+        {siteContent.admin.cards.map((card, index) => (
           <AnimatedInfoCard key={card.title} card={card} index={index} />
         ))}
       </div>

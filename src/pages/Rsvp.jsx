@@ -1,28 +1,73 @@
+import { useEffect, useRef } from "react";
 import { useInView } from "framer-motion";
-import { useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
-import GuestCard from "../components/rsvp/GuestCard";
+import HeaderSection from "../components/common/HeaderSection";
+import CreateInvitationCard from "../components/rsvp/CreateInvitationCard";
 import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
 import SearchInvitationCard from "../components/rsvp/SearchInvitationCard";
-import CreateInvitationCard from "../components/rsvp/CreateInvitationCard";
 import Spinner from "../components/spinner/Spinner";
-import { MAX_GUESTS } from "../constants/rsvp";
+import { siteContent } from "../config/siteContent";
 import useRsvp from "../hooks/useRsvp";
 import useSpinner from "../hooks/useSpinner.js";
-import PrimaryButton from "../components/common/PrimaryButton";
 
 export default function Rsvp() {
   const spinner = useSpinner();
-  const rsvp = useRsvp(spinner);
+  const rsvp = useRsvp(spinner, { mode: "search" });
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const rsvpRef = useRef(null);
   const rsvpInView = useInView(rsvpRef, {
     once: true,
     amount: 0.35,
   });
 
+  useEffect(() => {
+    const groupId = searchParams.get("groupId");
+
+    if (groupId) {
+      navigate(`/rsvp/edit?groupId=${encodeURIComponent(groupId)}`, {
+        replace: true,
+      });
+    }
+  }, [navigate, searchParams]);
+
+  return (
+    <RsvpPageShell spinner={spinner} wrapperRef={rsvpRef}>
+      <CinematicStaggeredRevealItem index={0} isVisible={rsvpInView}>
+        <HeaderSection
+          eyebrow={siteContent.rsvp.eyebrow}
+          title={siteContent.rsvp.title}
+          titleAs="h1"
+          text={siteContent.rsvp.text}
+        />
+      </CinematicStaggeredRevealItem>
+
+      <CinematicStaggeredRevealItem index={1} isVisible={rsvpInView}>
+        <div className="mt-4">
+          <CreateInvitationCard onCreateNew={rsvp.handleCreateNew} />
+
+          <SearchInvitationCard
+            email={rsvp.contact.email}
+            emailError={rsvp.errors.email}
+            loading={spinner.loading}
+            onEmailChange={(value) => rsvp.handleContactChange("email", value)}
+            onSearchInvitation={rsvp.handleSearchInvitation}
+          />
+        </div>
+      </CinematicStaggeredRevealItem>
+
+      <RsvpStatus
+        closePopup={rsvp.closePopup}
+        popup={rsvp.popup}
+      />
+    </RsvpPageShell>
+  );
+}
+
+export function RsvpPageShell({ children, spinner, wrapperRef }) {
   return (
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
@@ -30,125 +75,26 @@ export default function Rsvp() {
       <CinematicSection
         id="search"
         className="surface-soft"
-        innerClassName="max-w-4xl"
+        innerClassName="max-w-4xl py-6"
         reveal={false}
       >
-        <div ref={rsvpRef}>
-          <div className="mx-auto mb-6 max-w-3xl text-center">
-            <CinematicStaggeredRevealItem index={0} isVisible={rsvpInView}>
-              <p className="section-eyebrow">Sara & Fran</p>
-            </CinematicStaggeredRevealItem>
-
-            <CinematicStaggeredRevealItem index={1} isVisible={rsvpInView}>
-              <h1 className="section-title">Confirmación de asistencia</h1>
-            </CinematicStaggeredRevealItem>
-
-            <CinematicStaggeredRevealItem index={2} isVisible={rsvpInView}>
-              <p className="section-text">
-                Estamos deseando celebrar este día con vosotros. Podéis
-                confirmar vuestra asistencia y gestionar todos los invitados
-                desde este formulario.
-              </p>
-            </CinematicStaggeredRevealItem>
-          </div>
-
-          {!rsvp.mode && !rsvp.hasGroupId && (
-            <CinematicStaggeredRevealItem index={3} isVisible={rsvpInView}>
-              <CreateInvitationCard
-                email={rsvp.contact.email}
-                emailError={rsvp.errors.email}
-                loading={spinner.loading}
-                onCreateNew={rsvp.handleCreateNew}
-                onEmailChange={(value) =>
-                  rsvp.handleContactChange("email", value)
-                }
-                onSearchInvitation={rsvp.handleSearchInvitation}
-              />
-
-              <SearchInvitationCard
-                email={rsvp.contact.email}
-                emailError={rsvp.errors.email}
-                loading={spinner.loading}
-                onCreateNew={rsvp.handleCreateNew}
-                onEmailChange={(value) =>
-                  rsvp.handleContactChange("email", value)
-                }
-                onSearchInvitation={rsvp.handleSearchInvitation}
-              />
-            </CinematicStaggeredRevealItem>
-          )}
-
-          {rsvp.mode === "form" && (
-            <form onSubmit={rsvp.handleSubmit} className="space-y-6">
-              <CinematicStaggeredRevealItem index={3} isVisible={rsvpInView}>
-                <ContactDetailsCard
-                  contact={rsvp.contact}
-                  errors={rsvp.errors}
-                  onContactChange={rsvp.handleContactChange}
-                />
-              </CinematicStaggeredRevealItem>
-
-              {rsvp.guests.map((guest, index) => (
-                <CinematicStaggeredRevealItem
-                  key={index}
-                  index={4 + index}
-                  isVisible={rsvpInView}
-                >
-                  <GuestCard
-                    canRemove={rsvp.guests.length > 1}
-                    errors={rsvp.errors}
-                    guest={guest}
-                    index={index}
-                    onGuestChange={rsvp.handleGuestChange}
-                    onRemoveGuest={rsvp.handleRemoveGuest}
-                  />
-                </CinematicStaggeredRevealItem>
-              ))}
-
-              <CinematicStaggeredRevealItem
-                index={4 + rsvp.guests.length}
-                isVisible={rsvpInView}
-              >
-                <div className="flex flex-col gap-4">
-                  {rsvp.totalGuests < MAX_GUESTS && (
-                    <button
-                      type="button"
-                      disabled={spinner.loading}
-                      onClick={rsvp.handleAddGuest}
-                      className="btn-secondary disabled:opacity-50"
-                    >
-                      Añadir invitado
-                    </button>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={spinner.loading}
-                    className="btn-primary disabled:opacity-50"
-                  >
-                    Confirmar asistencia
-                  </button>
-
-                  <PrimaryButton to="/" variant="secondary">
-                    Volver al inicio
-                  </PrimaryButton>
-                </div>
-              </CinematicStaggeredRevealItem>
-            </form>
-          )}
-
-          <RsvpStatusDialog
-            closeText={rsvp.popup.closeText}
-            closeTo={rsvp.popup.closeTo}
-            eyebrow={rsvp.popup.eyebrow}
-            message={rsvp.popup.message}
-            onClose={rsvp.closePopup}
-            open={rsvp.popup.open}
-            title={rsvp.popup.title}
-            type={rsvp.popup.type}
-          />
-        </div>
+        <div ref={wrapperRef}>{children}</div>
       </CinematicSection>
     </CinematicPage>
+  );
+}
+
+export function RsvpStatus({ closePopup, popup }) {
+  return (
+    <RsvpStatusDialog
+      closeText={popup.closeText}
+      closeTo={popup.closeTo}
+      eyebrow={popup.eyebrow}
+      message={popup.message}
+      onClose={closePopup}
+      open={popup.open}
+      title={popup.title}
+      type={popup.type}
+    />
   );
 }

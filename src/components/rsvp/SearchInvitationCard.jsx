@@ -1,11 +1,10 @@
-import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 import PrimaryButton from "../common/PrimaryButton";
+import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 
 export default function SearchInvitationCard({
   email,
   emailError,
   loading,
-  onCreateNew,
   onEmailChange,
   onSearchInvitation,
 }) {

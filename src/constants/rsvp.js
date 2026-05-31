@@ -12,13 +12,13 @@ export const COMMON_ALLERGIES = [
 ];
 
 export const OUTBOUND_BUS_OPTIONS = [
-  { value: "No", label: "No necesito autobús de ida" },
+  { value: "No", label: "No" },
   { value: "18:00", label: "18:00 (Huelva)" },
   { value: "18:20", label: "18:20 (Corrales)" },
 ];
 
 export const RETURN_BUS_OPTIONS = [
-  { value: "No", label: "No necesito autobús de vuelta" },
+  { value: "No", label: "No" },
   { value: "3:00", label: "3:00 (Corrales - Huelva)" },
   { value: "6:00", label: "6:00 (Corrales - Huelva)" },
 ];

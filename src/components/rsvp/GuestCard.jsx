@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Trash2 } from "lucide-react";
+import IconButton from "../common/IconButton";
 import {
   COMMON_ALLERGIES,
   OUTBOUND_BUS_OPTIONS,
@@ -31,15 +32,13 @@ export default function GuestCard({
         </h3>
 
         {canRemove && (
-          <button
-            type="button"
+          <IconButton
+            label={`Eliminar invitado ${index + 1}`}
             onClick={() => onRemoveGuest(index)}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-500 transition hover:bg-red-100"
-            aria-label={`Eliminar invitado ${index + 1}`}
-            title="Eliminar"
+            tone="danger"
           >
             <Trash2 size={16} strokeWidth={1.8} />
-          </button>
+          </IconButton>
         )}
       </div>
 

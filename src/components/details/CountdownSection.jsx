@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../common/HeaderSection";
-
-const WEDDING_DATE = "2026-08-22T19:00:00";
+import { siteContent } from "../../config/siteContent";
 
 function getTimeLeft(targetDate) {
   const difference = targetDate.getTime() - new Date().getTime();
@@ -32,17 +31,18 @@ function getTimeLeft(targetDate) {
 function CountdownCard({ label, value }) {
   return (
     <div className="premium-card px-4 py-8 text-center sm:px-6 sm:py-10">
-      <span className="block font-serif section-text text-5xl sm:text-6xl lg:text-7xl">
+      <span className="section-text block font-serif text-5xl sm:text-6xl lg:text-7xl">
         {value}
       </span>
 
-      <span className="mt-4 block section-eyebrow">{label}</span>
+      <span className="section-eyebrow mt-4 block">{label}</span>
     </div>
   );
 }
 
 export default function CountdownSection() {
-  const targetDate = useMemo(() => new Date(WEDDING_DATE), []);
+  const { countdown } = siteContent.details;
+  const targetDate = useMemo(() => new Date(siteContent.weddingDate.iso), []);
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));
 
   useEffect(() => {
@@ -54,19 +54,19 @@ export default function CountdownSection() {
   }, [targetDate]);
 
   const items = [
-    { label: "Días", value: timeLeft.days },
-    { label: "Horas", value: timeLeft.hours },
-    { label: "Minutos", value: timeLeft.minutes },
-    { label: "Segundos", value: timeLeft.seconds },
+    { label: countdown.labels.days, value: timeLeft.days },
+    { label: countdown.labels.hours, value: timeLeft.hours },
+    { label: countdown.labels.minutes, value: timeLeft.minutes },
+    { label: countdown.labels.seconds, value: timeLeft.seconds },
   ];
 
   return (
     <CinematicSection id="countdown">
       <div className="mx-auto max-w-4xl text-center">
         <HeaderSection
-          eyebrow="Cada vez queda menos"
-          title="Cuenta atrás"
-          text="El tiempo avanza hacia un día que queremos vivir rodeados de las personas que más queremos."
+          eyebrow={countdown.eyebrow}
+          title={countdown.title}
+          text={countdown.text}
         />
 
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -75,7 +75,9 @@ export default function CountdownSection() {
           ))}
         </div>
 
-        <p className="section-eyebrow mt-6">22 de agosto de 2026 · 19:00</p>
+        <p className="section-eyebrow mt-6">
+          {siteContent.weddingDate.display}
+        </p>
       </div>
     </CinematicSection>
   );
