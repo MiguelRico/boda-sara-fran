@@ -182,25 +182,6 @@ function AdminLogin({
 function AdminDashboard() {
   return (
     <div className="mx-auto w-full max-w-4xl">
-      {/*
-      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="section-eyebrow mb-2">Gestion</p>
-          <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)] sm:text-5xl">
-            Panel de invitados
-          </h2>
-        </div>
-        <button
-          className="btn-secondary gap-2"
-          onClick={onLogout}
-          type="button"
-        >
-          <LogOut size={16} strokeWidth={1.8} />
-          Salir
-        </button>
-      </div>
-
-        */}
       <div className="grid gap-4 sm:grid-cols-2">
         {adminCards.map((card, index) => (
           <AnimatedInfoCard key={card.title} card={card} index={index} />

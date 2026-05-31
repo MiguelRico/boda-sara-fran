@@ -902,19 +902,19 @@ function GroupEditor({ group, onClose, onSave }) {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
+              className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={saving}
+              type="submit"
+            >
+              Guardar
+            </button>
+            <button
               className="btn-secondary"
               disabled={saving}
               onClick={onClose}
               type="button"
             >
               Cancelar
-            </button>
-            <button
-              className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={saving}
-              type="submit"
-            >
-              Guardar
             </button>
           </div>
         </div>
