@@ -1,7 +1,7 @@
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
-import PrimaryButton from "../common/PrimaryButton";
+import IconButton from "../ui/IconButton";
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 
 export default function RsvpStatusDialog({
@@ -59,14 +59,16 @@ export default function RsvpStatusDialog({
 
         {children}
 
-        <PrimaryButton
+        <IconButton
           className="mt-8"
           icon={<Check size={16} strokeWidth={1.8} />}
           onClick={handleClose}
+          tone="primary"
           type="button"
+          showText="always"
         >
           {closeText}
-        </PrimaryButton>
+        </IconButton>
       </div>
     </div>
   );

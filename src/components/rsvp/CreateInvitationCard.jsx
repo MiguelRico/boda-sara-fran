@@ -1,6 +1,6 @@
 import { FormCard } from "./FormPrimitives";
 import { Plus } from "lucide-react";
-import PrimaryButton from "../common/PrimaryButton";
+import IconButton from "../ui/IconButton";
 
 export default function CreateInvitationCard({ onCreateNew }) {
   return (
@@ -16,14 +16,16 @@ export default function CreateInvitationCard({ onCreateNew }) {
       </div>
 
       <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-        <PrimaryButton
+        <IconButton
           className="flex-1"
           icon={<Plus size={16} strokeWidth={1.8} />}
+          showText="always"
+          tone="primary"
           type="button"
           onClick={onCreateNew}
         >
           Crear nueva
-        </PrimaryButton>
+        </IconButton>
       </div>
     </FormCard>
   );

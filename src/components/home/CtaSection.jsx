@@ -2,7 +2,7 @@ import { useInView } from "framer-motion";
 import { useRef } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../cinematic/CinematicStaggeredRevealItem";
-import PrimaryButton from "../common/PrimaryButton";
+import IconButton from "../ui/IconButton";
 import { siteContent } from "../../config/siteContent";
 import { CalendarCheck, Home } from "lucide-react";
 
@@ -31,20 +31,23 @@ export default function CtaSection() {
 
         <CinematicStaggeredRevealItem index={3} isVisible={ctaInView}>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <PrimaryButton
+            <IconButton
               icon={<CalendarCheck size={16} strokeWidth={1.8} />}
+              showText="always"
+              tone="primary"
               to="/rsvp"
             >
               {cta.primaryAction}
-            </PrimaryButton>
+            </IconButton>
 
-            <PrimaryButton
+            <IconButton
               icon={<Home size={16} strokeWidth={1.8} />}
+              showText="always"
               to="/"
-              variant="secondary"
+              tone="secondary"
             >
               {cta.secondaryAction}
-            </PrimaryButton>
+            </IconButton>
           </div>
         </CinematicStaggeredRevealItem>
       </div>

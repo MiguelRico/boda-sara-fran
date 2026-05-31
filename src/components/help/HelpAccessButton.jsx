@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { CircleHelp, Mail, Phone } from "lucide-react";
 
-import IconButton from "../common/IconButton";
-import PrimaryButton from "../common/PrimaryButton";
+import IconButton from "../ui/IconButton";
 import RsvpStatusDialog from "../rsvp/RsvpStatusDialog";
 import { siteContent } from "../../config/siteContent";
 
@@ -24,7 +23,6 @@ export default function HelpAccessButton() {
           icon={<CircleHelp size={18} strokeWidth={1.8} />}
           label="Abrir ayuda"
           onClick={() => setIsOpen(true)}
-          showText
           type="button"
         >
           Ayuda
@@ -51,27 +49,29 @@ export default function HelpAccessButton() {
               </h3>
 
               <div className="mt-4 grid gap-3">
-                <PrimaryButton
+                <IconButton
                   className="w-full justify-start"
                   disabled={!contact.phone}
-                  href={contact.phone ? formatPhoneHref(contact.phone) : undefined}
+                  href={
+                    contact.phone ? formatPhoneHref(contact.phone) : undefined
+                  }
                   icon={<Phone size={16} strokeWidth={1.8} />}
-                  showText
-                  variant="secondary"
+                  showText="always"
+                  tone="secondary"
                 >
                   {contact.phone || "Telefono pendiente"}
-                </PrimaryButton>
+                </IconButton>
 
-                <PrimaryButton
+                <IconButton
                   className="w-full justify-start"
                   disabled={!contact.email}
                   href={contact.email ? `mailto:${contact.email}` : undefined}
                   icon={<Mail size={16} strokeWidth={1.8} />}
-                  showText
-                  variant="secondary"
+                  showText="always"
+                  tone="secondary"
                 >
                   {contact.email || "Email pendiente"}
-                </PrimaryButton>
+                </IconButton>
               </div>
             </div>
           ))}

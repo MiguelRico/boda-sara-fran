@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Trash2 } from "lucide-react";
-import IconButton from "../common/IconButton";
+import IconButton from "../ui/IconButton";
 import {
   COMMON_ALLERGIES,
   OUTBOUND_BUS_OPTIONS,
@@ -33,12 +33,11 @@ export default function GuestCard({
 
         {canRemove && (
           <IconButton
+            icon={<Trash2 size={16} strokeWidth={1.8} />}
             label={`Eliminar invitado ${index + 1}`}
             onClick={() => onRemoveGuest(index)}
             tone="danger"
-          >
-            <Trash2 size={16} strokeWidth={1.8} />
-          </IconButton>
+          />
         )}
       </div>
 
@@ -219,3 +218,4 @@ function BusSelect({ label, onChange, options, value }) {
     </div>
   );
 }
+

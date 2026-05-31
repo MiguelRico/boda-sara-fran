@@ -2,8 +2,8 @@ import { useRef } from "react";
 import { useInView } from "framer-motion";
 import { ArrowLeft, Check, UserPlus } from "lucide-react";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import HeaderSection from "../components/common/HeaderSection";
-import PrimaryButton from "../components/common/PrimaryButton";
+import HeaderSection from "../components/ui/HeaderSection";
+import IconButton from "../components/ui/IconButton";
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
 import { siteContent } from "../config/siteContent";
@@ -83,33 +83,37 @@ export function RsvpFormPage({
         >
           <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
             {rsvp.totalGuests < MAX_GUESTS && (
-              <PrimaryButton
+              <IconButton
                 icon={<UserPlus size={16} strokeWidth={1.8} />}
-                variant="secondary"
+                showText="always"
+                tone="secondary"
                 type="button"
                 disabled={spinner.loading}
                 onClick={rsvp.handleAddGuest}
               >
                 Añadir
-              </PrimaryButton>
+              </IconButton>
             )}
 
-            <PrimaryButton
+            <IconButton
               icon={<Check size={16} strokeWidth={1.8} />}
+              showText="always"
+              tone="primary"
               type="button"
               onClick={rsvp.handleSubmit}
               disabled={spinner.loading}
             >
               Confirmar
-            </PrimaryButton>
+            </IconButton>
 
-            <PrimaryButton
+            <IconButton
               icon={<ArrowLeft size={16} strokeWidth={1.8} />}
+              showText="always"
               to="/rsvp"
-              variant="secondary"
+              tone="secondary"
             >
               Volver
-            </PrimaryButton>
+            </IconButton>
           </div>
         </CinematicStaggeredRevealItem>
       </form>

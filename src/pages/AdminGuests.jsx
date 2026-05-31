@@ -29,13 +29,13 @@ import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import HeaderSection from "../components/common/HeaderSection";
-import IconButton from "../components/common/IconButton";
-import StatusNotice from "../components/common/StatusNotice";
+import HeaderSection from "../components/ui/HeaderSection";
+import IconButton from "../components/ui/IconButton";
+import StatusNotice from "../components/ui/StatusNotice";
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
 import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
-import Spinner from "../components/spinner/Spinner";
+import Spinner from "../components/ui/Spinner";
 import { createEmptyGuest, MAX_GUESTS } from "../constants/rsvp";
 import {
   deleteAdminGroup,
@@ -1322,3 +1322,4 @@ function downloadCsv(rows) {
 function escapeCsvValue(value) {
   return `"${String(value || "").replaceAll('"', '""')}"`;
 }
+

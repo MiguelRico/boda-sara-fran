@@ -16,7 +16,7 @@ export default function IconButton({
   icon,
   label,
   onClick,
-  showText = false,
+  showText = true,
   target,
   to,
   tone = "secondary",
@@ -24,21 +24,30 @@ export default function IconButton({
   ...props
 }) {
   const accessibleLabel = label || (typeof children === "string" ? children : "");
+  const hasText = Boolean(children && showText);
+  const textClass =
+    showText === "always"
+      ? "inline"
+      : "hidden sm:inline";
   const content = (
     <>
       <span className="inline-flex shrink-0 items-center justify-center">
         {icon || children}
       </span>
-      {showText && children && (
-        <span className="truncate text-[0.68rem] uppercase tracking-[0.22em] sm:text-xs">
+      {hasText && (
+        <span
+          className={`${textClass} truncate text-[0.68rem] uppercase tracking-[0.22em] sm:text-xs`}
+        >
           {children}
         </span>
       )}
     </>
   );
   const toneClass = toneClasses[tone] ?? toneClasses.secondary;
-  const sizeClass = showText
-    ? "min-h-11 gap-2 px-5 py-3"
+  const sizeClass = hasText
+    ? showText === "always"
+      ? "min-h-11 gap-2 px-5 py-3"
+      : "h-10 w-10 sm:min-h-11 sm:w-auto sm:gap-2 sm:px-5 sm:py-3"
     : "h-10 w-10 sm:h-11 sm:w-11";
   const baseClass = `inline-flex shrink-0 items-center justify-center rounded-full border font-sans transition-all duration-500 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 ${toneClass} ${sizeClass} ${className}`;
 

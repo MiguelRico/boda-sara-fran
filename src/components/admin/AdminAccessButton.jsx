@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { LayoutDashboard, LockKeyhole, LogOut, ShieldCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  LockKeyhole,
+  LogOut,
+  ShieldCheck,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import IconButton from "../common/IconButton";
+import IconButton from "../ui/IconButton";
 import { ADMIN_AUTH_EVENT, ADMIN_SESSION_KEY } from "../../constants/admin";
 
 function getAdminAuthState() {
@@ -75,10 +80,7 @@ export default function AdminAccessButton() {
   };
 
   return (
-    <div
-      className="fixed right-3 top-3 z-50 sm:right-5 sm:top-5"
-      ref={menuRef}
-    >
+    <div className="fixed right-3 top-3 z-50 sm:right-5 sm:top-5" ref={menuRef}>
       <IconButton
         aria-expanded={isAuthenticated ? isOpen : undefined}
         aria-haspopup={isAuthenticated ? "menu" : undefined}
@@ -109,7 +111,7 @@ export default function AdminAccessButton() {
             label="Panel admin"
             onClick={handleNavigateAdmin}
             role="menuitem"
-            showText
+            showText="always"
             type="button"
           >
             Panel admin
@@ -121,7 +123,7 @@ export default function AdminAccessButton() {
             label="Cerrar sesion"
             onClick={handleLogout}
             role="menuitem"
-            showText
+            showText="always"
             type="button"
           >
             Cerrar sesion

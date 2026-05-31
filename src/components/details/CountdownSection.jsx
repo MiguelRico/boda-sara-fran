@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
-import HeaderSection from "../common/HeaderSection";
+import HeaderSection from "../ui/HeaderSection";
 import { siteContent } from "../../config/siteContent";
 
 function getTimeLeft(targetDate) {
@@ -82,3 +82,4 @@ export default function CountdownSection() {
     </CinematicSection>
   );
 }
+

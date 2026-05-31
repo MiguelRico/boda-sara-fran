@@ -58,12 +58,12 @@ export const siteContent = {
     contacts: [
       {
         name: "Sara",
-        phone: "asd",
+        phone: "616642844",
         email: "asd",
       },
       {
         name: "Fran",
-        phone: "asd",
+        phone: "695537560",
         email: "asd",
       },
     ],
