@@ -1,8 +1,16 @@
 import { Guest } from "./Guest";
+import {
+  DEFAULT_TABLE_SHAPE,
+  TABLE_GROUP_OPTIONS,
+  TABLE_SHAPE_OPTIONS,
+  TABLE_SHAPES,
+} from "../constants/tables";
 
 export const TABLE_DEFAULTS = {
   id: "",
   name: "",
+  group: "",
+  shape: DEFAULT_TABLE_SHAPE,
   seats: [],
 };
 
@@ -13,6 +21,9 @@ export const TABLE_SEAT_DEFAULTS = {
 
 const normalizeString = (value) => (value == null ? "" : String(value));
 const normalizeKey = (value) => normalizeString(value).trim().toLowerCase();
+const getTableShapeOption = (shape) =>
+  TABLE_SHAPE_OPTIONS.find((option) => option.value === shape) ||
+  TABLE_SHAPE_OPTIONS.find((option) => option.value === DEFAULT_TABLE_SHAPE);
 const getGuestKey = (guest) => {
   const normalizedGuest = Guest.normalize(guest);
   const name = Guest.getFullName(normalizedGuest);
@@ -41,12 +52,20 @@ export const Table = {
       overrides.id || overrides.table || overrides.name,
     ).trim();
     const name = normalizeString(overrides.name || overrides.table || id).trim();
+    const shape = getTableShapeOption(overrides.shape).value;
+    const normalizedSeats = Table.normalizeSeats(overrides.seats);
+    const seatCount = Number(overrides.seatCount) || normalizedSeats.length;
 
     return {
       ...TABLE_DEFAULTS,
       id,
       name,
-      seats: Table.normalizeSeats(overrides.seats),
+      group: normalizeString(overrides.group || overrides.groupName).trim(),
+      shape,
+      seats:
+        normalizedSeats.length > 0
+          ? normalizedSeats
+          : Table.createSeatsFromCount(seatCount),
     };
   },
 
@@ -58,6 +77,14 @@ export const Table = {
     return Array.isArray(tables)
       ? tables.map((table) => Table.normalize(table))
       : [];
+  },
+
+  createSeatsFromCount(seatCount) {
+    const nextSeatCount = Math.max(Number(seatCount) || 0, 0);
+
+    return Array.from({ length: nextSeatCount }, (_, index) =>
+      Table.createSeat(String(index + 1)),
+    );
   },
 
   createSeat(overrides = {}) {
@@ -111,6 +138,47 @@ export const Table = {
 
     return Array.from(tablesById.values()).sort((left, right) =>
       compareNaturalText(left.name || left.id, right.name || right.id),
+    );
+  },
+
+  mergeLists(primaryTables, secondaryTables) {
+    return Table.normalizeList([...primaryTables, ...secondaryTables]).reduce(
+      (acc, table) => {
+        const tableKey = normalizeKey(table.id || table.name);
+        const existingIndex = acc.findIndex(
+          (item) => normalizeKey(item.id || item.name) === tableKey,
+        );
+
+        if (!tableKey || existingIndex < 0) {
+          return [...acc, table];
+        }
+
+        const existingTable = acc[existingIndex];
+        const seatsById = new Map(
+          existingTable.seats.map((seat) => [seat.seat, seat]),
+        );
+
+        table.seats.forEach((seat) => {
+          const currentSeat = seatsById.get(seat.seat);
+
+          seatsById.set(
+            seat.seat,
+            currentSeat?.guest && !seat.guest ? currentSeat : seat,
+          );
+        });
+
+        return acc.map((item, index) =>
+          index === existingIndex
+            ? Table.create({
+                ...table,
+                ...existingTable,
+                group: existingTable.group || table.group,
+                seats: Array.from(seatsById.values()),
+              })
+            : item,
+        );
+      },
+      [],
     );
   },
 
@@ -221,6 +289,25 @@ export const Table = {
     };
   },
 
+  getShapeLabel(table) {
+    const normalizedTable = Table.normalize(table);
+
+    return getTableShapeOption(normalizedTable.shape).label;
+  },
+
+  getSeatRange(shape) {
+    return getTableShapeOption(shape).seatRange;
+  },
+
+  isSeatCountAllowed(shape, seatCount) {
+    const range = Table.getSeatRange(shape);
+    const normalizedSeatCount = Number(seatCount);
+
+    return (
+      normalizedSeatCount >= range.min && normalizedSeatCount <= range.max
+    );
+  },
+
   toGuestAssignments(tables) {
     return Table.normalizeList(tables).flatMap((table) =>
       table.seats
@@ -241,6 +328,28 @@ export const Table = {
 
     if (!normalizedTable.id && !normalizedTable.name) {
       errors.push("La mesa necesita identificador o nombre.");
+    }
+
+    if (!TABLE_SHAPES[normalizedTable.shape]) {
+      errors.push("La forma de la mesa no es valida.");
+    }
+
+    if (
+      normalizedTable.group &&
+      !TABLE_GROUP_OPTIONS.some((option) => option.value === normalizedTable.group)
+    ) {
+      errors.push("El grupo de la mesa no es valido.");
+    }
+
+    if (
+      normalizedTable.seats.length > 0 &&
+      !Table.isSeatCountAllowed(normalizedTable.shape, normalizedTable.seats.length)
+    ) {
+      const range = Table.getSeatRange(normalizedTable.shape);
+
+      errors.push(
+        `La mesa ${Table.getShapeLabel(normalizedTable).toLowerCase()} necesita entre ${range.min} y ${range.max} asientos.`,
+      );
     }
 
     const repeatedSeats = normalizedTable.seats
