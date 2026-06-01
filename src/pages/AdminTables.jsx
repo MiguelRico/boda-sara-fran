@@ -13,7 +13,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { Navigate } from "react-router-dom";
+import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
 import {
   Check,
   ChevronLeft,
@@ -21,7 +21,9 @@ import {
   Download,
   Plus,
   RefreshCw,
+  Save,
   Trash2,
+  Undo2,
   X,
 } from "lucide-react";
 
@@ -46,8 +48,8 @@ import PendingGuestsList from "../components/admin/PendingGuestsList";
 import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
 import { Guest } from "../models";
 import {
-  assignGuestToSeat,
-  assignPendingGuestToSeat,
+  assignGuestToSeatLocal,
+  assignPendingGuestToSeatLocal,
   buildTables,
   buildTableStats,
   createTableFormFromTable,
@@ -58,8 +60,7 @@ import {
   loadAdminTables,
   persistAdminTables,
   readStoredTables,
-  saveStoredTables,
-  unassignGuestFromSeat,
+  unassignGuestFromSeatLocal,
   upsertManualTable,
   validateTableForm,
   getTableKey,
@@ -78,6 +79,10 @@ const mobilePageSize = 1;
 const pageDataSwapDelay = 680;
 const pageRevealDelay = 160;
 const mobilePageHeightLockDelay = 560;
+const emptySavedSnapshot = {
+  groups: [],
+  manualTables: [],
+};
 const emptyState = {
   groups: [],
   loading: true,
@@ -116,6 +121,7 @@ export default function AdminTables() {
   const tablesRef = useRef(null);
   const tablesCardRef = useRef(null);
   const tablesStartRef = useRef(null);
+  const manualTablesRef = useRef(null);
   const pageLoadingTimeoutRef = useRef(null);
   const pageRevealTimeoutRef = useRef(null);
   const pageScrollStartFrameRef = useRef(null);
@@ -128,6 +134,7 @@ export default function AdminTables() {
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   const [state, setState] = useState(emptyState);
   const [manualTables, setManualTables] = useState(readStoredTables);
+  const [savedSnapshot, setSavedSnapshot] = useState(emptySavedSnapshot);
   const [tableForm, setTableForm] = useState(createEmptyTableForm);
   const [tableFormErrors, setTableFormErrors] = useState({});
   const [editingTable, setEditingTable] = useState(null);
@@ -140,6 +147,8 @@ export default function AdminTables() {
   const [isMobileList, setIsMobileList] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageLoadingMinHeight, setPageLoadingMinHeight] = useState(null);
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
+    useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     try {
       return window.localStorage.getItem(ADMIN_ACTIVE_TAB_KEY) || "tables";
@@ -172,6 +181,11 @@ export default function AdminTables() {
         if (storedTables) {
           setManualTables(storedTables);
         }
+
+        setSavedSnapshot({
+          groups,
+          manualTables: storedTables || manualTablesRef.current || [],
+        });
         setState({
           groups,
           loading: false,
@@ -192,6 +206,10 @@ export default function AdminTables() {
   );
 
   useEffect(() => {
+    manualTablesRef.current = manualTables;
+  }, [manualTables]);
+
+  useEffect(() => {
     if (!isAuthenticated) return;
 
     const timeoutId = window.setTimeout(() => {
@@ -200,10 +218,6 @@ export default function AdminTables() {
 
     return () => window.clearTimeout(timeoutId);
   }, [isAuthenticated, loadTables]);
-
-  useEffect(() => {
-    saveStoredTables(manualTables);
-  }, [manualTables]);
 
   useEffect(() => {
     try {
@@ -259,6 +273,46 @@ export default function AdminTables() {
     (total, table) => total + table.seats.length,
     0,
   );
+  const pendingChanges = useMemo(
+    () =>
+      buildPendingTableChanges({
+        currentGroups: state.groups,
+        currentManualTables: manualTables,
+        savedGroups: savedSnapshot.groups,
+        savedManualTables: savedSnapshot.manualTables,
+      }),
+    [manualTables, savedSnapshot, state.groups],
+  );
+  const hasPendingChanges = pendingChanges.length > 0;
+  const changedGroups = useMemo(
+    () => getChangedGroups(savedSnapshot.groups, state.groups),
+    [savedSnapshot.groups, state.groups],
+  );
+
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    return (
+      hasPendingChanges &&
+      currentLocation.pathname !== nextLocation.pathname
+    );
+  });
+
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (!hasPendingChanges) return;
+
+        event.preventDefault();
+        event.returnValue = "";
+      },
+      [hasPendingChanges],
+    ),
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setShowUnsavedChangesDialog(true);
+    }
+  }, [blocker.state]);
 
   const guestsPending = useMemo(
     () => getPendingGuests(state.groups),
@@ -389,66 +443,29 @@ export default function AdminTables() {
       return changed ? { ...group, guests } : group;
     });
 
-    try {
-      spinner.show("Eliminando mesa...");
+    setManualTables(nextManualTables);
+    setState((prev) => ({
+      ...prev,
+      groups: updatedGroups,
+      loading: false,
+      error: "",
+    }));
 
-      const persistencePromises = [
-        persistAdminTables({
-          password: ADMIN_PASSWORD,
-          tables: nextManualTables,
-        }),
-      ];
-
-      const changedGroups = updatedGroups.filter(
-        (group, index) => group !== state.groups[index],
-      );
-
-      if (changedGroups.length) {
-        persistencePromises.push(
-          ...changedGroups.map((group) =>
-            saveAdminGroup({
-              group,
-              password: ADMIN_PASSWORD,
-            }),
-          ),
-        );
-      }
-
-      await Promise.all(persistencePromises);
-
-      setManualTables(nextManualTables);
-      setState((prev) => ({
-        ...prev,
-        groups: updatedGroups,
-        loading: false,
-        error: "",
-      }));
-
-      if (editingTable && getTableKey(editingTable) === tableKey) {
-        handleCloseTableForm();
-      }
-
-      const nextTables = buildTables({
-        groups: updatedGroups,
-        manualTables: nextManualTables,
-      });
-      const nextPage = Math.min(
-        page,
-        Math.max(Math.ceil(nextTables.length / pageSize), 1),
-      );
-
-      setPage(nextPage);
-    } catch (error) {
-      console.error("Error al eliminar mesa:", error);
-      setState((prev) => ({
-        ...prev,
-        error:
-          error.message || "No se pudo eliminar la mesa. Intenta de nuevo.",
-      }));
-    } finally {
-      spinner.hide();
-      setTableToDelete(null);
+    if (editingTable && getTableKey(editingTable) === tableKey) {
+      handleCloseTableForm();
     }
+
+    const nextTables = buildTables({
+      groups: updatedGroups,
+      manualTables: nextManualTables,
+    });
+    const nextPage = Math.min(
+      page,
+      Math.max(Math.ceil(nextTables.length / pageSize), 1),
+    );
+
+    setPage(nextPage);
+    setTableToDelete(null);
   };
 
   const handleSeatClick = ({ seat, table }) => {
@@ -462,24 +479,96 @@ export default function AdminTables() {
   };
 
   const handleRefreshTables = useCallback(async () => {
+    if (hasPendingChanges) {
+      setState((prev) => ({
+        ...prev,
+        error:
+          "Guarda o descarta los cambios pendientes antes de actualizar las mesas.",
+      }));
+      return;
+    }
+
     try {
       spinner.show("Actualizando mesas...");
       await loadTables({ showLoading: false });
     } finally {
       spinner.hide();
     }
-  }, [loadTables, spinner]);
+  }, [hasPendingChanges, loadTables, spinner]);
+
+  const handleSavePendingChanges = async () => {
+    if (!hasPendingChanges) return;
+
+    try {
+      spinner.show("Guardando cambios...");
+
+      const persistencePromises = [
+        persistAdminTables({
+          password: ADMIN_PASSWORD,
+          tables: manualTables,
+        }),
+        ...changedGroups.map((group) =>
+          saveAdminGroup({
+            group,
+            password: ADMIN_PASSWORD,
+          }),
+        ),
+      ];
+
+      await Promise.all(persistencePromises);
+
+      setSavedSnapshot({
+        groups: state.groups,
+        manualTables,
+      });
+    } catch (error) {
+      console.error("Error al guardar cambios de mesas:", error);
+      setState((prev) => ({
+        ...prev,
+        error:
+          error.message ||
+          "No se pudieron guardar los cambios. Intenta de nuevo.",
+      }));
+    } finally {
+      spinner.hide();
+    }
+  };
+
+  const handleDiscardPendingChanges = useCallback(() => {
+    const restoredManualTables = savedSnapshot.manualTables;
+    const restoredGroups = savedSnapshot.groups;
+
+    setManualTables(restoredManualTables);
+    setState((prev) => ({
+      ...prev,
+      groups: restoredGroups,
+      loading: false,
+      error: "",
+    }));
+    setTableToDelete(null);
+    setSeatAssignmentTarget(null);
+    handleCloseTableForm();
+
+    const restoredTables = buildTables({
+      groups: restoredGroups,
+      manualTables: restoredManualTables,
+    });
+    const restoredTotalPages = Math.max(
+      Math.ceil(restoredTables.length / pageSize),
+      1,
+    );
+
+    setPage((current) => Math.min(current, restoredTotalPages));
+  }, [pageSize, savedSnapshot.groups, savedSnapshot.manualTables]);
 
   const handleAssignGuestToTable = useCallback(
     async ({ guestId, guestGroupName, guestIndex, tableName, seatNumber }) => {
       try {
-        spinner.show("Asignando invitado...");
-        const updatedGroups = await assignPendingGuestToSeat({
+        const updatedGroups = assignPendingGuestToSeatLocal({
           groups: state.groups,
           guestGroupName,
           guestId,
           guestIndex,
-          password: ADMIN_PASSWORD,
           seatNumber,
           tableName,
           tables,
@@ -498,11 +587,9 @@ export default function AdminTables() {
             error.message || "No se pudo asignar la mesa. Intenta de nuevo.",
         }));
         throw error;
-      } finally {
-        spinner.hide();
       }
     },
-    [spinner, state.groups, tables],
+    [state.groups, tables],
   );
 
   const handleAssignGuestToSeat = async ({
@@ -516,13 +603,11 @@ export default function AdminTables() {
     setState((prev) => ({ ...prev, error: "" }));
 
     try {
-      spinner.show("Guardando asiento...");
-      const updatedGroups = await assignGuestToSeat({
+      const updatedGroups = assignGuestToSeatLocal({
         groups: state.groups,
         guestGroupName,
         guestIndex,
         guestName,
-        password: ADMIN_PASSWORD,
         seat: seatAssignmentTarget.seat,
         table: seatAssignmentTarget.table,
       });
@@ -542,7 +627,6 @@ export default function AdminTables() {
       }));
     } finally {
       setAssigningSeat(false);
-      spinner.hide();
     }
   };
 
@@ -553,10 +637,8 @@ export default function AdminTables() {
     setState((prev) => ({ ...prev, error: "" }));
 
     try {
-      spinner.show("Liberando asiento...");
-      const updatedGroups = await unassignGuestFromSeat({
+      const updatedGroups = unassignGuestFromSeatLocal({
         groups: state.groups,
-        password: ADMIN_PASSWORD,
         seat: target.seat,
         table: target.table,
       });
@@ -578,7 +660,6 @@ export default function AdminTables() {
       }));
     } finally {
       setAssigningSeat(false);
-      spinner.hide();
     }
   };
 
@@ -598,30 +679,29 @@ export default function AdminTables() {
       manualTables,
     });
 
-    try {
-      spinner.show(editingTable ? "Guardando mesa..." : "Creando mesa...");
-      await persistAdminTables({
-        password: ADMIN_PASSWORD,
-        tables: nextManualTables,
-      });
-      setManualTables(nextManualTables);
+    setManualTables(nextManualTables);
 
-      if (!editingTable) {
-        setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
-      }
-
-      handleCloseTableForm();
-    } catch (error) {
-      console.error("Error al guardar mesas:", error);
-      setState((prev) => ({
-        ...prev,
-        error:
-          error.message ||
-          "No se pudieron guardar las mesas. Intenta de nuevo.",
-      }));
-    } finally {
-      spinner.hide();
+    if (!editingTable) {
+      setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
     }
+
+    handleCloseTableForm();
+  };
+
+  const handleCancelBlockedNavigation = () => {
+    setShowUnsavedChangesDialog(false);
+    blocker.reset?.();
+  };
+
+  const handleConfirmBlockedNavigation = () => {
+    setShowUnsavedChangesDialog(false);
+    blocker.proceed?.();
+  };
+
+  const handleDiscardFromBlockedNavigation = () => {
+    handleDiscardPendingChanges();
+    setShowUnsavedChangesDialog(false);
+    blocker.reset?.();
   };
 
   if (!isAuthenticated) {
@@ -631,6 +711,15 @@ export default function AdminTables() {
   return (
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
+
+      {showUnsavedChangesDialog && (
+        <UnsavedChangesDialog
+          changes={pendingChanges}
+          onCancel={handleCancelBlockedNavigation}
+          onConfirm={handleConfirmBlockedNavigation}
+          onDiscard={handleDiscardFromBlockedNavigation}
+        />
+      )}
 
       <CinematicSection
         className="surface-soft"
@@ -649,7 +738,9 @@ export default function AdminTables() {
 
           <CinematicStaggeredRevealItem index={2} isVisible={tablesInView}>
             <TablesOverview
+              hasPendingChanges={hasPendingChanges}
               loading={state.loading}
+              onDiscardChanges={handleDiscardPendingChanges}
               onRefresh={handleRefreshTables}
               stats={tableStats}
             />
@@ -664,35 +755,54 @@ export default function AdminTables() {
                     Asientos asignados
                   </h2>
 
-                  {activeTab === "tables" && (
-                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+                      {activeTab === "tables" ? (
+                        <>
                         {pagedTableCount}{" "}
                         {pagedTableCount === 1 ? "mesa" : "mesas"} en esta
                         pagina - {pagedSeatCount}{" "}
                         {pagedSeatCount === 1 ? "asiento" : "asientos"}
-                      </p>
+                        </>
+                      ) : (
+                        <>
+                          {guestsPending.length}{" "}
+                          {guestsPending.length === 1
+                            ? "invitado pendiente"
+                            : "invitados pendientes"}
+                        </>
+                      )}
+                    </p>
 
-                      <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex sm:justify-end">
-                        <IconButton
-                          className="!w-full sm:!w-10 [var(--color-accent)]"
-                          disabled={!tables.length}
-                          label="Exportar"
-                          onClick={() => downloadTablesCsv(tables)}
-                        >
-                          <Download size={16} strokeWidth={1.8} />
-                        </IconButton>
+                    <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
+                      <IconButton
+                        className="!w-full sm:!w-10 [var(--color-accent)]"
+                        disabled={!tables.length}
+                        label="Exportar"
+                        onClick={() => downloadTablesCsv(tables)}
+                      >
+                        <Download size={16} strokeWidth={1.8} />
+                      </IconButton>
 
-                        <IconButton
-                          className="!w-full border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] sm:!w-10"
-                          label="Crear mesa"
-                          onClick={handleCreateTable}
-                        >
-                          <Plus size={18} strokeWidth={2.4} />
-                        </IconButton>
-                      </div>
+                      <IconButton
+                        className="!w-full sm:!w-10"
+                        disabled={!hasPendingChanges || spinner.loading}
+                        label="Guardar cambios"
+                        onClick={handleSavePendingChanges}
+                        tone="primary"
+                      >
+                        <Save size={16} strokeWidth={1.8} />
+                      </IconButton>
+
+                      <IconButton
+                        className="!w-full border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] sm:!w-10"
+                        label="Crear mesa"
+                        onClick={handleCreateTable}
+                      >
+                        <Plus size={18} strokeWidth={2.4} />
+                      </IconButton>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 
@@ -1026,7 +1136,87 @@ function SeatAssignmentDialog({
   return createPortal(dialog, document.body);
 }
 
-function TablesOverview({ loading, onRefresh, stats }) {
+function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
+  useViewportScrollLock(true);
+
+  const dialog = (
+    <div className="rsvp-dialog-overlay">
+      <div
+        aria-labelledby="unsaved-table-changes-title"
+        aria-modal="true"
+        className="premium-card rsvp-dialog-card"
+        role="alertdialog"
+      >
+        <p className="section-eyebrow mb-3">Cambios sin guardar</p>
+        <h2
+          className="font-serif text-3xl text-[var(--color-accent-dark)]"
+          id="unsaved-table-changes-title"
+        >
+          Se perderan los cambios
+        </h2>
+        <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
+          Tienes cambios pendientes en mesas. Si sales ahora, no se enviaran a
+          Apps Script.
+        </p>
+        <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
+          {changes.map((change, index) => (
+            <li
+              className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
+              key={`${change}-${index}`}
+            >
+              {change}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <IconButton
+            className="flex-1"
+            icon={<X size={16} strokeWidth={1.8} />}
+            label="Seguir editando"
+            onClick={onCancel}
+            showText="always"
+            tone="secondary"
+            type="button"
+          >
+            Seguir editando
+          </IconButton>
+          <IconButton
+            className="flex-1"
+            icon={<Undo2 size={16} strokeWidth={1.8} />}
+            label="Deshacer cambios"
+            onClick={onDiscard}
+            showText="always"
+            tone="secondary"
+            type="button"
+          >
+            Deshacer cambios
+          </IconButton>
+          <IconButton
+            className="flex-1"
+            icon={<Trash2 size={16} strokeWidth={1.8} />}
+            label="Salir sin guardar"
+            onClick={onConfirm}
+            showText="always"
+            tone="danger"
+            type="button"
+          >
+            Salir sin guardar
+          </IconButton>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(dialog, document.body);
+}
+
+function TablesOverview({
+  hasPendingChanges,
+  loading,
+  onDiscardChanges,
+  onRefresh,
+  stats,
+}) {
   return (
     <section className="premium-card mt-4 mb-5">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -1036,7 +1226,7 @@ function TablesOverview({ loading, onRefresh, stats }) {
           </h2>
         </div>
 
-        <div className="grid gap-3 sm:flex sm:items-center">
+        <div className="grid gap-3 sm:w-auto">
           <IconButton
             className="w-full sm:w-auto"
             disabled={loading}
@@ -1052,6 +1242,18 @@ function TablesOverview({ loading, onRefresh, stats }) {
             showText="always"
           >
             Actualizar
+          </IconButton>
+          <IconButton
+            className="w-full sm:w-auto"
+            disabled={!hasPendingChanges || loading}
+            icon={<Undo2 size={16} strokeWidth={1.8} />}
+            label="Deshacer cambios"
+            onClick={onDiscardChanges}
+            showText="always"
+            tone="secondary"
+            type="button"
+          >
+            Deshacer cambios
           </IconButton>
         </div>
       </div>
@@ -1275,6 +1477,99 @@ function getTableRenderKey(table) {
     .join(",");
 
   return `${table.name}-${seatSignature}`;
+}
+
+function buildPendingTableChanges({
+  currentGroups,
+  currentManualTables,
+  savedGroups,
+  savedManualTables,
+}) {
+  const changes = [
+    ...buildManualTableChanges(savedManualTables, currentManualTables),
+    ...buildSeatAssignmentChanges(savedGroups, currentGroups),
+  ];
+
+  return changes.length ? changes : [];
+}
+
+function buildManualTableChanges(savedTables, currentTables) {
+  const savedByKey = new Map(savedTables.map((table) => [getTableKey(table), table]));
+  const currentByKey = new Map(
+    currentTables.map((table) => [getTableKey(table), table]),
+  );
+  const changes = [];
+
+  currentByKey.forEach((table, tableKey) => {
+    if (!tableKey) return;
+
+    const savedTable = savedByKey.get(tableKey);
+
+    if (!savedTable) {
+      changes.push(`Mesa creada: ${table.name}`);
+      return;
+    }
+
+    if (getStableJson(savedTable) !== getStableJson(table)) {
+      changes.push(`Mesa modificada: ${table.name}`);
+    }
+  });
+
+  savedByKey.forEach((table, tableKey) => {
+    if (tableKey && !currentByKey.has(tableKey)) {
+      changes.push(`Mesa eliminada: ${table.name}`);
+    }
+  });
+
+  return changes;
+}
+
+function buildSeatAssignmentChanges(savedGroups, currentGroups) {
+  const savedByGroupName = new Map(
+    savedGroups.map((group) => [group.groupName, group]),
+  );
+  const changes = [];
+
+  currentGroups.forEach((group) => {
+    const savedGroup = savedByGroupName.get(group.groupName);
+
+    group.guests.forEach((guest, index) => {
+      const savedGuest = savedGroup?.guests?.[index] || {};
+      const previousAssignment = getGuestAssignmentLabel(savedGuest);
+      const currentAssignment = getGuestAssignmentLabel(guest);
+
+      if (previousAssignment === currentAssignment) return;
+
+      changes.push(
+        `${Guest.getFullName(guest, `Invitado ${index + 1}`)}: ${previousAssignment} -> ${currentAssignment}`,
+      );
+    });
+  });
+
+  return changes;
+}
+
+function getChangedGroups(savedGroups, currentGroups) {
+  const savedByGroupName = new Map(
+    savedGroups.map((group) => [group.groupName, getStableJson(group)]),
+  );
+
+  return currentGroups.filter(
+    (group) => savedByGroupName.get(group.groupName) !== getStableJson(group),
+  );
+}
+
+function getGuestAssignmentLabel(guest = {}) {
+  const table = String(guest.table || "").trim();
+  const seat = String(guest.seat || "").trim();
+
+  if (!table && !seat) return "Sin asiento";
+
+  return `Mesa ${table || "-"}, asiento ${seat || "-"}`;
+}
+
+function getStableJson(value) {
+  return JSON.stringify(value);
 }
 
 function createGuestOptionValue({ groupName, guestIndex = "", name }) {

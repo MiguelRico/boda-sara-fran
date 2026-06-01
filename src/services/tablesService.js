@@ -189,12 +189,11 @@ export const upsertManualTable = ({ editingTable, form, manualTables }) => {
   ];
 };
 
-export const assignPendingGuestToSeat = async ({
+export const assignPendingGuestToSeatLocal = ({
   groups,
   guestGroupName,
   guestId,
   guestIndex,
-  password,
   seatNumber,
   tableName,
   tables,
@@ -255,11 +254,6 @@ export const assignPendingGuestToSeat = async ({
     ),
   };
 
-  await saveAdminGroup({
-    group: updatedConfirmation,
-    password,
-  });
-
   return groups.map((group) =>
     group.groupName === updatedConfirmation.groupName
       ? updatedConfirmation
@@ -267,12 +261,42 @@ export const assignPendingGuestToSeat = async ({
   );
 };
 
-export const assignGuestToSeat = async ({
+export const assignPendingGuestToSeat = async ({
+  groups,
+  guestGroupName,
+  guestId,
+  guestIndex,
+  password,
+  seatNumber,
+  tableName,
+  tables,
+}) => {
+  const updatedGroups = assignPendingGuestToSeatLocal({
+    groups,
+    guestGroupName,
+    guestId,
+    guestIndex,
+    seatNumber,
+    tableName,
+    tables,
+  });
+  const updatedConfirmation = updatedGroups.find(
+    (group) => group.groupName === guestGroupName,
+  );
+
+  await saveAdminGroup({
+    group: updatedConfirmation,
+    password,
+  });
+
+  return updatedGroups;
+};
+
+export const assignGuestToSeatLocal = ({
   groups,
   guestGroupName,
   guestIndex,
   guestName,
-  password,
   seat,
   table,
 }) => {
@@ -316,13 +340,33 @@ export const assignGuestToSeat = async ({
 
     return changed ? { ...group, guests } : group;
   });
-  const changedGroups = updatedGroups.filter(
-    (group, index) => group !== groups[index],
-  );
-
   if (!selectedGuestFound) {
     throw new Error("Invitado no encontrado en el grupo");
   }
+
+  return updatedGroups;
+};
+
+export const assignGuestToSeat = async ({
+  groups,
+  guestGroupName,
+  guestIndex,
+  guestName,
+  password,
+  seat,
+  table,
+}) => {
+  const updatedGroups = assignGuestToSeatLocal({
+    groups,
+    guestGroupName,
+    guestIndex,
+    guestName,
+    seat,
+    table,
+  });
+  const changedGroups = updatedGroups.filter(
+    (group, index) => group !== groups[index],
+  );
 
   await Promise.all(
     changedGroups.map((group) =>
@@ -336,7 +380,7 @@ export const assignGuestToSeat = async ({
   return updatedGroups;
 };
 
-export const unassignGuestFromSeat = async ({ groups, password, seat, table }) => {
+export const unassignGuestFromSeatLocal = ({ groups, seat, table }) => {
   const tableName = getTableKey(table);
   const seatNumber = seat.seat;
   const updatedGroups = groups.map((group) => {
@@ -365,6 +409,15 @@ export const unassignGuestFromSeat = async ({ groups, password, seat, table }) =
   if (!changedGroups.length) {
     throw new Error("No hay ningun invitado asignado a este asiento");
   }
+
+  return updatedGroups;
+};
+
+export const unassignGuestFromSeat = async ({ groups, password, seat, table }) => {
+  const updatedGroups = unassignGuestFromSeatLocal({ groups, seat, table });
+  const changedGroups = updatedGroups.filter(
+    (group, index) => group !== groups[index],
+  );
 
   await Promise.all(
     changedGroups.map((group) =>
