@@ -1,17 +1,24 @@
+import { GUEST_MENU_OPTIONS } from "../constants/rsvp";
+
 export const GUEST_DEFAULTS = {
   name: "",
   lastname: "",
   allergies: [],
   otherAllergies: "",
   comments: "",
-  outboundBus: "18:00",
-  returnBus: "3:00",
+  outboundBus: "No",
+  returnBus: "No",
   menu: "",
   table: "",
   seat: "",
 };
 
 const normalizeString = (value) => (value == null ? "" : String(value));
+const normalizeMenu = (value) => {
+  const menu = normalizeString(value).trim();
+
+  return GUEST_MENU_OPTIONS.includes(menu) ? menu : "";
+};
 const isBlankValue = (value) => {
   if (Array.isArray(value)) return value.length === 0;
   if (typeof value === "boolean") return value === false;
@@ -35,7 +42,7 @@ export const Guest = {
         normalizeString(overrides.outboundBus) || GUEST_DEFAULTS.outboundBus,
       returnBus:
         normalizeString(overrides.returnBus) || GUEST_DEFAULTS.returnBus,
-      menu: normalizeString(overrides.menu),
+      menu: normalizeMenu(overrides.menu),
       table: normalizeString(overrides.table),
       seat: normalizeString(overrides.seat),
     };
@@ -98,7 +105,7 @@ export const Guest = {
   getAssignmentText(guest) {
     const normalizedGuest = Guest.normalize(guest);
     const values = [
-      normalizedGuest.menu && `Menu ${normalizedGuest.menu}`,
+      normalizedGuest.menu && `Menú ${normalizedGuest.menu}`,
       normalizedGuest.table && `Mesa ${normalizedGuest.table}`,
       normalizedGuest.seat && `Asiento ${normalizedGuest.seat}`,
     ].filter(Boolean);
@@ -127,7 +134,7 @@ export const Guest = {
 
     return Boolean(
       (normalizedGuest.outboundBus && normalizedGuest.outboundBus !== "No") ||
-        (normalizedGuest.returnBus && normalizedGuest.returnBus !== "No"),
+      (normalizedGuest.returnBus && normalizedGuest.returnBus !== "No"),
     );
   },
 
@@ -140,9 +147,9 @@ export const Guest = {
 
     return Boolean(
       Guest.hasOtherAllergies(normalizedGuest) ||
-        Guest.hasComments(normalizedGuest) ||
-        (Guest.usesBus(normalizedGuest) &&
-          (!normalizedGuest.outboundBus || !normalizedGuest.returnBus)),
+      Guest.hasComments(normalizedGuest) ||
+      (Guest.usesBus(normalizedGuest) &&
+        (!normalizedGuest.outboundBus || !normalizedGuest.returnBus)),
     );
   },
 
@@ -161,8 +168,9 @@ export const Guest = {
 
     return Boolean(
       normalizedGuest.name.trim() &&
-        normalizedGuest.lastname.trim() &&
-        normalizedGuest.comments.length <= 300,
+      normalizedGuest.lastname.trim() &&
+      normalizedGuest.menu &&
+      normalizedGuest.comments.length <= 300,
     );
   },
 
@@ -176,6 +184,10 @@ export const Guest = {
 
     if (!normalizedGuest.lastname.trim()) {
       errors[`guest_lastname_${index}`] = "Los apellidos son obligatorios";
+    }
+
+    if (!normalizedGuest.menu) {
+      errors[`guest_menu_${index}`] = "Selecciona Carne o Pescado";
     }
 
     if (normalizedGuest.comments.length > 300) {
@@ -203,3 +215,5 @@ export const Guest = {
     );
   },
 };
+
+export const createEmptyGuest = () => Guest.create();

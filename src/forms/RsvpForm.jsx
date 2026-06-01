@@ -40,7 +40,7 @@ export default function RsvpForm({
   const shouldShowIncompleteGuestMessage =
     Guest.hasIncompleteVisibleGuests(guests);
   const incompleteGuestMessage =
-    "Completa nombre y apellidos de todos los invitados antes de añadir otro o enviar el formulario.";
+    "Completa nombre, apellidos y menú de todos los invitados antes de añadir otro o enviar el formulario.";
   const addIcon =
     variant === "admin" ? (
       <Plus size={16} strokeWidth={1.8} />

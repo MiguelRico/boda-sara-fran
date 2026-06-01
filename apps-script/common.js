@@ -57,6 +57,12 @@ function parseAllergies(value) {
     .filter(Boolean);
 }
 
+function normalizeMenu(value) {
+  const menu = String(value || "").trim();
+
+  return menu === "Carne" || menu === "Pescado" ? menu : "";
+}
+
 function deleteGroupRows(sheet, groupId) {
   const data = sheet.getDataRange().getValues();
 
@@ -79,7 +85,7 @@ function buildGuestFromRow(row) {
     comments: row[7] || "",
     outboundBus: row[8] || "No",
     returnBus: row[9] || "No",
-    menu: row[11] || "",
+    menu: normalizeMenu(row[11]),
     table: row[12] || "",
     seat: row[13] || "",
   };

@@ -53,6 +53,7 @@ const EMAIL_COPY = {
     checkListCta: "Abrir administración",
     labels: {
       name: "Nombre",
+      menu: "Menú",
       bus: "Autobús",
       outbound: "Ida",
       return: "Vuelta",

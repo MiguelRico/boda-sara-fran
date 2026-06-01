@@ -134,6 +134,10 @@ function sendAdminNotification(groupName, email, phone, guests) {
             <div style="font-size:18px;line-height:1.4;color:${COLOR_TEXT};font-weight:600;margin-bottom:12px;">${escapeEmailHtml(guestName)}</div>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
               <tr>
+                <td style="padding:8px 0;color:${COLOR_ACCENT_DARK};font-size:13px;font-weight:600;width:34%;">${escapeEmailHtml(labels.menu)}</td>
+                <td style="padding:8px 0;color:${COLOR_TEXT};font-size:13px;line-height:1.6;">${emailValue(guest.menu, "-")}</td>
+              </tr>
+              <tr>
                 <td style="padding:8px 0;color:${COLOR_ACCENT_DARK};font-size:13px;font-weight:600;width:34%;">${escapeEmailHtml(labels.bus)}</td>
                 <td style="padding:8px 0;color:${COLOR_TEXT};font-size:13px;line-height:1.6;">${escapeEmailHtml(labels.outbound)}: ${emailValue(guest.outboundBus, fallback.noBus)} | ${escapeEmailHtml(labels.return)}: ${emailValue(guest.returnBus, fallback.noBus)}</td>
               </tr>
