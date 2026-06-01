@@ -1,6 +1,64 @@
 /* eslint-disable */
 function getSheet() {
-  return SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(SHEET_NAME);
+  }
+
+  ensureGuestsHeader(sheet);
+
+  return sheet;
+}
+
+const GUESTS_HEADERS = [
+  "Email",
+  "Telefono",
+  "Grupo",
+  "Nombre",
+  "Apellidos",
+  "Alergias",
+  "Otras alergias",
+  "Comentarios",
+  "Ida",
+  "Vuelta",
+  "Menu",
+  "Mesa",
+  "Asiento",
+  "Usuario",
+  "Fecha",
+];
+
+const GUESTS_COLUMNS = {
+  email: 0,
+  phone: 1,
+  groupName: 2,
+  name: 3,
+  lastname: 4,
+  allergies: 5,
+  otherAllergies: 6,
+  comments: 7,
+  outboundBus: 8,
+  returnBus: 9,
+  menu: 10,
+  table: 11,
+  seat: 12,
+  user: 13,
+  date: 14,
+};
+
+function ensureGuestsHeader(sheet) {
+  const currentHeaders = sheet
+    .getRange(1, 1, 1, GUESTS_HEADERS.length)
+    .getValues()[0];
+  const needsHeader = GUESTS_HEADERS.some(
+    (header, index) => currentHeaders[index] !== header,
+  );
+
+  if (needsHeader) {
+    sheet.getRange(1, 1, 1, GUESTS_HEADERS.length).setValues([GUESTS_HEADERS]);
+  }
 }
 
 function getTablesSheet() {
@@ -98,7 +156,10 @@ function deleteGroupRows(sheet, groupId) {
   const data = sheet.getDataRange().getValues();
 
   for (let i = data.length - 1; i > 0; i--) {
-    if (String(data[i][0]).trim().toLowerCase() === String(groupId).trim().toLowerCase()) {
+    if (
+      String(data[i][GUESTS_COLUMNS.email]).trim().toLowerCase() ===
+      String(groupId).trim().toLowerCase()
+    ) {
       sheet.deleteRow(i + 1);
     }
   }
@@ -106,20 +167,42 @@ function deleteGroupRows(sheet, groupId) {
 
 function buildGuestFromRow(row) {
   return {
-    email: row[0] || "",
-    phone: row[1] || "",
-    groupName: row[2] || "",
-    name: row[3] || "",
-    lastname: row[4] || "",
-    allergies: parseAllergies(row[5]),
-    otherAllergies: row[6] || "",
-    comments: row[7] || "",
-    outboundBus: row[8] || "No",
-    returnBus: row[9] || "No",
-    menu: normalizeMenu(row[11]),
-    table: row[12] || "",
-    seat: row[13] || "",
+    email: row[GUESTS_COLUMNS.email] || "",
+    phone: row[GUESTS_COLUMNS.phone] || "",
+    groupName: row[GUESTS_COLUMNS.groupName] || "",
+    name: row[GUESTS_COLUMNS.name] || "",
+    lastname: row[GUESTS_COLUMNS.lastname] || "",
+    allergies: parseAllergies(row[GUESTS_COLUMNS.allergies]),
+    otherAllergies: row[GUESTS_COLUMNS.otherAllergies] || "",
+    comments: row[GUESTS_COLUMNS.comments] || "",
+    outboundBus: row[GUESTS_COLUMNS.outboundBus] || "No",
+    returnBus: row[GUESTS_COLUMNS.returnBus] || "No",
+    menu: normalizeMenu(row[GUESTS_COLUMNS.menu]),
+    table: row[GUESTS_COLUMNS.table] || "",
+    seat: row[GUESTS_COLUMNS.seat] || "",
+    user: row[GUESTS_COLUMNS.user] || "",
+    date: row[GUESTS_COLUMNS.date] || "",
   };
+}
+
+function buildGuestRow(data, guest, now) {
+  return [
+    data.email,
+    data.phone,
+    data.groupName,
+    guest.name,
+    guest.lastname,
+    normalizeAllergies(guest.allergies),
+    guest.otherAllergies || "",
+    guest.comments || "",
+    guest.outboundBus || "No",
+    guest.returnBus || "No",
+    normalizeMenu(guest.menu),
+    guest.table || "",
+    guest.seat || "",
+    data.user || data.usuario || data.updatedBy || "",
+    now,
+  ];
 }
 
 function normalizeTableShape(value) {

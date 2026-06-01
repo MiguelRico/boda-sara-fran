@@ -90,9 +90,12 @@ function searchConfirmation(e) {
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
 
-    if (String(row[0]).trim().toLowerCase() === groupId.toLowerCase()) {
-      phone = row[1] || "";
-      groupName = row[2] || "";
+    if (
+      String(row[GUESTS_COLUMNS.email]).trim().toLowerCase() ===
+      groupId.toLowerCase()
+    ) {
+      phone = row[GUESTS_COLUMNS.phone] || "";
+      groupName = row[GUESTS_COLUMNS.groupName] || "";
       result.push(buildGuestFromRow(row));
     }
   }
@@ -118,7 +121,7 @@ function listConfirmations(e) {
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    const email = row[0];
+    const email = row[GUESTS_COLUMNS.email];
 
     if (!email) continue;
 
@@ -126,8 +129,8 @@ function listConfirmations(e) {
       groupsByEmail[email] = {
         groupId: email,
         email,
-        phone: row[1] || "",
-        groupName: row[2] || "",
+        phone: row[GUESTS_COLUMNS.phone] || "",
+        groupName: row[GUESTS_COLUMNS.groupName] || "",
         guests: [],
       };
     }

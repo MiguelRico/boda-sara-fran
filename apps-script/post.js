@@ -23,22 +23,7 @@ function doPost(e) {
     deleteGroupRows(sheet, groupId);
 
     data.guests.forEach((guest) => {
-      sheet.appendRow([
-        data.email,
-        data.phone,
-        data.groupName,
-        guest.name,
-        guest.lastname,
-        normalizeAllergies(guest.allergies),
-        guest.otherAllergies || "",
-        guest.comments || "",
-        guest.outboundBus || "No",
-        guest.returnBus || "No",
-        now,
-        normalizeMenu(guest.menu),
-        guest.table || "",
-        guest.seat || "",
-      ]);
+      sheet.appendRow(buildGuestRow(data, guest, now));
     });
 
     sendConfirmationEmail(data.email, groupId, data.guests);
