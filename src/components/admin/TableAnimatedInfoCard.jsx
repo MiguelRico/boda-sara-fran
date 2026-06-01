@@ -12,6 +12,7 @@ export default function TableAnimatedInfoCard({
   onDelete,
   onEdit,
   onSeatClick,
+  onUnassignSeat,
   reveal = true,
   table,
 }) {
@@ -20,6 +21,7 @@ export default function TableAnimatedInfoCard({
       onDelete={onDelete}
       onEdit={onEdit}
       onSeatClick={onSeatClick}
+      onUnassignSeat={onUnassignSeat}
       table={table}
     />
   );
@@ -39,7 +41,7 @@ export default function TableAnimatedInfoCard({
   );
 }
 
-function TableInfoCard({ onDelete, onEdit, onSeatClick, table }) {
+function TableInfoCard({ onDelete, onEdit, onSeatClick, onUnassignSeat, table }) {
   const [showAssignments, setShowAssignments] = useState(false);
   const assignedGuests = Table.getAssignedGuests(table);
   const tableLabel = table.name;
@@ -119,6 +121,7 @@ function TableInfoCard({ onDelete, onEdit, onSeatClick, table }) {
 
       {showAssignments && (
         <AssignmentModal
+          onUnassignSeat={onUnassignSeat}
           table={table}
           onClose={() => setShowAssignments(false)}
         />
@@ -127,8 +130,21 @@ function TableInfoCard({ onDelete, onEdit, onSeatClick, table }) {
   );
 }
 
-function AssignmentModal({ table, onClose }) {
+function AssignmentModal({ onUnassignSeat, table, onClose }) {
   const assignedSeats = table.seats.filter((seat) => seat.guest);
+  const [removingSeat, setRemovingSeat] = useState("");
+
+  const handleUnassignSeat = async (seat) => {
+    if (!onUnassignSeat) return;
+
+    setRemovingSeat(seat.seat);
+
+    try {
+      await onUnassignSeat({ seat, table });
+    } finally {
+      setRemovingSeat("");
+    }
+  };
 
   return createPortal(
     <div className="rsvp-dialog-overlay" onClick={onClose}>
@@ -152,23 +168,14 @@ function AssignmentModal({ table, onClose }) {
         {assignedSeats.length ? (
           <div className="space-y-4">
             {assignedSeats.map((seat) => (
-              <div
+              <AssignedSeatCard
+                isRemoving={removingSeat === seat.seat}
                 key={seat.seat}
-                className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4"
-              >
-                <p className="font-medium text-[var(--color-accent-dark)]">
-                  Asiento {seat.seat} –{" "}
-                  {Guest.getFullName(seat.guest, "Invitado")}
-                </p>
-                <p className="mt-2 text-sm text-[var(--color-muted)]">
-                  Menú: {seat.guest.menu || "-"}
-                </p>
-                {seat.guest.phone && (
-                  <p className="mt-1 text-sm text-[var(--color-muted)]">
-                    Teléfono: {seat.guest.phone}
-                  </p>
-                )}
-              </div>
+                onUnassign={
+                  onUnassignSeat ? () => handleUnassignSeat(seat) : undefined
+                }
+                seat={seat}
+              />
             ))}
           </div>
         ) : (
@@ -180,6 +187,71 @@ function AssignmentModal({ table, onClose }) {
     </div>,
     document.body,
   );
+}
+
+function AssignedSeatCard({ isRemoving, onUnassign, seat }) {
+  return (
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="font-medium text-[var(--color-accent-dark)]">
+            Asiento {seat.seat} - {Guest.getFullName(seat.guest, "Invitado")}
+          </p>
+          <div className="mt-3 grid gap-2 text-sm text-[var(--color-muted)]">
+            <AssignmentDetail label="Menu" value={seat.guest.menu} />
+            <AssignmentDetail
+              label="Alergias"
+              value={formatGuestAllergies(seat.guest)}
+            />
+            <AssignmentDetail
+              label="Otras alergias"
+              value={seat.guest.otherAllergies}
+            />
+            <AssignmentDetail
+              label="Comentarios"
+              value={seat.guest.comments}
+            />
+            {seat.guest.phone && (
+              <AssignmentDetail label="Telefono" value={seat.guest.phone} />
+            )}
+          </div>
+        </div>
+
+        {onUnassign && (
+          <IconButton
+            className="w-full sm:w-auto"
+            disabled={isRemoving}
+            icon={<Trash2 size={16} strokeWidth={1.8} />}
+            label="Liberar asiento"
+            onClick={onUnassign}
+            showText="always"
+            tone="danger"
+          >
+            {isRemoving ? "Liberando..." : "Liberar asiento"}
+          </IconButton>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AssignmentDetail({ label, value }) {
+  const text = String(value || "").trim() || "-";
+
+  return (
+    <p>
+      <span className="text-[var(--color-accent)]">{label}: </span>
+      <span>{text}</span>
+    </p>
+  );
+}
+
+function formatGuestAllergies(guest) {
+  const normalizedGuest = Guest.normalize(guest);
+
+  return normalizedGuest.allergies.length
+    ? normalizedGuest.allergies.join(", ")
+    : "No";
 }
 
 function TableDiagram({ onSeatClick, onCenterClick, table }) {

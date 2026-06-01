@@ -546,8 +546,8 @@ export default function AdminTables() {
     }
   };
 
-  const handleRemoveGuestFromSeat = async () => {
-    if (!seatAssignmentTarget) return;
+  const handleRemoveGuestFromSeat = async (target = seatAssignmentTarget) => {
+    if (!target) return;
 
     setAssigningSeat(true);
     setState((prev) => ({ ...prev, error: "" }));
@@ -557,10 +557,12 @@ export default function AdminTables() {
       const updatedGroups = await unassignGuestFromSeat({
         groups: state.groups,
         password: ADMIN_PASSWORD,
-        seat: seatAssignmentTarget.seat,
-        table: seatAssignmentTarget.table,
+        seat: target.seat,
+        table: target.table,
       });
-      setSeatAssignmentTarget(null);
+      if (target === seatAssignmentTarget) {
+        setSeatAssignmentTarget(null);
+      }
       setState((prev) => ({
         ...prev,
         groups: updatedGroups,
@@ -726,6 +728,7 @@ export default function AdminTables() {
                             onDelete={handleRequestDeleteTable}
                             onEdit={handleEditTable}
                             onSeatClick={handleSeatClick}
+                            onUnassignSeat={handleRemoveGuestFromSeat}
                             tables={pagedTables}
                           />
                           <MobileTablesList
@@ -733,6 +736,7 @@ export default function AdminTables() {
                             onDelete={handleRequestDeleteTable}
                             onEdit={handleEditTable}
                             onSeatClick={handleSeatClick}
+                            onUnassignSeat={handleRemoveGuestFromSeat}
                             page={currentPage}
                             tables={pagedTables}
                             allTables={tables}
@@ -1096,7 +1100,7 @@ function getTableSummaryItems(stats) {
   ];
 }
 
-function TablesGrid({ onDelete, onEdit, onSeatClick, tables }) {
+function TablesGrid({ onDelete, onEdit, onSeatClick, onUnassignSeat, tables }) {
   if (!tables.length) {
     return (
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
@@ -1120,6 +1124,7 @@ function TablesGrid({ onDelete, onEdit, onSeatClick, tables }) {
           onDelete={onDelete}
           onEdit={onEdit}
           onSeatClick={onSeatClick}
+          onUnassignSeat={onUnassignSeat}
           table={table}
         />
       ))}
@@ -1131,6 +1136,7 @@ function MobileTablesList({
   onDelete,
   onEdit,
   onSeatClick,
+  onUnassignSeat,
   page,
   tables,
   allTables,
@@ -1219,6 +1225,7 @@ function MobileTablesList({
               onDelete={() => {}}
               onEdit={() => {}}
               onSeatClick={() => {}}
+              onUnassignSeat={() => {}}
               reveal={false}
               table={table}
             />
@@ -1247,6 +1254,7 @@ function MobileTablesList({
               onDelete={onDelete}
               onEdit={onEdit}
               onSeatClick={onSeatClick}
+              onUnassignSeat={onUnassignSeat}
               reveal={false}
               table={table}
             />
