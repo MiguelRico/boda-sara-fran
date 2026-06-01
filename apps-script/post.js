@@ -26,6 +26,9 @@ function doPost(e) {
         guest.outboundBus || "No",
         guest.returnBus || "No",
         now,
+        normalizeMenu(guest.menu),
+        guest.table || "",
+        guest.seat || "",
       ]);
     });
 

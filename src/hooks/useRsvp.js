@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import { createEmptyGuest, MAX_GUESTS } from "../constants/rsvp";
+import { MAX_GUESTS } from "../constants/rsvp";
+import { Confirmation, Guest } from "../models";
 import {
   findGroupByEmail,
   findGroupById,
@@ -20,22 +21,6 @@ const createInitialPopup = () => ({
 
 const hasValidationErrors = (errors) => Object.keys(errors).length > 0;
 
-const normalizeGuest = (guest = {}) => ({
-  ...createEmptyGuest(),
-  name: guest.name || "",
-  lastname: guest.lastname || "",
-  allergies: Array.isArray(guest.allergies) ? guest.allergies : [],
-  otherAllergies: guest.otherAllergies || "",
-  comments: guest.comments || "",
-  outboundBus: guest.outboundBus || createEmptyGuest().outboundBus,
-  returnBus: guest.returnBus || createEmptyGuest().returnBus,
-});
-
-const normalizeGuests = (guests) =>
-  Array.isArray(guests) && guests.length
-    ? guests.map(normalizeGuest)
-    : [createEmptyGuest()];
-
 export default function useRsvp(spinner, { mode = "search" } = {}) {
   const { hide, show } = spinner;
   const location = useLocation();
@@ -45,18 +30,17 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const isEdition = mode === "edit";
   const navigationGroup =
     isEdition && location.state?.group?.email === groupIdFromUrl
-      ? location.state.group
+      ? Confirmation.normalize(location.state.group)
       : null;
 
   const [groupId, setGroupId] = useState(() => navigationGroup?.email || null);
   const [contact, setContact] = useState(() => ({
     email: navigationGroup?.email || "",
-    groupName:
-      navigationGroup?.groupName || navigationGroup?.nombre_grupo || "",
+    groupName: navigationGroup?.groupName || "",
     phone: navigationGroup?.phone || "",
   }));
   const [guests, setGuests] = useState(() =>
-    normalizeGuests(navigationGroup?.guests),
+    Guest.normalizeList(navigationGroup?.guests),
   );
   const [errors, setErrors] = useState({});
   const [popup, setPopup] = useState(createInitialPopup);
@@ -71,50 +55,39 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   };
 
   const loadFoundGroup = useCallback((response) => {
-    setGroupId(response.email);
+    const confirmation = Confirmation.normalize(response);
+
+    setGroupId(confirmation.email);
     setContact({
-      email: response.email,
-      groupName: response.groupName || response.nombre_grupo || "",
-      phone: response.phone,
+      email: confirmation.email,
+      groupName: confirmation.groupName,
+      phone: confirmation.phone,
     });
-    setGuests(normalizeGuests(response.guests));
+    setGuests(Guest.normalizeList(confirmation.guests));
   }, []);
 
   const handleGuestChange = (index, field, value) => {
     setGuests((prevGuests) => {
       const updatedGuests = [...prevGuests];
 
-      if (field === "allergies") {
-        const allergies = updatedGuests[index].allergies || [];
-        const exists = allergies.includes(value);
-
-        updatedGuests[index] = {
-          ...updatedGuests[index],
-          allergies: exists
-            ? allergies.filter((item) => item !== value)
-            : [...allergies, value],
-        };
-
-        return updatedGuests;
-      }
-
-      updatedGuests[index] = {
-        ...updatedGuests[index],
-        [field]: value,
-      };
+      updatedGuests[index] = Guest.withUpdatedField(
+        updatedGuests[index],
+        field,
+        value,
+      );
 
       return updatedGuests;
     });
   };
 
   const handleAddGuest = () => {
-    if (guests.length >= MAX_GUESTS) return;
-    setGuests((prev) => [...prev, createEmptyGuest()]);
+    setGuests((prev) =>
+      Confirmation.withAddedGuestList(prev, { maxGuests: MAX_GUESTS }),
+    );
   };
 
   const handleRemoveGuest = (index) => {
-    if (guests.length === 1) return;
-    setGuests((prev) => prev.filter((_, i) => i !== index));
+    setGuests((prev) => Confirmation.withRemovedGuestList(prev, index));
   };
 
   const closePopup = () => {
@@ -199,11 +172,11 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
 
     try {
       const payload = {
-        groupId: groupId || contact.email,
-        email: contact.email,
-        groupName: contact.groupName,
-        phone: contact.phone,
-        guests,
+        ...Confirmation.normalize({
+          ...contact,
+          groupId: groupId || contact.email,
+          guests,
+        }),
       };
 
       show("Enviando confirmación...");

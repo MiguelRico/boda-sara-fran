@@ -38,7 +38,8 @@ import DeleteDialog from "../components/ui/DeleteDialog";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import RsvpForm from "../forms/RsvpForm";
-import { createEmptyGuest, MAX_GUESTS } from "../constants/rsvp";
+import { MAX_GUESTS } from "../constants/rsvp";
+import { Confirmation } from "../models";
 import {
   deleteAdminGroup,
   findAllGroups,
@@ -64,7 +65,7 @@ const filters = [
   { value: "all", label: "Todos" },
   { value: "allergies", label: "Con alergias" },
   { value: "bus", label: "Con bus" },
-  { value: "review", label: "Revision" },
+  { value: "comments", label: "Con comentarios" },
 ];
 
 const emptyState = {
@@ -102,6 +103,7 @@ export default function AdminGuests() {
   const pageRevealTimeoutRef = useRef(null);
   const pageScrollStartFrameRef = useRef(null);
   const pageScrollCancelRef = useRef(null);
+  const initialLoadStartedRef = useRef(false);
   const guestsInView = useInView(guestsRef, {
     once: true,
     amount: 0.18,
@@ -147,6 +149,9 @@ export default function AdminGuests() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+    if (initialLoadStartedRef.current) return;
+
+    initialLoadStartedRef.current = true;
 
     const timeoutId = window.setTimeout(() => {
       loadGuests({ showLoading: false });
@@ -185,9 +190,12 @@ export default function AdminGuests() {
     };
   }, []);
 
-  const rows = useMemo(() => buildGroupRows(state.groups), [state.groups]);
+  const rows = useMemo(
+    () => Confirmation.toAdminRows(state.groups),
+    [state.groups],
+  );
   const visibleRows = useMemo(
-    () => filterRows(rows, query, filter),
+    () => Confirmation.filterAdminRows(rows, query, filter),
     [filter, query, rows],
   );
   const pageSize = isMobileList ? mobilePageSize : desktopPageSize;
@@ -635,11 +643,12 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
 function DesktopTable({ onDelete, onEdit, rows }) {
   return (
     <div className="hidden overflow-x-auto rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 md:block">
-      <table className="w-full min-w-[920px] border-collapse text-left">
+      <table className="w-full min-w-[1040px] border-collapse text-left">
         <thead>
           <tr className="border-b border-[var(--color-border)] text-xs uppercase tracking-[0.16em] text-[var(--color-accent)]">
             <th className="px-5 py-4 font-medium">Grupo</th>
             <th className="px-5 py-4 font-medium">Contacto</th>
+            <th className="px-5 py-4 font-medium">Mesa</th>
             <th className="px-5 py-4 font-medium">Alergias</th>
             <th className="px-5 py-4 font-medium">Transporte</th>
             <th className="px-5 py-4 text-right font-medium">Acciones</th>
@@ -662,6 +671,9 @@ function DesktopTable({ onDelete, onEdit, rows }) {
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
                 <p>{row.email || "-"}</p>
                 <p className="mt-1">{row.phone || "-"}</p>
+              </td>
+              <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
+                {row.assignmentText || "-"}
               </td>
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
                 {row.allergyText}
@@ -860,8 +872,7 @@ function MobileList({ direction, onDelete, onEdit, page, rows }) {
                   className="mt-2 hidden text-[var(--color-muted)] sm:block"
                   style={detailTextStyle}
                 >
-                  {row.groupSize}{" "}
-                  {row.groupSize === 1 ? "persona" : "personas"}
+                  {row.groupSize} {row.groupSize === 1 ? "persona" : "personas"}
                 </p>
 
                 <div className="mt-3 flex items-center justify-between gap-3 sm:hidden">
@@ -894,6 +905,7 @@ function MobileList({ direction, onDelete, onEdit, page, rows }) {
             </div>
 
             <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
+              <InfoLine label="Mesa" value={row.assignmentText || "-"} />
               <InfoLine label="Alergias" value={row.allergyText} />
               <InfoLine label="Transporte" value={row.transportText} />
             </div>
@@ -974,66 +986,30 @@ function GroupEditor({ group, onClose, onSave }) {
   useViewportScrollLock(true);
 
   const updateContact = (field, value) => {
-    setDraft((current) => ({
-      ...current,
-      [field]: value,
-      groupId: field === "email" ? value : current.groupId,
-    }));
+    setDraft((current) =>
+      Confirmation.withUpdatedContact(current, field, value),
+    );
   };
 
   const updateGuest = (index, field, value) => {
-    setDraft((current) => {
-      const guests = [...current.guests];
-
-      if (field === "allergies") {
-        const allergies = guests[index].allergies || [];
-        const exists = allergies.includes(value);
-
-        guests[index] = {
-          ...guests[index],
-          allergies: exists
-            ? allergies.filter((item) => item !== value)
-            : [...allergies, value],
-        };
-      } else {
-        guests[index] = {
-          ...guests[index],
-          [field]: value,
-        };
-      }
-
-      return {
-        ...current,
-        guests,
-      };
-    });
+    setDraft((current) =>
+      Confirmation.withUpdatedGuest(current, index, field, value),
+    );
   };
 
   const addGuest = () => {
-    setDraft((current) => {
-      if (current.guests.length >= MAX_GUESTS) return current;
-
-      return {
-        ...current,
-        guests: [...current.guests, createEmptyGuest()],
-      };
-    });
+    setDraft((current) =>
+      Confirmation.withAddedGuest(current, { maxGuests: MAX_GUESTS }),
+    );
   };
 
   const removeGuest = (index) => {
-    setDraft((current) => {
-      if (current.guests.length === 1) return current;
-
-      return {
-        ...current,
-        guests: current.guests.filter((_, itemIndex) => itemIndex !== index),
-      };
-    });
+    setDraft((current) => Confirmation.withRemovedGuest(current, index));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const validationError = validateGroup(draft);
+    const validationError = Confirmation.validateForAdmin(draft);
 
     if (validationError) {
       setError(validationError);
@@ -1165,159 +1141,12 @@ function GuestsSkeleton() {
   );
 }
 
-function buildGroupRows(groups) {
-  return groups.map((group, index) => {
-    const guests = Array.isArray(group.guests) ? group.guests : [];
-
-    return {
-      allergyText: buildGroupRateText(
-        guests.filter((guest) => buildAllergyText(guest) !== "No").length,
-        guests.length,
-      ),
-      commentsText: buildGroupCommentsText(guests),
-      email: group.email,
-      group,
-      groupId: group.groupId || group.email,
-      groupName: group.groupName,
-      groupSize: guests.length,
-      guestNames: buildGuestNames(guests),
-      guests,
-      hasAllergies: guests.some((guest) => buildAllergyText(guest) !== "No"),
-      needsReview: guests.some(hasReview),
-      phone: group.phone,
-      rowId: `${group.groupId || group.email || "group"}-${index}`,
-      transportText: buildGroupRateText(
-        guests.filter(hasBus).length,
-        guests.length,
-      ),
-      usesBus: guests.some(hasBus),
-    };
-  });
-}
-
-function filterRows(rows, query, filter) {
-  const normalizedQuery = normalizeText(query);
-
-  return rows.filter((row) => {
-    const matchesQuery =
-      !normalizedQuery ||
-      normalizeText(
-        `${row.email} ${row.phone} ${row.groupName} ${row.guestNames}`,
-      ).includes(normalizedQuery);
-    const matchesFilter =
-      filter === "all" ||
-      (filter === "allergies" && row.hasAllergies) ||
-      (filter === "bus" && row.usesBus) ||
-      (filter === "review" && row.needsReview);
-
-    return matchesQuery && matchesFilter;
-  });
-}
-
 function createDraftGroup(group) {
   if (!group) {
-    return {
-      groupId: "",
-      email: "",
-      groupName: "",
-      phone: "",
-      guests: [createEmptyGuest()],
-    };
+    return Confirmation.createEmpty();
   }
 
-  return {
-    groupId: group.groupId || group.email || "",
-    email: group.email || "",
-    groupName: group.groupName || "",
-    phone: group.phone || "",
-    guests: group.guests.map((guest) => ({
-      ...createEmptyGuest(),
-      name: guest.name || "",
-      lastname: guest.lastname || "",
-      allergies: Array.isArray(guest.allergies) ? guest.allergies : [],
-      otherAllergies: guest.otherAllergies || "",
-      comments: guest.comments || "",
-      outboundBus: guest.outboundBus || createEmptyGuest().outboundBus,
-      returnBus: guest.returnBus || createEmptyGuest().returnBus,
-    })),
-  };
-}
-
-function validateGroup(group) {
-  if (!group.email.trim()) return "El email es obligatorio.";
-  if (!group.groupName?.trim()) return "El nombre de grupo es obligatorio.";
-  if (!group.phone.trim()) return "El teléfono es obligatorio.";
-  if (!group.guests.length) return "Debe haber al menos un invitado.";
-
-  const invalidGuest = group.guests.find(
-    (guest) => !guest.name.trim() || !guest.lastname.trim(),
-  );
-
-  if (invalidGuest) return "Todos los invitados necesitan nombre y apellidos.";
-
-  return "";
-}
-
-function buildAllergyText(guest) {
-  const values = [...(guest.allergies || [])];
-
-  if (guest.otherAllergies?.trim()) {
-    values.push(guest.otherAllergies.trim());
-  }
-
-  return values.length ? values.join(", ") : "No";
-}
-
-function buildGuestNames(guests) {
-  if (!guests.length) return "Sin invitados";
-
-  return guests
-    .map((guest, index) =>
-      `${guest.name || `Invitado ${index + 1}`} ${guest.lastname || ""}`.trim(),
-    )
-    .join(", ");
-}
-
-function buildGroupCommentsText(guests) {
-  const values = guests
-    .map((guest, index) => {
-      if (!guest.comments?.trim()) return "";
-
-      const name =
-        `${guest.name || `Invitado ${index + 1}`} ${guest.lastname || ""}`.trim();
-
-      return `${name}: ${guest.comments.trim()}`;
-    })
-    .filter(Boolean);
-
-  return values.length ? values.join(" | ") : "";
-}
-
-function buildGroupRateText(value, total) {
-  return `${value} de ${total} personas`;
-}
-
-function hasBus(guest) {
-  return Boolean(
-    (guest.outboundBus && guest.outboundBus !== "No") ||
-      (guest.returnBus && guest.returnBus !== "No"),
-  );
-}
-
-function hasReview(guest) {
-  return Boolean(
-    guest.otherAllergies?.trim() ||
-    guest.comments?.trim() ||
-    (hasBus(guest) && (!guest.outboundBus || !guest.returnBus)),
-  );
-}
-
-function normalizeText(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
+  return Confirmation.normalize(group);
 }
 
 function downloadCsv(rows) {
@@ -1326,6 +1155,7 @@ function downloadCsv(rows) {
     "teléfono",
     "nombre_grupo",
     "total_invitados",
+    "mesa_menu_asiento",
     "alergias",
     "transporte",
     "comentarios",
@@ -1336,6 +1166,7 @@ function downloadCsv(rows) {
       row.phone,
       row.groupName,
       row.groupSize,
+      row.assignmentText,
       row.allergyText,
       row.transportText,
       row.commentsText,
