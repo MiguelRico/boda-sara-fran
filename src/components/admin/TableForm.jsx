@@ -1,4 +1,11 @@
-import { BriefcaseBusiness, HeartHandshake, Save, UsersRound, X } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  HeartHandshake,
+  Save,
+  Trash2,
+  UsersRound,
+  X,
+} from "lucide-react";
 
 import {
   DEFAULT_TABLE_SHAPE,
@@ -6,7 +13,12 @@ import {
   TABLE_GROUP_OPTIONS,
   TABLE_SHAPE_OPTIONS,
 } from "../../constants/tables";
-import { FieldError, FormCard, inputClassName, Label } from "../rsvp/FormPrimitives";
+import {
+  FieldError,
+  FormCard,
+  inputClassName,
+  Label,
+} from "../rsvp/FormPrimitives";
 import IconButton from "../ui/IconButton";
 
 const groupIcons = {
@@ -26,6 +38,7 @@ export default function TableForm({
   loading = false,
   onCancel,
   onChange,
+  onDelete,
   onSubmit,
 }) {
   const shapeOption = getShapeOption(form.shape);
@@ -37,7 +50,10 @@ export default function TableForm({
   const handleShapeChange = (shape) => {
     const nextShape = getShapeOption(shape);
     const nextSeatCount = Math.min(
-      Math.max(Number(form.seatCount) || nextShape.seatRange.min, nextShape.seatRange.min),
+      Math.max(
+        Number(form.seatCount) || nextShape.seatRange.min,
+        nextShape.seatRange.min,
+      ),
       nextShape.seatRange.max,
     );
 
@@ -144,7 +160,9 @@ export default function TableForm({
 
             <select
               className={`${inputClassName} bg-white`}
-              onChange={(event) => onChange("seatCount", Number(event.target.value))}
+              onChange={(event) =>
+                onChange("seatCount", Number(event.target.value))
+              }
               value={form.seatCount}
             >
               {seatOptions.map((seatCount) => (
@@ -172,7 +190,11 @@ export default function TableForm({
           <FieldError>{errors.notes}</FieldError>
         </div>
 
-        <div className="mt-6 flex flex-col gap-4 sm:grid sm:grid-cols-2">
+        <div
+          className={`mt-6 flex flex-col gap-4 sm:grid ${
+            onDelete ? "sm:grid-cols-3" : "sm:grid-cols-2"
+          }`}
+        >
           <IconButton
             disabled={loading}
             icon={<Save size={16} strokeWidth={1.8} />}
@@ -183,6 +205,20 @@ export default function TableForm({
           >
             {content.submitText}
           </IconButton>
+
+          {onDelete && (
+            <IconButton
+              disabled={loading}
+              icon={<Trash2 size={16} strokeWidth={1.8} />}
+              label="Eliminar mesa"
+              onClick={onDelete}
+              showText="always"
+              tone="danger"
+              type="button"
+            >
+              Eliminar mesa
+            </IconButton>
+          )}
 
           <IconButton
             disabled={loading}

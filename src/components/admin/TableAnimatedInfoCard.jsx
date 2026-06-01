@@ -1,4 +1,4 @@
-import { Pencil, X } from "lucide-react";
+import { Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -9,13 +9,19 @@ import RevealOnView from "../ui/RevealOnView";
 
 export default function TableAnimatedInfoCard({
   index = 0,
+  onDelete,
   onEdit,
   onSeatClick,
   reveal = true,
   table,
 }) {
   const content = (
-    <TableInfoCard onEdit={onEdit} onSeatClick={onSeatClick} table={table} />
+    <TableInfoCard
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onSeatClick={onSeatClick}
+      table={table}
+    />
   );
 
   if (!reveal) return content;
@@ -33,7 +39,7 @@ export default function TableAnimatedInfoCard({
   );
 }
 
-function TableInfoCard({ onEdit, onSeatClick, table }) {
+function TableInfoCard({ onDelete, onEdit, onSeatClick, table }) {
   const [showAssignments, setShowAssignments] = useState(false);
   const assignedGuests = Table.getAssignedGuests(table);
   const tableLabel = table.name || table.id;
@@ -59,18 +65,43 @@ function TableInfoCard({ onEdit, onSeatClick, table }) {
           <div className="mb-4">
             <div className="min-w-0">
               <p className="section-eyebrow mb-2">{groupLabel || "Mesa"}</p>
-              <h3 className="truncate font-serif text-3xl leading-none text-[var(--color-text)] sm:text-4xl">
-                {tableLabel}
-              </h3>
-              <p className="mt-2 text-sm text-[var(--color-accent)]">
-                {shapeLabel} - {assignedGuests.length}/{table.seats.length}{" "}
-                asientos
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate font-serif text-3xl leading-none text-[var(--color-text)] sm:text-4xl">
+                    {tableLabel}
+                  </h3>
+                  <p className="mt-2 text-sm text-[var(--color-accent)]">
+                    {shapeLabel} - {assignedGuests.length}/{table.seats.length}{" "}
+                    asientos
+                  </p>
+                </div>
+
+                {(onEdit || onDelete) && (
+                  <div className="shrink-0 self-center flex items-center gap-2">
+                    {onEdit && (
+                      <IconButton
+                        label="Editar mesa"
+                        onClick={() => onEdit(table)}
+                      >
+                        <Pencil size={16} strokeWidth={1.8} />
+                      </IconButton>
+                    )}
+                    {onDelete && (
+                      <IconButton
+                        label="Eliminar mesa"
+                        onClick={() => onDelete(table)}
+                        tone="danger"
+                      >
+                        <Trash2 size={16} strokeWidth={1.8} />
+                      </IconButton>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           <TableDiagram
-            onEdit={onEdit}
             onSeatClick={onSeatClick}
             onCenterClick={() => setShowAssignments(true)}
             table={table}
@@ -149,7 +180,7 @@ function AssignmentModal({ table, onClose }) {
   );
 }
 
-function TableDiagram({ onEdit, onSeatClick, onCenterClick, table }) {
+function TableDiagram({ onSeatClick, onCenterClick, table }) {
   const seats =
     table.shape === TABLE_SHAPES.round
       ? getRoundSeatPositions(table.seats)
@@ -159,14 +190,6 @@ function TableDiagram({ onEdit, onSeatClick, onCenterClick, table }) {
     <div className="relative mt-2 h-60 overflow-hidden rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 sm:h-64">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.85),transparent_62%)]" />
 
-      {onEdit && (
-        <div className="absolute right-3 top-3 z-20">
-          <IconButton label="Editar mesa" onClick={() => onEdit(table)}>
-            <Pencil size={16} strokeWidth={1.8} />
-          </IconButton>
-        </div>
-      )}
-
       {table.shape === TABLE_SHAPES.round ? <RoundTable /> : <RectTable />}
 
       {onCenterClick && (
@@ -175,7 +198,7 @@ function TableDiagram({ onEdit, onSeatClick, onCenterClick, table }) {
           onClick={onCenterClick}
           className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 px-3 py-1 text-center text-[0.75rem] font-semibold text-[var(--color-accent-dark)] transition hover:text-[var(--color-accent)] focus:outline-none"
         >
-          Ver asientos asignados
+          Ver asientos
         </button>
       )}
 

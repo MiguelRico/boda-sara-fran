@@ -41,6 +41,7 @@ import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import TabNavigation from "../components/ui/TabNavigation";
+import DeleteDialog from "../components/ui/DeleteDialog";
 import PendingGuestsList from "../components/admin/PendingGuestsList";
 import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
 import { Guest } from "../models";
@@ -61,7 +62,9 @@ import {
   unassignGuestFromSeat,
   upsertManualTable,
   validateTableForm,
+  getTableKey,
 } from "../services/tablesService";
+import { saveAdminGroup } from "../services/rsvpService";
 import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
 
@@ -131,6 +134,7 @@ export default function AdminTables() {
   const [tableFormErrors, setTableFormErrors] = useState({});
   const [editingTable, setEditingTable] = useState(null);
   const [showTableForm, setShowTableForm] = useState(false);
+  const [tableToDelete, setTableToDelete] = useState(null);
   const [seatAssignmentTarget, setSeatAssignmentTarget] = useState(null);
   const [assigningSeat, setAssigningSeat] = useState(false);
   const [page, setPage] = useState(1);
@@ -352,6 +356,101 @@ export default function AdminTables() {
     setTableForm(createTableFormFromTable(table));
     setTableFormErrors({});
     setShowTableForm(true);
+  };
+
+  const handleRequestDeleteTable = (table) => {
+    setTableToDelete(table);
+  };
+
+  const handleCancelDeleteTable = () => {
+    setTableToDelete(null);
+  };
+
+  const handleConfirmDeleteTable = async () => {
+    if (!tableToDelete) return;
+
+    const tableKey = getTableKey(tableToDelete);
+    const nextManualTables = manualTables.filter(
+      (table) => getTableKey(table) !== tableKey,
+    );
+    const updatedGroups = state.groups.map((group) => {
+      let changed = false;
+
+      const guests = group.guests.map((guest) => {
+        if (guest.table !== tableKey) return guest;
+
+        changed = true;
+
+        return {
+          ...guest,
+          table: "",
+          seat: "",
+        };
+      });
+
+      return changed ? { ...group, guests } : group;
+    });
+
+    try {
+      spinner.show("Eliminando mesa...");
+
+      const persistencePromises = [
+        persistAdminTables({
+          password: ADMIN_PASSWORD,
+          tables: nextManualTables,
+        }),
+      ];
+
+      const changedGroups = updatedGroups.filter(
+        (group, index) => group !== state.groups[index],
+      );
+
+      if (changedGroups.length) {
+        persistencePromises.push(
+          ...changedGroups.map((group) =>
+            saveAdminGroup({
+              group,
+              password: ADMIN_PASSWORD,
+            }),
+          ),
+        );
+      }
+
+      await Promise.all(persistencePromises);
+
+      setManualTables(nextManualTables);
+      setState((prev) => ({
+        ...prev,
+        groups: updatedGroups,
+        loading: false,
+        error: "",
+      }));
+
+      if (editingTable && getTableKey(editingTable) === tableKey) {
+        handleCloseTableForm();
+      }
+
+      const nextTables = buildTables({
+        groups: updatedGroups,
+        manualTables: nextManualTables,
+      });
+      const nextPage = Math.min(
+        page,
+        Math.max(Math.ceil(nextTables.length / pageSize), 1),
+      );
+
+      setPage(nextPage);
+    } catch (error) {
+      console.error("Error al eliminar mesa:", error);
+      setState((prev) => ({
+        ...prev,
+        error:
+          error.message || "No se pudo eliminar la mesa. Intenta de nuevo.",
+      }));
+    } finally {
+      spinner.hide();
+      setTableToDelete(null);
+    }
   };
 
   const handleSeatClick = ({ seat, table }) => {
@@ -626,12 +725,14 @@ export default function AdminTables() {
                           }
                         >
                           <TablesGrid
+                            onDelete={handleRequestDeleteTable}
                             onEdit={handleEditTable}
                             onSeatClick={handleSeatClick}
                             tables={pagedTables}
                           />
                           <MobileTablesList
                             direction={pageDirection}
+                            onDelete={handleRequestDeleteTable}
                             onEdit={handleEditTable}
                             onSeatClick={handleSeatClick}
                             page={currentPage}
@@ -686,7 +787,23 @@ export default function AdminTables() {
           title={editingTable ? "Editar mesa" : "Crear mesa"}
           onCancel={handleCloseTableForm}
           onChange={handleTableFormChange}
+          onDelete={
+            editingTable
+              ? () => handleRequestDeleteTable(editingTable)
+              : undefined
+          }
           onSubmit={handleTableSubmit}
+        />
+      )}
+
+      {tableToDelete && (
+        <DeleteDialog
+          title="Eliminar mesa"
+          message={`¿Estás seguro que deseas eliminar la mesa ${
+            tableToDelete.name || tableToDelete.id
+          }? Esta acción liberará cualquier asiento asignado a esta mesa.`}
+          onCancel={handleCancelDeleteTable}
+          onConfirm={handleConfirmDeleteTable}
         />
       )}
 
@@ -711,6 +828,7 @@ function TableEditor({
   form,
   onCancel,
   onChange,
+  onDelete,
   onSubmit,
   title = "Crear mesa",
 }) {
@@ -746,6 +864,7 @@ function TableEditor({
           form={form}
           onCancel={onCancel}
           onChange={onChange}
+          onDelete={onDelete}
           onSubmit={onSubmit}
         />
       </div>
@@ -979,7 +1098,7 @@ function getTableSummaryItems(stats) {
   ];
 }
 
-function TablesGrid({ onEdit, onSeatClick, tables }) {
+function TablesGrid({ onDelete, onEdit, onSeatClick, tables }) {
   if (!tables.length) {
     return (
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
@@ -1000,6 +1119,7 @@ function TablesGrid({ onEdit, onSeatClick, tables }) {
         <TableAnimatedInfoCard
           index={index}
           key={getTableRenderKey(table)}
+          onDelete={onDelete}
           onEdit={onEdit}
           onSeatClick={onSeatClick}
           table={table}
@@ -1010,6 +1130,7 @@ function TablesGrid({ onEdit, onSeatClick, tables }) {
 }
 function MobileTablesList({
   direction,
+  onDelete,
   onEdit,
   onSeatClick,
   page,
@@ -1074,16 +1195,21 @@ function MobileTablesList({
 
   return (
     <div
-      className="relative overflow-hidden md:hidden"
+      className="relative overflow-hidden md:hidden bg-transparent"
       style={
         cardMinHeight
-          ? { minHeight: `${cardMinHeight}px`, height: `${cardMinHeight}px` }
-          : undefined
+          ? {
+              minHeight: `${cardMinHeight}px`,
+              height: `${cardMinHeight}px`,
+            }
+          : {
+              undefined,
+            }
       }
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-0 top-0 z-[-1] h-auto w-full opacity-0"
+        className="pointer-events-none absolute left-0 top-0 z-[-1] h-auto w-full opacity-0 bg-transparent"
         style={{ width: "100%" }}
       >
         {allTables?.map((table, index) => (
@@ -1094,6 +1220,7 @@ function MobileTablesList({
             }}
           >
             <TableAnimatedInfoCard
+              onDelete={() => {}}
               onEdit={() => {}}
               onSeatClick={() => {}}
               reveal={false}
@@ -1121,6 +1248,7 @@ function MobileTablesList({
           {tables.map((table) => (
             <TableAnimatedInfoCard
               key={getTableRenderKey(table)}
+              onDelete={onDelete}
               onEdit={onEdit}
               onSeatClick={onSeatClick}
               reveal={false}
