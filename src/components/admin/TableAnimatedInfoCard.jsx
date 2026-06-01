@@ -1,4 +1,6 @@
-import { Pencil } from "lucide-react";
+import { Pencil, X } from "lucide-react";
+import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Guest, Table } from "../../models";
 import { getTableGroupOption, TABLE_SHAPES } from "../../constants/tables";
@@ -32,64 +34,122 @@ export default function TableAnimatedInfoCard({
 }
 
 function TableInfoCard({ onEdit, onSeatClick, table }) {
+  const [showAssignments, setShowAssignments] = useState(false);
   const assignedGuests = Table.getAssignedGuests(table);
   const tableLabel = table.name || table.id;
   const groupLabel = getTableGroupOption(table.group)?.label;
   const shapeLabel = Table.getShapeLabel(table);
 
   return (
-    <div
-      className="
-        group relative block h-full overflow-hidden rounded-[2rem]
-        border border-[var(--color-border-strong)] bg-white/55 p-5
-        shadow-[0_24px_70px_rgba(77,56,40,0.08)] backdrop-blur-sm
-        transition-all duration-700 hover:-translate-y-1
-        hover:border-[var(--color-border)] hover:bg-white/80 sm:p-6
-      "
-    >
-      <div className="pointer-events-none absolute right-6 top-6 text-5xl opacity-[0.08] transition-all duration-700 group-hover:scale-110 group-hover:opacity-[0.12]">
-        {table.shape === TABLE_SHAPES.round ? "O" : "[]"}
-      </div>
+    <>
+      <div
+        className="
+          group relative block h-full overflow-hidden rounded-[2rem]
+          border border-[var(--color-border-strong)] bg-white/55 p-5
+          shadow-[0_24px_70px_rgba(77,56,40,0.08)] backdrop-blur-sm
+          transition-all duration-700 hover:-translate-y-1
+          hover:border-[var(--color-border)] hover:bg-white/80 sm:p-6
+        "
+      >
+        <div className="pointer-events-none absolute right-6 top-6 text-5xl opacity-[0.08] transition-all duration-700 group-hover:scale-110 group-hover:opacity-[0.12]">
+          {table.shape === TABLE_SHAPES.round ? "O" : "[]"}
+        </div>
 
-      <div className="relative flex h-full flex-col">
-        <div className="mb-4">
-          <div className="min-w-0">
-            <p className="section-eyebrow mb-2">{groupLabel || "Mesa"}</p>
-            <h3 className="truncate font-serif text-3xl leading-none text-[var(--color-text)] sm:text-4xl">
-              {tableLabel}
-            </h3>
-            <p className="mt-2 text-sm text-[var(--color-accent)]">
-              {shapeLabel} - {assignedGuests.length}/{table.seats.length}{" "}
-              asientos
-            </p>
+        <div className="relative flex h-full flex-col">
+          <div className="mb-4">
+            <div className="min-w-0">
+              <p className="section-eyebrow mb-2">{groupLabel || "Mesa"}</p>
+              <h3 className="truncate font-serif text-3xl leading-none text-[var(--color-text)] sm:text-4xl">
+                {tableLabel}
+              </h3>
+              <p className="mt-2 text-sm text-[var(--color-accent)]">
+                {shapeLabel} - {assignedGuests.length}/{table.seats.length}{" "}
+                asientos
+              </p>
+            </div>
           </div>
-        </div>
 
-        <TableDiagram onEdit={onEdit} onSeatClick={onSeatClick} table={table} />
+          <TableDiagram
+            onEdit={onEdit}
+            onSeatClick={onSeatClick}
+            onCenterClick={() => setShowAssignments(true)}
+            table={table}
+          />
 
-        {table.notes && (
-          <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
-            {table.notes}
-          </p>
-        )}
-
-        <div className="mt-5 grid gap-3">
-          {table.seats.map((seat) => (
-            <SeatInfo
-              key={seat.seat}
-              onClick={
-                onSeatClick ? () => onSeatClick({ seat, table }) : undefined
-              }
-              seat={seat}
-            />
-          ))}
+          {table.notes && (
+            <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
+              {table.notes}
+            </p>
+          )}
         </div>
       </div>
-    </div>
+
+      {showAssignments && (
+        <AssignmentModal
+          table={table}
+          onClose={() => setShowAssignments(false)}
+        />
+      )}
+    </>
   );
 }
 
-function TableDiagram({ onEdit, onSeatClick, table }) {
+function AssignmentModal({ table, onClose }) {
+  const assignedSeats = table.seats.filter((seat) => seat.guest);
+
+  return createPortal(
+    <div className="rsvp-dialog-overlay" onClick={onClose}>
+      <div
+        className="rsvp-dialog-card relative rounded-[2rem] border border-[var(--color-border)] bg-white p-6 text-left shadow-[0_24px_70px_rgba(77,56,40,0.08)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <p className="section-eyebrow mb-2">Invitados asignados</p>
+            <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
+              {table.name || table.id}
+            </h2>
+          </div>
+
+          <IconButton label="Cerrar" onClick={onClose} tone="secondary">
+            <X size={16} strokeWidth={1.8} />
+          </IconButton>
+        </div>
+
+        {assignedSeats.length ? (
+          <div className="space-y-4">
+            {assignedSeats.map((seat) => (
+              <div
+                key={seat.seat}
+                className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4"
+              >
+                <p className="font-medium text-[var(--color-accent-dark)]">
+                  Asiento {seat.seat} –{" "}
+                  {Guest.getFullName(seat.guest, "Invitado")}
+                </p>
+                <p className="mt-2 text-sm text-[var(--color-muted)]">
+                  Menú: {seat.guest.menu || "-"}
+                </p>
+                {seat.guest.phone && (
+                  <p className="mt-1 text-sm text-[var(--color-muted)]">
+                    Teléfono: {seat.guest.phone}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-[var(--color-muted)]">
+            No hay invitados asignados a esta mesa.
+          </p>
+        )}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function TableDiagram({ onEdit, onSeatClick, onCenterClick, table }) {
   const seats =
     table.shape === TABLE_SHAPES.round
       ? getRoundSeatPositions(table.seats)
@@ -108,6 +168,16 @@ function TableDiagram({ onEdit, onSeatClick, table }) {
       )}
 
       {table.shape === TABLE_SHAPES.round ? <RoundTable /> : <RectTable />}
+
+      {onCenterClick && (
+        <button
+          type="button"
+          onClick={onCenterClick}
+          className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 px-3 py-1 text-center text-[0.75rem] font-semibold text-[var(--color-accent-dark)] transition hover:text-[var(--color-accent)] focus:outline-none"
+        >
+          Ver asientos asignados
+        </button>
+      )}
 
       {seats.map(({ seat, transform, x, y }) => (
         <SeatDot

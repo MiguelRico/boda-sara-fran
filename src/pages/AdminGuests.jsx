@@ -239,13 +239,8 @@ export default function AdminGuests() {
 
     if (clampedPage === currentPage || pageLoading) return;
 
-    const tableCardElement = tableCardRef.current;
-    const tableCardRect = tableCardElement?.getBoundingClientRect();
     const tableElement = tableStartRef.current;
     const tableRect = tableElement?.getBoundingClientRect();
-    const tableCardTop = tableCardRect
-      ? Math.max(0, tableCardRect.top + window.scrollY - pageScrollOffset)
-      : window.scrollY;
     const tableHeight = tableRect?.height || null;
     const direction = clampedPage > currentPage ? 1 : -1;
 
@@ -255,12 +250,6 @@ export default function AdminGuests() {
       setPageLoadingMinHeight(tableHeight);
       setPageDirection(direction);
       setPage(clampedPage);
-      pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
-        pageScrollStartFrameRef.current = null;
-        pageScrollCancelRef.current = scrollToY(tableCardTop, {
-          duration: pageScrollDuration,
-        });
-      });
       pageRevealTimeoutRef.current = window.setTimeout(() => {
         setPageLoadingMinHeight(null);
         pageRevealTimeoutRef.current = null;
@@ -272,26 +261,17 @@ export default function AdminGuests() {
     setPageDirection(direction);
     setPageLoadingMinHeight(tableHeight);
     setPageLoading(true);
-    pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
-      pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
-        pageScrollStartFrameRef.current = null;
-        pageScrollCancelRef.current = scrollToY(tableCardTop, {
-          duration: pageScrollDuration,
-        });
 
-        pageLoadingTimeoutRef.current = window.setTimeout(() => {
-          setPage(clampedPage);
-          pageLoadingTimeoutRef.current = null;
-          pageScrollCancelRef.current = null;
+    pageLoadingTimeoutRef.current = window.setTimeout(() => {
+      setPage(clampedPage);
+      pageLoadingTimeoutRef.current = null;
 
-          pageRevealTimeoutRef.current = window.setTimeout(() => {
-            setPageLoading(false);
-            setPageLoadingMinHeight(null);
-            pageRevealTimeoutRef.current = null;
-          }, pageRevealDelay);
-        }, pageDataSwapDelay);
-      });
-    });
+      pageRevealTimeoutRef.current = window.setTimeout(() => {
+        setPageLoading(false);
+        setPageLoadingMinHeight(null);
+        pageRevealTimeoutRef.current = null;
+      }, pageRevealDelay);
+    }, pageDataSwapDelay);
   };
 
   const closePopup = () => {
@@ -502,6 +482,7 @@ export default function AdminGuests() {
                           }
                           page={currentPage}
                           rows={pagedRows}
+                          allRows={visibleRows}
                         />
 
                         {!visibleRows.length && (
@@ -648,7 +629,7 @@ function DesktopTable({ onDelete, onEdit, rows }) {
           <tr className="border-b border-[var(--color-border)] text-xs uppercase tracking-[0.16em] text-[var(--color-accent)]">
             <th className="px-5 py-4 font-medium">Grupo</th>
             <th className="px-5 py-4 font-medium">Contacto</th>
-            <th className="px-5 py-4 font-medium">Mesa</th>
+            <th className="px-5 py-4 font-medium">Menú</th>
             <th className="px-5 py-4 font-medium">Alergias</th>
             <th className="px-5 py-4 font-medium">Transporte</th>
             <th className="px-5 py-4 text-right font-medium">Acciones</th>
@@ -673,7 +654,14 @@ function DesktopTable({ onDelete, onEdit, rows }) {
                 <p className="mt-1">{row.phone || "-"}</p>
               </td>
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
-                {row.assignmentText || "-"}
+                <div>
+                  Pescado:{" "}
+                  {row.guests?.filter((g) => g.menu === "Pescado").length || 0}
+                </div>
+                <div className="mt-1">
+                  Carne:{" "}
+                  {row.guests?.filter((g) => g.menu === "Carne").length || 0}
+                </div>
               </td>
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
                 {row.allergyText}
@@ -703,10 +691,11 @@ function DesktopTable({ onDelete, onEdit, rows }) {
   );
 }
 
-function MobileList({ direction, onDelete, onEdit, page, rows }) {
+function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
   const reduceMotion = useReducedMotion();
   const cardRef = useRef(null);
   const groupNameRefs = useRef([]);
+  const measureRefs = useRef([]);
   const [cardMinHeight, setCardMinHeight] = useState(null);
   const [groupNameFontSize, setGroupNameFontSize] = useState(
     mobileGroupNameBaseFontSize,
@@ -770,35 +759,29 @@ function MobileList({ direction, onDelete, onEdit, page, rows }) {
   }, [rows]);
 
   useLayoutEffect(() => {
-    const node = cardRef.current;
-
-    if (!node) return undefined;
+    if (!allRows?.length) return undefined;
 
     const updateCardHeight = () => {
-      setCardMinHeight((currentHeight) => {
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        const stableHeight = Math.max(currentHeight || 0, nextHeight);
+      const maxHeight = allRows.reduce((max, _, index) => {
+        const node = measureRefs.current[index];
+        if (!node) return max;
 
-        return Math.abs((currentHeight || 0) - stableHeight) < 1
+        return Math.max(max, Math.ceil(node.getBoundingClientRect().height));
+      }, 0);
+
+      setCardMinHeight((currentHeight) => {
+        if (!maxHeight) return currentHeight;
+        return Math.abs((currentHeight || 0) - maxHeight) < 1
           ? currentHeight
-          : stableHeight;
+          : maxHeight;
       });
     };
 
     updateCardHeight();
+    window.addEventListener("resize", updateCardHeight);
 
-    if (!window.ResizeObserver) {
-      window.addEventListener("resize", updateCardHeight);
-
-      return () => window.removeEventListener("resize", updateCardHeight);
-    }
-
-    const resizeObserver = new ResizeObserver(updateCardHeight);
-
-    resizeObserver.observe(node);
-
-    return () => resizeObserver.disconnect();
-  }, [page, rows]);
+    return () => window.removeEventListener("resize", updateCardHeight);
+  }, [allRows]);
 
   const variants = reduceMotion
     ? {
@@ -824,11 +807,104 @@ function MobileList({ direction, onDelete, onEdit, page, rows }) {
         }),
       };
 
+  measureRefs.current = [];
+
   return (
     <div
       className="relative overflow-hidden md:hidden"
-      style={cardMinHeight ? { height: `${cardMinHeight}px` } : undefined}
+      style={
+        cardMinHeight
+          ? { minHeight: `${cardMinHeight}px`, height: `${cardMinHeight}px` }
+          : undefined
+      }
     >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-0 top-0 z-[-1] h-auto w-full opacity-0"
+      >
+        {allRows?.map((row, index) => (
+          <div
+            key={`measure-${row.rowId || index}`}
+            ref={(node) => {
+              measureRefs.current[index] = node;
+            }}
+            className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 shadow-[0_18px_45px_rgba(52,69,49,0.06)] sm:p-5"
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1">
+                <p
+                  className="overflow-hidden whitespace-nowrap font-serif leading-none text-[var(--color-accent-dark)]"
+                  style={{ fontSize: `${groupNameFontSize}px` }}
+                >
+                  {row.groupName || "Grupo sin nombre"}
+                </p>
+                <p
+                  className="mt-2 break-words text-[var(--color-muted)] [overflow-wrap:anywhere]"
+                  style={detailTextStyle}
+                >
+                  {row.email || "-"}
+                </p>
+                <p
+                  className="mt-1 hidden break-words text-[var(--color-muted)] [overflow-wrap:anywhere] sm:block"
+                  style={detailTextStyle}
+                >
+                  {row.phone || "-"}
+                </p>
+                <p
+                  className="mt-2 hidden text-[var(--color-muted)] sm:block"
+                  style={detailTextStyle}
+                >
+                  {row.groupSize} {row.groupSize === 1 ? "persona" : "personas"}
+                </p>
+
+                <div className="mt-3 flex items-center justify-between gap-3 sm:hidden">
+                  <div
+                    className="min-w-0 text-[var(--color-muted)]"
+                    style={detailTextStyle}
+                  >
+                    <p className="break-words [overflow-wrap:anywhere]">
+                      {row.phone || "-"}
+                    </p>
+                    <p className="mt-1">
+                      {row.groupSize}{" "}
+                      {row.groupSize === 1 ? "persona" : "personas"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden sm:block">
+                <div className="flex shrink-0 justify-end gap-2">
+                  <IconButton label="Editar" tone="secondary">
+                    <Pencil size={16} strokeWidth={1.8} />
+                  </IconButton>
+                  <IconButton label="Eliminar" tone="danger">
+                    <Trash2 size={16} strokeWidth={1.8} />
+                  </IconButton>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
+              <InfoLine
+                label="Pescado"
+                value={
+                  row.guests?.filter((g) => g.menu === "Pescado").length || 0
+                }
+              />
+              <InfoLine
+                label="Carne"
+                value={
+                  row.guests?.filter((g) => g.menu === "Carne").length || 0
+                }
+              />
+              <InfoLine label="Alergias" value={row.allergyText} />
+              <InfoLine label="Transporte" value={row.transportText} />
+            </div>
+          </div>
+        ))}
+      </div>
+
       <AnimatePresence custom={direction} initial={false}>
         {rows.map((row, index) => (
           <motion.article
@@ -905,7 +981,18 @@ function MobileList({ direction, onDelete, onEdit, page, rows }) {
             </div>
 
             <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
-              <InfoLine label="Mesa" value={row.assignmentText || "-"} />
+              <InfoLine
+                label="Pescado"
+                value={
+                  row.guests?.filter((g) => g.menu === "Pescado").length || 0
+                }
+              />
+              <InfoLine
+                label="Carne"
+                value={
+                  row.guests?.filter((g) => g.menu === "Carne").length || 0
+                }
+              />
               <InfoLine label="Alergias" value={row.allergyText} />
               <InfoLine label="Transporte" value={row.transportText} />
             </div>

@@ -1,8 +1,8 @@
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { inputClassName, Label } from "../rsvp/FormPrimitives";
 import { Table, Guest } from "../../models";
 import IconButton from "../ui/IconButton";
-import { Check, AlertCircle } from "lucide-react";
+import { Check, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
  * Lista de invitados sin mesa con filtros y selectores inline para asignar.
@@ -20,6 +20,8 @@ export default function PendingGuestsList({
   const [filters, setFilters] = useState({ group: "", menu: "" });
   const [assigningGuest, setAssigningGuest] = useState(null);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
 
   // Calcular grupos únicos de invitados pendientes
   const availableGroups = useMemo(() => {
@@ -42,6 +44,19 @@ export default function PendingGuestsList({
     });
   }, [guests, filters]);
 
+  const totalPages = Math.max(Math.ceil(filteredGuests.length / pageSize), 1);
+  const currentPage = Math.min(page, totalPages);
+  const pagedGuests = filteredGuests.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   // Mesas con asientos disponibles
   const tablesWithSeats = useMemo(() => {
     return tables.filter((table) => {
@@ -52,6 +67,7 @@ export default function PendingGuestsList({
 
   const handleFilterChange = (filterKey, value) => {
     setFilters((prev) => ({ ...prev, [filterKey]: value }));
+    setPage(1);
   };
 
   const handleAssign = useCallback(
@@ -150,17 +166,56 @@ export default function PendingGuestsList({
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filteredGuests.map((guest, index) => (
-            <GuestAssignmentRow
-              key={`${guest.email}-${guest.name}-${index}`}
-              guest={guest}
-              tables={tablesWithSeats}
-              onAssign={handleAssign}
-              isAssigning={assigningGuest === getGuestRowKey(guest)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="space-y-3">
+            {pagedGuests.map((guest, index) => (
+              <GuestAssignmentRow
+                key={`${guest.email}-${guest.name}-${index}`}
+                guest={guest}
+                tables={tablesWithSeats}
+                onAssign={handleAssign}
+                isAssigning={assigningGuest === getGuestRowKey(guest)}
+              />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-[var(--color-muted)]">
+                Página {currentPage} de {totalPages}
+              </p>
+
+              <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
+                <IconButton
+                  className="w-full sm:w-auto"
+                  disabled={currentPage === 1}
+                  icon={<ChevronLeft size={16} strokeWidth={1.8} />}
+                  label="Anterior"
+                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  showText
+                  tone="secondary"
+                  type="button"
+                >
+                  Anterior
+                </IconButton>
+                <IconButton
+                  className="w-full sm:w-auto"
+                  disabled={currentPage === totalPages}
+                  icon={<ChevronRight size={16} strokeWidth={1.8} />}
+                  label="Siguiente"
+                  onClick={() =>
+                    setPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  showText
+                  tone="secondary"
+                  type="button"
+                >
+                  Siguiente
+                </IconButton>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Resumen */}
