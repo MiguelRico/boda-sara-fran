@@ -77,8 +77,6 @@ const desktopPageSize = 4;
 const mobilePageSize = 1;
 const pageDataSwapDelay = 680;
 const pageRevealDelay = 160;
-const pageScrollDuration = 680;
-const pageScrollOffset = 12;
 const mobilePageHeightLockDelay = 560;
 const emptyState = {
   groups: [],
@@ -473,17 +471,17 @@ export default function AdminTables() {
   }, [loadTables, spinner]);
 
   const handleAssignGuestToTable = useCallback(
-    async ({ guestId, guestEmail, guestIndex, tableId, seatNumber }) => {
+    async ({ guestId, guestGroupName, guestIndex, tableName, seatNumber }) => {
       try {
         spinner.show("Asignando invitado...");
         const updatedGroups = await assignPendingGuestToSeat({
           groups: state.groups,
-          guestEmail,
+          guestGroupName,
           guestId,
           guestIndex,
           password: ADMIN_PASSWORD,
           seatNumber,
-          tableId,
+          tableName,
           tables,
         });
         setState((prev) => ({
@@ -508,11 +506,11 @@ export default function AdminTables() {
   );
 
   const handleAssignGuestToSeat = async ({
-    guestEmail,
+    guestGroupName,
     guestIndex,
     guestName,
   }) => {
-    if (!seatAssignmentTarget || !guestEmail) return;
+    if (!seatAssignmentTarget || !guestGroupName) return;
 
     setAssigningSeat(true);
     setState((prev) => ({ ...prev, error: "" }));
@@ -521,7 +519,7 @@ export default function AdminTables() {
       spinner.show("Guardando asiento...");
       const updatedGroups = await assignGuestToSeat({
         groups: state.groups,
-        guestEmail,
+        guestGroupName,
         guestIndex,
         guestName,
         password: ADMIN_PASSWORD,
@@ -800,7 +798,7 @@ export default function AdminTables() {
         <DeleteDialog
           title="Eliminar mesa"
           message={`¿Estás seguro que deseas eliminar la mesa ${
-            tableToDelete.name || tableToDelete.id
+            tableToDelete.name
           }? Esta acción liberará cualquier asiento asignado a esta mesa.`}
           onCancel={handleCancelDeleteTable}
           onConfirm={handleConfirmDeleteTable}
@@ -885,8 +883,8 @@ function SeatAssignmentDialog({
 }) {
   useViewportScrollLock(true);
 
-  const tableKey = table.id || table.name;
-  const tableLabel = table.name || table.id;
+  const tableKey = table.name;
+  const tableLabel = table.name;
   const currentGuest = guests.find(
     (guest) =>
       guest.table === tableKey && String(guest.seat) === String(seat.seat),
@@ -898,7 +896,7 @@ function SeatAssignmentDialog({
       : "";
   const currentGuestValue = currentGuest
     ? createGuestOptionValue({
-        email: currentGuest.email,
+        groupName: currentGuest.groupName,
         guestIndex: currentGuest.guestIndex,
         name: currentGuestName,
       })
@@ -909,9 +907,9 @@ function SeatAssignmentDialog({
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    const [guestEmail, guestIndex, guestName] = selectedGuest.split("|||");
+    const [guestGroupName, guestIndex, guestName] = selectedGuest.split("|||");
 
-    onAssign({ guestEmail, guestIndex, guestName });
+    onAssign({ guestGroupName, guestIndex, guestName });
   };
 
   const dialog = (
@@ -960,14 +958,14 @@ function SeatAssignmentDialog({
 
               return (
                 <option
-                  key={`${guest.email}-${guestName}-${index}`}
+                  key={`${guest.groupName}-${guestName}-${index}`}
                   value={createGuestOptionValue({
-                    email: guest.email,
+                    groupName: guest.groupName,
                     guestIndex: guest.guestIndex,
                     name: guestName,
                   })}
                 >
-                  {guestName} - {guest.groupName || guest.email}
+                  {guestName} - {guest.groupName}
                   {assignmentText ? ` (${assignmentText})` : ""}
                 </option>
               );
@@ -1191,8 +1189,6 @@ function MobileTablesList({
         }),
       };
 
-  measureRefs.current = [];
-
   return (
     <div
       className="relative overflow-hidden md:hidden bg-transparent"
@@ -1270,11 +1266,11 @@ function getTableRenderKey(table) {
     })
     .join(",");
 
-  return `${table.id || table.name}-${seatSignature}`;
+  return `${table.name}-${seatSignature}`;
 }
 
-function createGuestOptionValue({ email, guestIndex = "", name }) {
-  return `${email || ""}|||${guestIndex}|||${name || ""}`;
+function createGuestOptionValue({ groupName, guestIndex = "", name }) {
+  return `${groupName || ""}|||${guestIndex}|||${name || ""}`;
 }
 
 function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
@@ -1312,50 +1308,6 @@ function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
       </div>
     </div>
   );
-}
-
-function scrollToY(targetY, { duration }) {
-  const reduceMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
-  ).matches;
-  const startY = window.scrollY;
-  const nextY = Math.max(0, targetY);
-  const distance = nextY - startY;
-
-  if (distance >= -4) return null;
-
-  if (reduceMotion) {
-    window.scrollTo(0, nextY);
-    return null;
-  }
-
-  const startTime = window.performance.now();
-  let frameId = null;
-  let canceled = false;
-
-  const step = (currentTime) => {
-    if (canceled) return;
-
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const easedProgress = 1 - Math.pow(1 - progress, 3);
-
-    window.scrollTo(0, startY + distance * easedProgress);
-
-    if (progress < 1) {
-      frameId = window.requestAnimationFrame(step);
-    }
-  };
-
-  frameId = window.requestAnimationFrame(step);
-
-  return () => {
-    canceled = true;
-
-    if (frameId) {
-      window.cancelAnimationFrame(frameId);
-    }
-  };
 }
 
 function TablesSkeleton() {

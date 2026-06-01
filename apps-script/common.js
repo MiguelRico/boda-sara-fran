@@ -1,95 +1,93 @@
 /* eslint-disable */
+function getSpreadsheet() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
+}
+
+function getConfirmationsSheet() {
+  const spreadsheet = getSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(CONFIRMATIONS_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(CONFIRMATIONS_SHEET_NAME);
+  }
+
+  ensureHeader(sheet, CONFIRMATIONS_HEADERS);
+
+  return sheet;
+}
+
 function getSheet() {
-  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const spreadsheet = getSpreadsheet();
   let sheet = spreadsheet.getSheetByName(SHEET_NAME);
 
   if (!sheet) {
     sheet = spreadsheet.insertSheet(SHEET_NAME);
   }
 
-  ensureGuestsHeader(sheet);
+  ensureHeader(sheet, GUESTS_HEADERS);
 
   return sheet;
 }
 
+const CONFIRMATIONS_HEADERS = ["groupName", "email", "phone", "guests"];
+
+const CONFIRMATIONS_COLUMNS = {
+  groupName: 0,
+  email: 1,
+  phone: 2,
+  guests: 3,
+};
+
 const GUESTS_HEADERS = [
-  "Email",
-  "Telefono",
-  "Grupo",
-  "Nombre",
-  "Apellidos",
-  "Alergias",
-  "Otras alergias",
-  "Comentarios",
-  "Ida",
-  "Vuelta",
-  "Menu",
-  "Mesa",
-  "Asiento",
-  "Usuario",
-  "Fecha",
+  "groupName",
+  "name",
+  "lastname",
+  "allergies",
+  "otherAllergies",
+  "comments",
+  "outboundBus",
+  "returnBus",
+  "menu",
+  "table",
+  "seat",
 ];
 
 const GUESTS_COLUMNS = {
-  email: 0,
-  phone: 1,
-  groupName: 2,
-  name: 3,
-  lastname: 4,
-  allergies: 5,
-  otherAllergies: 6,
-  comments: 7,
-  outboundBus: 8,
-  returnBus: 9,
-  menu: 10,
-  table: 11,
-  seat: 12,
-  user: 13,
-  date: 14,
+  groupName: 0,
+  name: 1,
+  lastname: 2,
+  allergies: 3,
+  otherAllergies: 4,
+  comments: 5,
+  outboundBus: 6,
+  returnBus: 7,
+  menu: 8,
+  table: 9,
+  seat: 10,
 };
 
-function ensureGuestsHeader(sheet) {
-  const currentHeaders = sheet
-    .getRange(1, 1, 1, GUESTS_HEADERS.length)
-    .getValues()[0];
-  const needsHeader = GUESTS_HEADERS.some(
-    (header, index) => currentHeaders[index] !== header,
-  );
+const TABLES_HEADERS = ["name", "tag", "shape", "seats", "notes"];
 
-  if (needsHeader) {
-    sheet.getRange(1, 1, 1, GUESTS_HEADERS.length).setValues([GUESTS_HEADERS]);
-  }
-}
-
-function getTablesSheet() {
-  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sheet = spreadsheet.getSheetByName(TABLES_SHEET_NAME);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(TABLES_SHEET_NAME);
-  }
-
-  ensureTablesHeader(sheet);
-
-  return sheet;
-}
-
-function ensureTablesHeader(sheet) {
-  const headers = [
-    "id",
-    "name",
-    "group",
-    "shape",
-    "seatCount",
-    "notes",
-    "updatedAt",
-  ];
+function ensureHeader(sheet, headers) {
   const currentHeaders = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
   const needsHeader = headers.some((header, index) => currentHeaders[index] !== header);
 
   if (needsHeader) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   }
+}
+
+function getTablesSheet() {
+  const spreadsheet = getSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(TABLES_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(TABLES_SHEET_NAME);
+  }
+
+  ensureHeader(sheet, TABLES_HEADERS);
+
+  return sheet;
 }
 
 function jsonResponse(obj, e) {
@@ -112,6 +110,40 @@ function jsonResponse(obj, e) {
 
 function readParam(value) {
   return decodeURIComponent(value || "").trim();
+}
+
+function decodeGroupName(value) {
+  const text = String(value || "").trim();
+
+  if (!text) return "";
+
+  try {
+    return Utilities.newBlob(Utilities.base64Decode(text)).getDataAsString("UTF-8").trim();
+  } catch (err) {
+    return text;
+  }
+}
+
+function encodeGroupName(value) {
+  const text = String(value || "").trim();
+
+  if (!text) return "";
+
+  return Utilities.base64Encode(text, Utilities.Charset.UTF_8);
+}
+
+function encodeConfirmationForApi(confirmation) {
+  const encodedGroupName = encodeGroupName(confirmation.groupName);
+
+  return {
+    groupName: encodedGroupName,
+    email: confirmation.email || "",
+    phone: confirmation.phone || "",
+    guests: (confirmation.guests || []).map((guest) => ({
+      ...guest,
+      groupName: encodedGroupName,
+    })),
+  };
 }
 
 function validateAdmin(e) {
@@ -152,24 +184,68 @@ function normalizeMenu(value) {
   return menu === "Carne" || menu === "Pescado" ? menu : "";
 }
 
-function deleteGroupRows(sheet, groupId) {
+function getNormalizedConfirmationData(data) {
+  const groupName = decodeGroupName(data.groupName);
+
+  return {
+    groupName,
+    email: String(data.email || "").trim(),
+    phone: String(data.phone || "").trim(),
+    guests: Array.isArray(data.guests)
+      ? data.guests.map((guest) => ({
+          ...guest,
+          groupName,
+        }))
+      : [],
+  };
+}
+
+function deleteGroupRows(sheet, groupName) {
   const data = sheet.getDataRange().getValues();
 
   for (let i = data.length - 1; i > 0; i--) {
     if (
-      String(data[i][GUESTS_COLUMNS.email]).trim().toLowerCase() ===
-      String(groupId).trim().toLowerCase()
+      String(data[i][GUESTS_COLUMNS.groupName]).trim().toLowerCase() ===
+      String(groupName).trim().toLowerCase()
     ) {
       sheet.deleteRow(i + 1);
     }
   }
 }
 
-function buildGuestFromRow(row) {
+function deleteConfirmationRow(sheet, groupName) {
+  const data = sheet.getDataRange().getValues();
+
+  for (let i = data.length - 1; i > 0; i--) {
+    if (
+      String(data[i][CONFIRMATIONS_COLUMNS.groupName]).trim().toLowerCase() ===
+      String(groupName).trim().toLowerCase()
+    ) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+}
+
+function buildConfirmationFromRow(row, guests) {
   return {
-    email: row[GUESTS_COLUMNS.email] || "",
-    phone: row[GUESTS_COLUMNS.phone] || "",
-    groupName: row[GUESTS_COLUMNS.groupName] || "",
+    groupName: row[CONFIRMATIONS_COLUMNS.groupName] || "",
+    email: row[CONFIRMATIONS_COLUMNS.email] || "",
+    phone: row[CONFIRMATIONS_COLUMNS.phone] || "",
+    guests: guests || [],
+  };
+}
+
+function buildConfirmationRow(data) {
+  return [data.groupName, data.email, data.phone, data.guests.length];
+}
+
+function buildGuestFromRow(row, confirmation) {
+  const groupName = row[GUESTS_COLUMNS.groupName] || confirmation.groupName || "";
+
+  return {
+    groupName,
+    email: confirmation.email || "",
+    phone: confirmation.phone || "",
     name: row[GUESTS_COLUMNS.name] || "",
     lastname: row[GUESTS_COLUMNS.lastname] || "",
     allergies: parseAllergies(row[GUESTS_COLUMNS.allergies]),
@@ -180,15 +256,11 @@ function buildGuestFromRow(row) {
     menu: normalizeMenu(row[GUESTS_COLUMNS.menu]),
     table: row[GUESTS_COLUMNS.table] || "",
     seat: row[GUESTS_COLUMNS.seat] || "",
-    user: row[GUESTS_COLUMNS.user] || "",
-    date: row[GUESTS_COLUMNS.date] || "",
   };
 }
 
-function buildGuestRow(data, guest, now) {
+function buildGuestRow(data, guest) {
   return [
-    data.email,
-    data.phone,
     data.groupName,
     guest.name,
     guest.lastname,
@@ -200,8 +272,6 @@ function buildGuestRow(data, guest, now) {
     normalizeMenu(guest.menu),
     guest.table || "",
     guest.seat || "",
-    data.user || data.usuario || data.updatedBy || "",
-    now,
   ];
 }
 
@@ -211,27 +281,16 @@ function normalizeTableShape(value) {
   return shape === "round" || shape === "rectangular" ? shape : "rectangular";
 }
 
-function normalizeTableGroup(value) {
-  const group = String(value || "").trim();
-
-  return group === "familia" || group === "amistades" || group === "trabajo"
-    ? group
-    : "familia";
-}
-
 function buildTableFromRow(row) {
-  const id = row[0] || row[1] || "";
-  const name = row[1] || row[0] || "";
-  const shape = normalizeTableShape(row[3]);
-  const seatCount = Math.max(Number(row[4]) || 0, 0);
+  const name = row[0] || "";
 
   return {
-    id,
     name,
-    group: normalizeTableGroup(row[2]),
-    shape,
-    seatCount,
-    notes: row[5] || "",
+    group: row[1] || "",
+    tag: row[1] || "",
+    shape: normalizeTableShape(row[2]),
+    seatCount: Math.max(Number(row[3]) || 0, 0),
+    notes: row[4] || "",
   };
 }
 

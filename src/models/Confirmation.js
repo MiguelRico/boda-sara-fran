@@ -1,9 +1,8 @@
 import { Guest } from "./Guest";
 
-export const CONFIRMATION_DEFAULTS = {
-  groupId: "",
-  email: "",
+const CONFIRMATION_DEFAULTS = {
   groupName: "",
+  email: "",
   phone: "",
   guests: [],
 };
@@ -24,16 +23,21 @@ const getRate = (value, total) => {
 
 export const Confirmation = {
   create(overrides = {}) {
-    const email = normalizeString(overrides.email || overrides.groupId);
-    const groupId = normalizeString(overrides.groupId || overrides.email);
+    const groupName = normalizeString(
+      overrides.groupName || overrides.nombre_grupo,
+    );
 
     return {
       ...CONFIRMATION_DEFAULTS,
-      groupId,
-      email,
-      groupName: normalizeString(overrides.groupName || overrides.nombre_grupo),
+      groupName,
+      email: normalizeString(overrides.email),
       phone: normalizeString(overrides.phone),
-      guests: Guest.normalizeList(overrides.guests, { ensureOne: false }),
+      guests: Guest.normalizeList(overrides.guests, { ensureOne: false }).map(
+        (guest) => ({
+          ...guest,
+          groupName: guest.groupName || groupName,
+        }),
+      ),
     };
   },
 
@@ -59,7 +63,6 @@ export const Confirmation = {
     return Confirmation.normalize({
       ...currentConfirmation,
       [field]: value,
-      groupId: field === "email" ? value : currentConfirmation.groupId,
     });
   },
 
@@ -271,7 +274,6 @@ export const Confirmation = {
       commentsText: Confirmation.getCommentsText(normalizedConfirmation),
       email: normalizedConfirmation.email,
       group: normalizedConfirmation,
-      groupId: normalizedConfirmation.groupId || normalizedConfirmation.email,
       groupName: normalizedConfirmation.groupName,
       groupSize: Confirmation.getGuestCount(normalizedConfirmation),
       guestNames: Confirmation.getGuestNames(normalizedConfirmation),
@@ -280,11 +282,7 @@ export const Confirmation = {
       hasComments: Confirmation.hasComments(normalizedConfirmation),
       needsReview: Confirmation.needsReview(normalizedConfirmation),
       phone: normalizedConfirmation.phone,
-      rowId: `${
-        normalizedConfirmation.groupId ||
-        normalizedConfirmation.email ||
-        "group"
-      }-${index}`,
+      rowId: `${normalizedConfirmation.groupName || "group"}-${index}`,
       transportText: Confirmation.getTransportText(normalizedConfirmation),
       usesBus: Confirmation.usesBus(normalizedConfirmation),
     };

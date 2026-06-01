@@ -1,6 +1,7 @@
 import { GUEST_MENU_OPTIONS } from "../constants/rsvp";
 
-export const GUEST_DEFAULTS = {
+const GUEST_DEFAULTS = {
+  groupName: "",
   name: "",
   lastname: "",
   allergies: [],
@@ -31,6 +32,7 @@ export const Guest = {
   create(overrides = {}) {
     return {
       ...GUEST_DEFAULTS,
+      groupName: normalizeString(overrides.groupName),
       name: normalizeString(overrides.name),
       lastname: normalizeString(overrides.lastname),
       allergies: Array.isArray(overrides.allergies)
@@ -157,7 +159,13 @@ export const Guest = {
     const normalizedGuest = Guest.normalize(guest);
 
     return Object.entries(normalizedGuest).every(([field, value]) => {
-      if (field === "outboundBus" || field === "returnBus") return true;
+      if (
+        field === "groupName" ||
+        field === "outboundBus" ||
+        field === "returnBus"
+      ) {
+        return true;
+      }
 
       return isBlankValue(value);
     });
@@ -215,5 +223,3 @@ export const Guest = {
     );
   },
 };
-
-export const createEmptyGuest = () => Guest.create();

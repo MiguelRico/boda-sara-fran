@@ -3,12 +3,9 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { MAX_GUESTS } from "../constants/rsvp";
 import { Confirmation, Guest } from "../models";
-import {
-  findGroupByEmail,
-  findGroupById,
-  saveGroup,
-} from "../services/rsvpService";
-import { validateRsvpEmail, validateRsvpForm } from "../utils/rsvpValidation";
+import { findGroupByName, saveGroup } from "../services/rsvpService";
+import { decodeGroupName, getGroupNameUrl } from "../utils/groupNameCodec";
+import { validateRsvpForm } from "../utils/rsvpValidation";
 
 const createInitialPopup = () => ({
   closeText: "Cerrar",
@@ -26,14 +23,16 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const groupIdFromUrl = searchParams.get("groupId");
+  const groupNameFromUrl = decodeGroupName(searchParams.get("groupName"));
   const isEdition = mode === "edit";
   const navigationGroup =
-    isEdition && location.state?.group?.email === groupIdFromUrl
+    isEdition && location.state?.group?.groupName === groupNameFromUrl
       ? Confirmation.normalize(location.state.group)
       : null;
 
-  const [groupId, setGroupId] = useState(() => navigationGroup?.email || null);
+  const [currentGroupName, setCurrentGroupName] = useState(
+    () => navigationGroup?.groupName || null,
+  );
   const [contact, setContact] = useState(() => ({
     email: navigationGroup?.email || "",
     groupName: navigationGroup?.groupName || "",
@@ -57,7 +56,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const loadFoundGroup = useCallback((response) => {
     const confirmation = Confirmation.normalize(response);
 
-    setGroupId(confirmation.email);
+    setCurrentGroupName(confirmation.groupName);
     setContact({
       email: confirmation.email,
       groupName: confirmation.groupName,
@@ -102,8 +101,9 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   };
 
   const handleSearchInvitation = async () => {
-    const emailError = validateRsvpEmail(contact.email);
-    const validationErrors = emailError ? { email: emailError } : {};
+    const validationErrors = !contact.groupName.trim()
+      ? { groupName: "El nombre de grupo es obligatorio" }
+      : {};
     let keepSpinnerUntilNavigation = false;
 
     setErrors(validationErrors);
@@ -113,7 +113,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     try {
       show("Buscando confirmación...");
 
-      const response = await findGroupByEmail(contact.email);
+      const response = await findGroupByName(contact.groupName);
 
       if (!response.found) {
         setPopup({
@@ -128,7 +128,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
         return;
       }
 
-      navigate(`/rsvp/edit?groupId=${encodeURIComponent(response.email)}`, {
+      navigate(getGroupNameUrl(response.groupName), {
         state: { group: response },
       });
       keepSpinnerUntilNavigation = true;
@@ -174,17 +174,19 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
       const payload = {
         ...Confirmation.normalize({
           ...contact,
-          groupId: groupId || contact.email,
+          groupName: currentGroupName || contact.groupName,
           guests,
         }),
       };
 
       show("Enviando confirmación...");
 
-      const response = await saveGroup(payload);
+      const response = await saveGroup(payload, {
+        method: isEdition ? "PUT" : "POST",
+      });
 
-      if (response.email) {
-        setGroupId(response.email);
+      if (response.groupName) {
+        setCurrentGroupName(response.groupName);
       }
 
       setPopup({
@@ -216,13 +218,13 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
 
   useEffect(() => {
     const loadGroup = async () => {
-      if (!isEdition || !groupIdFromUrl) return;
+      if (!isEdition || !groupNameFromUrl) return;
       if (navigationGroup) return;
 
       try {
         show("Cargando confirmación...");
 
-        const response = await findGroupById(groupIdFromUrl);
+        const response = await findGroupByName(groupNameFromUrl);
 
         if (!response.found) {
           setPopup({
@@ -257,13 +259,13 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     };
 
     loadGroup();
-  }, [groupIdFromUrl, hide, isEdition, loadFoundGroup, navigationGroup, show]);
+  }, [groupNameFromUrl, hide, isEdition, loadFoundGroup, navigationGroup, show]);
 
   return {
     closePopup,
     contact,
     errors,
-    groupId,
+    groupName: currentGroupName,
     guests,
     handleAddGuest,
     handleContactChange,

@@ -2,37 +2,13 @@
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+    const method = getRequestMethod(data);
 
-    if (data.action === "tables-save") {
-      return saveTables(data);
-    }
+    if (method === "POST") return routePost(data);
+    if (method === "PUT") return routePut(data);
+    if (method === "DELETE") return routeDelete(data);
 
-    const sheet = getSheet();
-
-    if (!sheet) {
-      throw new Error("Sheet not found");
-    }
-
-    if (data.action === "delete") {
-      return deleteConfirmation(sheet, data);
-    }
-
-    const groupId = data.groupId || data.email;
-    const now = new Date();
-
-    deleteGroupRows(sheet, groupId);
-
-    data.guests.forEach((guest) => {
-      sheet.appendRow(buildGuestRow(data, guest, now));
-    });
-
-    sendConfirmationEmail(data.email, groupId, data.guests);
-    sendAdminNotification(data.groupName, data.email, data.phone, data.guests);
-
-    return jsonResponse({
-      success: true,
-      groupId,
-    });
+    throw new Error("Method not supported");
   } catch (err) {
     return jsonResponse({
       success: false,
@@ -41,56 +17,28 @@ function doPost(e) {
   }
 }
 
-function deleteConfirmation(sheet, data) {
-  if (data.password !== ADMIN_PASSWORD) {
-    throw new Error("Unauthorized");
-  }
+function getRequestMethod(data) {
+  const explicitMethod = String(data.method || "").trim();
 
-  const groupId = data.groupId || data.email;
+  if (explicitMethod) return explicitMethod.toUpperCase();
 
-  if (!groupId) {
-    throw new Error("Missing groupId");
-  }
-
-  deleteGroupRows(sheet, groupId);
-
-  return jsonResponse({
-    success: true,
-    groupId,
-  });
+  return "POST";
 }
 
-function saveTables(data) {
-  if (data.password !== ADMIN_PASSWORD) {
-    throw new Error("Unauthorized");
+function getRequestEntity(data) {
+  const explicitEntity = String(data.entity || "").trim();
+
+  if (explicitEntity) return explicitEntity;
+
+  return "";
+}
+
+function routePost(data) {
+  const entity = getRequestEntity(data);
+
+  if (entity === "confirmations") {
+    return saveConfirmation(data);
   }
 
-  const sheet = getTablesSheet();
-  const now = new Date();
-  const tables = Array.isArray(data.tables) ? data.tables : [];
-
-  deleteAllTableRows(sheet);
-
-  tables.forEach((table) => {
-    const id = String(table.id || table.name || "").trim();
-    const name = String(table.name || table.id || "").trim();
-    const seatCount = Math.max(Number(table.seatCount) || Number(table.seats && table.seats.length) || 0, 0);
-
-    if (!id && !name) return;
-
-    sheet.appendRow([
-      id,
-      name,
-      normalizeTableGroup(table.group),
-      normalizeTableShape(table.shape),
-      seatCount,
-      table.notes || "",
-      now,
-    ]);
-  });
-
-  return jsonResponse({
-    success: true,
-    tables: tables.length,
-  });
+  throw new Error("Resource not supported");
 }

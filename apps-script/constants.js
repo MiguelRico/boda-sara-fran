@@ -1,4 +1,5 @@
 /* eslint-disable */
+const CONFIRMATIONS_SHEET_NAME = "Confirmaciones";
 const SHEET_NAME = "Invitados";
 const TABLES_SHEET_NAME = "Mesas";
 const SPREADSHEET_ID = "1bNNIgd7F-tsmKtKu_vChwIJP8DabGOW1wXWlzPvxRdM";
@@ -6,8 +7,6 @@ const ADMIN_PASSWORD = "sara-fran-admin";
 const ADMIN_EMAIL = "miguel.rico.vazquez@gmail.com";
 const APP_BASE_URL = "https://boda-sara-fran.vercel.app";
 const RSVP_URL = `${APP_BASE_URL}/rsvp`;
-const GUEST_LIST_URL =
-  "https://docs.google.com/spreadsheets/d/1MXYeIf-c0LoSuILonx8nNjYUmkJkVn5I38OBj0OKmyE/edit?gid=0#gid=0";
 
 const COLOR_BG = "#f5f8f2";
 const COLOR_BG_SOFT = "#edf3e8";

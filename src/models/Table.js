@@ -1,21 +1,19 @@
 import { Guest } from "./Guest";
 import {
   DEFAULT_TABLE_SHAPE,
-  TABLE_GROUP_OPTIONS,
   TABLE_SHAPE_OPTIONS,
-  TABLE_SHAPES,
 } from "../constants/tables";
 
-export const TABLE_DEFAULTS = {
-  id: "",
+const TABLE_DEFAULTS = {
   name: "",
   group: "",
+  tag: "",
   notes: "",
   shape: DEFAULT_TABLE_SHAPE,
   seats: [],
 };
 
-export const TABLE_SEAT_DEFAULTS = {
+const TABLE_SEAT_DEFAULTS = {
   seat: "",
   guest: null,
 };
@@ -25,21 +23,6 @@ const normalizeKey = (value) => normalizeString(value).trim().toLowerCase();
 const getTableShapeOption = (shape) =>
   TABLE_SHAPE_OPTIONS.find((option) => option.value === shape) ||
   TABLE_SHAPE_OPTIONS.find((option) => option.value === DEFAULT_TABLE_SHAPE);
-const getGuestKey = (guest) => {
-  const normalizedGuest = Guest.normalize(guest);
-  const name = Guest.getFullName(normalizedGuest);
-
-  return normalizeKey(
-    [
-      normalizedGuest.email,
-      normalizedGuest.groupName,
-      name,
-      normalizedGuest.menu,
-    ]
-      .filter(Boolean)
-      .join("|"),
-  );
-};
 
 const compareNaturalText = (left, right) =>
   normalizeString(left).localeCompare(normalizeString(right), "es", {
@@ -49,10 +32,7 @@ const compareNaturalText = (left, right) =>
 
 export const Table = {
   create(overrides = {}) {
-    const id = normalizeString(
-      overrides.id || overrides.table || overrides.name,
-    ).trim();
-    const name = normalizeString(overrides.name || overrides.table || id).trim();
+    const name = normalizeString(overrides.name || overrides.table).trim();
     const shape = getTableShapeOption(overrides.shape).value;
     const normalizedSeats = Table.normalizeSeats(overrides.seats);
     const hasExplicitSeatCount =
@@ -65,9 +45,13 @@ export const Table = {
 
     return {
       ...TABLE_DEFAULTS,
-      id,
       name,
-      group: normalizeString(overrides.group || overrides.groupName).trim(),
+      group: normalizeString(
+        overrides.group || overrides.tag || overrides.groupName,
+      ).trim(),
+      tag: normalizeString(
+        overrides.tag || overrides.group || overrides.groupName,
+      ).trim(),
       notes: normalizeString(overrides.notes).trim(),
       shape,
       seats,
@@ -82,14 +66,6 @@ export const Table = {
     return Array.isArray(tables)
       ? tables.map((table) => Table.normalize(table))
       : [];
-  },
-
-  createSeatsFromCount(seatCount) {
-    const nextSeatCount = Math.max(Number(seatCount) || 0, 0);
-
-    return Array.from({ length: nextSeatCount }, (_, index) =>
-      Table.createSeat(String(index + 1)),
-    );
   },
 
   resizeSeats(seats, seatCount) {
@@ -130,21 +106,21 @@ export const Table = {
   },
 
   fromGuests(guests) {
-    const tablesById = Guest.normalizeList(guests, { ensureOne: false }).reduce(
+    const tablesByName = Guest.normalizeList(guests, { ensureOne: false }).reduce(
       (acc, guest) => {
-        const tableId = normalizeString(guest.table).trim();
+        const tableName = normalizeString(guest.table).trim();
 
-        if (!tableId) return acc;
+        if (!tableName) return acc;
 
         const seat = normalizeString(guest.seat).trim();
-        const table = acc.get(tableId) || Table.create({ id: tableId });
+        const table = acc.get(tableName) || Table.create({ name: tableName });
         const seatId = seat || String(table.seats.length + 1);
 
         acc.set(
-          tableId,
+          tableName,
           Table.withAssignedGuest(table, seatId, {
             ...guest,
-            table: tableId,
+            table: tableName,
             seat: seatId,
           }),
         );
@@ -154,17 +130,17 @@ export const Table = {
       new Map(),
     );
 
-    return Array.from(tablesById.values()).sort((left, right) =>
-      compareNaturalText(left.name || left.id, right.name || right.id),
+    return Array.from(tablesByName.values()).sort((left, right) =>
+      compareNaturalText(left.name, right.name),
     );
   },
 
   mergeLists(primaryTables, secondaryTables) {
     return Table.normalizeList([...primaryTables, ...secondaryTables]).reduce(
       (acc, table) => {
-        const tableKey = normalizeKey(table.id || table.name);
+        const tableKey = normalizeKey(table.name);
         const existingIndex = acc.findIndex(
-          (item) => normalizeKey(item.id || item.name) === tableKey,
+          (item) => normalizeKey(item.name) === tableKey,
         );
 
         if (!tableKey || existingIndex < 0) {
@@ -200,24 +176,6 @@ export const Table = {
     );
   },
 
-  withSeatCount(table, seatCount) {
-    const normalizedTable = Table.normalize(table);
-    const nextSeatCount = Math.max(Number(seatCount) || 0, 0);
-    const existingSeats = new Map(
-      normalizedTable.seats.map((seat) => [seat.seat, seat]),
-    );
-    const seats = Array.from({ length: nextSeatCount }, (_, index) => {
-      const seatId = String(index + 1);
-
-      return existingSeats.get(seatId) || Table.createSeat(seatId);
-    });
-
-    return Table.create({
-      ...normalizedTable,
-      seats,
-    });
-  },
-
   withAssignedGuest(table, seat, guest) {
     const normalizedTable = Table.normalize(table);
     const seatId = normalizeString(seat).trim();
@@ -226,7 +184,7 @@ export const Table = {
 
     const assignedGuest = Guest.normalize({
       ...guest,
-      table: normalizedTable.id || normalizedTable.name,
+      table: normalizedTable.name,
       seat: seatId,
     });
     const existingSeatIndex = normalizedTable.seats.findIndex(
@@ -248,34 +206,6 @@ export const Table = {
       ...normalizedTable,
       seats,
     });
-  },
-
-  withRemovedGuest(table, seat) {
-    const normalizedTable = Table.normalize(table);
-    const seatId = normalizeString(seat).trim();
-
-    return Table.create({
-      ...normalizedTable,
-      seats: normalizedTable.seats.map((item) =>
-        item.seat === seatId ? Table.createSeat({ ...item, guest: null }) : item,
-      ),
-    });
-  },
-
-  getSeat(table, seat) {
-    const seatId = normalizeString(seat).trim();
-
-    return (
-      Table.normalize(table).seats.find((item) => item.seat === seatId) || null
-    );
-  },
-
-  getSeatGuest(table, seat) {
-    return Table.getSeat(table, seat)?.guest || null;
-  },
-
-  isSeatOccupied(table, seat) {
-    return Boolean(Table.getSeatGuest(table, seat));
   },
 
   getAssignedGuests(table) {
@@ -326,82 +256,4 @@ export const Table = {
     );
   },
 
-  toGuestAssignments(tables) {
-    return Table.normalizeList(tables).flatMap((table) =>
-      table.seats
-        .filter((seat) => seat.guest)
-        .map((seat) =>
-          Guest.normalize({
-            ...seat.guest,
-            table: table.id || table.name,
-            seat: seat.seat,
-          }),
-        ),
-    );
-  },
-
-  validate(table) {
-    const normalizedTable = Table.normalize(table);
-    const errors = [];
-
-    if (!normalizedTable.id && !normalizedTable.name) {
-      errors.push("La mesa necesita identificador o nombre.");
-    }
-
-    if (!TABLE_SHAPES[normalizedTable.shape]) {
-      errors.push("La forma de la mesa no es valida.");
-    }
-
-    if (
-      normalizedTable.group &&
-      !TABLE_GROUP_OPTIONS.some((option) => option.value === normalizedTable.group)
-    ) {
-      errors.push("El grupo de la mesa no es valido.");
-    }
-
-    if (
-      normalizedTable.seats.length > 0 &&
-      !Table.isSeatCountAllowed(normalizedTable.shape, normalizedTable.seats.length)
-    ) {
-      const range = Table.getSeatRange(normalizedTable.shape);
-
-      errors.push(
-        `La mesa ${Table.getShapeLabel(normalizedTable).toLowerCase()} necesita entre ${range.min} y ${range.max} asientos.`,
-      );
-    }
-
-    const repeatedSeats = normalizedTable.seats
-      .map((seat) => seat.seat)
-      .filter((seat, index, seats) => seats.indexOf(seat) !== index);
-
-    if (repeatedSeats.length) {
-      errors.push(`Asientos duplicados: ${[...new Set(repeatedSeats)].join(", ")}.`);
-    }
-
-    return errors;
-  },
-
-  validateList(tables) {
-    const normalizedTables = Table.normalizeList(tables);
-    const guestKeys = new Set();
-    const errors = normalizedTables.flatMap((table) => Table.validate(table));
-
-    normalizedTables.forEach((table) => {
-      table.seats.forEach((seat) => {
-        if (!seat.guest) return;
-
-        const guestKey = getGuestKey(seat.guest);
-
-        if (guestKey && guestKeys.has(guestKey)) {
-          errors.push(
-            `${Guest.getFullName(seat.guest, "Invitado")} aparece en mas de un asiento.`,
-          );
-        }
-
-        guestKeys.add(guestKey);
-      });
-    });
-
-    return errors;
-  },
 };

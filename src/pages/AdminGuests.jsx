@@ -54,8 +54,6 @@ const desktopPageSize = 8;
 const mobilePageSize = 1;
 const pageDataSwapDelay = 680;
 const pageRevealDelay = 160;
-const pageScrollDuration = 680;
-const pageScrollOffset = 12;
 const mobilePageHeightLockDelay = 560;
 const mobileGroupNameBaseFontSize = 30;
 const mobileGroupNameMinFontSize = 10;
@@ -282,7 +280,7 @@ export default function AdminGuests() {
   };
 
   const handleSaveGroup = async (group) => {
-    const isCreation = !editingGroup?.groupId;
+    const isCreation = !editingGroup?.groupName;
 
     try {
       spinner.show(
@@ -291,6 +289,7 @@ export default function AdminGuests() {
 
       await saveAdminGroup({
         group,
+        method: isCreation ? "POST" : "PUT",
         password: ADMIN_PASSWORD,
       });
 
@@ -326,7 +325,7 @@ export default function AdminGuests() {
       spinner.show("Eliminando confirmación...");
 
       await deleteAdminGroup({
-        groupId: deleteTarget.groupId,
+        groupName: deleteTarget.groupName,
         password: ADMIN_PASSWORD,
       });
 
@@ -538,7 +537,7 @@ export default function AdminGuests() {
           message={
             <>
               Se eliminará el grupo asociado a{" "}
-              {deleteTarget.email || deleteTarget.groupId}. Esta acción no se
+              {deleteTarget.groupName || deleteTarget.email}. Esta acción no se
               puede deshacer desde el panel.
             </>
           }
@@ -807,8 +806,6 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
         }),
       };
 
-  measureRefs.current = [];
-
   return (
     <div
       className="relative overflow-hidden md:hidden"
@@ -1014,50 +1011,6 @@ function MobileRowActions({ onDelete, onEdit }) {
       </IconButton>
     </div>
   );
-}
-
-function scrollToY(targetY, { duration }) {
-  const reduceMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
-  ).matches;
-  const startY = window.scrollY;
-  const nextY = Math.max(0, targetY);
-  const distance = nextY - startY;
-
-  if (distance >= -4) return null;
-
-  if (reduceMotion) {
-    window.scrollTo(0, nextY);
-    return null;
-  }
-
-  const startTime = window.performance.now();
-  let frameId = null;
-  let canceled = false;
-
-  const step = (currentTime) => {
-    if (canceled) return;
-
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const easedProgress = 1 - Math.pow(1 - progress, 3);
-
-    window.scrollTo(0, startY + distance * easedProgress);
-
-    if (progress < 1) {
-      frameId = window.requestAnimationFrame(step);
-    }
-  };
-
-  frameId = window.requestAnimationFrame(step);
-
-  return () => {
-    canceled = true;
-
-    if (frameId) {
-      window.cancelAnimationFrame(frameId);
-    }
-  };
 }
 
 function GroupEditor({ group, onClose, onSave }) {

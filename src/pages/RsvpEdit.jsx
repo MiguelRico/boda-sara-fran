@@ -14,7 +14,7 @@ export default function RsvpEdit() {
   const spinner = useSpinner();
   const rsvp = useRsvp(spinner, { mode: "edit" });
   const [searchParams] = useSearchParams();
-  const groupId = searchParams.get("groupId");
+  const groupName = searchParams.get("groupName");
   const rsvpRef = useRef(null);
   const rsvpInView = useInView(rsvpRef, {
     once: true,
@@ -30,7 +30,7 @@ export default function RsvpEdit() {
     </CinematicStaggeredRevealItem>
   );
 
-  if (!groupId) {
+  if (!groupName) {
     return <Navigate to="/rsvp" replace />;
   }
 

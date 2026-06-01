@@ -42,7 +42,7 @@ export default function TableAnimatedInfoCard({
 function TableInfoCard({ onDelete, onEdit, onSeatClick, table }) {
   const [showAssignments, setShowAssignments] = useState(false);
   const assignedGuests = Table.getAssignedGuests(table);
-  const tableLabel = table.name || table.id;
+  const tableLabel = table.name;
   const groupLabel = getTableGroupOption(table.group)?.label;
   const shapeLabel = Table.getShapeLabel(table);
 
@@ -65,21 +65,22 @@ function TableInfoCard({ onDelete, onEdit, onSeatClick, table }) {
           <div className="mb-4">
             <div className="min-w-0">
               <p className="section-eyebrow mb-2">{groupLabel || "Mesa"}</p>
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-serif text-3xl leading-none text-[var(--color-text)] sm:text-4xl">
+                  <h3 className="break-words font-serif text-3xl leading-none text-[var(--color-text)] sm:truncate sm:text-4xl">
                     {tableLabel}
                   </h3>
-                  <p className="mt-2 text-sm text-[var(--color-accent)]">
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
                     {shapeLabel} - {assignedGuests.length}/{table.seats.length}{" "}
                     asientos
                   </p>
                 </div>
 
                 {(onEdit || onDelete) && (
-                  <div className="shrink-0 self-center flex items-center gap-2">
+                  <div className="grid w-full shrink-0 grid-cols-2 gap-3 sm:w-auto sm:flex sm:items-center sm:justify-end sm:gap-2 sm:self-center">
                     {onEdit && (
                       <IconButton
+                        className="!w-full sm:!w-11"
                         label="Editar mesa"
                         onClick={() => onEdit(table)}
                       >
@@ -88,6 +89,7 @@ function TableInfoCard({ onDelete, onEdit, onSeatClick, table }) {
                     )}
                     {onDelete && (
                       <IconButton
+                        className="!w-full sm:!w-11"
                         label="Eliminar mesa"
                         onClick={() => onDelete(table)}
                         tone="danger"
@@ -138,7 +140,7 @@ function AssignmentModal({ table, onClose }) {
           <div>
             <p className="section-eyebrow mb-2">Invitados asignados</p>
             <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-              {table.name || table.id}
+              {table.name}
             </h2>
           </div>
 
@@ -268,39 +270,6 @@ function SeatDot({ onClick, seat, style }) {
       style={style}
     >
       {initials}
-    </Component>
-  );
-}
-
-function SeatInfo({ onClick, seat }) {
-  const guestName = seat.guest ? Guest.getFullName(seat.guest, "Invitado") : "";
-  const Component = onClick ? "button" : "div";
-
-  return (
-    <Component
-      className={`
-        grid w-full grid-cols-[4.5rem_1fr_auto] items-center gap-3 rounded-2xl
-        border border-[var(--color-border)] bg-white/50 p-3 text-left text-sm
-        ${
-          onClick
-            ? "cursor-pointer transition-all duration-300 hover:border-[var(--color-border-strong)] hover:bg-white/75 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
-            : ""
-        }
-      `}
-      onClick={onClick}
-      type={onClick ? "button" : undefined}
-    >
-      <span className="font-medium text-[var(--color-accent-dark)]">
-        Asiento {seat.seat}
-      </span>
-      <span className="min-w-0 truncate text-[var(--color-muted)]">
-        {guestName || "Sin asignar"}
-      </span>
-      {seat.guest?.menu && (
-        <span className="rounded-full border border-[var(--color-border-strong)] px-3 py-1 text-xs text-[var(--color-accent-dark)]">
-          {seat.guest.menu}
-        </span>
-      )}
     </Component>
   );
 }

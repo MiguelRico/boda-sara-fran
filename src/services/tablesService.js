@@ -52,9 +52,9 @@ export const persistAdminTables = async ({ password, tables }) => {
   await saveAdminTables({
     password,
     tables: Table.normalizeList(tables).map((table) => ({
-      id: table.id || table.name,
-      name: table.name || table.id,
+      name: table.name,
       group: table.group,
+      tag: table.tag || table.group,
       shape: table.shape,
       seatCount: table.seats.length,
       notes: table.notes,
@@ -97,13 +97,13 @@ const getNormalizedGuestIndex = (guestIndex) => {
 const doesGuestMatch = ({
   group,
   guest,
-  guestEmail,
+  guestGroupName,
   guestId,
   guestIndex,
   guestName,
   index,
 }) => {
-  if (group.email !== guestEmail) return false;
+  if (group.groupName !== guestGroupName) return false;
 
   const normalizedGuestIndex = getNormalizedGuestIndex(guestIndex);
 
@@ -129,14 +129,14 @@ export const createTableFormFromTable = (table) => {
 
   return {
     group: normalizedTable.group,
-    name: normalizedTable.name || normalizedTable.id,
+    name: normalizedTable.name,
     notes: normalizedTable.notes,
     seatCount: normalizedTable.seats.length,
     shape: normalizedTable.shape,
   };
 };
 
-export const getTableKey = (table) => (table.id || table.name || "").trim();
+export const getTableKey = (table) => (table.name || "").trim();
 
 export const validateTableForm = (form, tables, editingTable = null) => {
   const errors = {};
@@ -174,7 +174,6 @@ export const validateTableForm = (form, tables, editingTable = null) => {
 export const upsertManualTable = ({ editingTable, form, manualTables }) => {
   const nextTable = Table.create({
     ...form,
-    id: editingTable ? getTableKey(editingTable) : form.name,
     seatCount: form.seatCount,
   });
 
@@ -192,15 +191,15 @@ export const upsertManualTable = ({ editingTable, form, manualTables }) => {
 
 export const assignPendingGuestToSeat = async ({
   groups,
-  guestEmail,
+  guestGroupName,
   guestId,
   guestIndex,
   password,
   seatNumber,
-  tableId,
+  tableName,
   tables,
 }) => {
-  const confirmation = groups.find((group) => group.email === guestEmail);
+  const confirmation = groups.find((group) => group.groupName === guestGroupName);
 
   if (!confirmation) {
     throw new Error("Grupo de invitacion no encontrado");
@@ -210,7 +209,7 @@ export const assignPendingGuestToSeat = async ({
     doesGuestMatch({
       group: confirmation,
       guest,
-      guestEmail,
+      guestGroupName,
       guestId,
       guestIndex,
       index,
@@ -228,7 +227,7 @@ export const assignPendingGuestToSeat = async ({
   }
 
   const table = tables.find(
-    (item) => getTableKey(item) === String(tableId || "").trim(),
+    (item) => getTableKey(item) === String(tableName || "").trim(),
   );
 
   if (!table) {
@@ -249,7 +248,7 @@ export const assignPendingGuestToSeat = async ({
       index === nextGuestIndex
         ? {
             ...guest,
-            table: tableId,
+            table: tableName,
             seat: seatNumber,
           }
         : guest,
@@ -262,20 +261,22 @@ export const assignPendingGuestToSeat = async ({
   });
 
   return groups.map((group) =>
-    group.email === updatedConfirmation.email ? updatedConfirmation : group,
+    group.groupName === updatedConfirmation.groupName
+      ? updatedConfirmation
+      : group,
   );
 };
 
 export const assignGuestToSeat = async ({
   groups,
-  guestEmail,
+  guestGroupName,
   guestIndex,
   guestName,
   password,
   seat,
   table,
 }) => {
-  const tableId = getTableKey(table);
+  const tableName = getTableKey(table);
   const seatNumber = seat.seat;
   let selectedGuestFound = false;
   const updatedGroups = groups.map((group) => {
@@ -284,13 +285,13 @@ export const assignGuestToSeat = async ({
       const isSelectedGuest = doesGuestMatch({
         group,
         guest,
-        guestEmail,
+        guestGroupName,
         guestIndex,
         guestName,
         index,
       });
       const isCurrentSeatGuest =
-        guest.table === tableId && guest.seat === seatNumber;
+        guest.table === tableName && guest.seat === seatNumber;
 
       if (!isSelectedGuest && !isCurrentSeatGuest) return guest;
 
@@ -301,7 +302,7 @@ export const assignGuestToSeat = async ({
 
         return {
           ...guest,
-          table: tableId,
+          table: tableName,
           seat: seatNumber,
         };
       }
@@ -336,13 +337,13 @@ export const assignGuestToSeat = async ({
 };
 
 export const unassignGuestFromSeat = async ({ groups, password, seat, table }) => {
-  const tableId = getTableKey(table);
+  const tableName = getTableKey(table);
   const seatNumber = seat.seat;
   const updatedGroups = groups.map((group) => {
     let changed = false;
     const guests = group.guests.map((guest) => {
       const isCurrentSeatGuest =
-        guest.table === tableId && guest.seat === seatNumber;
+        guest.table === tableName && guest.seat === seatNumber;
 
       if (!isCurrentSeatGuest) return guest;
 
@@ -390,7 +391,7 @@ export const downloadTablesCsv = (tables) => {
   const lines = tables.flatMap((table) =>
     table.seats.map((seat) =>
       [
-        table.name || table.id,
+        table.name,
         getTableGroupOption(table.group)?.label || "",
         Table.getShapeLabel(table),
         table.notes,

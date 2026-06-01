@@ -3,10 +3,10 @@ import { Home, Search } from "lucide-react";
 import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 
 export default function SearchInvitationCard({
-  email,
-  emailError,
+  groupName,
+  groupNameError,
   loading,
-  onEmailChange,
+  onGroupNameChange,
   onSearchInvitation,
 }) {
   return (
@@ -17,22 +17,22 @@ export default function SearchInvitationCard({
         <h2 className="font-serif text-3xl">Modificar tu confirmación</h2>
 
         <p className="mt-3 text-sm leading-relaxed">
-          Introduce el email asociado a tu confirmación.
+          Introduce el nombre de grupo asociado a tu confirmación.
         </p>
       </div>
 
       <div className="mb-4">
-        <Label>Email de contacto</Label>
+        <Label>Nombre de grupo</Label>
 
         <input
-          type="email"
-          value={email}
-          onChange={(event) => onEmailChange(event.target.value)}
+          type="text"
+          value={groupName}
+          onChange={(event) => onGroupNameChange(event.target.value)}
           className={inputClassName}
-          placeholder="ejemplo@email.com"
+          placeholder="Ej: Familia Garcia"
         />
 
-        <FieldError>{emailError}</FieldError>
+        <FieldError>{groupNameError}</FieldError>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row">

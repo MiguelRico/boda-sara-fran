@@ -25,10 +25,10 @@ export default function Rsvp() {
   });
 
   useEffect(() => {
-    const groupId = searchParams.get("groupId");
+    const groupName = searchParams.get("groupName");
 
-    if (groupId) {
-      navigate(`/rsvp/edit?groupId=${encodeURIComponent(groupId)}`, {
+    if (groupName) {
+      navigate(`/rsvp/edit?groupName=${encodeURIComponent(groupName)}`, {
         replace: true,
       });
     }
@@ -50,10 +50,12 @@ export default function Rsvp() {
           <CreateInvitationCard onCreateNew={rsvp.handleCreateNew} />
 
           <SearchInvitationCard
-            email={rsvp.contact.email}
-            emailError={rsvp.errors.email}
+            groupName={rsvp.contact.groupName}
+            groupNameError={rsvp.errors.groupName}
             loading={spinner.loading}
-            onEmailChange={(value) => rsvp.handleContactChange("email", value)}
+            onGroupNameChange={(value) =>
+              rsvp.handleContactChange("groupName", value)
+            }
             onSearchInvitation={rsvp.handleSearchInvitation}
           />
         </div>

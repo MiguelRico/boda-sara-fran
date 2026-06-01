@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { inputClassName, Label } from "../rsvp/FormPrimitives";
 import { Table, Guest } from "../../models";
 import IconButton from "../ui/IconButton";
@@ -10,7 +10,7 @@ import { Check, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
  *
  * @param {Array} guests - Invitados sin mesa asignada
  * @param {Array} tables - Todas las mesas disponibles
- * @param {Function} onAssignTable - Callback: ({guestId, guestEmail, tableId, seatNumber}) => Promise
+ * @param {Function} onAssignTable - Callback: ({guestId, guestGroupName, tableName, seatNumber}) => Promise
  */
 export default function PendingGuestsList({
   guests = [],
@@ -25,7 +25,7 @@ export default function PendingGuestsList({
 
   // Calcular grupos únicos de invitados pendientes
   const availableGroups = useMemo(() => {
-    const groupSet = new Set(guests.map((g) => g.email).filter(Boolean));
+    const groupSet = new Set(guests.map((g) => g.groupName).filter(Boolean));
     return Array.from(groupSet);
   }, [guests]);
 
@@ -38,7 +38,7 @@ export default function PendingGuestsList({
   // Filtrar invitados según criterios
   const filteredGuests = useMemo(() => {
     return guests.filter((guest) => {
-      if (filters.group && guest.email !== filters.group) return false;
+      if (filters.group && guest.groupName !== filters.group) return false;
       if (filters.menu && guest.menu !== filters.menu) return false;
       return true;
     });
@@ -50,12 +50,6 @@ export default function PendingGuestsList({
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
 
   // Mesas con asientos disponibles
   const tablesWithSeats = useMemo(() => {
@@ -71,8 +65,8 @@ export default function PendingGuestsList({
   };
 
   const handleAssign = useCallback(
-    async (guest, tableId, seatNumber) => {
-      if (!tableId || !seatNumber) return;
+    async (guest, tableName, seatNumber) => {
+      if (!tableName || !seatNumber) return;
 
       setError("");
       setAssigningGuest(getGuestRowKey(guest));
@@ -80,9 +74,9 @@ export default function PendingGuestsList({
       try {
         await onAssignTable({
           guestId: Guest.getFullName(guest),
-          guestEmail: guest.email,
+          guestGroupName: guest.groupName,
           guestIndex: guest.guestIndex,
-          tableId,
+          tableName,
           seatNumber,
         });
         // Limpiar estado tras éxito
@@ -170,7 +164,7 @@ export default function PendingGuestsList({
           <div className="space-y-3">
             {pagedGuests.map((guest, index) => (
               <GuestAssignmentRow
-                key={`${guest.email}-${guest.name}-${index}`}
+                key={`${guest.groupName}-${guest.name}-${index}`}
                 guest={guest}
                 tables={tablesWithSeats}
                 onAssign={handleAssign}
@@ -244,7 +238,7 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
   const [selectedSeat, setSelectedSeat] = useState("");
 
   const selectedTableObj = useMemo(
-    () => tables.find((t) => (t.id || t.name) === selectedTable),
+    () => tables.find((t) => t.name === selectedTable),
     [selectedTable, tables],
   );
 
@@ -280,7 +274,7 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
 
       {/* Grupo + Menú */}
       <div className="text-xs text-[var(--color-muted)] sm:col-span-1">
-        <span className="block">{guest.groupName || guest.email}</span>
+        <span className="block">{guest.groupName}</span>
         {guest.menu && (
           <span className="inline-block rounded-full border border-[var(--color-border-strong)] px-2 py-1 text-[0.65rem] text-[var(--color-accent-dark)]">
             {guest.menu}
@@ -303,11 +297,11 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
           <option value="">Seleccionar</option>
           {tables.map((table) => {
             const emptySeats = Table.getEmptySeats(table);
-            const label = `${table.name || table.id} (${emptySeats.length})`;
+            const label = `${table.name} (${emptySeats.length})`;
             return (
               <option
-                key={table.id || table.name}
-                value={table.id || table.name}
+                key={table.name}
+                value={table.name}
               >
                 {label}
               </option>
@@ -359,5 +353,5 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
 }
 
 function getGuestRowKey(guest) {
-  return `${guest.email || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`;
+  return `${guest.groupName || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`;
 }

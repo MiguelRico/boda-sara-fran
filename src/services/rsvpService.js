@@ -1,4 +1,5 @@
 import { Confirmation } from "../models";
+import { decodeGroupName, encodeGroupName } from "../utils/groupNameCodec";
 
 const getRsvpApiUrl = () => import.meta.env.VITE_RSVP_API_URL;
 const inFlightJsonpRequests = new Map();
@@ -69,53 +70,101 @@ const sendToRsvpApi = async (payload) => {
   });
 };
 
-export const findGroupByEmail = async (email) => {
-  return await requestJsonp({
-    action: "search",
-    groupId: email,
-  });
+const decodeConfirmationPayload = (payload) => {
+  if (!payload || typeof payload !== "object") return payload;
+
+  const groupName = decodeGroupName(payload.groupName);
+
+  return {
+    ...payload,
+    groupName,
+    guests: Array.isArray(payload.guests)
+      ? payload.guests.map((guest) => ({
+          ...guest,
+          groupName: decodeGroupName(guest.groupName) || groupName,
+        }))
+      : payload.guests,
+  };
 };
 
-export const findGroupById = async (groupId) => {
-  return await requestJsonp({
-    action: "search",
-    groupId,
-  });
+const decodeApiResponse = (response) => {
+  if (Array.isArray(response)) {
+    return response.map(decodeConfirmationPayload);
+  }
+
+  if (!response || typeof response !== "object") return response;
+
+  return {
+    ...decodeConfirmationPayload(response),
+    groups: Array.isArray(response.groups)
+      ? response.groups.map(decodeConfirmationPayload)
+      : response.groups,
+  };
+};
+
+const encodeConfirmationPayload = (group) => {
+  const confirmation = Confirmation.normalize(group);
+  const encodedGroupName = encodeGroupName(confirmation.groupName);
+
+  return {
+    ...confirmation,
+    groupName: encodedGroupName,
+    guests: confirmation.guests.map((guest) => ({
+      ...guest,
+      groupName: encodedGroupName,
+    })),
+  };
+};
+
+export const findGroupByName = async (groupName) => {
+  return decodeApiResponse(
+    await requestJsonp({
+      entity: "confirmations",
+      groupName: encodeGroupName(groupName),
+      method: "GET",
+    }),
+  );
 };
 
 export const findAllGroups = async ({ password } = {}) => {
-  return await requestJsonp({
-    action: "list",
-    password,
-  });
+  return decodeApiResponse(
+    await requestJsonp({
+      entity: "confirmations",
+      method: "GET",
+      password,
+    }),
+  );
 };
 
 export const findAllTables = async ({ password } = {}) => {
   return await requestJsonp({
-    action: "tables-list",
+    entity: "tables",
+    method: "GET",
     password,
   });
 };
 
-export const saveGroup = async (payload) => {
-  const confirmation = Confirmation.normalize(payload);
+export const saveGroup = async (payload, { method = "POST" } = {}) => {
+  const confirmation = encodeConfirmationPayload(payload);
 
   await sendToRsvpApi({
     ...confirmation,
-    action: "save",
+    entity: "confirmations",
+    method,
   });
 
   return {
     success: true,
-    email: confirmation.email,
+    groupName: Confirmation.normalize(payload).groupName,
   };
 };
 
-export const saveAdminGroup = async ({ group, password }) => {
-  const confirmation = Confirmation.normalize(group);
+export const saveAdminGroup = async ({ group, method = "PUT", password }) => {
+  const confirmation = encodeConfirmationPayload(group);
   const payload = {
     ...confirmation,
-    action: "save",
+    entity: "confirmations",
+    method,
     password,
   };
 
@@ -123,13 +172,14 @@ export const saveAdminGroup = async ({ group, password }) => {
 
   return {
     success: true,
-    email: confirmation.email,
+    groupName: Confirmation.normalize(group).groupName,
   };
 };
 
 export const saveAdminTables = async ({ password, tables }) => {
   await sendToRsvpApi({
-    action: "tables-save",
+    entity: "tables",
+    method: "PUT",
     password,
     tables,
   });
@@ -140,15 +190,16 @@ export const saveAdminTables = async ({ password, tables }) => {
   };
 };
 
-export const deleteAdminGroup = async ({ groupId, password }) => {
+export const deleteAdminGroup = async ({ groupName, password }) => {
   await sendToRsvpApi({
-    action: "delete",
-    groupId,
+    entity: "confirmations",
+    groupName: encodeGroupName(groupName),
+    method: "DELETE",
     password,
   });
 
   return {
     success: true,
-    groupId,
+    groupName,
   };
 };

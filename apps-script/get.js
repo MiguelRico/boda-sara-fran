@@ -7,33 +7,7 @@ function doGet(e) {
       return executeRedirection();
     }
 
-    const action = readParam(e.parameter.action);
-
-    if (action === "search") {
-      return searchConfirmation(e);
-    }
-
-    if (action === "list") {
-      const authError = validateAdmin(e);
-      if (authError) return authError;
-
-      return listConfirmations(e);
-    }
-
-    if (action === "tables-list") {
-      const authError = validateAdmin(e);
-      if (authError) return authError;
-
-      return listTables(e);
-    }
-
-    return jsonResponse(
-      {
-        success: false,
-        error: "Action not supported",
-      },
-      e,
-    );
+    return routeGet(e);
   } catch (err) {
     return jsonResponse(
       {
@@ -43,6 +17,36 @@ function doGet(e) {
       e,
     );
   }
+}
+
+function routeGet(e) {
+  const entity = readParam(e.parameter.entity);
+
+  if (entity === "confirmations") {
+    if (e.parameter.groupName) {
+      return getConfirmation(e);
+    }
+
+    const authError = validateAdmin(e);
+    if (authError) return authError;
+
+    return listConfirmations(e);
+  }
+
+  if (entity === "tables") {
+    const authError = validateAdmin(e);
+    if (authError) return authError;
+
+    return listTables(e);
+  }
+
+  return jsonResponse(
+    {
+      success: false,
+      error: "Resource not supported",
+    },
+    e,
+  );
 }
 
 function executeRedirection() {
@@ -59,89 +63,109 @@ function executeRedirection() {
       </head>
       <body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#fbf7f1;font-family:Arial,sans-serif;color:#2f2a25;text-align:center;padding:24px;">
         <div>
-          <p style="font-size:16px;color:#7b6b5d;">Abriendo vuestra invitación...</p>
-          <a href="${RSVP_URL}" style="color:#8f6f56;font-weight:600;">Abrir invitación</a>
+          <p style="font-size:16px;color:#7b6b5d;">Abriendo vuestra invitacion...</p>
+          <a href="${RSVP_URL}" style="color:#8f6f56;font-weight:600;">Abrir invitacion</a>
         </div>
       </body>
     </html>
   `);
 }
 
-function searchConfirmation(e) {
-  const groupId = readParam(e.parameter.groupId || e.parameter.email);
+function getConfirmation(e) {
+  const groupName = decodeGroupName(readParam(e.parameter.groupName));
 
-  if (!groupId) {
+  if (!groupName) {
     return jsonResponse(
       {
         success: false,
         found: false,
-        error: "Missing groupId or email",
+        error: "Missing groupName",
       },
       e,
     );
   }
 
-  const sheet = getSheet();
-  const rows = sheet.getDataRange().getDisplayValues();
-  const result = [];
-  let phone = "";
-  let groupName = "";
+  const confirmationsSheet = getConfirmationsSheet();
+  const guestsSheet = getSheet();
+  const confirmationRows = confirmationsSheet.getDataRange().getDisplayValues();
+  const guestRows = guestsSheet.getDataRange().getDisplayValues();
+  let confirmation = null;
 
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
+  for (let i = 1; i < confirmationRows.length; i++) {
+    const row = confirmationRows[i];
 
     if (
-      String(row[GUESTS_COLUMNS.email]).trim().toLowerCase() ===
-      groupId.toLowerCase()
+      String(row[CONFIRMATIONS_COLUMNS.groupName]).trim().toLowerCase() ===
+      groupName.toLowerCase()
     ) {
-      phone = row[GUESTS_COLUMNS.phone] || "";
-      groupName = row[GUESTS_COLUMNS.groupName] || "";
-      result.push(buildGuestFromRow(row));
+      confirmation = buildConfirmationFromRow(row, []);
+      break;
+    }
+  }
+
+  if (!confirmation) {
+    return jsonResponse(
+      {
+        success: true,
+        found: false,
+        groupName: encodeGroupName(groupName),
+        guests: [],
+      },
+      e,
+    );
+  }
+
+  for (let i = 1; i < guestRows.length; i++) {
+    const row = guestRows[i];
+
+    if (
+      String(row[GUESTS_COLUMNS.groupName]).trim().toLowerCase() ===
+      groupName.toLowerCase()
+    ) {
+      confirmation.guests.push(buildGuestFromRow(row, confirmation));
     }
   }
 
   return jsonResponse(
     {
       success: true,
-      found: result.length > 0,
-      groupId,
-      email: groupId,
-      groupName,
-      phone,
-      guests: result,
+      found: confirmation.guests.length > 0,
+      ...encodeConfirmationForApi(confirmation),
     },
     e,
   );
 }
 
 function listConfirmations(e) {
-  const sheet = getSheet();
-  const rows = sheet.getDataRange().getDisplayValues();
-  const groupsByEmail = {};
+  const confirmationsSheet = getConfirmationsSheet();
+  const guestsSheet = getSheet();
+  const confirmationRows = confirmationsSheet.getDataRange().getDisplayValues();
+  const guestRows = guestsSheet.getDataRange().getDisplayValues();
+  const groupsByName = {};
 
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    const email = row[GUESTS_COLUMNS.email];
+  for (let i = 1; i < confirmationRows.length; i++) {
+    const row = confirmationRows[i];
+    const groupName = row[CONFIRMATIONS_COLUMNS.groupName];
 
-    if (!email) continue;
+    if (!groupName) continue;
 
-    if (!groupsByEmail[email]) {
-      groupsByEmail[email] = {
-        groupId: email,
-        email,
-        phone: row[GUESTS_COLUMNS.phone] || "",
-        groupName: row[GUESTS_COLUMNS.groupName] || "",
-        guests: [],
-      };
-    }
+    groupsByName[groupName] = buildConfirmationFromRow(row, []);
+  }
 
-    groupsByEmail[email].guests.push(buildGuestFromRow(row));
+  for (let i = 1; i < guestRows.length; i++) {
+    const row = guestRows[i];
+    const groupName = row[GUESTS_COLUMNS.groupName];
+    const confirmation = groupsByName[groupName];
+
+    if (!confirmation) continue;
+
+    confirmation.guests.push(buildGuestFromRow(row, confirmation));
   }
 
   return jsonResponse(
     {
       success: true,
-      groups: Object.values(groupsByEmail),
+      groups: Object.values(groupsByName).map(encodeConfirmationForApi),
     },
     e,
   );
@@ -155,7 +179,7 @@ function listTables(e) {
   for (let i = 1; i < rows.length; i++) {
     const table = buildTableFromRow(rows[i]);
 
-    if (!table.id && !table.name) continue;
+    if (!table.name) continue;
 
     tables.push(table);
   }
