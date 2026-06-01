@@ -8,10 +8,13 @@ import RevealOnView from "../ui/RevealOnView";
 export default function TableAnimatedInfoCard({
   index = 0,
   onEdit,
+  onSeatClick,
   reveal = true,
   table,
 }) {
-  const content = <TableInfoCard onEdit={onEdit} table={table} />;
+  const content = (
+    <TableInfoCard onEdit={onEdit} onSeatClick={onSeatClick} table={table} />
+  );
 
   if (!reveal) return content;
 
@@ -28,7 +31,7 @@ export default function TableAnimatedInfoCard({
   );
 }
 
-function TableInfoCard({ onEdit, table }) {
+function TableInfoCard({ onEdit, onSeatClick, table }) {
   const assignedGuests = Table.getAssignedGuests(table);
   const tableLabel = table.name || table.id;
   const groupLabel = getTableGroupOption(table.group)?.label;
@@ -62,7 +65,7 @@ function TableInfoCard({ onEdit, table }) {
           </div>
         </div>
 
-        <TableDiagram onEdit={onEdit} table={table} />
+        <TableDiagram onEdit={onEdit} onSeatClick={onSeatClick} table={table} />
 
         {table.notes && (
           <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
@@ -72,7 +75,13 @@ function TableInfoCard({ onEdit, table }) {
 
         <div className="mt-5 grid gap-3">
           {table.seats.map((seat) => (
-            <SeatInfo key={seat.seat} seat={seat} />
+            <SeatInfo
+              key={seat.seat}
+              onClick={
+                onSeatClick ? () => onSeatClick({ seat, table }) : undefined
+              }
+              seat={seat}
+            />
           ))}
         </div>
       </div>
@@ -80,7 +89,7 @@ function TableInfoCard({ onEdit, table }) {
   );
 }
 
-function TableDiagram({ onEdit, table }) {
+function TableDiagram({ onEdit, onSeatClick, table }) {
   const seats =
     table.shape === TABLE_SHAPES.round
       ? getRoundSeatPositions(table.seats)
@@ -102,6 +111,7 @@ function TableDiagram({ onEdit, table }) {
 
       {seats.map(({ seat, transform, x, y }) => (
         <SeatDot
+          onClick={onSeatClick ? () => onSeatClick({ seat, table }) : undefined}
           key={seat.seat}
           seat={seat}
           style={{
@@ -140,36 +150,53 @@ function RoundTable() {
   );
 }
 
-function SeatDot({ seat, style }) {
+function SeatDot({ onClick, seat, style }) {
   const guestName = seat.guest ? Guest.getFullName(seat.guest, "Invitado") : "";
+  const initials = seat.guest ? getGuestInitials(seat.guest) : "";
+  const Component = onClick ? "button" : "span";
 
   return (
-    <span
+    <Component
       aria-label={`Asiento ${seat.seat}${guestName ? ` - ${guestName}` : ""}`}
       className={`
         absolute z-10 flex h-5 w-5 items-center justify-center rounded-full
-        border text-[0.62rem] font-medium shadow-[0_8px_18px_rgba(77,56,40,0.12)]
-        [--round-seat-offset:5.15rem] transition-transform duration-500
-        group-hover:scale-110 sm:[--round-seat-offset:5.65rem]
+        border text-[0.58rem] font-semibold shadow-[0_8px_18px_rgba(77,56,40,0.12)]
+        [--round-seat-offset:5.15rem] sm:[--round-seat-offset:5.65rem]
+        ${onClick ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2" : ""}
         ${
           seat.guest
             ? "border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-white"
             : "border-[var(--color-border-strong)] bg-white text-[var(--color-accent)]"
         }
       `}
+      onClick={onClick}
       title={guestName || `Asiento ${seat.seat}`}
+      type={onClick ? "button" : undefined}
       style={style}
     >
-      {seat.seat}
-    </span>
+      {initials}
+    </Component>
   );
 }
 
-function SeatInfo({ seat }) {
+function SeatInfo({ onClick, seat }) {
   const guestName = seat.guest ? Guest.getFullName(seat.guest, "Invitado") : "";
+  const Component = onClick ? "button" : "div";
 
   return (
-    <div className="grid grid-cols-[4.5rem_1fr_auto] items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-white/50 p-3 text-sm">
+    <Component
+      className={`
+        grid w-full grid-cols-[4.5rem_1fr_auto] items-center gap-3 rounded-2xl
+        border border-[var(--color-border)] bg-white/50 p-3 text-left text-sm
+        ${
+          onClick
+            ? "cursor-pointer transition-all duration-300 hover:border-[var(--color-border-strong)] hover:bg-white/75 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
+            : ""
+        }
+      `}
+      onClick={onClick}
+      type={onClick ? "button" : undefined}
+    >
       <span className="font-medium text-[var(--color-accent-dark)]">
         Asiento {seat.seat}
       </span>
@@ -181,7 +208,7 @@ function SeatInfo({ seat }) {
           {seat.guest.menu}
         </span>
       )}
-    </div>
+    </Component>
   );
 }
 
@@ -222,4 +249,12 @@ function getJustifiedPosition(index, count, min, max) {
   if (count <= 1) return 50;
 
   return min + ((index + 1) / (count + 1)) * (max - min);
+}
+
+function getGuestInitials(guest) {
+  const normalizedGuest = Guest.normalize(guest);
+  const nameInitial = normalizedGuest.name.trim().charAt(0);
+  const lastnameInitial = normalizedGuest.lastname.trim().charAt(0);
+
+  return `${nameInitial}${lastnameInitial}`.toUpperCase();
 }
