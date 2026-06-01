@@ -16,9 +16,11 @@ export default function GuestCard({
   index,
   onGuestChange,
   onRemoveGuest,
+  variant = "public",
 }) {
   const reduceMotion = useReducedMotion();
   const [showBusPanel, setShowBusPanel] = useState(true);
+  const isAdmin = variant === "admin";
   const busPanelHidden = reduceMotion
     ? { height: 0, opacity: 0 }
     : { height: 0, opacity: 0, y: -8, filter: "blur(4px)" };
@@ -76,6 +78,52 @@ export default function GuestCard({
           <FieldError>{errors[`guest_lastname_${index}`]}</FieldError>
         </div>
       </div>
+
+      {isAdmin && (
+        <div className="mt-4 grid gap-5 md:grid-cols-3">
+          <div>
+            <Label>Menú</Label>
+
+            <input
+              className={inputClassName}
+              onChange={(event) =>
+                onGuestChange(index, "menu", event.target.value)
+              }
+              placeholder="Ej: Adulto"
+              type="text"
+              value={guest.menu}
+            />
+          </div>
+
+          <div>
+            <Label>Mesa</Label>
+
+            <input
+              className={inputClassName}
+              onChange={(event) =>
+                onGuestChange(index, "table", event.target.value)
+              }
+              placeholder="Ej: 4"
+              type="text"
+              value={guest.table}
+            />
+          </div>
+
+          <div>
+            <Label>Asiento</Label>
+
+            <input
+              className={inputClassName}
+              onChange={(event) =>
+                onGuestChange(index, "seat", event.target.value)
+              }
+              placeholder="Ej: 7"
+              type="text"
+              value={guest.seat}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="mt-4">
         <Label>Intolerancias o alergias</Label>

@@ -1,3 +1,5 @@
+import { Guest } from "../models/Guest";
+
 export const MAX_GUESTS = 10;
 
 export const COMMON_ALLERGIES = [
@@ -23,12 +25,4 @@ export const RETURN_BUS_OPTIONS = [
   { value: "6:00", label: "6:00 (Corrales - Huelva)" },
 ];
 
-export const createEmptyGuest = () => ({
-  name: "",
-  lastname: "",
-  allergies: [],
-  otherAllergies: "",
-  comments: "",
-  outboundBus: "18:00",
-  returnBus: "3:00",
-});
+export const createEmptyGuest = () => Guest.create();

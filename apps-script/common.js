@@ -79,6 +79,8 @@ function buildGuestFromRow(row) {
     comments: row[7] || "",
     outboundBus: row[8] || "No",
     returnBus: row[9] || "No",
+    menu: row[11] || "",
+    table: row[12] || "",
+    seat: row[13] || "",
   };
 }
-

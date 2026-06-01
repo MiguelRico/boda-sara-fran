@@ -12,8 +12,9 @@ import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
 import { COMMON_ALLERGIES } from "../constants/rsvp";
+import { Confirmation } from "../models";
 import { findAllGroups } from "../services/rsvpService";
-import { getGroupsFromResponse } from "../utils/rsvpGroups";
+import { normalizeAdminGroups } from "../utils/rsvpGroups";
 
 const ADMIN_OUTBOUND_BUS_OPTIONS = [
   { value: "No", label: "No" },
@@ -64,7 +65,7 @@ export default function AdminStats() {
 
     try {
       const response = await findAllGroups({ password: ADMIN_PASSWORD });
-      const groups = getGroupsFromResponse(response);
+      const groups = normalizeAdminGroups(response);
 
       setState({
         groups,
@@ -93,7 +94,15 @@ export default function AdminStats() {
     return () => window.clearTimeout(timeoutId);
   }, [isAuthenticated, loadStats]);
 
-  const stats = useMemo(() => buildStats(state.groups), [state.groups]);
+  const stats = useMemo(
+    () =>
+      Confirmation.buildStats(state.groups, {
+        allergies: COMMON_ALLERGIES,
+        outboundBusOptions: ADMIN_OUTBOUND_BUS_OPTIONS,
+        returnBusOptions: ADMIN_RETURN_BUS_OPTIONS,
+      }),
+    [state.groups],
+  );
 
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
@@ -583,93 +592,6 @@ function StatsSkeleton() {
         </div>
       ))}
     </div>
-  );
-}
-
-function buildStats(groups) {
-  const normalizedGroups = groups.map((group) => ({
-    ...group,
-    guests: Array.isArray(group.guests) ? group.guests : [],
-  }));
-  const guests = normalizedGroups.flatMap((group) =>
-    group.guests.map((guest) => ({
-      ...guest,
-      email: group.email,
-      groupName: group.groupName,
-      phone: group.phone,
-    })),
-  );
-
-  const totalGuests = guests.length;
-  const totalGroups = normalizedGroups.length;
-  const guestsWithAllergies = guests.filter(hasAllergies).length;
-  const guestsWithOtherAllergies = guests.filter((guest) =>
-    guest.otherAllergies?.trim(),
-  ).length;
-  const guestsUsingBus = guests.filter(usesBus).length;
-  const guestsWithComments = guests.filter((guest) =>
-    guest.comments?.trim(),
-  ).length;
-
-  return {
-    allergyRate: getRate(guestsWithAllergies, totalGuests),
-    allergiesByType: buildAllergyStats(guests),
-    busRate: getRate(guestsUsingBus, totalGuests),
-    commentsRate: getRate(guestsWithComments, totalGuests),
-    guestsWithAllergies,
-    guestsWithComments,
-    guestsWithOtherAllergies,
-    guestsUsingBus,
-    otherAllergyRate: getRate(guestsWithOtherAllergies, totalGuests),
-    outboundBusStats: buildBusStats(
-      guests,
-      ADMIN_OUTBOUND_BUS_OPTIONS,
-      "outboundBus",
-    ),
-    returnBusStats: buildBusStats(
-      guests,
-      ADMIN_RETURN_BUS_OPTIONS,
-      "returnBus",
-    ),
-    totalGroups,
-    totalGuests,
-  };
-}
-
-function buildAllergyStats(guests) {
-  return COMMON_ALLERGIES.map((allergy) => ({
-    label: allergy,
-    value: guests.filter((guest) => guest.allergies?.includes(allergy)).length,
-  })).filter((item) => item.value > 0);
-}
-
-function buildBusStats(guests, options, field) {
-  return options
-    .filter((option) => option.value !== "No")
-    .map((option) => ({
-      label: option.label,
-      value: guests.filter((guest) => {
-        const selectedValue = guest[field] || "No";
-
-        return selectedValue === option.value;
-      }).length,
-    }));
-}
-
-function getRate(value, total) {
-  if (!total) return 0;
-
-  return Math.round((value / total) * 100);
-}
-
-function hasAllergies(guest) {
-  return Boolean(guest.allergies?.length && guest.allergies != "No");
-}
-
-function usesBus(guest) {
-  return Boolean(
-    (guest.outboundBus && guest.outboundBus !== "No") ||
-    (guest.returnBus && guest.returnBus !== "No"),
   );
 }
 

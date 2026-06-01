@@ -1,0 +1,205 @@
+export const GUEST_DEFAULTS = {
+  name: "",
+  lastname: "",
+  allergies: [],
+  otherAllergies: "",
+  comments: "",
+  outboundBus: "18:00",
+  returnBus: "3:00",
+  menu: "",
+  table: "",
+  seat: "",
+};
+
+const normalizeString = (value) => (value == null ? "" : String(value));
+const isBlankValue = (value) => {
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === "boolean") return value === false;
+  if (value == null) return true;
+
+  return String(value).trim() === "";
+};
+
+export const Guest = {
+  create(overrides = {}) {
+    return {
+      ...GUEST_DEFAULTS,
+      name: normalizeString(overrides.name),
+      lastname: normalizeString(overrides.lastname),
+      allergies: Array.isArray(overrides.allergies)
+        ? [...overrides.allergies]
+        : [],
+      otherAllergies: normalizeString(overrides.otherAllergies),
+      comments: normalizeString(overrides.comments),
+      outboundBus:
+        normalizeString(overrides.outboundBus) || GUEST_DEFAULTS.outboundBus,
+      returnBus:
+        normalizeString(overrides.returnBus) || GUEST_DEFAULTS.returnBus,
+      menu: normalizeString(overrides.menu),
+      table: normalizeString(overrides.table),
+      seat: normalizeString(overrides.seat),
+    };
+  },
+
+  normalize(guest = {}) {
+    return Guest.create(guest);
+  },
+
+  normalizeList(guests, { ensureOne = true } = {}) {
+    if (!Array.isArray(guests) || !guests.length) {
+      return ensureOne ? [Guest.create()] : [];
+    }
+
+    return guests.map((guest) => Guest.normalize(guest));
+  },
+
+  withUpdatedField(guest, field, value) {
+    const currentGuest = Guest.normalize(guest);
+
+    if (field !== "allergies") {
+      return Guest.normalize({
+        ...currentGuest,
+        [field]: value,
+      });
+    }
+
+    const exists = currentGuest.allergies.includes(value);
+
+    return Guest.normalize({
+      ...currentGuest,
+      allergies: exists
+        ? currentGuest.allergies.filter((item) => item !== value)
+        : [...currentGuest.allergies, value],
+    });
+  },
+
+  getFullName(guest, fallback = "") {
+    const normalizedGuest = Guest.normalize(guest);
+    const name = `${normalizedGuest.name} ${normalizedGuest.lastname}`.trim();
+
+    return name || fallback;
+  },
+
+  getDisplayName(guest, index) {
+    return Guest.getFullName(guest, `Invitado ${index + 1}`);
+  },
+
+  getAllergyText(guest) {
+    const normalizedGuest = Guest.normalize(guest);
+    const values = [...normalizedGuest.allergies];
+
+    if (normalizedGuest.otherAllergies.trim()) {
+      values.push(normalizedGuest.otherAllergies.trim());
+    }
+
+    return values.length ? values.join(", ") : "No";
+  },
+
+  getAssignmentText(guest) {
+    const normalizedGuest = Guest.normalize(guest);
+    const values = [
+      normalizedGuest.menu && `Menu ${normalizedGuest.menu}`,
+      normalizedGuest.table && `Mesa ${normalizedGuest.table}`,
+      normalizedGuest.seat && `Asiento ${normalizedGuest.seat}`,
+    ].filter(Boolean);
+
+    return values.length ? values.join(" | ") : "";
+  },
+
+  hasAllergies(guest) {
+    return Guest.getAllergyText(guest) !== "No";
+  },
+
+  hasAllergy(guest, allergy) {
+    return Guest.normalize(guest).allergies.includes(allergy);
+  },
+
+  hasOtherAllergies(guest) {
+    return Boolean(Guest.normalize(guest).otherAllergies.trim());
+  },
+
+  hasComments(guest) {
+    return Boolean(Guest.normalize(guest).comments.trim());
+  },
+
+  usesBus(guest) {
+    const normalizedGuest = Guest.normalize(guest);
+
+    return Boolean(
+      (normalizedGuest.outboundBus && normalizedGuest.outboundBus !== "No") ||
+        (normalizedGuest.returnBus && normalizedGuest.returnBus !== "No"),
+    );
+  },
+
+  hasBusValue(guest, field, value) {
+    return (Guest.normalize(guest)[field] || "No") === value;
+  },
+
+  needsReview(guest) {
+    const normalizedGuest = Guest.normalize(guest);
+
+    return Boolean(
+      Guest.hasOtherAllergies(normalizedGuest) ||
+        Guest.hasComments(normalizedGuest) ||
+        (Guest.usesBus(normalizedGuest) &&
+          (!normalizedGuest.outboundBus || !normalizedGuest.returnBus)),
+    );
+  },
+
+  isEmpty(guest) {
+    const normalizedGuest = Guest.normalize(guest);
+
+    return Object.entries(normalizedGuest).every(([field, value]) => {
+      if (field === "outboundBus" || field === "returnBus") return true;
+
+      return isBlankValue(value);
+    });
+  },
+
+  isValid(guest) {
+    const normalizedGuest = Guest.normalize(guest);
+
+    return Boolean(
+      normalizedGuest.name.trim() &&
+        normalizedGuest.lastname.trim() &&
+        normalizedGuest.comments.length <= 300,
+    );
+  },
+
+  validate(guest, index) {
+    const normalizedGuest = Guest.normalize(guest);
+    const errors = {};
+
+    if (!normalizedGuest.name.trim()) {
+      errors[`guest_name_${index}`] = "El nombre es obligatorio";
+    }
+
+    if (!normalizedGuest.lastname.trim()) {
+      errors[`guest_lastname_${index}`] = "Los apellidos son obligatorios";
+    }
+
+    if (normalizedGuest.comments.length > 300) {
+      errors[`guest_comments_${index}`] = "Máximo 300 caracteres";
+    }
+
+    return errors;
+  },
+
+  hasInvalidGuests(guests) {
+    return Guest.normalizeList(guests, { ensureOne: false }).some(
+      (guest) => !Guest.isValid(guest),
+    );
+  },
+
+  hasIncompleteVisibleGuests(guests) {
+    const normalizedGuests = Guest.normalizeList(guests, { ensureOne: false });
+
+    return (
+      Guest.hasInvalidGuests(normalizedGuests) &&
+      (normalizedGuests.length > 1 ||
+        normalizedGuests.some(
+          (guest) => !Guest.isValid(guest) && !Guest.isEmpty(guest),
+        ))
+    );
+  },
+};

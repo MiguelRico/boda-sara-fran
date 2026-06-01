@@ -7,24 +7,9 @@ import { FieldError } from "../components/rsvp/FormPrimitives";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import IconButton from "../components/ui/IconButton";
 import { MAX_GUESTS } from "../constants/rsvp";
+import { Guest } from "../models";
 
 const defaultRenderItem = (_index, children) => children;
-const isBlankValue = (value) => {
-  if (Array.isArray(value)) return value.length === 0;
-  if (typeof value === "boolean") return value === false;
-  if (value == null) return true;
-
-  return String(value).trim() === "";
-};
-const isEmptyGuest = (guest) =>
-  Object.entries(guest).every(([field, value]) => {
-    if (field === "outboundBus" || field === "returnBus") return true;
-
-    return isBlankValue(value);
-  });
-const isValidGuest = (guest) =>
-  Boolean(guest.name?.trim() && guest.lastname?.trim()) &&
-  (guest.comments || "").length <= 300;
 
 export default function RsvpForm({
   addText = "Añadir",
@@ -49,15 +34,11 @@ export default function RsvpForm({
 }) {
   const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
   const guestDeleteName = guestDeleteTarget
-    ? [guestDeleteTarget.guest.name, guestDeleteTarget.guest.lastname]
-        .filter(Boolean)
-        .join(" ")
+    ? Guest.getFullName(guestDeleteTarget.guest)
     : "";
-  const hasInvalidGuest = guests.some((guest) => !isValidGuest(guest));
+  const hasInvalidGuest = Guest.hasInvalidGuests(guests);
   const shouldShowIncompleteGuestMessage =
-    hasInvalidGuest &&
-    (guests.length > 1 ||
-      guests.some((guest) => !isValidGuest(guest) && !isEmptyGuest(guest)));
+    Guest.hasIncompleteVisibleGuests(guests);
   const incompleteGuestMessage =
     "Completa nombre y apellidos de todos los invitados antes de añadir otro o enviar el formulario.";
   const addIcon =
@@ -86,7 +67,7 @@ export default function RsvpForm({
     setGuestDeleteTarget(null);
   };
   const handleRemoveGuest = (guest, index) => {
-    if (isEmptyGuest(guest)) {
+    if (Guest.isEmpty(guest)) {
       onRemoveGuest(index);
       return;
     }
@@ -126,6 +107,7 @@ export default function RsvpForm({
               key={index}
               onGuestChange={onGuestChange}
               onRemoveGuest={() => handleRemoveGuest(guest, index)}
+              variant={variant}
             />,
           ),
         )}
