@@ -158,6 +158,20 @@ export default function TableForm({
           </div>
         </div>
 
+        <div className="mt-5">
+          <Label>{content.fields.notes.label}</Label>
+
+          <textarea
+            className={`${inputClassName} resize-none`}
+            onChange={(event) => onChange("notes", event.target.value)}
+            placeholder={content.fields.notes.placeholder}
+            rows={4}
+            value={form.notes}
+          />
+
+          <FieldError>{errors.notes}</FieldError>
+        </div>
+
         <div className="mt-6 flex flex-col gap-4 sm:grid sm:grid-cols-2">
           <IconButton
             disabled={loading}

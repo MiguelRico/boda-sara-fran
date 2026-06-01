@@ -366,12 +366,17 @@ function TablesGrid({ tables }) {
               <h3 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
                 Mesa {table.name || table.id}
               </h3>
-              <p className="mt-2 text-sm text-[var(--color-muted)]">
-                {[getTableGroupOption(table.group)?.label, Table.getShapeLabel(table)]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            </div>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">
+            {[getTableGroupOption(table.group)?.label, Table.getShapeLabel(table)]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+          {table.notes && (
+            <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
+              {table.notes}
+            </p>
+          )}
+        </div>
             <p className="text-sm text-[var(--color-muted)]">
               {Table.getAssignedGuests(table).length} invitados
             </p>

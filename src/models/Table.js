@@ -10,6 +10,7 @@ export const TABLE_DEFAULTS = {
   id: "",
   name: "",
   group: "",
+  notes: "",
   shape: DEFAULT_TABLE_SHAPE,
   seats: [],
 };
@@ -61,6 +62,7 @@ export const Table = {
       id,
       name,
       group: normalizeString(overrides.group || overrides.groupName).trim(),
+      notes: normalizeString(overrides.notes).trim(),
       shape,
       seats:
         normalizedSeats.length > 0

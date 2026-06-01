@@ -58,6 +58,10 @@ export const tableFormContent = {
     seatCount: {
       label: "Numero de asientos *",
     },
+    notes: {
+      label: "Notas",
+      placeholder: "Ej: Cerca de la pista, mesa infantil, indicaciones del catering...",
+    },
   },
 };
 
@@ -72,6 +76,7 @@ export const createEmptyTableForm = () => {
   return {
     name: "",
     group: DEFAULT_TABLE_GROUP,
+    notes: "",
     shape: shapeOption.value,
     seatCount: shapeOption.seatRange.min,
   };
