@@ -56,7 +56,7 @@ function TableInfoCard({ onEdit, onSeatClick, table }) {
           <div className="min-w-0">
             <p className="section-eyebrow mb-2">{groupLabel || "Mesa"}</p>
             <h3 className="truncate font-serif text-3xl leading-none text-[var(--color-text)] sm:text-4xl">
-              Mesa {tableLabel}
+              {tableLabel}
             </h3>
             <p className="mt-2 text-sm text-[var(--color-accent)]">
               {shapeLabel} - {assignedGuests.length}/{table.seats.length}{" "}

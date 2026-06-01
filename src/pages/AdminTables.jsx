@@ -21,6 +21,7 @@ import {
   Download,
   Plus,
   RefreshCw,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -57,6 +58,7 @@ import {
   persistAdminTables,
   readStoredTables,
   saveStoredTables,
+  unassignGuestFromSeat,
   upsertManualTable,
   validateTableForm,
 } from "../services/tablesService";
@@ -69,7 +71,7 @@ const SECTION_TABS = [
   { id: "pending", label: "Invitados Pendientes" },
 ];
 const desktopPageSize = 4;
-const mobilePageSize = 2;
+const mobilePageSize = 1;
 const pageDataSwapDelay = 680;
 const pageRevealDelay = 160;
 const pageScrollDuration = 680;
@@ -461,6 +463,40 @@ export default function AdminTables() {
     }
   };
 
+  const handleRemoveGuestFromSeat = async () => {
+    if (!seatAssignmentTarget) return;
+
+    setAssigningSeat(true);
+    setState((prev) => ({ ...prev, error: "" }));
+
+    try {
+      spinner.show("Liberando asiento...");
+      const updatedGroups = await unassignGuestFromSeat({
+        groups: state.groups,
+        password: ADMIN_PASSWORD,
+        seat: seatAssignmentTarget.seat,
+        table: seatAssignmentTarget.table,
+      });
+      setSeatAssignmentTarget(null);
+      setState((prev) => ({
+        ...prev,
+        groups: updatedGroups,
+        loading: false,
+        error: "",
+      }));
+    } catch (error) {
+      console.error("Error al liberar asiento:", error);
+      setState((prev) => ({
+        ...prev,
+        error:
+          error.message || "No se pudo liberar el asiento. Intenta de nuevo.",
+      }));
+    } finally {
+      setAssigningSeat(false);
+      spinner.hide();
+    }
+  };
+
   const handleTableSubmit = async (event) => {
     event.preventDefault();
 
@@ -672,6 +708,7 @@ export default function AdminTables() {
           guests={assignableGuests}
           onAssign={handleAssignGuestToSeat}
           onCancel={handleCloseSeatAssignment}
+          onRemove={handleRemoveGuestFromSeat}
           seat={seatAssignmentTarget.seat}
           table={seatAssignmentTarget.table}
         />
@@ -735,6 +772,7 @@ function SeatAssignmentDialog({
   guests,
   onAssign,
   onCancel,
+  onRemove,
   seat,
   table,
 }) {
@@ -758,6 +796,7 @@ function SeatAssignmentDialog({
         name: currentGuestName,
       })
     : "";
+  const canRemoveGuest = Boolean(currentGuest);
   const [selectedGuest, setSelectedGuest] = useState(currentGuestValue);
 
   const handleSubmit = (event) => {
@@ -828,7 +867,11 @@ function SeatAssignmentDialog({
             })}
           </select>
 
-          <div className="mt-6 flex flex-col gap-4 sm:grid sm:grid-cols-2">
+          <div
+            className={`mt-6 flex flex-col gap-4 sm:grid ${
+              canRemoveGuest ? "sm:grid-cols-3" : "sm:grid-cols-2"
+            }`}
+          >
             <IconButton
               disabled={!selectedGuest || assigning}
               icon={<Check size={16} strokeWidth={1.8} />}
@@ -839,6 +882,20 @@ function SeatAssignmentDialog({
             >
               {assigning ? "Asignando..." : "Asignar invitado"}
             </IconButton>
+
+            {canRemoveGuest && (
+              <IconButton
+                disabled={assigning}
+                icon={<Trash2 size={16} strokeWidth={1.8} />}
+                label="Eliminar"
+                onClick={onRemove}
+                showText="always"
+                tone="secondary"
+                type="button"
+              >
+                Eliminar
+              </IconButton>
+            )}
 
             <IconButton
               disabled={assigning}

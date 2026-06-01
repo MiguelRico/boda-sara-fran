@@ -335,6 +335,48 @@ export const assignGuestToSeat = async ({
   return updatedGroups;
 };
 
+export const unassignGuestFromSeat = async ({ groups, password, seat, table }) => {
+  const tableId = getTableKey(table);
+  const seatNumber = seat.seat;
+  const updatedGroups = groups.map((group) => {
+    let changed = false;
+    const guests = group.guests.map((guest) => {
+      const isCurrentSeatGuest =
+        guest.table === tableId && guest.seat === seatNumber;
+
+      if (!isCurrentSeatGuest) return guest;
+
+      changed = true;
+
+      return {
+        ...guest,
+        table: "",
+        seat: "",
+      };
+    });
+
+    return changed ? { ...group, guests } : group;
+  });
+  const changedGroups = updatedGroups.filter(
+    (group, index) => group !== groups[index],
+  );
+
+  if (!changedGroups.length) {
+    throw new Error("No hay ningun invitado asignado a este asiento");
+  }
+
+  await Promise.all(
+    changedGroups.map((group) =>
+      saveAdminGroup({
+        group,
+        password,
+      }),
+    ),
+  );
+
+  return updatedGroups;
+};
+
 export const downloadTablesCsv = (tables) => {
   const headers = [
     "mesa",
