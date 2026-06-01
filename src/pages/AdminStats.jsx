@@ -4,15 +4,20 @@ import { Navigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import {
+  AdminMetricGrid,
+  AdminMetricGridSkeleton,
+} from "../components/admin/AdminMetricGrid";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
-import HeaderSection from "../components/common/HeaderSection";
-import StatusNotice from "../components/common/StatusNotice";
+import HeaderSection from "../components/ui/HeaderSection";
+import IconButton from "../components/ui/IconButton";
+import StatusDialog from "../components/ui/StatusDialog";
 import { COMMON_ALLERGIES } from "../constants/rsvp";
+import { Confirmation } from "../models";
 import { findAllGroups } from "../services/rsvpService";
-import { getGroupsFromResponse } from "../utils/rsvpGroups";
+import { normalizeAdminGroups } from "../utils/rsvpGroups";
 
 const ADMIN_OUTBOUND_BUS_OPTIONS = [
   { value: "No", label: "No" },
@@ -63,7 +68,7 @@ export default function AdminStats() {
 
     try {
       const response = await findAllGroups({ password: ADMIN_PASSWORD });
-      const groups = getGroupsFromResponse(response);
+      const groups = normalizeAdminGroups(response);
 
       setState({
         groups,
@@ -92,7 +97,15 @@ export default function AdminStats() {
     return () => window.clearTimeout(timeoutId);
   }, [isAuthenticated, loadStats]);
 
-  const stats = useMemo(() => buildStats(state.groups), [state.groups]);
+  const stats = useMemo(
+    () =>
+      Confirmation.buildStats(state.groups, {
+        allergies: COMMON_ALLERGIES,
+        outboundBusOptions: ADMIN_OUTBOUND_BUS_OPTIONS,
+        returnBusOptions: ADMIN_RETURN_BUS_OPTIONS,
+      }),
+    [state.groups],
+  );
 
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
@@ -114,12 +127,6 @@ export default function AdminStats() {
               text="Seguimiento de respuestas recibidas y datos operativos"
             />
           </CinematicStaggeredRevealItem>
-
-          {state.error && (
-            <CinematicStaggeredRevealItem index={1} isVisible={statsInView}>
-              <StatusNotice tone="error">{state.error}</StatusNotice>
-            </CinematicStaggeredRevealItem>
-          )}
 
           <CinematicStaggeredRevealItem index={2} isVisible={statsInView}>
             <StatsOverview
@@ -145,6 +152,15 @@ export default function AdminStats() {
           )}
         </div>
       </CinematicSection>
+
+      <StatusDialog
+        eyebrow="Aviso"
+        message={state.error}
+        onClose={() => setState((current) => ({ ...current, error: "" }))}
+        open={Boolean(state.error)}
+        title="Ha ocurrido un problema"
+        type="error"
+      />
     </CinematicPage>
   );
 }
@@ -159,92 +175,82 @@ function StatsOverview({ loading, onRefresh, stats }) {
           </h2>
         </div>
 
-        <button
-          className="btn-secondary w-full gap-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        <IconButton
+          className="w-full sm:w-auto"
           disabled={loading}
+          icon={
+            <RefreshCw
+              className={loading ? "animate-spin" : ""}
+              size={16}
+              strokeWidth={1.8}
+            />
+          }
+          label="Actualizar"
           onClick={onRefresh}
-          type="button"
+          showText
         >
-          <RefreshCw
-            className={loading ? "animate-spin" : ""}
-            size={16}
-            strokeWidth={1.8}
-          />
           Actualizar
-        </button>
+        </IconButton>
       </div>
 
-      {loading ? <StatsSkeleton /> : <SummaryGrid stats={stats} />}
+      {loading ? (
+        <AdminMetricGridSkeleton />
+      ) : (
+        <AdminMetricGrid items={getSummaryItems(stats)} />
+      )}
     </section>
   );
 }
 
-function SummaryGrid({ stats }) {
-  const items = [
+function getSummaryItems(stats) {
+  return [
     {
       label: "Total confirmaciones",
       value: stats.totalGroups,
-      detail: "confirmaciones registradas",
+      detail: "Confirmaciones",
       emoji: "👥",
     },
     {
       label: "Total de personas",
       value: stats.totalGuests,
-      detail: "incluidas en las respuestas",
+      detail: "Personas",
       emoji: "+",
     },
     {
       label: "Personas con alergias",
-      value: `${stats.allergyRate}%`,
-      detail: `${stats.guestsWithAllergies} de ${stats.totalGuests} personas`,
+      value: stats.guestsWithAllergies,
+      detail: "Alergias",
       emoji: "🥗",
     },
     {
       label: "Con otras alergias",
-      value: `${stats.otherAllergyRate}%`,
-      detail: `${stats.guestsWithOtherAllergies} de ${stats.totalGuests} personas`,
+      value: stats.guestsWithOtherAllergies,
+      detail: "Otras alergias",
       emoji: "!",
     },
     {
       label: "Con comentarios",
-      value: `${stats.commentsRate}%`,
-      detail: `${stats.guestsWithComments} de ${stats.totalGuests} personas`,
+      value: `${stats.guestsWithComments}%`,
+      detail: "Comentarios",
       emoji: "...",
     },
     {
       label: "Usan transporte",
-      value: `${stats.busRate}%`,
-      detail: `${stats.guestsUsingBus} de ${stats.totalGuests} personas`,
+      value: `${stats.guestsUsingBus}`,
+      detail: "Autobús",
       emoji: "🚌",
     },
   ];
-
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-      {items.map((item, index) => (
-        <AnimatedInfoCard
-          card={{
-            className:
-              "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-4 sm:p-5",
-            description: item.detail,
-            emoji: item.emoji,
-            inlineTitleDescription: true,
-            showAction: false,
-            subtitle: item.label,
-            title: String(item.value),
-          }}
-          index={index}
-          key={item.label}
-        />
-      ))}
-    </div>
-  );
 }
 
 function DonutStatsCard({ emptyText, emoji, items, title }) {
   const [hoveredLabel, setHoveredLabel] = useState("");
   const [selectedLabel, setSelectedLabel] = useState("");
   const activeLabel = hoveredLabel || selectedLabel;
+  const handleSelectLabel = useCallback((label) => {
+    setHoveredLabel("");
+    setSelectedLabel((currentLabel) => (currentLabel === label ? "" : label));
+  }, []);
 
   return (
     <article className="premium-card relative overflow-hidden">
@@ -256,12 +262,15 @@ function DonutStatsCard({ emptyText, emoji, items, title }) {
             activeLabel={activeLabel}
             items={items}
             onHoverLabel={setHoveredLabel}
-            onSelectLabel={setSelectedLabel}
+            onSelectLabel={handleSelectLabel}
+            selectedLabel={selectedLabel}
           />
           <ChartLegend
             activeLabel={activeLabel}
             items={items}
             onHoverLabel={setHoveredLabel}
+            onSelectLabel={handleSelectLabel}
+            selectedLabel={selectedLabel}
           />
         </div>
       ) : (
@@ -290,6 +299,10 @@ function TransportGroup({ items, title }) {
   const [hoveredLabel, setHoveredLabel] = useState("");
   const [selectedLabel, setSelectedLabel] = useState("");
   const activeLabel = hoveredLabel || selectedLabel;
+  const handleSelectLabel = useCallback((label) => {
+    setHoveredLabel("");
+    setSelectedLabel((currentLabel) => (currentLabel === label ? "" : label));
+  }, []);
 
   return (
     <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
@@ -303,7 +316,8 @@ function TransportGroup({ items, title }) {
           colors={TRANSPORT_DONUT_COLORS}
           items={items}
           onHoverLabel={setHoveredLabel}
-          onSelectLabel={setSelectedLabel}
+          onSelectLabel={handleSelectLabel}
+          selectedLabel={selectedLabel}
           size="sm"
         />
         <ChartLegend
@@ -312,6 +326,8 @@ function TransportGroup({ items, title }) {
           colors={TRANSPORT_DONUT_COLORS}
           items={items}
           onHoverLabel={setHoveredLabel}
+          onSelectLabel={handleSelectLabel}
+          selectedLabel={selectedLabel}
         />
       </div>
     </div>
@@ -336,12 +352,20 @@ function CardHeader({ emoji, title }) {
   );
 }
 
+function supportsHoverPointer() {
+  return Boolean(
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(hover: hover) and (pointer: fine)").matches,
+  );
+}
+
 function DonutChart({
   activeLabel,
   colors = DONUT_COLORS,
   items,
   onHoverLabel,
   onSelectLabel,
+  selectedLabel,
   size = "md",
 }) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
@@ -349,6 +373,16 @@ function DonutChart({
   const dimensions = size === "sm" ? "h-40 w-40" : "h-48 w-48";
   const valueSize = size === "sm" ? "text-3xl" : "text-4xl";
   const activeItem = visibleItems.find((item) => item.label === activeLabel);
+  const handleHoverLabel = (label) => {
+    if (supportsHoverPointer()) {
+      onHoverLabel(label);
+    }
+  };
+  const handleSelectLabel = (label) => {
+    if (supportsHoverPointer()) {
+      onSelectLabel(label);
+    }
+  };
   const segments = visibleItems.reduce(
     (acc, item, index) => {
       const percent = total ? (item.value / total) * 100 : 0;
@@ -371,11 +405,11 @@ function DonutChart({
   ).values;
 
   return (
-    <div className="flex justify-center">
+    <div className="flex select-none justify-center">
       <div className={`relative ${dimensions}`}>
         <svg
           aria-label="Gráfica de tipo donut"
-          className="h-full w-full -rotate-90"
+          className="h-full w-full -rotate-90 select-none"
           role="img"
           viewBox="0 0 100 100"
         >
@@ -396,13 +430,10 @@ function DonutChart({
               cy="50"
               fill="none"
               key={segment.label}
-              onClick={() =>
-                onSelectLabel((currentLabel) =>
-                  currentLabel === segment.label ? "" : segment.label,
-                )
-              }
-              onMouseEnter={() => onHoverLabel(segment.label)}
-              onMouseLeave={() => onHoverLabel("")}
+              onClick={() => handleSelectLabel(segment.label)}
+              onMouseEnter={() => handleHoverLabel(segment.label)}
+              onMouseLeave={() => handleHoverLabel("")}
+              onMouseDown={(event) => event.preventDefault()}
               pathLength="100"
               r="38"
               role="button"
@@ -415,24 +446,23 @@ function DonutChart({
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  onSelectLabel((currentLabel) =>
-                    currentLabel === segment.label ? "" : segment.label,
-                  );
+                  onSelectLabel(segment.label);
                 }
               }}
               style={{
                 filter:
                   activeLabel === segment.label
-                    ? "drop-shadow(0 3px 5px rgba(85, 107, 82, 0.28))"
+                    ? "drop-shadow(0 3px 5px rgba(85, 107, 82, 0.34))"
                     : "none",
                 opacity:
                   activeItem && activeItem.label !== segment.label ? 0.38 : 1,
+                strokeWidth: selectedLabel === segment.label ? 14 : 12,
               }}
             />
           ))}
         </svg>
 
-        <span className="absolute inset-0 flex flex-col items-center justify-center rounded-full px-4 text-center transition-all duration-200">
+        <span className="absolute inset-0 flex select-none flex-col items-center justify-center rounded-full px-4 text-center transition-all duration-200">
           <span
             className={`max-w-full truncate font-serif ${valueSize} leading-none text-[var(--color-accent-dark)]`}
           >
@@ -458,38 +488,63 @@ function ChartLegend({
   compact = false,
   items,
   onHoverLabel,
+  onSelectLabel,
+  selectedLabel,
 }) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
+  const handleHoverLabel = (label) => {
+    if (supportsHoverPointer()) {
+      onHoverLabel(label);
+    }
+  };
 
   return (
-    <div className={compact ? "space-y-2" : "space-y-3"}>
+    <div className={`select-none ${compact ? "space-y-2" : "space-y-3"}`}>
       {items.map((item, index) => {
         const color = colors[index % colors.length];
         const isActive = activeLabel === item.label;
+        const isSelected = selectedLabel === item.label;
 
         return (
-          <div
-            className={`grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl px-2 py-1.5 text-sm transition-all duration-200 ${
-              isActive ? "bg-white/55 shadow-sm" : ""
+          <button
+            className={`grid w-full cursor-pointer select-none grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl px-2 py-1.5 text-left text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-dark)]/35 ${
+              isSelected
+                ? "bg-white/75 shadow-md ring-1 ring-[var(--color-border-strong)]"
+                : isActive
+                  ? "bg-white/55 shadow-sm"
+                  : ""
             }`}
             key={item.label}
-            onMouseEnter={() => onHoverLabel(item.label)}
-            onMouseLeave={() => onHoverLabel("")}
+            onClick={() => onSelectLabel(item.label)}
+            onMouseEnter={() => handleHoverLabel(item.label)}
+            onMouseLeave={() => handleHoverLabel("")}
+            onMouseDown={(event) => event.preventDefault()}
+            type="button"
           >
             <span
               className={`h-3 w-3 rounded-full transition-all duration-200 ${
-                isActive ? "scale-125 shadow-sm" : ""
+                isSelected
+                  ? "scale-150 shadow-md"
+                  : isActive
+                    ? "scale-125 shadow-sm"
+                    : ""
               }`}
               style={{
                 backgroundColor: color,
-                boxShadow: isActive ? `0 0 0 4px ${color}22` : undefined,
+                boxShadow: isSelected
+                  ? `0 0 0 5px ${color}33`
+                  : isActive
+                    ? `0 0 0 4px ${color}22`
+                    : undefined,
               }}
             />
             <span
               className={`min-w-0 leading-snug transition-colors duration-200 ${
-                isActive
-                  ? "font-medium text-[var(--color-accent-dark)]"
-                  : "text-[var(--color-muted)]"
+                isSelected
+                  ? "font-semibold text-[var(--color-accent-dark)]"
+                  : isActive
+                    ? "font-medium text-[var(--color-accent-dark)]"
+                    : "text-[var(--color-muted)]"
               }`}
             >
               {item.label}
@@ -502,113 +557,9 @@ function ChartLegend({
                 </span>
               )}
             </span>
-          </div>
+          </button>
         );
       })}
     </div>
-  );
-}
-
-function StatsSkeleton() {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div
-          className="min-h-48 animate-pulse rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 sm:p-5"
-          key={index}
-        >
-          <div className="h-11 w-11 rounded-full bg-[var(--color-border)]" />
-          <div className="mt-8 h-4 w-24 rounded-full bg-[var(--color-border)]" />
-          <div className="mt-4 h-12 w-20 rounded-full bg-[var(--color-border)]" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function buildStats(groups) {
-  const normalizedGroups = groups.map((group) => ({
-    ...group,
-    guests: Array.isArray(group.guests) ? group.guests : [],
-  }));
-  const guests = normalizedGroups.flatMap((group) =>
-    group.guests.map((guest) => ({
-      ...guest,
-      email: group.email,
-      groupName: group.groupName,
-      phone: group.phone,
-    })),
-  );
-
-  const totalGuests = guests.length;
-  const totalGroups = normalizedGroups.length;
-  const guestsWithAllergies = guests.filter(hasAllergies).length;
-  const guestsWithOtherAllergies = guests.filter((guest) =>
-    guest.otherAllergies?.trim(),
-  ).length;
-  const guestsUsingBus = guests.filter(usesBus).length;
-  const guestsWithComments = guests.filter((guest) =>
-    guest.comments?.trim(),
-  ).length;
-
-  return {
-    allergyRate: getRate(guestsWithAllergies, totalGuests),
-    allergiesByType: buildAllergyStats(guests),
-    busRate: getRate(guestsUsingBus, totalGuests),
-    commentsRate: getRate(guestsWithComments, totalGuests),
-    guestsWithAllergies,
-    guestsWithComments,
-    guestsWithOtherAllergies,
-    guestsUsingBus,
-    otherAllergyRate: getRate(guestsWithOtherAllergies, totalGuests),
-    outboundBusStats: buildBusStats(
-      guests,
-      ADMIN_OUTBOUND_BUS_OPTIONS,
-      "outboundBus",
-    ),
-    returnBusStats: buildBusStats(
-      guests,
-      ADMIN_RETURN_BUS_OPTIONS,
-      "returnBus",
-    ),
-    totalGroups,
-    totalGuests,
-  };
-}
-
-function buildAllergyStats(guests) {
-  return COMMON_ALLERGIES.map((allergy) => ({
-    label: allergy,
-    value: guests.filter((guest) => guest.allergies?.includes(allergy)).length,
-  })).filter((item) => item.value > 0);
-}
-
-function buildBusStats(guests, options, field) {
-  return options
-    .filter((option) => option.value !== "No")
-    .map((option) => ({
-      label: option.label,
-      value: guests.filter((guest) => {
-        const selectedValue = guest[field] || "No";
-
-        return selectedValue === option.value;
-      }).length,
-    }));
-}
-
-function getRate(value, total) {
-  if (!total) return 0;
-
-  return Math.round((value / total) * 100);
-}
-
-function hasAllergies(guest) {
-  return Boolean(guest.allergies?.length && guest.allergies != "No");
-}
-
-function usesBus(guest) {
-  return Boolean(
-    (guest.outboundBus && guest.outboundBus !== "No") ||
-    (guest.returnBus && guest.returnBus !== "No"),
   );
 }

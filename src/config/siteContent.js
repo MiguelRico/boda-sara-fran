@@ -51,6 +51,23 @@ export const siteContent = {
     title: "Confirmación de asistencia",
     text: "Estamos deseando celebrar este día con vosotros. Podéis confirmar vuestra asistencia y gestionar todos los invitados desde este formulario.",
   },
+  help: {
+    eyebrow: "Ayuda",
+    title: "Contacto",
+    text: "Si tienes cualquier duda o problema con la confirmacion, puedes escribirnos directamente.",
+    contacts: [
+      {
+        name: "Sara",
+        phone: "616642844",
+        email: "asd",
+      },
+      {
+        name: "Fran",
+        phone: "695537560",
+        email: "asd",
+      },
+    ],
+  },
   details: {
     history: {
       eyebrow: "Una historia construida poco a poco",
@@ -87,7 +104,8 @@ export const siteContent = {
         {
           src: "/carousel/image5.jpeg",
           alt: "Sara y Fran celebrando su historia",
-          caption: "Celebrar la vida juntos siempre ha sido nuestro mejor plan.",
+          caption:
+            "Celebrar la vida juntos siempre ha sido nuestro mejor plan.",
         },
       ],
     },
@@ -217,6 +235,14 @@ export const siteContent = {
           "Consultar totales, asistencia, alergias y horarios de autobús.",
         to: "/admin/stats",
         emoji: "📊",
+      },
+      {
+        title: "Mesas",
+        subtitle: "Organiza asientos",
+        description:
+          "Consultar la distribución de mesas, asientos e invitados asignados.",
+        to: "/admin/tables",
+        emoji: "🪑",
       },
     ],
   },

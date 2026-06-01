@@ -1,15 +1,15 @@
 import { useInView } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LockKeyhole } from "lucide-react";
+import { Home, LockKeyhole, LogIn } from "lucide-react";
 
 import {
   ADMIN_AUTH_EVENT,
   ADMIN_PASSWORD,
   ADMIN_SESSION_KEY,
 } from "../constants/admin";
-import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
-import HeaderSection from "../components/common/HeaderSection";
-import PrimaryButton from "../components/common/PrimaryButton";
+import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
+import HeaderSection from "../components/ui/HeaderSection";
+import IconButton from "../components/ui/IconButton";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
@@ -143,17 +143,24 @@ function AdminLogin({
         <FieldError>{error}</FieldError>
 
         <div className="mt-6 flex flex-col gap-3">
-          <button
-            className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+          <IconButton
             disabled={!canSubmit}
+            icon={<LogIn size={16} strokeWidth={1.8} />}
+            showText="always"
+            tone="primary"
             type="submit"
           >
             Entrar
-          </button>
+          </IconButton>
 
-          <PrimaryButton to="/" variant="secondary">
+          <IconButton
+            icon={<Home size={16} strokeWidth={1.8} />}
+            showText="always"
+            to="/"
+            tone="secondary"
+          >
             Volver al inicio
-          </PrimaryButton>
+          </IconButton>
         </div>
       </form>
     </FormCard>
@@ -162,8 +169,8 @@ function AdminLogin({
 
 function AdminDashboard() {
   return (
-    <div className="mx-auto w-full max-w-4xl">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <div className="mx-auto w-full max-w-6xl">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {siteContent.admin.cards.map((card, index) => (
           <AnimatedInfoCard key={card.title} card={card} index={index} />
         ))}

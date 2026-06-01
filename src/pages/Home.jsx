@@ -1,7 +1,6 @@
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
-import AnimatedInfoCard from "../components/common/AnimatedInfoCard";
-import CtaSection from "../components/home/CtaSection";
+import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeroSection from "../components/home/HeroSection";
 import { siteContent } from "../config/siteContent";
 
@@ -19,8 +18,6 @@ export default function Home() {
           </div>
         </div>
       </CinematicSection>
-
-      <CtaSection />
     </CinematicPage>
   );
 }

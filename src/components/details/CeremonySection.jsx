@@ -1,7 +1,9 @@
 import CinematicSection from "../cinematic/CinematicSection";
-import HeaderSection from "../common/HeaderSection";
-import ImageCarousel from "../common/ImageCarousel";
+import HeaderSection from "../ui/HeaderSection";
+import ImageCarousel from "../ui/ImageCarousel";
+import IconButton from "../ui/IconButton";
 import { siteContent } from "../../config/siteContent";
+import { MapPin } from "lucide-react";
 
 export default function CeremonySection() {
   const { ceremony } = siteContent.details;
@@ -17,14 +19,15 @@ export default function CeremonySection() {
           <p className="text-eyebrow mt-4">{ceremony.address}</p>
 
           <div className="mt-4">
-            <a
+            <IconButton
               href={ceremony.mapUrl}
+              icon={<MapPin size={16} strokeWidth={1.8} />}
+              showText
               target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary"
+              tone="primary"
             >
               {ceremony.mapLabel}
-            </a>
+            </IconButton>
           </div>
         </HeaderSection>
 
@@ -37,3 +40,6 @@ export default function CeremonySection() {
     </CinematicSection>
   );
 }
+
+
+

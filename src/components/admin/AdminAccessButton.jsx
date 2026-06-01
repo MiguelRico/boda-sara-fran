@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { LayoutDashboard, LockKeyhole, LogOut, ShieldCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  LockKeyhole,
+  LogOut,
+  ShieldCheck,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import IconButton from "../ui/IconButton";
 import { ADMIN_AUTH_EVENT, ADMIN_SESSION_KEY } from "../../constants/admin";
 
 function getAdminAuthState() {
@@ -74,52 +80,54 @@ export default function AdminAccessButton() {
   };
 
   return (
-    <div
-      className="fixed right-3 top-3 z-50 sm:right-5 sm:top-5"
-      ref={menuRef}
-    >
-      <button
+    <div className="fixed right-3 top-3 z-50 sm:right-5 sm:top-5" ref={menuRef}>
+      <IconButton
         aria-expanded={isAuthenticated ? isOpen : undefined}
         aria-haspopup={isAuthenticated ? "menu" : undefined}
-        aria-label={isAuthenticated ? "Abrir menu admin" : "Acceso admin"}
-        className="group inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[var(--color-border-strong)] bg-white/70 px-3 text-[var(--color-accent-dark)] shadow-[0_18px_45px_rgba(52,69,49,0.12)] backdrop-blur-md transition-all duration-500 hover:-translate-y-0.5 hover:bg-white/90 sm:h-12 sm:px-4"
+        className="bg-white/70 shadow-[0_18px_45px_rgba(52,69,49,0.12)] backdrop-blur-md hover:bg-white/90"
+        icon={
+          isAuthenticated ? (
+            <ShieldCheck size={18} strokeWidth={1.8} />
+          ) : (
+            <LockKeyhole size={18} strokeWidth={1.8} />
+          )
+        }
+        label={isAuthenticated ? "Abrir menu admin" : "Acceso admin"}
         onClick={handleMainClick}
+        showText
         type="button"
       >
-        {isAuthenticated ? (
-          <ShieldCheck size={18} strokeWidth={1.8} />
-        ) : (
-          <LockKeyhole size={18} strokeWidth={1.8} />
-        )}
-        <span className="hidden text-[0.66rem] uppercase tracking-[0.2em] sm:inline">
-          Admin
-        </span>
-      </button>
+        Admin
+      </IconButton>
 
       {isAuthenticated && isOpen && (
         <div
           className="absolute right-0 mt-3 w-52 overflow-hidden rounded-[1.5rem] border border-[var(--color-border)] bg-white/90 p-2 shadow-[0_24px_70px_rgba(52,69,49,0.14)] backdrop-blur-md"
           role="menu"
         >
-          <button
-            className="flex w-full items-center gap-3 rounded-full px-4 py-3 text-left text-sm text-[var(--color-accent-dark)] transition-all duration-300 hover:bg-[var(--color-bg-soft)]"
+          <IconButton
+            className="w-full justify-start border-transparent bg-transparent shadow-none hover:bg-[var(--color-bg-soft)]"
+            icon={<LayoutDashboard size={16} strokeWidth={1.8} />}
+            label="Panel admin"
             onClick={handleNavigateAdmin}
             role="menuitem"
+            showText="always"
             type="button"
           >
-            <LayoutDashboard size={16} strokeWidth={1.8} />
             Panel admin
-          </button>
+          </IconButton>
 
-          <button
-            className="flex w-full items-center gap-3 rounded-full px-4 py-3 text-left text-sm text-[var(--color-muted)] transition-all duration-300 hover:bg-[var(--color-bg-soft)]"
+          <IconButton
+            className="w-full justify-start border-transparent bg-transparent shadow-none hover:bg-[var(--color-bg-soft)]"
+            icon={<LogOut size={16} strokeWidth={1.8} />}
+            label="Cerrar sesion"
             onClick={handleLogout}
             role="menuitem"
+            showText="always"
             type="button"
           >
-            <LogOut size={16} strokeWidth={1.8} />
             Cerrar sesion
-          </button>
+          </IconButton>
         </div>
       )}
     </div>

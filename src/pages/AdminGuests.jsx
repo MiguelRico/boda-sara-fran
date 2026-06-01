@@ -1,4 +1,9 @@
-import { useInView } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useReducedMotion,
+} from "framer-motion";
 import {
   useCallback,
   useEffect,
@@ -10,8 +15,9 @@ import { useRef } from "react";
 import { createPortal } from "react-dom";
 import { Navigate } from "react-router-dom";
 import {
-  AlertTriangle,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Download,
   Pencil,
   Plus,
@@ -26,33 +32,31 @@ import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import HeaderSection from "../components/common/HeaderSection";
-import IconButton from "../components/common/IconButton";
-import StatusNotice from "../components/common/StatusNotice";
-import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
-import GuestCard from "../components/rsvp/GuestCard";
-import RsvpStatusDialog from "../components/rsvp/RsvpStatusDialog";
-import Spinner from "../components/spinner/Spinner";
-import { createEmptyGuest, MAX_GUESTS } from "../constants/rsvp";
+import HeaderSection from "../components/ui/HeaderSection";
+import IconButton from "../components/ui/IconButton";
+import DeleteDialog from "../components/ui/DeleteDialog";
+import StatusDialog from "../components/ui/StatusDialog";
+import Spinner from "../components/ui/Spinner";
+import RsvpForm from "../forms/RsvpForm";
+import { MAX_GUESTS } from "../constants/rsvp";
+import { Confirmation } from "../models";
 import {
   deleteAdminGroup,
   findAllGroups,
   saveAdminGroup,
 } from "../services/rsvpService";
-import {
-  FieldError,
-  inputClassName,
-  Label,
-} from "../components/rsvp/FormPrimitives";
+import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
 import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
 import { normalizeAdminGroups } from "../utils/rsvpGroups";
 
-const pageSize = 8;
+const desktopPageSize = 8;
+const mobilePageSize = 1;
 const pageDataSwapDelay = 680;
 const pageRevealDelay = 160;
 const pageScrollDuration = 680;
 const pageScrollOffset = 12;
+const mobilePageHeightLockDelay = 560;
 const mobileGroupNameBaseFontSize = 30;
 const mobileGroupNameMinFontSize = 10;
 const mobileDetailBaseFontSize = 14;
@@ -61,7 +65,7 @@ const filters = [
   { value: "all", label: "Todos" },
   { value: "allergies", label: "Con alergias" },
   { value: "bus", label: "Con bus" },
-  { value: "review", label: "Revision" },
+  { value: "comments", label: "Con comentarios" },
 ];
 
 const emptyState = {
@@ -99,6 +103,7 @@ export default function AdminGuests() {
   const pageRevealTimeoutRef = useRef(null);
   const pageScrollStartFrameRef = useRef(null);
   const pageScrollCancelRef = useRef(null);
+  const initialLoadStartedRef = useRef(false);
   const guestsInView = useInView(guestsRef, {
     once: true,
     amount: 0.18,
@@ -109,6 +114,8 @@ export default function AdminGuests() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [pageDirection, setPageDirection] = useState(1);
+  const [isMobileList, setIsMobileList] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageLoadingMinHeight, setPageLoadingMinHeight] = useState(null);
   const [editingGroup, setEditingGroup] = useState(null);
@@ -142,6 +149,9 @@ export default function AdminGuests() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+    if (initialLoadStartedRef.current) return;
+
+    initialLoadStartedRef.current = true;
 
     const timeoutId = window.setTimeout(() => {
       loadGuests({ showLoading: false });
@@ -168,13 +178,33 @@ export default function AdminGuests() {
     };
   }, []);
 
-  const rows = useMemo(() => buildGroupRows(state.groups), [state.groups]);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateIsMobileList = () => setIsMobileList(mediaQuery.matches);
+
+    updateIsMobileList();
+    mediaQuery.addEventListener("change", updateIsMobileList);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateIsMobileList);
+    };
+  }, []);
+
+  const rows = useMemo(
+    () => Confirmation.toAdminRows(state.groups),
+    [state.groups],
+  );
   const visibleRows = useMemo(
-    () => filterRows(rows, query, filter),
+    () => Confirmation.filterAdminRows(rows, query, filter),
     [filter, query, rows],
   );
+  const pageSize = isMobileList ? mobilePageSize : desktopPageSize;
   const totalPages = Math.max(Math.ceil(visibleRows.length / pageSize), 1);
-  const pagedRows = visibleRows.slice((page - 1) * pageSize, page * pageSize);
+  const currentPage = Math.min(page, totalPages);
+  const pagedRows = visibleRows.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
   const pagedGroupCount = pagedRows.length;
   const pagedGuestCount = pagedRows.reduce(
     (total, row) => total + row.groupSize,
@@ -207,7 +237,7 @@ export default function AdminGuests() {
   const handlePageChange = (nextPage) => {
     const clampedPage = Math.min(Math.max(nextPage, 1), totalPages);
 
-    if (clampedPage === page || pageLoading) return;
+    if (clampedPage === currentPage || pageLoading) return;
 
     const tableCardElement = tableCardRef.current;
     const tableCardRect = tableCardElement?.getBoundingClientRect();
@@ -217,8 +247,29 @@ export default function AdminGuests() {
       ? Math.max(0, tableCardRect.top + window.scrollY - pageScrollOffset)
       : window.scrollY;
     const tableHeight = tableRect?.height || null;
+    const direction = clampedPage > currentPage ? 1 : -1;
 
     cancelPageLoading();
+
+    if (isMobileList) {
+      setPageLoadingMinHeight(tableHeight);
+      setPageDirection(direction);
+      setPage(clampedPage);
+      pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
+        pageScrollStartFrameRef.current = null;
+        pageScrollCancelRef.current = scrollToY(tableCardTop, {
+          duration: pageScrollDuration,
+        });
+      });
+      pageRevealTimeoutRef.current = window.setTimeout(() => {
+        setPageLoadingMinHeight(null);
+        pageRevealTimeoutRef.current = null;
+      }, mobilePageHeightLockDelay);
+
+      return;
+    }
+
+    setPageDirection(direction);
     setPageLoadingMinHeight(tableHeight);
     setPageLoading(true);
     pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
@@ -346,12 +397,6 @@ export default function AdminGuests() {
             />
           </CinematicStaggeredRevealItem>
 
-          {state.error && (
-            <CinematicStaggeredRevealItem index={1} isVisible={guestsInView}>
-              <StatusNotice tone="error">{state.error}</StatusNotice>
-            </CinematicStaggeredRevealItem>
-          )}
-
           <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
             <FiltersCard
               filter={filter}
@@ -371,53 +416,53 @@ export default function AdminGuests() {
 
           <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
             <section className="premium-card" ref={tableCardRef}>
-              <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="mb-5">
                 <div>
                   <p className="section-eyebrow mb-2">Invitados</p>
                   <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
                     Confirmaciones
                   </h2>
-                  <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-                    {pagedGroupCount}{" "}
-                    {pagedGroupCount === 1 ? "grupo" : "grupos"} en esta página
-                    · {pagedGuestCount}{" "}
-                    {pagedGuestCount === 1 ? "persona" : "personas"}
-                  </p>
-                </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <button
-                    className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!rows.length}
-                    onClick={() => downloadCsv(rows)}
-                    type="button"
-                  >
-                    <Download size={16} strokeWidth={1.8} />
-                    Exportar
-                  </button>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+                      {pagedGroupCount}{" "}
+                      {pagedGroupCount === 1 ? "grupo" : "grupos"} en esta
+                      página · {pagedGuestCount}{" "}
+                      {pagedGuestCount === 1 ? "persona" : "personas"}
+                    </p>
 
-                  <button
-                    className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={state.loading}
-                    onClick={loadGuests}
-                    type="button"
-                  >
-                    <RefreshCw
-                      className={state.loading ? "animate-spin" : ""}
-                      size={16}
-                      strokeWidth={1.8}
-                    />
-                    Actualizar
-                  </button>
+                    <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
+                      <IconButton
+                        className="!w-full sm:!w-10 [var(--color-accent)]"
+                        disabled={!rows.length}
+                        label="Exportar"
+                        onClick={() => downloadCsv(rows)}
+                      >
+                        <Download size={16} strokeWidth={1.8} />
+                      </IconButton>
 
-                  <button
-                    className="btn-primary gap-2"
-                    onClick={() => setEditingGroup(createDraftGroup())}
-                    type="button"
-                  >
-                    <Plus size={16} strokeWidth={1.8} />
-                    Crear
-                  </button>
+                      <IconButton
+                        className="!w-full sm:!w-10 [var(--color-accent)]"
+                        disabled={state.loading}
+                        label="Actualizar"
+                        onClick={loadGuests}
+                      >
+                        <RefreshCw
+                          className={state.loading ? "animate-spin" : ""}
+                          size={16}
+                          strokeWidth={1.8}
+                        />
+                      </IconButton>
+
+                      <IconButton
+                        className="!w-full border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] sm:!w-10"
+                        label="Crear"
+                        onClick={() => setEditingGroup(createDraftGroup())}
+                      >
+                        <Plus size={18} strokeWidth={2.4} />
+                      </IconButton>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -450,10 +495,12 @@ export default function AdminGuests() {
                         />
 
                         <MobileList
+                          direction={pageDirection}
                           onDelete={setDeleteTarget}
                           onEdit={(group) =>
                             setEditingGroup(createDraftGroup(group))
                           }
+                          page={currentPage}
                           rows={pagedRows}
                         />
 
@@ -468,7 +515,7 @@ export default function AdminGuests() {
                               Sin resultados
                             </p>
                             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-                        Prueba con otra búsqueda o cambia el filtro
+                              Prueba con otra búsqueda o cambia el filtro
                               seleccionado.
                             </p>
                           </div>
@@ -483,10 +530,11 @@ export default function AdminGuests() {
                     </div>
 
                     <Pagination
-                      page={page}
+                      isMobileList={isMobileList}
+                      page={currentPage}
                       totalPages={totalPages}
-                      onNext={() => handlePageChange(page + 1)}
-                      onPrev={() => handlePageChange(page - 1)}
+                      onNext={() => handlePageChange(currentPage + 1)}
+                      onPrev={() => handlePageChange(currentPage - 1)}
                     />
                   </>
                 )}
@@ -506,13 +554,20 @@ export default function AdminGuests() {
 
       {deleteTarget && (
         <DeleteDialog
-          group={deleteTarget}
+          message={
+            <>
+              Se eliminará el grupo asociado a{" "}
+              {deleteTarget.email || deleteTarget.groupId}. Esta acción no se
+              puede deshacer desde el panel.
+            </>
+          }
           onCancel={() => setDeleteTarget(null)}
           onConfirm={handleDeleteGroup}
+          title="Eliminar confirmación"
         />
       )}
 
-      <RsvpStatusDialog
+      <StatusDialog
         closeText={popup.closeText}
         closeTo={popup.closeTo}
         eyebrow={popup.eyebrow}
@@ -521,6 +576,15 @@ export default function AdminGuests() {
         open={popup.open}
         title={popup.title}
         type={popup.type}
+      />
+
+      <StatusDialog
+        eyebrow="Aviso"
+        message={state.error}
+        onClose={() => setState((current) => ({ ...current, error: "" }))}
+        open={Boolean(state.error)}
+        title="Ha ocurrido un problema"
+        type="error"
       />
     </CinematicPage>
   );
@@ -579,11 +643,12 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
 function DesktopTable({ onDelete, onEdit, rows }) {
   return (
     <div className="hidden overflow-x-auto rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 md:block">
-      <table className="w-full min-w-[920px] border-collapse text-left">
+      <table className="w-full min-w-[1040px] border-collapse text-left">
         <thead>
           <tr className="border-b border-[var(--color-border)] text-xs uppercase tracking-[0.16em] text-[var(--color-accent)]">
             <th className="px-5 py-4 font-medium">Grupo</th>
             <th className="px-5 py-4 font-medium">Contacto</th>
+            <th className="px-5 py-4 font-medium">Mesa</th>
             <th className="px-5 py-4 font-medium">Alergias</th>
             <th className="px-5 py-4 font-medium">Transporte</th>
             <th className="px-5 py-4 text-right font-medium">Acciones</th>
@@ -606,6 +671,9 @@ function DesktopTable({ onDelete, onEdit, rows }) {
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
                 <p>{row.email || "-"}</p>
                 <p className="mt-1">{row.phone || "-"}</p>
+              </td>
+              <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
+                {row.assignmentText || "-"}
               </td>
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
                 {row.allergyText}
@@ -635,8 +703,11 @@ function DesktopTable({ onDelete, onEdit, rows }) {
   );
 }
 
-function MobileList({ onDelete, onEdit, rows }) {
+function MobileList({ direction, onDelete, onEdit, page, rows }) {
+  const reduceMotion = useReducedMotion();
+  const cardRef = useRef(null);
   const groupNameRefs = useRef([]);
+  const [cardMinHeight, setCardMinHeight] = useState(null);
   const [groupNameFontSize, setGroupNameFontSize] = useState(
     mobileGroupNameBaseFontSize,
   );
@@ -698,57 +769,134 @@ function MobileList({ onDelete, onEdit, rows }) {
     };
   }, [rows]);
 
-  return (
-    <div className="space-y-4 md:hidden">
-      {rows.map((row, index) => (
-        <article
-          className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4"
-          key={row.rowId}
-        >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 flex-1">
-              <p
-                className="overflow-hidden whitespace-nowrap font-serif leading-none text-[var(--color-accent-dark)]"
-                ref={(node) => {
-                  groupNameRefs.current[index] = node;
-                }}
-                style={{ fontSize: `${groupNameFontSize}px` }}
-              >
-                {row.groupName || "Grupo sin nombre"}
-              </p>
-              <p
-                className="mt-2 break-words text-[var(--color-muted)] [overflow-wrap:anywhere]"
-                style={detailTextStyle}
-              >
-                {row.email || "-"}
-              </p>
-              <p
-                className="mt-1 hidden break-words text-[var(--color-muted)] [overflow-wrap:anywhere] sm:block"
-                style={detailTextStyle}
-              >
-                {row.phone || "-"}
-              </p>
-              <p
-                className="mt-2 hidden text-[var(--color-muted)] sm:block"
-                style={detailTextStyle}
-              >
-                {row.groupSize} {row.groupSize === 1 ? "persona" : "personas"}
-              </p>
+  useLayoutEffect(() => {
+    const node = cardRef.current;
 
-              <div className="mt-3 flex items-center justify-between gap-3 sm:hidden">
-                <div
-                  className="min-w-0 text-[var(--color-muted)]"
+    if (!node) return undefined;
+
+    const updateCardHeight = () => {
+      setCardMinHeight((currentHeight) => {
+        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+        const stableHeight = Math.max(currentHeight || 0, nextHeight);
+
+        return Math.abs((currentHeight || 0) - stableHeight) < 1
+          ? currentHeight
+          : stableHeight;
+      });
+    };
+
+    updateCardHeight();
+
+    if (!window.ResizeObserver) {
+      window.addEventListener("resize", updateCardHeight);
+
+      return () => window.removeEventListener("resize", updateCardHeight);
+    }
+
+    const resizeObserver = new ResizeObserver(updateCardHeight);
+
+    resizeObserver.observe(node);
+
+    return () => resizeObserver.disconnect();
+  }, [page, rows]);
+
+  const variants = reduceMotion
+    ? {
+        enter: { opacity: 0 },
+        center: { opacity: 1 },
+        exit: { opacity: 0 },
+      }
+    : {
+        enter: (pageDirection) => ({
+          opacity: 0,
+          x: pageDirection > 0 ? 72 : -72,
+          filter: "blur(6px)",
+        }),
+        center: {
+          opacity: 1,
+          x: 0,
+          filter: "blur(0px)",
+        },
+        exit: (pageDirection) => ({
+          opacity: 0,
+          x: pageDirection > 0 ? -72 : 72,
+          filter: "blur(6px)",
+        }),
+      };
+
+  return (
+    <div
+      className="relative overflow-hidden md:hidden"
+      style={cardMinHeight ? { height: `${cardMinHeight}px` } : undefined}
+    >
+      <AnimatePresence custom={direction} initial={false}>
+        {rows.map((row, index) => (
+          <motion.article
+            animate="center"
+            className="absolute inset-x-0 top-0 rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 shadow-[0_18px_45px_rgba(52,69,49,0.06)]"
+            custom={direction}
+            exit="exit"
+            initial="enter"
+            key={`${row.rowId}-${page}`}
+            ref={cardRef}
+            transition={{
+              duration: reduceMotion ? 0.18 : 0.48,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            variants={variants}
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1">
+                <p
+                  className="overflow-hidden whitespace-nowrap font-serif leading-none text-[var(--color-accent-dark)]"
+                  ref={(node) => {
+                    groupNameRefs.current[index] = node;
+                  }}
+                  style={{ fontSize: `${groupNameFontSize}px` }}
+                >
+                  {row.groupName || "Grupo sin nombre"}
+                </p>
+                <p
+                  className="mt-2 break-words text-[var(--color-muted)] [overflow-wrap:anywhere]"
                   style={detailTextStyle}
                 >
-                  <p className="break-words [overflow-wrap:anywhere]">
-                    {row.phone || "-"}
-                  </p>
-                  <p className="mt-1">
-                    {row.groupSize}{" "}
-                    {row.groupSize === 1 ? "persona" : "personas"}
-                  </p>
-                </div>
+                  {row.email || "-"}
+                </p>
+                <p
+                  className="mt-1 hidden break-words text-[var(--color-muted)] [overflow-wrap:anywhere] sm:block"
+                  style={detailTextStyle}
+                >
+                  {row.phone || "-"}
+                </p>
+                <p
+                  className="mt-2 hidden text-[var(--color-muted)] sm:block"
+                  style={detailTextStyle}
+                >
+                  {row.groupSize} {row.groupSize === 1 ? "persona" : "personas"}
+                </p>
 
+                <div className="mt-3 flex items-center justify-between gap-3 sm:hidden">
+                  <div
+                    className="min-w-0 text-[var(--color-muted)]"
+                    style={detailTextStyle}
+                  >
+                    <p className="break-words [overflow-wrap:anywhere]">
+                      {row.phone || "-"}
+                    </p>
+                    <p className="mt-1">
+                      {row.groupSize}{" "}
+                      {row.groupSize === 1 ? "persona" : "personas"}
+                    </p>
+                  </div>
+
+                  <MobileRowActions
+                    onDelete={() => onDelete(row.group)}
+                    onEdit={() => onEdit(row.group)}
+                  />
+                </div>
+              </div>
+
+              <div className="hidden sm:block">
                 <MobileRowActions
                   onDelete={() => onDelete(row.group)}
                   onEdit={() => onEdit(row.group)}
@@ -756,20 +904,14 @@ function MobileList({ onDelete, onEdit, rows }) {
               </div>
             </div>
 
-            <div className="hidden sm:block">
-              <MobileRowActions
-                onDelete={() => onDelete(row.group)}
-                onEdit={() => onEdit(row.group)}
-              />
+            <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
+              <InfoLine label="Mesa" value={row.assignmentText || "-"} />
+              <InfoLine label="Alergias" value={row.allergyText} />
+              <InfoLine label="Transporte" value={row.transportText} />
             </div>
-          </div>
-
-          <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
-            <InfoLine label="Alergias" value={row.allergyText} />
-            <InfoLine label="Transporte" value={row.transportText} />
-          </div>
-        </article>
-      ))}
+          </motion.article>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }
@@ -835,70 +977,39 @@ function GroupEditor({ group, onClose, onSave }) {
   const [draft, setDraft] = useState(group);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const renderFormItem = (index, children) => (
+    <CinematicStaggeredRevealItem index={index} isVisible key={index}>
+      {children}
+    </CinematicStaggeredRevealItem>
+  );
 
   useViewportScrollLock(true);
 
   const updateContact = (field, value) => {
-    setDraft((current) => ({
-      ...current,
-      [field]: value,
-      groupId: field === "email" ? value : current.groupId,
-    }));
+    setDraft((current) =>
+      Confirmation.withUpdatedContact(current, field, value),
+    );
   };
 
   const updateGuest = (index, field, value) => {
-    setDraft((current) => {
-      const guests = [...current.guests];
-
-      if (field === "allergies") {
-        const allergies = guests[index].allergies || [];
-        const exists = allergies.includes(value);
-
-        guests[index] = {
-          ...guests[index],
-          allergies: exists
-            ? allergies.filter((item) => item !== value)
-            : [...allergies, value],
-        };
-      } else {
-        guests[index] = {
-          ...guests[index],
-          [field]: value,
-        };
-      }
-
-      return {
-        ...current,
-        guests,
-      };
-    });
+    setDraft((current) =>
+      Confirmation.withUpdatedGuest(current, index, field, value),
+    );
   };
 
   const addGuest = () => {
-    setDraft((current) => {
-      if (current.guests.length >= MAX_GUESTS) return current;
-
-      return {
-        ...current,
-        guests: [...current.guests, createEmptyGuest()],
-      };
-    });
+    setDraft((current) =>
+      Confirmation.withAddedGuest(current, { maxGuests: MAX_GUESTS }),
+    );
   };
 
   const removeGuest = (index) => {
-    setDraft((current) => {
-      if (current.guests.length === 1) return current;
-
-      return {
-        ...current,
-        guests: current.guests.filter((_, itemIndex) => itemIndex !== index),
-      };
-    });
+    setDraft((current) => Confirmation.withRemovedGuest(current, index));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const validationError = validateGroup(draft);
+    const validationError = Confirmation.validateForAdmin(draft);
 
     if (validationError) {
       setError(validationError);
@@ -917,11 +1028,10 @@ function GroupEditor({ group, onClose, onSave }) {
 
   const dialog = (
     <div className="rsvp-dialog-overlay">
-      <form
+      <div
         aria-labelledby="group-editor-title"
         aria-modal="true"
         className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-7"
-        onSubmit={handleSubmit}
         role="dialog"
       >
         <div className="mb-6 flex items-start justify-between gap-4">
@@ -940,109 +1050,26 @@ function GroupEditor({ group, onClose, onSave }) {
           </IconButton>
         </div>
 
-        <ContactDetailsCard
+        <RsvpForm
+          addText="Invitado"
+          cancelText="Cancelar"
           contact={draft}
-          disableFilledFields={true}
+          deleteContextText="editor"
+          disableContactFields={false}
           errors={{}}
+          formError={error}
+          guests={draft.guests}
+          loading={saving}
+          onAddGuest={addGuest}
+          onCancel={onClose}
           onContactChange={updateContact}
+          onGuestChange={updateGuest}
+          onRemoveGuest={removeGuest}
+          onSubmit={handleSubmit}
+          renderItem={renderFormItem}
+          submitText="Guardar"
+          variant="admin"
         />
-
-        <div className="mt-6 space-y-4">
-          {draft.guests.map((guest, index) => (
-            <GuestCard
-              canRemove={draft.guests.length > 1}
-              errors={{}}
-              guest={guest}
-              index={index}
-              key={index}
-              onGuestChange={updateGuest}
-              onRemoveGuest={removeGuest}
-            />
-          ))}
-        </div>
-
-        <FieldError>{error}</FieldError>
-
-        <div className="mt-6 flex flex-col gap-3 sm:grid sm:grid-cols-3">
-          <button
-            className="btn-secondary gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={draft.guests.length >= MAX_GUESTS || saving}
-            onClick={addGuest}
-            type="button"
-          >
-            <Plus size={16} strokeWidth={1.8} />
-            Invitado
-          </button>
-
-          <button
-            className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={saving}
-            type="submit"
-          >
-            Guardar
-          </button>
-          <button
-            className="btn-secondary"
-            disabled={saving}
-            onClick={onClose}
-            type="button"
-          >
-            Cancelar
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-
-  return createPortal(dialog, document.body);
-}
-
-function DeleteDialog({ group, onCancel, onConfirm }) {
-  useViewportScrollLock(true);
-
-  const dialog = (
-    <div className="rsvp-dialog-overlay">
-      <div
-        aria-describedby="delete-dialog-message"
-        aria-labelledby="delete-dialog-title"
-        aria-modal="true"
-        className="premium-card rsvp-dialog-card"
-        role="alertdialog"
-      >
-        <AlertTriangle
-          className="mx-auto text-red-500"
-          size={30}
-          strokeWidth={1.7}
-        />
-        <h2
-          className="mt-4 font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
-          id="delete-dialog-title"
-        >
-          Eliminar confirmación
-        </h2>
-        <p
-          className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]"
-          id="delete-dialog-message"
-        >
-          Se eliminara el grupo asociado a {group.email || group.groupId}. Esta
-          acción no se puede deshacer desde el panel.
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <button
-            className="btn-secondary flex-1"
-            onClick={onCancel}
-            type="button"
-          >
-            Cancelar
-          </button>
-          <button
-            className="btn-primary flex-1 bg-red-500"
-            onClick={onConfirm}
-            type="button"
-          >
-            Eliminar
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -1050,30 +1077,38 @@ function DeleteDialog({ group, onCancel, onConfirm }) {
   return createPortal(dialog, document.body);
 }
 
-function Pagination({ onNext, onPrev, page, totalPages }) {
+function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
   return (
     <div className="mt-5 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
       <p className="text-center">
-        Página {page} de {totalPages}
+        {isMobileList ? "Confirmación" : "Página"} {page} de {totalPages}
       </p>
 
-      <div className="flex gap-3">
-        <button
-          className="btn-secondary disabled:cursor-not-allowed disabled:opacity-50"
+      <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
+        <IconButton
+          className="w-full sm:w-auto"
           disabled={page === 1}
+          icon={<ChevronLeft size={16} strokeWidth={1.8} />}
+          label="Anterior"
           onClick={onPrev}
+          showText
+          tone="secondary"
           type="button"
         >
           Anterior
-        </button>
-        <button
-          className="btn-secondary disabled:cursor-not-allowed disabled:opacity-50"
+        </IconButton>
+        <IconButton
+          className="w-full sm:w-auto"
           disabled={page === totalPages}
+          icon={<ChevronRight size={16} strokeWidth={1.8} />}
+          label="Siguiente"
           onClick={onNext}
+          showText
+          tone="secondary"
           type="button"
         >
           Siguiente
-        </button>
+        </IconButton>
       </div>
     </div>
   );
@@ -1106,156 +1141,12 @@ function GuestsSkeleton() {
   );
 }
 
-function buildGroupRows(groups) {
-  return groups.map((group, index) => {
-    const guests = Array.isArray(group.guests) ? group.guests : [];
-
-    return {
-      allergyText: buildGroupRateText(
-        guests.filter((guest) => buildAllergyText(guest) !== "No").length,
-        guests.length,
-      ),
-      commentsText: buildGroupCommentsText(guests),
-      email: group.email,
-      group,
-      groupId: group.groupId || group.email,
-      groupName: group.groupName,
-      groupSize: guests.length,
-      guestNames: buildGuestNames(guests),
-      guests,
-      hasAllergies: guests.some((guest) => buildAllergyText(guest) !== "No"),
-      needsReview: guests.some(hasReview),
-      phone: group.phone,
-      rowId: `${group.groupId || group.email || "group"}-${index}`,
-      transportText: buildGroupRateText(
-        guests.filter(hasBus).length,
-        guests.length,
-      ),
-      usesBus: guests.some(hasBus),
-    };
-  });
-}
-
-function filterRows(rows, query, filter) {
-  const normalizedQuery = normalizeText(query);
-
-  return rows.filter((row) => {
-    const matchesQuery =
-      !normalizedQuery ||
-      normalizeText(
-        `${row.email} ${row.phone} ${row.groupName} ${row.guestNames}`,
-      ).includes(normalizedQuery);
-    const matchesFilter =
-      filter === "all" ||
-      (filter === "allergies" && row.hasAllergies) ||
-      (filter === "bus" && row.usesBus) ||
-      (filter === "review" && row.needsReview);
-
-    return matchesQuery && matchesFilter;
-  });
-}
-
 function createDraftGroup(group) {
   if (!group) {
-    return {
-      groupId: "",
-      email: "",
-      groupName: "",
-      phone: "",
-      guests: [createEmptyGuest()],
-    };
+    return Confirmation.createEmpty();
   }
 
-  return {
-    groupId: group.groupId || group.email || "",
-    email: group.email || "",
-    groupName: group.groupName || "",
-    phone: group.phone || "",
-    guests: group.guests.map((guest) => ({
-      ...createEmptyGuest(),
-      ...guest,
-      allergies: Array.isArray(guest.allergies) ? guest.allergies : [],
-      busNeeded: hasBus(guest),
-    })),
-  };
-}
-
-function validateGroup(group) {
-  if (!group.email.trim()) return "El email es obligatorio.";
-  if (!group.groupName?.trim()) return "El nombre de grupo es obligatorio.";
-  if (!group.phone.trim()) return "El teléfono es obligatorio.";
-  if (!group.guests.length) return "Debe haber al menos un invitado.";
-
-  const invalidGuest = group.guests.find(
-    (guest) => !guest.name.trim() || !guest.lastname.trim(),
-  );
-
-  if (invalidGuest) return "Todos los invitados necesitan nombre y apellidos.";
-
-  return "";
-}
-
-function buildAllergyText(guest) {
-  const values = [...(guest.allergies || [])];
-
-  if (guest.otherAllergies?.trim()) {
-    values.push(guest.otherAllergies.trim());
-  }
-
-  return values.length ? values.join(", ") : "No";
-}
-
-function buildGuestNames(guests) {
-  if (!guests.length) return "Sin invitados";
-
-  return guests
-    .map((guest, index) =>
-      `${guest.name || `Invitado ${index + 1}`} ${guest.lastname || ""}`.trim(),
-    )
-    .join(", ");
-}
-
-function buildGroupCommentsText(guests) {
-  const values = guests
-    .map((guest, index) => {
-      if (!guest.comments?.trim()) return "";
-
-      const name =
-        `${guest.name || `Invitado ${index + 1}`} ${guest.lastname || ""}`.trim();
-
-      return `${name}: ${guest.comments.trim()}`;
-    })
-    .filter(Boolean);
-
-  return values.length ? values.join(" | ") : "";
-}
-
-function buildGroupRateText(value, total) {
-  return `${value} de ${total} personas`;
-}
-
-function hasBus(guest) {
-  return Boolean(
-    guest.busNeeded ||
-    (guest.outboundBus && guest.outboundBus !== "No") ||
-    (guest.returnBus && guest.returnBus !== "No"),
-  );
-}
-
-function hasReview(guest) {
-  return Boolean(
-    guest.otherAllergies?.trim() ||
-    guest.comments?.trim() ||
-    (hasBus(guest) && (!guest.outboundBus || !guest.returnBus)),
-  );
-}
-
-function normalizeText(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
+  return Confirmation.normalize(group);
 }
 
 function downloadCsv(rows) {
@@ -1264,6 +1155,7 @@ function downloadCsv(rows) {
     "teléfono",
     "nombre_grupo",
     "total_invitados",
+    "mesa_menu_asiento",
     "alergias",
     "transporte",
     "comentarios",
@@ -1274,6 +1166,7 @@ function downloadCsv(rows) {
       row.phone,
       row.groupName,
       row.groupSize,
+      row.assignmentText,
       row.allergyText,
       row.transportText,
       row.commentsText,

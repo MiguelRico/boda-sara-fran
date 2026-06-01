@@ -1,4 +1,5 @@
-import PrimaryButton from "../common/PrimaryButton";
+import IconButton from "../ui/IconButton";
+import { Home, Search } from "lucide-react";
 import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 
 export default function SearchInvitationCard({
@@ -35,18 +36,27 @@ export default function SearchInvitationCard({
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row">
-        <button
+        <IconButton
+          className="flex-1"
+          icon={<Search size={16} strokeWidth={1.8} />}
+          showText="always"
+          tone="primary"
           type="button"
           onClick={onSearchInvitation}
           disabled={loading}
-          className="btn-primary flex-1 disabled:opacity-50"
         >
           Buscar mi confirmación
-        </button>
+        </IconButton>
 
-        <PrimaryButton to="/" variant="secondary">
+        <IconButton
+          className="flex-1"
+          icon={<Home size={16} strokeWidth={1.8} />}
+          showText="always"
+          to="/"
+          tone="secondary"
+        >
           Volver al inicio
-        </PrimaryButton>
+        </IconButton>
       </div>
     </FormCard>
   );

@@ -1,5 +1,5 @@
 import CinematicSection from "../cinematic/CinematicSection";
-import HeaderSection from "../common/HeaderSection";
+import HeaderSection from "../ui/HeaderSection";
 import { siteContent } from "../../config/siteContent";
 import TransportCard from "./transport/TransportCard";
 
@@ -24,3 +24,4 @@ export default function TransportSection() {
     </CinematicSection>
   );
 }
+

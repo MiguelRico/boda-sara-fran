@@ -9,6 +9,7 @@ import RsvpEdit from "../pages/RsvpEdit";
 import Admin from "../pages/Admin";
 import AdminStats from "../pages/AdminStats";
 import AdminGuests from "../pages/AdminGuests";
+import AdminTables from "../pages/AdminTables";
 
 export const router = createBrowserRouter([
   {
@@ -46,6 +47,10 @@ export const router = createBrowserRouter([
       {
         path: "admin/guests",
         element: <AdminGuests />,
+      },
+      {
+        path: "admin/tables",
+        element: <AdminTables />,
       },
     ],
   },

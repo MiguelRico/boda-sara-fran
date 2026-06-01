@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import AdminAccessButton from "../components/admin/AdminAccessButton";
+import HelpAccessButton from "../components/help/HelpAccessButton";
 import ScrollManager from "../components/ui/ScrollManager";
 
 export default function MainLayout() {
@@ -10,6 +11,7 @@ export default function MainLayout() {
 
   return (
     <div className="app-shell">
+      <HelpAccessButton />
       <AdminAccessButton />
 
       <AnimatePresence mode="wait">

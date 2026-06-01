@@ -103,30 +103,6 @@ body {
     transform: translateY(-4px);
   }
 
-  .btn-primary {
-    @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-sans text-[0.68rem] uppercase tracking-[0.22em] transition-all duration-500 sm:text-xs;
-    background: var(--color-accent);
-    color: white;
-    box-shadow: var(--shadow-button);
-  }
-
-  .btn-primary:hover {
-    background: var(--color-accent-dark);
-    transform: translateY(-2px);
-  }
-
-  .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-full border px-6 py-3 font-sans text-[0.68rem] uppercase tracking-[0.22em] transition-all duration-500 sm:text-xs;
-    border-color: var(--color-border-strong);
-    color: var(--color-muted);
-    background: rgba(255, 255, 255, 0.4);
-  }
-
-  .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.75);
-    transform: translateY(-2px);
-  }
-
   .surface-soft {
     background: var(--color-bg-soft);
   }

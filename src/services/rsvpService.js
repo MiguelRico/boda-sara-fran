@@ -1,7 +1,22 @@
-const getRsvpApiUrl = () => import.meta.env.VITE_RSVP_API_URL;
+import { Confirmation } from "../models";
 
-const requestJsonp = (params) =>
-  new Promise((resolve, reject) => {
+const getRsvpApiUrl = () => import.meta.env.VITE_RSVP_API_URL;
+const inFlightJsonpRequests = new Map();
+
+const createRequestKey = (params) =>
+  JSON.stringify(
+    Object.entries(params)
+      .filter(([, value]) => value !== undefined && value !== null && value !== "")
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey)),
+  );
+
+const requestJsonp = (params) => {
+  const requestKey = createRequestKey(params);
+  const inFlightRequest = inFlightJsonpRequests.get(requestKey);
+
+  if (inFlightRequest) return inFlightRequest;
+
+  const request = new Promise((resolve, reject) => {
     const callbackName = `rsvpCallback_${Date.now()}_${Math.random()
       .toString(36)
       .slice(2)}`;
@@ -37,7 +52,14 @@ const requestJsonp = (params) =>
     };
     script.src = url.toString();
     document.body.appendChild(script);
+  }).finally(() => {
+    inFlightJsonpRequests.delete(requestKey);
   });
+
+  inFlightJsonpRequests.set(requestKey, request);
+
+  return request;
+};
 
 const sendToRsvpApi = async (payload) => {
   await fetch(getRsvpApiUrl(), {
@@ -68,21 +90,31 @@ export const findAllGroups = async ({ password } = {}) => {
   });
 };
 
+export const findAllTables = async ({ password } = {}) => {
+  return await requestJsonp({
+    action: "tables-list",
+    password,
+  });
+};
+
 export const saveGroup = async (payload) => {
+  const confirmation = Confirmation.normalize(payload);
+
   await sendToRsvpApi({
-    ...payload,
+    ...confirmation,
     action: "save",
   });
 
   return {
     success: true,
-    email: payload.email,
+    email: confirmation.email,
   };
 };
 
 export const saveAdminGroup = async ({ group, password }) => {
+  const confirmation = Confirmation.normalize(group);
   const payload = {
-    ...group,
+    ...confirmation,
     action: "save",
     password,
   };
@@ -91,7 +123,20 @@ export const saveAdminGroup = async ({ group, password }) => {
 
   return {
     success: true,
-    email: group.email,
+    email: confirmation.email,
+  };
+};
+
+export const saveAdminTables = async ({ password, tables }) => {
+  await sendToRsvpApi({
+    action: "tables-save",
+    password,
+    tables,
+  });
+
+  return {
+    success: true,
+    tables,
   };
 };
 

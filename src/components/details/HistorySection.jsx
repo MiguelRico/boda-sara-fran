@@ -1,6 +1,6 @@
 import CinematicSection from "../cinematic/CinematicSection";
-import HeaderSection from "../common/HeaderSection";
-import ImageCarousel from "../common/ImageCarousel";
+import HeaderSection from "../ui/HeaderSection";
+import ImageCarousel from "../ui/ImageCarousel";
 import { siteContent } from "../../config/siteContent";
 
 export default function HistorySection() {
@@ -26,3 +26,4 @@ export default function HistorySection() {
     </CinematicSection>
   );
 }
+

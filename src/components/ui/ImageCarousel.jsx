@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import IconButton from "./IconButton";
 
 export default function ImageCarousel({
   images = [],
@@ -64,39 +66,33 @@ export default function ImageCarousel({
 
           {showControls && (
             <>
-              <button
-                type="button"
-                onClick={goToPrevious}
-                aria-label="Imagen anterior"
+              <IconButton
                 className="
                   absolute left-3 top-1/2 z-10
-                  flex h-10 w-10 -translate-y-1/2 items-center justify-center
-                  rounded-full border border-white/50 bg-white/70
+                  h-10 w-10 -translate-y-1/2 border-white/50 bg-white/70
                   text-[var(--color-accent-dark)] backdrop-blur-md
-                  transition-all duration-300
                   hover:scale-105 hover:bg-white
                   sm:left-5 sm:h-12 sm:w-12
                 "
-              >
-                &lsaquo;
-              </button>
-
-              <button
+                icon={<ChevronLeft size={18} strokeWidth={1.8} />}
+                label="Imagen anterior"
+                onClick={goToPrevious}
                 type="button"
-                onClick={goToNext}
-                aria-label="Imagen siguiente"
+              />
+
+              <IconButton
                 className="
                   absolute right-3 top-1/2 z-10
-                  flex h-10 w-10 -translate-y-1/2 items-center justify-center
-                  rounded-full border border-white/50 bg-white/70
+                  h-10 w-10 -translate-y-1/2 border-white/50 bg-white/70
                   text-[var(--color-accent)] backdrop-blur-md
-                  transition-all duration-300
                   hover:scale-105 hover:bg-white
                   sm:right-5 sm:h-12 sm:w-12
                 "
-              >
-                &rsaquo;
-              </button>
+                icon={<ChevronRight size={18} strokeWidth={1.8} />}
+                label="Imagen siguiente"
+                onClick={goToNext}
+                type="button"
+              />
             </>
           )}
 
@@ -122,19 +118,20 @@ export default function ImageCarousel({
       {showControls && (
         <div className="mt-6 flex items-center justify-center gap-3">
           {images.map((image, index) => (
-            <button
+            <IconButton
               key={image.src}
-              type="button"
-              onClick={() => setCurrentIndex(index)}
-              aria-label={`Ir a imagen ${index + 1}`}
               className={`
-                h-2.5 rounded-full transition-all duration-500
+                !h-2.5 min-h-0 border-0 p-0 shadow-none hover:translate-y-0
                 ${
                   index === currentIndex
-                    ? "w-8 bg-[var(--color-accent-dark)]"
-                    : "w-2.5 bg-[var(--color-accent)]"
+                    ? "!w-8 bg-[var(--color-accent-dark)]"
+                    : "!w-2.5 bg-[var(--color-accent)]"
                 }
               `}
+              icon={<span className="sr-only">Imagen {index + 1}</span>}
+              label={`Ir a imagen ${index + 1}`}
+              onClick={() => setCurrentIndex(index)}
+              type="button"
             />
           ))}
         </div>
