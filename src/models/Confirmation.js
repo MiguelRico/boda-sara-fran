@@ -167,7 +167,7 @@ export const Confirmation = {
   },
 
   getGroupRateText(value, total) {
-    return `${value} de ${total} personas`;
+    return `${value} personas de ${total}`;
   },
 
   getAllergyText(confirmation) {
@@ -184,6 +184,24 @@ export const Confirmation = {
 
     return Confirmation.getGroupRateText(
       guests.filter(Guest.usesBus).length,
+      guests.length,
+    );
+  },
+
+  getMenuText(confirmation, menu) {
+    const { guests } = Confirmation.normalize(confirmation);
+
+    return Confirmation.getGroupRateText(
+      guests.filter((guest) => guest.menu === menu).length,
+      guests.length,
+    );
+  },
+
+  getCommentsCountText(confirmation) {
+    const { guests } = Confirmation.normalize(confirmation);
+
+    return Confirmation.getGroupRateText(
+      guests.filter(Guest.hasComments).length,
       guests.length,
     );
   },
@@ -271,8 +289,11 @@ export const Confirmation = {
     return {
       allergyText: Confirmation.getAllergyText(normalizedConfirmation),
       assignmentText: Confirmation.getAssignmentText(normalizedConfirmation),
+      commentsCountText:
+        Confirmation.getCommentsCountText(normalizedConfirmation),
       commentsText: Confirmation.getCommentsText(normalizedConfirmation),
       email: normalizedConfirmation.email,
+      fishText: Confirmation.getMenuText(normalizedConfirmation, "Pescado"),
       group: normalizedConfirmation,
       groupName: normalizedConfirmation.groupName,
       groupSize: Confirmation.getGuestCount(normalizedConfirmation),
@@ -283,6 +304,7 @@ export const Confirmation = {
       needsReview: Confirmation.needsReview(normalizedConfirmation),
       phone: normalizedConfirmation.phone,
       rowId: `${normalizedConfirmation.groupName || "group"}-${index}`,
+      meatText: Confirmation.getMenuText(normalizedConfirmation, "Carne"),
       transportText: Confirmation.getTransportText(normalizedConfirmation),
       usesBus: Confirmation.usesBus(normalizedConfirmation),
     };

@@ -6,6 +6,15 @@ export default function ContactDetailsCard({
   errors,
   onContactChange,
 }) {
+  const disabledFields =
+    typeof disableFilledFields === "object"
+      ? disableFilledFields
+      : {
+          email: disableFilledFields,
+          groupName: disableFilledFields,
+          phone: disableFilledFields,
+        };
+
   return (
     <FormCard>
       <p className="section-eyebrow mb-4">Contacto</p>
@@ -26,7 +35,7 @@ export default function ContactDetailsCard({
             }
             className={inputClassName}
             placeholder="Ej: Familia Garcia"
-            disabled={disableFilledFields}
+            disabled={disabledFields.groupName}
           />
 
           <FieldError>{errors.groupName}</FieldError>
@@ -41,7 +50,7 @@ export default function ContactDetailsCard({
             onChange={(event) => onContactChange("email", event.target.value)}
             className={inputClassName}
             placeholder="Ej: ejemplo@email.com"
-            disabled={disableFilledFields}
+            disabled={disabledFields.email}
           />
 
           <FieldError>{errors.email}</FieldError>
@@ -56,7 +65,7 @@ export default function ContactDetailsCard({
             onChange={(event) => onContactChange("phone", event.target.value)}
             className={inputClassName}
             placeholder="Ej: 600123456"
-            disabled={disableFilledFields}
+            disabled={disabledFields.phone}
           />
 
           <FieldError>{errors.phone}</FieldError>

@@ -47,6 +47,8 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const totalGuests = useMemo(() => guests.length, [guests]);
 
   const handleContactChange = (field, value) => {
+    if (isEdition && field === "groupName") return;
+
     setContact((prev) => ({
       ...prev,
       [field]: value,

@@ -59,6 +59,8 @@ const mobileGroupNameBaseFontSize = 30;
 const mobileGroupNameMinFontSize = 10;
 const mobileDetailBaseFontSize = 14;
 const mobileDetailMinFontSize = 10;
+const ADMIN_DEFAULT_EMAIL = "admin@admin.com";
+const ADMIN_DEFAULT_PHONE = "666666666";
 const filters = [
   { value: "all", label: "Todos" },
   { value: "allergies", label: "Con alergias" },
@@ -288,7 +290,7 @@ export default function AdminGuests() {
       );
 
       await saveAdminGroup({
-        group,
+        group: normalizeAdminGroupBeforeSave(group, { isCreation }),
         method: isCreation ? "POST" : "PUT",
         password: ADMIN_PASSWORD,
       });
@@ -527,6 +529,7 @@ export default function AdminGuests() {
       {editingGroup && (
         <GroupEditor
           group={editingGroup}
+          isCreation={!editingGroup.groupName}
           onClose={() => setEditingGroup(null)}
           onSave={handleSaveGroup}
         />
@@ -653,14 +656,8 @@ function DesktopTable({ onDelete, onEdit, rows }) {
                 <p className="mt-1">{row.phone || "-"}</p>
               </td>
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
-                <div>
-                  Pescado:{" "}
-                  {row.guests?.filter((g) => g.menu === "Pescado").length || 0}
-                </div>
-                <div className="mt-1">
-                  Carne:{" "}
-                  {row.guests?.filter((g) => g.menu === "Carne").length || 0}
-                </div>
+                <div>Pescado: {row.fishText}</div>
+                <div className="mt-1">Carne: {row.meatText}</div>
               </td>
               <td className="px-5 py-4 text-sm text-[var(--color-muted)]">
                 {row.allergyText}
@@ -885,18 +882,12 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
             <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
               <InfoLine
                 label="Pescado"
-                value={
-                  row.guests?.filter((g) => g.menu === "Pescado").length || 0
-                }
+                value={row.fishText}
               />
-              <InfoLine
-                label="Carne"
-                value={
-                  row.guests?.filter((g) => g.menu === "Carne").length || 0
-                }
-              />
+              <InfoLine label="Carne" value={row.meatText} />
               <InfoLine label="Alergias" value={row.allergyText} />
               <InfoLine label="Transporte" value={row.transportText} />
+              <InfoLine label="Comentarios" value={row.commentsCountText} />
             </div>
           </div>
         ))}
@@ -980,18 +971,12 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
             <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
               <InfoLine
                 label="Pescado"
-                value={
-                  row.guests?.filter((g) => g.menu === "Pescado").length || 0
-                }
+                value={row.fishText}
               />
-              <InfoLine
-                label="Carne"
-                value={
-                  row.guests?.filter((g) => g.menu === "Carne").length || 0
-                }
-              />
+              <InfoLine label="Carne" value={row.meatText} />
               <InfoLine label="Alergias" value={row.allergyText} />
               <InfoLine label="Transporte" value={row.transportText} />
+              <InfoLine label="Comentarios" value={row.commentsCountText} />
             </div>
           </motion.article>
         ))}
@@ -1013,7 +998,7 @@ function MobileRowActions({ onDelete, onEdit }) {
   );
 }
 
-function GroupEditor({ group, onClose, onSave }) {
+function GroupEditor({ group, isCreation, onClose, onSave }) {
   const [draft, setDraft] = useState(group);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -1049,7 +1034,8 @@ function GroupEditor({ group, onClose, onSave }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const validationError = Confirmation.validateForAdmin(draft);
+    const groupToSave = normalizeAdminGroupBeforeSave(draft, { isCreation });
+    const validationError = Confirmation.validateForAdmin(groupToSave);
 
     if (validationError) {
       setError(validationError);
@@ -1060,7 +1046,7 @@ function GroupEditor({ group, onClose, onSave }) {
     setError("");
 
     try {
-      await onSave(draft);
+      await onSave(groupToSave);
     } finally {
       setSaving(false);
     }
@@ -1187,6 +1173,18 @@ function createDraftGroup(group) {
   }
 
   return Confirmation.normalize(group);
+}
+
+function normalizeAdminGroupBeforeSave(group, { isCreation }) {
+  const confirmation = Confirmation.normalize(group);
+
+  if (!isCreation) return confirmation;
+
+  return Confirmation.normalize({
+    ...confirmation,
+    email: confirmation.email.trim() || ADMIN_DEFAULT_EMAIL,
+    phone: confirmation.phone.trim() || ADMIN_DEFAULT_PHONE,
+  });
 }
 
 function downloadCsv(rows) {

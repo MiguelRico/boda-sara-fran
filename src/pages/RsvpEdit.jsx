@@ -47,7 +47,7 @@ export default function RsvpEdit() {
 
       <RsvpForm
         contact={rsvp.contact}
-        disableContactFields
+        disableContactFields={{ groupName: true }}
         errors={rsvp.errors}
         guests={rsvp.guests}
         loading={spinner.loading}
