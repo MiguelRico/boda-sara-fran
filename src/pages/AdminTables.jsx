@@ -23,7 +23,8 @@ const emptyState = {
   loading: true,
   error: "",
 };
-const TABLE_METRIC_GRID_CLASS = "grid gap-4 sm:grid-cols-2 lg:grid-cols-4";
+const TABLE_METRIC_GRID_CLASS =
+  "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between";
 
 export default function AdminTables() {
   const tablesRef = useRef(null);
@@ -187,25 +188,25 @@ function getTableSummaryItems(stats) {
     {
       label: "Numero de mesas",
       value: stats.totalTables,
-      detail: "mesas con invitados asignados",
+      detail: "Mesas",
       emoji: "#",
     },
     {
       label: "Total asientos",
       value: stats.totalSeats,
-      detail: "asientos registrados",
+      detail: "Asientos",
       emoji: "+",
     },
     {
       label: "Asientos asignados",
       value: stats.assignedSeats,
-      detail: "con invitado confirmado",
+      detail: "Asignados",
       emoji: "OK",
     },
     {
       label: "Asientos pendientes",
       value: stats.pendingSeats,
-      detail: "sin invitado asignado",
+      detail: "Pendientes",
       emoji: "...",
     },
   ];

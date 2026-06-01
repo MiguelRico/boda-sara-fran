@@ -207,37 +207,37 @@ function getSummaryItems(stats) {
     {
       label: "Total confirmaciones",
       value: stats.totalGroups,
-      detail: "confirmaciones registradas",
+      detail: "Confirmaciones",
       emoji: "👥",
     },
     {
       label: "Total de personas",
       value: stats.totalGuests,
-      detail: "incluidas en las respuestas",
+      detail: "Personas",
       emoji: "+",
     },
     {
       label: "Personas con alergias",
       value: stats.guestsWithAllergies,
-      detail: `${stats.allergyRate}% del total`,
+      detail: "Alergias",
       emoji: "🥗",
     },
     {
       label: "Con otras alergias",
       value: stats.guestsWithOtherAllergies,
-      detail: `${stats.otherAllergyRate}% del total`,
+      detail: "Otras alergias",
       emoji: "!",
     },
     {
       label: "Con comentarios",
-      value: `${stats.commentsRate}%`,
-      detail: `${stats.guestsWithComments} de ${stats.totalGuests} personas`,
+      value: `${stats.guestsWithComments}%`,
+      detail: "Comentarios",
       emoji: "...",
     },
     {
       label: "Usan transporte",
-      value: `${stats.busRate}%`,
-      detail: `${stats.guestsUsingBus} de ${stats.totalGuests} personas`,
+      value: `${stats.guestsUsingBus}`,
+      detail: "Autobús",
       emoji: "🚌",
     },
   ];
@@ -355,7 +355,7 @@ function CardHeader({ emoji, title }) {
 function supportsHoverPointer() {
   return Boolean(
     typeof window !== "undefined" &&
-      window.matchMedia?.("(hover: hover) and (pointer: fine)").matches,
+    window.matchMedia?.("(hover: hover) and (pointer: fine)").matches,
   );
 }
 
@@ -544,7 +544,7 @@ function ChartLegend({
                   ? "font-semibold text-[var(--color-accent-dark)]"
                   : isActive
                     ? "font-medium text-[var(--color-accent-dark)]"
-                  : "text-[var(--color-muted)]"
+                    : "text-[var(--color-muted)]"
               }`}
             >
               {item.label}
@@ -563,4 +563,3 @@ function ChartLegend({
     </div>
   );
 }
-
