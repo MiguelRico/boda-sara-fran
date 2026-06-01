@@ -1,8 +1,27 @@
-import { useInView } from "framer-motion";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useReducedMotion,
+} from "framer-motion";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { Navigate } from "react-router-dom";
-import { Plus, RefreshCw, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Plus,
+  RefreshCw,
+  X,
+} from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import {
@@ -34,6 +53,13 @@ const SECTION_TABS = [
   { id: "tables", label: "Mesas" },
   { id: "pending", label: "Invitados Pendientes" },
 ];
+const desktopPageSize = 4;
+const mobilePageSize = 1;
+const pageDataSwapDelay = 680;
+const pageRevealDelay = 160;
+const pageScrollDuration = 680;
+const pageScrollOffset = 12;
+const mobilePageHeightLockDelay = 560;
 const emptyState = {
   groups: [],
   loading: true,
@@ -53,6 +79,12 @@ const readStoredTables = () => {
 
 export default function AdminTables() {
   const tablesRef = useRef(null);
+  const tablesCardRef = useRef(null);
+  const tablesStartRef = useRef(null);
+  const pageLoadingTimeoutRef = useRef(null);
+  const pageRevealTimeoutRef = useRef(null);
+  const pageScrollStartFrameRef = useRef(null);
+  const pageScrollCancelRef = useRef(null);
   const tablesInView = useInView(tablesRef, {
     once: true,
     amount: 0.2,
@@ -64,6 +96,11 @@ export default function AdminTables() {
   const [tableForm, setTableForm] = useState(createEmptyTableForm);
   const [tableFormErrors, setTableFormErrors] = useState({});
   const [showTableForm, setShowTableForm] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageDirection, setPageDirection] = useState(1);
+  const [isMobileList, setIsMobileList] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false);
+  const [pageLoadingMinHeight, setPageLoadingMinHeight] = useState(null);
   const [activeTab, setActiveTab] = useState(() => {
     try {
       return window.localStorage.getItem(ADMIN_ACTIVE_TAB_KEY) || "tables";
@@ -126,6 +163,36 @@ export default function AdminTables() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    return () => {
+      if (pageLoadingTimeoutRef.current) {
+        window.clearTimeout(pageLoadingTimeoutRef.current);
+      }
+
+      if (pageRevealTimeoutRef.current) {
+        window.clearTimeout(pageRevealTimeoutRef.current);
+      }
+
+      if (pageScrollStartFrameRef.current) {
+        window.cancelAnimationFrame(pageScrollStartFrameRef.current);
+      }
+
+      pageScrollCancelRef.current?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateIsMobileList = () => setIsMobileList(mediaQuery.matches);
+
+    updateIsMobileList();
+    mediaQuery.addEventListener("change", updateIsMobileList);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateIsMobileList);
+    };
+  }, []);
+
   const tables = useMemo(() => {
     const guests = Confirmation.getGuestsWithConfirmation(state.groups);
     const assignedTables = Table.fromGuests(guests);
@@ -133,11 +200,106 @@ export default function AdminTables() {
     return Table.mergeLists(manualTables, assignedTables);
   }, [manualTables, state.groups]);
   const tableStats = useMemo(() => Table.buildStats(tables), [tables]);
+  const pageSize = isMobileList ? mobilePageSize : desktopPageSize;
+  const totalPages = Math.max(Math.ceil(tables.length / pageSize), 1);
+  const currentPage = Math.min(page, totalPages);
+  const pagedTables = tables.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+  const pagedTableCount = pagedTables.length;
+  const pagedSeatCount = pagedTables.reduce(
+    (total, table) => total + table.seats.length,
+    0,
+  );
 
   const guestsPending = useMemo(() => {
     const guests = Confirmation.getGuestsWithConfirmation(state.groups);
     return guests.filter((g) => !g.table || !g.seat);
   }, [state.groups]);
+
+  const cancelPageLoading = () => {
+    if (pageLoadingTimeoutRef.current) {
+      window.clearTimeout(pageLoadingTimeoutRef.current);
+      pageLoadingTimeoutRef.current = null;
+    }
+
+    if (pageRevealTimeoutRef.current) {
+      window.clearTimeout(pageRevealTimeoutRef.current);
+      pageRevealTimeoutRef.current = null;
+    }
+
+    if (pageScrollStartFrameRef.current) {
+      window.cancelAnimationFrame(pageScrollStartFrameRef.current);
+      pageScrollStartFrameRef.current = null;
+    }
+
+    pageScrollCancelRef.current?.();
+    pageScrollCancelRef.current = null;
+
+    setPageLoading(false);
+    setPageLoadingMinHeight(null);
+  };
+
+  const handlePageChange = (nextPage) => {
+    const clampedPage = Math.min(Math.max(nextPage, 1), totalPages);
+
+    if (clampedPage === currentPage || pageLoading) return;
+
+    const cardElement = tablesCardRef.current;
+    const cardRect = cardElement?.getBoundingClientRect();
+    const tableElement = tablesStartRef.current;
+    const tableRect = tableElement?.getBoundingClientRect();
+    const cardTop = cardRect
+      ? Math.max(0, cardRect.top + window.scrollY - pageScrollOffset)
+      : window.scrollY;
+    const tableHeight = tableRect?.height || null;
+    const direction = clampedPage > currentPage ? 1 : -1;
+
+    cancelPageLoading();
+
+    if (isMobileList) {
+      setPageLoadingMinHeight(tableHeight);
+      setPageDirection(direction);
+      setPage(clampedPage);
+      pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
+        pageScrollStartFrameRef.current = null;
+        pageScrollCancelRef.current = scrollToY(cardTop, {
+          duration: pageScrollDuration,
+        });
+      });
+      pageRevealTimeoutRef.current = window.setTimeout(() => {
+        setPageLoadingMinHeight(null);
+        pageRevealTimeoutRef.current = null;
+      }, mobilePageHeightLockDelay);
+
+      return;
+    }
+
+    setPageDirection(direction);
+    setPageLoadingMinHeight(tableHeight);
+    setPageLoading(true);
+    pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
+      pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
+        pageScrollStartFrameRef.current = null;
+        pageScrollCancelRef.current = scrollToY(cardTop, {
+          duration: pageScrollDuration,
+        });
+
+        pageLoadingTimeoutRef.current = window.setTimeout(() => {
+          setPage(clampedPage);
+          pageLoadingTimeoutRef.current = null;
+          pageScrollCancelRef.current = null;
+
+          pageRevealTimeoutRef.current = window.setTimeout(() => {
+            setPageLoading(false);
+            setPageLoadingMinHeight(null);
+            pageRevealTimeoutRef.current = null;
+          }, pageRevealDelay);
+        }, pageDataSwapDelay);
+      });
+    });
+  };
 
   const handleTableFormChange = (field, value) => {
     setTableForm((current) => ({ ...current, [field]: value }));
@@ -225,6 +387,7 @@ export default function AdminTables() {
         seatCount: tableForm.seatCount,
       }),
     ]);
+    setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
     handleCloseTableForm();
   };
 
@@ -258,27 +421,44 @@ export default function AdminTables() {
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={tablesInView}>
-            <section className="premium-card">
-              <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <section className="premium-card" ref={tablesCardRef}>
+              <div className="mb-5">
                 <div>
                   <p className="section-eyebrow mb-2">Distribución</p>
                   <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
                     Asientos asignados
                   </h2>
-                </div>
 
-                {activeTab === "tables" && (
-                  <IconButton
-                    className="w-full sm:w-auto"
-                    icon={<Plus size={16} strokeWidth={1.8} />}
-                    label="Crear mesa"
-                    onClick={() => setShowTableForm(true)}
-                    showText="always"
-                    tone="primary"
-                  >
-                    Crear mesa
-                  </IconButton>
-                )}
+                  {activeTab === "tables" && (
+                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+                        {pagedTableCount}{" "}
+                        {pagedTableCount === 1 ? "mesa" : "mesas"} en esta
+                        pagina - {pagedSeatCount}{" "}
+                        {pagedSeatCount === 1 ? "asiento" : "asientos"}
+                      </p>
+
+                      <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex sm:justify-end">
+                        <IconButton
+                          className="!w-full sm:!w-10 [var(--color-accent)]"
+                          disabled={!tables.length}
+                          label="Exportar"
+                          onClick={() => downloadTablesCsv(tables)}
+                        >
+                          <Download size={16} strokeWidth={1.8} />
+                        </IconButton>
+
+                        <IconButton
+                          className="!w-full border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] sm:!w-10"
+                          label="Crear mesa"
+                          onClick={() => setShowTableForm(true)}
+                        >
+                          <Plus size={18} strokeWidth={2.4} />
+                        </IconButton>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <TabNavigation
@@ -289,11 +469,51 @@ export default function AdminTables() {
               />
 
               {activeTab === "tables" ? (
-                state.loading ? (
-                  <TablesSkeleton />
-                ) : (
-                  <TablesGrid tables={tables} />
-                )
+                <div
+                  ref={tablesStartRef}
+                  style={
+                    pageLoadingMinHeight
+                      ? { minHeight: `${pageLoadingMinHeight}px` }
+                      : undefined
+                  }
+                >
+                  {state.loading ? (
+                    <TablesSkeleton />
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <div
+                          className={
+                            pageLoading
+                              ? "pointer-events-none opacity-0"
+                              : "opacity-100"
+                          }
+                        >
+                          <TablesGrid tables={pagedTables} />
+                          <MobileTablesList
+                            direction={pageDirection}
+                            page={currentPage}
+                            tables={pagedTables}
+                          />
+                        </div>
+
+                        {pageLoading && (
+                          <div className="absolute inset-x-0 top-0 z-10">
+                            <TablesSkeleton />
+                          </div>
+                        )}
+                      </div>
+
+                      <Pagination
+                        isMobileList={isMobileList}
+                        page={currentPage}
+                        totalPages={totalPages}
+                        onNext={() => handlePageChange(currentPage + 1)}
+                        onPrev={() => handlePageChange(currentPage - 1)}
+                      />
+                    </>
+                  )}
+                </div>
               ) : (
                 <PendingGuestsList
                   guests={guestsPending}
@@ -459,7 +679,7 @@ function TablesGrid({ tables }) {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="hidden gap-4 md:grid lg:grid-cols-2">
       {tables.map((table) => (
         <article
           className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 sm:p-5"
@@ -496,6 +716,123 @@ function TablesGrid({ tables }) {
           </div>
         </article>
       ))}
+    </div>
+  );
+}
+
+function MobileTablesList({ direction, page, tables }) {
+  const reduceMotion = useReducedMotion();
+  const cardRef = useRef(null);
+  const [cardMinHeight, setCardMinHeight] = useState(null);
+
+  useLayoutEffect(() => {
+    const node = cardRef.current;
+
+    if (!node) return undefined;
+
+    const updateCardHeight = () => {
+      setCardMinHeight((currentHeight) => {
+        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+        const stableHeight = Math.max(currentHeight || 0, nextHeight);
+
+        return Math.abs((currentHeight || 0) - stableHeight) < 1
+          ? currentHeight
+          : stableHeight;
+      });
+    };
+
+    updateCardHeight();
+
+    if (!window.ResizeObserver) {
+      window.addEventListener("resize", updateCardHeight);
+
+      return () => window.removeEventListener("resize", updateCardHeight);
+    }
+
+    const resizeObserver = new ResizeObserver(updateCardHeight);
+
+    resizeObserver.observe(node);
+
+    return () => resizeObserver.disconnect();
+  }, [page, tables]);
+
+  const variants = reduceMotion
+    ? {
+        enter: { opacity: 0 },
+        center: { opacity: 1 },
+        exit: { opacity: 0 },
+      }
+    : {
+        enter: (pageDirection) => ({
+          opacity: 0,
+          x: pageDirection > 0 ? 72 : -72,
+          filter: "blur(6px)",
+        }),
+        center: {
+          opacity: 1,
+          x: 0,
+          filter: "blur(0px)",
+        },
+        exit: (pageDirection) => ({
+          opacity: 0,
+          x: pageDirection > 0 ? -72 : 72,
+          filter: "blur(6px)",
+        }),
+      };
+
+  return (
+    <div
+      className="relative overflow-hidden md:hidden"
+      style={cardMinHeight ? { height: `${cardMinHeight}px` } : undefined}
+    >
+      <AnimatePresence custom={direction} initial={false}>
+        {tables.map((table) => (
+          <motion.article
+            animate="center"
+            className="absolute inset-x-0 top-0 rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 shadow-[0_18px_45px_rgba(52,69,49,0.06)]"
+            custom={direction}
+            exit="exit"
+            initial="enter"
+            key={`${table.id || table.name}-${page}`}
+            ref={cardRef}
+            transition={{
+              duration: reduceMotion ? 0.18 : 0.48,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            variants={variants}
+          >
+            <div className="mb-4 flex items-baseline justify-between gap-4">
+              <div className="min-w-0">
+                <h3 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
+                  Mesa {table.name || table.id}
+                </h3>
+                <p className="mt-2 text-sm text-[var(--color-muted)]">
+                  {[
+                    getTableGroupOption(table.group)?.label,
+                    Table.getShapeLabel(table),
+                  ]
+                    .filter(Boolean)
+                    .join(" - ")}
+                </p>
+                {table.notes && (
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
+                    {table.notes}
+                  </p>
+                )}
+              </div>
+              <p className="shrink-0 text-sm text-[var(--color-muted)]">
+                {Table.getAssignedGuests(table).length} invitados
+              </p>
+            </div>
+
+            <div className="grid gap-3">
+              {table.seats.map((seat) => (
+                <SeatRow key={seat.seat} seat={seat} />
+              ))}
+            </div>
+          </motion.article>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }
@@ -549,6 +886,127 @@ function SeatRow({ seat }) {
       )}
     </div>
   );
+}
+
+function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
+  return (
+    <div className="mt-5 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-center">
+        {isMobileList ? "Mesa" : "Pagina"} {page} de {totalPages}
+      </p>
+
+      <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
+        <IconButton
+          className="w-full sm:w-auto"
+          disabled={page === 1}
+          icon={<ChevronLeft size={16} strokeWidth={1.8} />}
+          label="Anterior"
+          onClick={onPrev}
+          showText
+          tone="secondary"
+          type="button"
+        >
+          Anterior
+        </IconButton>
+        <IconButton
+          className="w-full sm:w-auto"
+          disabled={page === totalPages}
+          icon={<ChevronRight size={16} strokeWidth={1.8} />}
+          label="Siguiente"
+          onClick={onNext}
+          showText
+          tone="secondary"
+          type="button"
+        >
+          Siguiente
+        </IconButton>
+      </div>
+    </div>
+  );
+}
+
+function scrollToY(targetY, { duration }) {
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  const startY = window.scrollY;
+  const nextY = Math.max(0, targetY);
+  const distance = nextY - startY;
+
+  if (distance >= -4) return null;
+
+  if (reduceMotion) {
+    window.scrollTo(0, nextY);
+    return null;
+  }
+
+  const startTime = window.performance.now();
+  let frameId = null;
+  let canceled = false;
+
+  const step = (currentTime) => {
+    if (canceled) return;
+
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+    window.scrollTo(0, startY + distance * easedProgress);
+
+    if (progress < 1) {
+      frameId = window.requestAnimationFrame(step);
+    }
+  };
+
+  frameId = window.requestAnimationFrame(step);
+
+  return () => {
+    canceled = true;
+
+    if (frameId) {
+      window.cancelAnimationFrame(frameId);
+    }
+  };
+}
+
+function downloadTablesCsv(tables) {
+  const headers = [
+    "mesa",
+    "grupo",
+    "forma",
+    "notas",
+    "asiento",
+    "invitado",
+    "menu",
+  ];
+  const lines = tables.flatMap((table) =>
+    table.seats.map((seat) =>
+      [
+        table.name || table.id,
+        getTableGroupOption(table.group)?.label || "",
+        Table.getShapeLabel(table),
+        table.notes,
+        seat.seat,
+        seat.guest ? Guest.getFullName(seat.guest, "Invitado") : "",
+        seat.guest?.menu || "",
+      ]
+        .map(escapeCsvValue)
+        .join(","),
+    ),
+  );
+  const csv = [headers.join(","), ...lines].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "mesas.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function escapeCsvValue(value) {
+  return `"${String(value || "").replaceAll('"', '""')}"`;
 }
 
 function TablesSkeleton() {
