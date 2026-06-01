@@ -20,6 +20,13 @@ function doGet(e) {
       return listConfirmations(e);
     }
 
+    if (action === "tables-list") {
+      const authError = validateAdmin(e);
+      if (authError) return authError;
+
+      return listTables(e);
+    }
+
     return jsonResponse(
       {
         success: false,
@@ -132,6 +139,28 @@ function listConfirmations(e) {
     {
       success: true,
       groups: Object.values(groupsByEmail),
+    },
+    e,
+  );
+}
+
+function listTables(e) {
+  const sheet = getTablesSheet();
+  const rows = sheet.getDataRange().getDisplayValues();
+  const tables = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const table = buildTableFromRow(rows[i]);
+
+    if (!table.id && !table.name) continue;
+
+    tables.push(table);
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      tables,
     },
     e,
   );

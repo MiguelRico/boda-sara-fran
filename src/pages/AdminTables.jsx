@@ -25,12 +25,7 @@ import {
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
-import {
-  ADMIN_TABLES_STORAGE_KEY,
-  createEmptyTableForm,
-  getTableGroupOption,
-  TABLE_GROUP_OPTIONS,
-} from "../constants/tables";
+import { createEmptyTableForm } from "../constants/tables";
 import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
@@ -46,9 +41,24 @@ import StatusDialog from "../components/ui/StatusDialog";
 import TabNavigation from "../components/ui/TabNavigation";
 import PendingGuestsList from "../components/admin/PendingGuestsList";
 import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
-import { Confirmation, Guest, Table } from "../models";
-import { findAllGroups, saveAdminGroup } from "../services/rsvpService";
-import { normalizeAdminGroups } from "../utils/rsvpGroups";
+import { Guest } from "../models";
+import {
+  assignGuestToSeat,
+  assignPendingGuestToSeat,
+  buildTables,
+  buildTableStats,
+  createTableFormFromTable,
+  downloadTablesCsv,
+  getAssignableGuests,
+  getPendingGuests,
+  loadAdminTableGroups,
+  loadAdminTables,
+  persistAdminTables,
+  readStoredTables,
+  saveStoredTables,
+  upsertManualTable,
+  validateTableForm,
+} from "../services/tablesService";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
 
 const ADMIN_ACTIVE_TAB_KEY = "admin-tables-active-tab";
@@ -95,16 +105,6 @@ const tableEditorContent = {
     },
   },
 };
-const readStoredTables = () => {
-  try {
-    return Table.normalizeList(
-      JSON.parse(window.localStorage.getItem(ADMIN_TABLES_STORAGE_KEY) || "[]"),
-    );
-  } catch {
-    return [];
-  }
-};
-
 export default function AdminTables() {
   const tablesRef = useRef(null);
   const tablesCardRef = useRef(null);
@@ -146,10 +146,17 @@ export default function AdminTables() {
     }
 
     try {
-      const response = await findAllGroups({ password: ADMIN_PASSWORD });
+      const [groups, storedTables] = await Promise.all([
+        loadAdminTableGroups({ password: ADMIN_PASSWORD }),
+        loadAdminTables({ password: ADMIN_PASSWORD }).catch((error) => {
+          console.error("Error al cargar mesas guardadas:", error);
+          return readStoredTables();
+        }),
+      ]);
 
+      setManualTables(storedTables);
       setState({
-        groups: normalizeAdminGroups(response),
+        groups,
         loading: false,
         error: "",
       });
@@ -176,14 +183,7 @@ export default function AdminTables() {
   }, [isAuthenticated, loadTables]);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        ADMIN_TABLES_STORAGE_KEY,
-        JSON.stringify(manualTables),
-      );
-    } catch {
-      // Storage can be unavailable in private or locked browser contexts.
-    }
+    saveStoredTables(manualTables);
   }, [manualTables]);
 
   useEffect(() => {
@@ -225,12 +225,9 @@ export default function AdminTables() {
   }, []);
 
   const tables = useMemo(() => {
-    const guests = Confirmation.getGuestsWithConfirmation(state.groups);
-    const assignedTables = Table.fromGuests(guests);
-
-    return Table.mergeLists(manualTables, assignedTables);
+    return buildTables({ groups: state.groups, manualTables });
   }, [manualTables, state.groups]);
-  const tableStats = useMemo(() => Table.buildStats(tables), [tables]);
+  const tableStats = useMemo(() => buildTableStats(tables), [tables]);
   const pageSize = isMobileList ? mobilePageSize : desktopPageSize;
   const totalPages = Math.max(Math.ceil(tables.length / pageSize), 1);
   const currentPage = Math.min(page, totalPages);
@@ -244,12 +241,12 @@ export default function AdminTables() {
     0,
   );
 
-  const guestsPending = useMemo(() => {
-    const guests = Confirmation.getGuestsWithConfirmation(state.groups);
-    return guests.filter((g) => !g.table || !g.seat);
-  }, [state.groups]);
+  const guestsPending = useMemo(
+    () => getPendingGuests(state.groups),
+    [state.groups],
+  );
   const assignableGuests = useMemo(
-    () => Confirmation.getGuestsWithConfirmation(state.groups),
+    () => getAssignableGuests(state.groups),
     [state.groups],
   );
 
@@ -374,48 +371,15 @@ export default function AdminTables() {
   const handleAssignGuestToTable = useCallback(
     async ({ guestId, guestEmail, tableId, seatNumber }) => {
       try {
-        // Encontrar el grupo que contiene al guest
-        const confirmation = state.groups.find((g) => g.email === guestEmail);
-        if (!confirmation) {
-          throw new Error("Grupo de invitación no encontrado");
-        }
-
-        // Buscar el guest en el grupo
-        const guestIndex = confirmation.guests.findIndex(
-          (g) => Guest.getFullName(g) === guestId,
-        );
-        if (guestIndex === -1) {
-          throw new Error("Invitado no encontrado en el grupo");
-        }
-
-        // Validar que la mesa existe y tiene asiento disponible
-        const table = tables.find((t) => (t.id || t.name) === tableId);
-        if (!table) {
-          throw new Error("Mesa no encontrada");
-        }
-
-        const emptySeat = Table.getEmptySeats(table).find(
-          (s) => s.seat === seatNumber,
-        );
-        if (!emptySeat) {
-          throw new Error("El asiento no está disponible");
-        }
-
-        // Actualizar el guest
-        const updatedGuest = {
-          ...confirmation.guests[guestIndex],
-          table: tableId,
-          seat: seatNumber,
-        };
-        confirmation.guests[guestIndex] = updatedGuest;
-
-        // Guardar el grupo actualizado
-        await saveAdminGroup({
-          group: confirmation,
+        await assignPendingGuestToSeat({
+          groups: state.groups,
+          guestEmail,
+          guestId,
           password: ADMIN_PASSWORD,
+          seatNumber,
+          tableId,
+          tables,
         });
-
-        // Recargar tablas
         await loadTables({ showLoading: false });
       } catch (error) {
         console.error("Error al asignar mesa:", error);
@@ -426,61 +390,24 @@ export default function AdminTables() {
         }));
       }
     },
-    [state.groups, tables, loadTables],
+    [loadTables, state.groups, tables],
   );
 
   const handleAssignGuestToSeat = async ({ guestEmail, guestName }) => {
     if (!seatAssignmentTarget || !guestEmail || !guestName) return;
 
-    const tableId = getTableKey(seatAssignmentTarget.table);
-    const seatNumber = seatAssignmentTarget.seat.seat;
-
     setAssigningSeat(true);
     setState((prev) => ({ ...prev, error: "" }));
 
     try {
-      const updatedGroups = state.groups.map((group) => {
-        let changed = false;
-        const guests = group.guests.map((guest) => {
-          const isSelectedGuest =
-            group.email === guestEmail && Guest.getFullName(guest) === guestName;
-          const isCurrentSeatGuest =
-            guest.table === tableId && guest.seat === seatNumber;
-
-          if (!isSelectedGuest && !isCurrentSeatGuest) return guest;
-
-          changed = true;
-
-          if (isSelectedGuest) {
-            return {
-              ...guest,
-              table: tableId,
-              seat: seatNumber,
-            };
-          }
-
-          return {
-            ...guest,
-            table: "",
-            seat: "",
-          };
-        });
-
-        return changed ? { ...group, guests } : group;
+      await assignGuestToSeat({
+        groups: state.groups,
+        guestEmail,
+        guestName,
+        password: ADMIN_PASSWORD,
+        seat: seatAssignmentTarget.seat,
+        table: seatAssignmentTarget.table,
       });
-      const changedGroups = updatedGroups.filter(
-        (group, index) => group !== state.groups[index],
-      );
-
-      await Promise.all(
-        changedGroups.map((group) =>
-          saveAdminGroup({
-            group,
-            password: ADMIN_PASSWORD,
-          }),
-        ),
-      );
-
       setSeatAssignmentTarget(null);
       await loadTables({ showLoading: false });
     } catch (error) {
@@ -505,21 +432,26 @@ export default function AdminTables() {
       return;
     }
 
-    const nextTable = Table.create({
-      ...tableForm,
-      id: editingTable ? getTableKey(editingTable) : tableForm.name,
-      seatCount: tableForm.seatCount,
+    const nextManualTables = upsertManualTable({
+      editingTable,
+      form: tableForm,
+      manualTables,
     });
 
-    if (editingTable) {
-      const editingTableKey = getTableKey(editingTable);
+    setManualTables(nextManualTables);
+    persistAdminTables({
+      password: ADMIN_PASSWORD,
+      tables: nextManualTables,
+    }).catch((error) => {
+      console.error("Error al guardar mesas:", error);
+      setState((prev) => ({
+        ...prev,
+        error:
+          error.message || "No se pudieron guardar las mesas. Intenta de nuevo.",
+      }));
+    });
 
-      setManualTables((current) => [
-        ...current.filter((table) => getTableKey(table) !== editingTableKey),
-        nextTable,
-      ]);
-    } else {
-      setManualTables((current) => [...current, nextTable]);
+    if (!editingTable) {
       setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
     }
 
@@ -955,71 +887,27 @@ function TablesGrid({ onEdit, onSeatClick, tables }) {
           Sin mesas asignadas
         </p>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-          Asigna mesa y asiento desde la edición de invitados para ver aquí la
-          distribución.
+          Asigna mesa y asiento desde la edicion de invitados para ver aqui la
+          distribucion.
         </p>
-      </div>
-    );
-  }
-
-  if (tables.length) {
-    return (
-      <div className="hidden gap-4 md:grid lg:grid-cols-2">
-        {tables.map((table, index) => (
-          <TableAnimatedInfoCard
-          index={index}
-          key={table.id || table.name}
-          onEdit={onEdit}
-          onSeatClick={onSeatClick}
-          table={table}
-        />
-        ))}
       </div>
     );
   }
 
   return (
     <div className="hidden gap-4 md:grid lg:grid-cols-2">
-      {tables.map((table) => (
-        <article
-          className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 sm:p-5"
+      {tables.map((table, index) => (
+        <TableAnimatedInfoCard
+          index={index}
           key={table.id || table.name}
-        >
-          <div className="mb-4 flex items-baseline justify-between gap-4">
-            <div className="min-w-0">
-              <h3 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-                Mesa {table.name || table.id}
-              </h3>
-              <p className="mt-2 text-sm text-[var(--color-muted)]">
-                {[
-                  getTableGroupOption(table.group)?.label,
-                  Table.getShapeLabel(table),
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-              {table.notes && (
-                <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-                  {table.notes}
-                </p>
-              )}
-            </div>
-            <p className="text-sm text-[var(--color-muted)]">
-              {Table.getAssignedGuests(table).length} invitados
-            </p>
-          </div>
-
-          <div className="grid gap-3">
-            {table.seats.map((seat) => (
-              <SeatRow key={seat.seat} seat={seat} />
-            ))}
-          </div>
-        </article>
+          onEdit={onEdit}
+          onSeatClick={onSeatClick}
+          table={table}
+        />
       ))}
     </div>
   );
 }
-
 function MobileTablesList({ direction, onEdit, onSeatClick, page, tables }) {
   const reduceMotion = useReducedMotion();
   const cardRef = useRef(null);
@@ -1114,77 +1002,8 @@ function MobileTablesList({ direction, onEdit, onSeatClick, page, tables }) {
   );
 }
 
-function createTableFormFromTable(table) {
-  const normalizedTable = Table.normalize(table);
-
-  return {
-    group: normalizedTable.group,
-    name: normalizedTable.name || normalizedTable.id,
-    notes: normalizedTable.notes,
-    seatCount: normalizedTable.seats.length,
-    shape: normalizedTable.shape,
-  };
-}
-
-function getTableKey(table) {
-  return (table.id || table.name || "").trim();
-}
-
 function createGuestOptionValue({ email, name }) {
   return `${email || ""}|||${name || ""}`;
-}
-
-function validateTableForm(form, tables, editingTable = null) {
-  const errors = {};
-  const tableName = form.name.trim();
-  const editingTableKey = editingTable ? getTableKey(editingTable) : "";
-  const repeatedTable = tables.some(
-    (table) =>
-      getTableKey(table).toLowerCase() !== editingTableKey.toLowerCase() &&
-      getTableKey(table).toLowerCase() === tableName.toLowerCase(),
-  );
-
-  if (!tableName) {
-    errors.name = "Introduce el nombre de la mesa.";
-  } else if (repeatedTable) {
-    errors.name = "Ya existe una mesa con este nombre.";
-  }
-
-  if (!form.shape) {
-    errors.shape = "Selecciona la forma de la mesa.";
-  }
-
-  if (!TABLE_GROUP_OPTIONS.some((option) => option.value === form.group)) {
-    errors.group = "Selecciona un grupo de mesa.";
-  }
-
-  if (!Table.isSeatCountAllowed(form.shape, form.seatCount)) {
-    const range = Table.getSeatRange(form.shape);
-
-    errors.seatCount = `Selecciona entre ${range.min} y ${range.max} asientos.`;
-  }
-
-  return errors;
-}
-
-function SeatRow({ seat }) {
-  const guestName = seat.guest ? Guest.getFullName(seat.guest, "Invitado") : "";
-
-  return (
-    <div className="grid grid-cols-[4.5rem_1fr_auto] items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-white/50 p-3 text-sm">
-      <span className="font-medium text-[var(--color-accent-dark)]">
-        Asiento {seat.seat}
-      </span>
-      <span className="min-w-0 truncate text-[var(--color-muted)]">
-        {guestName || "Sin asignar"}
-      </span>
-      {seat.guest?.menu && (
-        <span className="rounded-full border border-[var(--color-border-strong)] px-3 py-1 text-xs text-[var(--color-accent-dark)]">
-          {seat.guest.menu}
-        </span>
-      )}
-    </div>
-  );
 }
 
 function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
@@ -1268,46 +1087,6 @@ function scrollToY(targetY, { duration }) {
   };
 }
 
-function downloadTablesCsv(tables) {
-  const headers = [
-    "mesa",
-    "grupo",
-    "forma",
-    "notas",
-    "asiento",
-    "invitado",
-    "menu",
-  ];
-  const lines = tables.flatMap((table) =>
-    table.seats.map((seat) =>
-      [
-        table.name || table.id,
-        getTableGroupOption(table.group)?.label || "",
-        Table.getShapeLabel(table),
-        table.notes,
-        seat.seat,
-        seat.guest ? Guest.getFullName(seat.guest, "Invitado") : "",
-        seat.guest?.menu || "",
-      ]
-        .map(escapeCsvValue)
-        .join(","),
-    ),
-  );
-  const csv = [headers.join(","), ...lines].join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = "mesas.csv";
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function escapeCsvValue(value) {
-  return `"${String(value || "").replaceAll('"', '""')}"`;
-}
-
 function TablesSkeleton() {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -1326,3 +1105,5 @@ function TablesSkeleton() {
     </div>
   );
 }
+
+

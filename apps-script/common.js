@@ -3,6 +3,37 @@ function getSheet() {
   return SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
 }
 
+function getTablesSheet() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(TABLES_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(TABLES_SHEET_NAME);
+  }
+
+  ensureTablesHeader(sheet);
+
+  return sheet;
+}
+
+function ensureTablesHeader(sheet) {
+  const headers = [
+    "id",
+    "name",
+    "group",
+    "shape",
+    "seatCount",
+    "notes",
+    "updatedAt",
+  ];
+  const currentHeaders = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
+  const needsHeader = headers.some((header, index) => currentHeaders[index] !== header);
+
+  if (needsHeader) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+}
+
 function jsonResponse(obj, e) {
   const json = JSON.stringify(obj);
   const callback = e && e.parameter.callback;
@@ -89,4 +120,42 @@ function buildGuestFromRow(row) {
     table: row[12] || "",
     seat: row[13] || "",
   };
+}
+
+function normalizeTableShape(value) {
+  const shape = String(value || "").trim();
+
+  return shape === "round" || shape === "rectangular" ? shape : "rectangular";
+}
+
+function normalizeTableGroup(value) {
+  const group = String(value || "").trim();
+
+  return group === "familia" || group === "amistades" || group === "trabajo"
+    ? group
+    : "familia";
+}
+
+function buildTableFromRow(row) {
+  const id = row[0] || row[1] || "";
+  const name = row[1] || row[0] || "";
+  const shape = normalizeTableShape(row[3]);
+  const seatCount = Math.max(Number(row[4]) || 0, 0);
+
+  return {
+    id,
+    name,
+    group: normalizeTableGroup(row[2]),
+    shape,
+    seatCount,
+    notes: row[5] || "",
+  };
+}
+
+function deleteAllTableRows(sheet) {
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow > 1) {
+    sheet.deleteRows(2, lastRow - 1);
+  }
 }
