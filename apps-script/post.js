@@ -13,6 +13,10 @@ function doPost(e) {
       throw new Error("Sheet not found");
     }
 
+    if (data.action === "delete") {
+      return deleteConfirmation(sheet, data);
+    }
+
     const groupId = data.groupId || data.email;
     const now = new Date();
 
@@ -50,6 +54,25 @@ function doPost(e) {
       error: err.message,
     });
   }
+}
+
+function deleteConfirmation(sheet, data) {
+  if (data.password !== ADMIN_PASSWORD) {
+    throw new Error("Unauthorized");
+  }
+
+  const groupId = data.groupId || data.email;
+
+  if (!groupId) {
+    throw new Error("Missing groupId");
+  }
+
+  deleteGroupRows(sheet, groupId);
+
+  return jsonResponse({
+    success: true,
+    groupId,
+  });
 }
 
 function saveTables(data) {

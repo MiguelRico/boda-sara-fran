@@ -38,6 +38,7 @@ import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStagg
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
+import Spinner from "../components/ui/Spinner";
 import TabNavigation from "../components/ui/TabNavigation";
 import PendingGuestsList from "../components/admin/PendingGuestsList";
 import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
@@ -59,6 +60,7 @@ import {
   upsertManualTable,
   validateTableForm,
 } from "../services/tablesService";
+import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
 
 const ADMIN_ACTIVE_TAB_KEY = "admin-tables-active-tab";
@@ -67,7 +69,7 @@ const SECTION_TABS = [
   { id: "pending", label: "Invitados Pendientes" },
 ];
 const desktopPageSize = 4;
-const mobilePageSize = 1;
+const mobilePageSize = 2;
 const pageDataSwapDelay = 680;
 const pageRevealDelay = 160;
 const pageScrollDuration = 680;
@@ -79,7 +81,7 @@ const emptyState = {
   error: "",
 };
 const TABLE_METRIC_GRID_CLASS =
-  "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between";
+  "grid grid-cols-2 gap-3 sm:flex sm:items-start sm:justify-between";
 const tableEditorContent = {
   eyebrow: "Mesa",
   title: "Editar mesa",
@@ -106,6 +108,7 @@ const tableEditorContent = {
   },
 };
 export default function AdminTables() {
+  const spinner = useSpinner();
   const tablesRef = useRef(null);
   const tablesCardRef = useRef(null);
   const tablesStartRef = useRef(null);
@@ -140,21 +143,28 @@ export default function AdminTables() {
     }
   });
 
-  const loadTables = useCallback(async ({ showLoading = true } = {}) => {
+  const loadTables = useCallback(
+    async ({ includeStoredTables = true, showLoading = true } = {}) => {
     if (showLoading) {
       setState((prev) => ({ ...prev, loading: true, error: "" }));
     }
 
     try {
+      const groupsPromise = loadAdminTableGroups({ password: ADMIN_PASSWORD });
+      const storedTablesPromise = includeStoredTables
+        ? loadAdminTables({ password: ADMIN_PASSWORD }).catch((error) => {
+            console.error("Error al cargar mesas guardadas:", error);
+            return readStoredTables();
+          })
+        : Promise.resolve(null);
       const [groups, storedTables] = await Promise.all([
-        loadAdminTableGroups({ password: ADMIN_PASSWORD }),
-        loadAdminTables({ password: ADMIN_PASSWORD }).catch((error) => {
-          console.error("Error al cargar mesas guardadas:", error);
-          return readStoredTables();
-        }),
+        groupsPromise,
+        storedTablesPromise,
       ]);
 
-      setManualTables(storedTables);
+      if (storedTables) {
+        setManualTables(storedTables);
+      }
       setState({
         groups,
         loading: false,
@@ -170,7 +180,9 @@ export default function AdminTables() {
           "No se pudieron cargar las mesas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
       });
     }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -368,19 +380,35 @@ export default function AdminTables() {
     setSeatAssignmentTarget(null);
   };
 
+  const handleRefreshTables = useCallback(async () => {
+    try {
+      spinner.show("Actualizando mesas...");
+      await loadTables({ showLoading: false });
+    } finally {
+      spinner.hide();
+    }
+  }, [loadTables, spinner]);
+
   const handleAssignGuestToTable = useCallback(
-    async ({ guestId, guestEmail, tableId, seatNumber }) => {
+    async ({ guestId, guestEmail, guestIndex, tableId, seatNumber }) => {
       try {
-        await assignPendingGuestToSeat({
+        spinner.show("Asignando invitado...");
+        const updatedGroups = await assignPendingGuestToSeat({
           groups: state.groups,
           guestEmail,
           guestId,
+          guestIndex,
           password: ADMIN_PASSWORD,
           seatNumber,
           tableId,
           tables,
         });
-        await loadTables({ showLoading: false });
+        setState((prev) => ({
+          ...prev,
+          groups: updatedGroups,
+          loading: false,
+          error: "",
+        }));
       } catch (error) {
         console.error("Error al asignar mesa:", error);
         setState((prev) => ({
@@ -388,28 +416,38 @@ export default function AdminTables() {
           error:
             error.message || "No se pudo asignar la mesa. Intenta de nuevo.",
         }));
+        throw error;
+      } finally {
+        spinner.hide();
       }
     },
-    [loadTables, state.groups, tables],
+    [spinner, state.groups, tables],
   );
 
-  const handleAssignGuestToSeat = async ({ guestEmail, guestName }) => {
-    if (!seatAssignmentTarget || !guestEmail || !guestName) return;
+  const handleAssignGuestToSeat = async ({ guestEmail, guestIndex, guestName }) => {
+    if (!seatAssignmentTarget || !guestEmail) return;
 
     setAssigningSeat(true);
     setState((prev) => ({ ...prev, error: "" }));
 
     try {
-      await assignGuestToSeat({
+      spinner.show("Guardando asiento...");
+      const updatedGroups = await assignGuestToSeat({
         groups: state.groups,
         guestEmail,
+        guestIndex,
         guestName,
         password: ADMIN_PASSWORD,
         seat: seatAssignmentTarget.seat,
         table: seatAssignmentTarget.table,
       });
       setSeatAssignmentTarget(null);
-      await loadTables({ showLoading: false });
+      setState((prev) => ({
+        ...prev,
+        groups: updatedGroups,
+        loading: false,
+        error: "",
+      }));
     } catch (error) {
       console.error("Error al asignar asiento:", error);
       setState((prev) => ({
@@ -419,10 +457,11 @@ export default function AdminTables() {
       }));
     } finally {
       setAssigningSeat(false);
+      spinner.hide();
     }
   };
 
-  const handleTableSubmit = (event) => {
+  const handleTableSubmit = async (event) => {
     event.preventDefault();
 
     const errors = validateTableForm(tableForm, tables, editingTable);
@@ -438,24 +477,29 @@ export default function AdminTables() {
       manualTables,
     });
 
-    setManualTables(nextManualTables);
-    persistAdminTables({
-      password: ADMIN_PASSWORD,
-      tables: nextManualTables,
-    }).catch((error) => {
+    try {
+      spinner.show(editingTable ? "Guardando mesa..." : "Creando mesa...");
+      await persistAdminTables({
+        password: ADMIN_PASSWORD,
+        tables: nextManualTables,
+      });
+      setManualTables(nextManualTables);
+
+      if (!editingTable) {
+        setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
+      }
+
+      handleCloseTableForm();
+    } catch (error) {
       console.error("Error al guardar mesas:", error);
       setState((prev) => ({
         ...prev,
         error:
           error.message || "No se pudieron guardar las mesas. Intenta de nuevo.",
       }));
-    });
-
-    if (!editingTable) {
-      setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
+    } finally {
+      spinner.hide();
     }
-
-    handleCloseTableForm();
   };
 
   if (!isAuthenticated) {
@@ -464,6 +508,8 @@ export default function AdminTables() {
 
   return (
     <CinematicPage>
+      {spinner.loading && <Spinner text={spinner.text} />}
+
       <CinematicSection
         className="surface-soft"
         innerClassName="max-w-6xl py-6"
@@ -482,7 +528,7 @@ export default function AdminTables() {
           <CinematicStaggeredRevealItem index={2} isVisible={tablesInView}>
             <TablesOverview
               loading={state.loading}
-              onRefresh={loadTables}
+              onRefresh={handleRefreshTables}
               stats={tableStats}
             />
           </CinematicStaggeredRevealItem>
@@ -694,24 +740,32 @@ function SeatAssignmentDialog({
 }) {
   useViewportScrollLock(true);
 
-  const currentGuestName = seat.guest
-    ? Guest.getFullName(seat.guest, "Invitado")
-    : "";
-  const currentGuestValue = seat.guest
+  const tableKey = table.id || table.name;
+  const tableLabel = table.name || table.id;
+  const currentGuest = guests.find(
+    (guest) =>
+      guest.table === tableKey && String(guest.seat) === String(seat.seat),
+  );
+  const currentGuestName = currentGuest
+    ? Guest.getFullName(currentGuest, "Invitado")
+    : seat.guest
+      ? Guest.getFullName(seat.guest, "Invitado")
+      : "";
+  const currentGuestValue = currentGuest
     ? createGuestOptionValue({
-        email: seat.guest.email,
+        email: currentGuest.email,
+        guestIndex: currentGuest.guestIndex,
         name: currentGuestName,
       })
     : "";
   const [selectedGuest, setSelectedGuest] = useState(currentGuestValue);
-  const tableLabel = table.name || table.id;
 
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    const [guestEmail, guestName] = selectedGuest.split("|||");
+    const [guestEmail, guestIndex, guestName] = selectedGuest.split("|||");
 
-    onAssign({ guestEmail, guestName });
+    onAssign({ guestEmail, guestIndex, guestName });
   };
 
   const dialog = (
@@ -763,6 +817,7 @@ function SeatAssignmentDialog({
                   key={`${guest.email}-${guestName}-${index}`}
                   value={createGuestOptionValue({
                     email: guest.email,
+                    guestIndex: guest.guestIndex,
                     name: guestName,
                   })}
                 >
@@ -899,7 +954,7 @@ function TablesGrid({ onEdit, onSeatClick, tables }) {
       {tables.map((table, index) => (
         <TableAnimatedInfoCard
           index={index}
-          key={table.id || table.name}
+          key={getTableRenderKey(table)}
           onEdit={onEdit}
           onSeatClick={onSeatClick}
           table={table}
@@ -974,43 +1029,56 @@ function MobileTablesList({ direction, onEdit, onSeatClick, page, tables }) {
       style={cardMinHeight ? { height: `${cardMinHeight}px` } : undefined}
     >
       <AnimatePresence custom={direction} initial={false}>
-        {tables.map((table) => (
-          <motion.div
-            animate="center"
-            className="absolute inset-x-0 top-0"
-            custom={direction}
-            exit="exit"
-            initial="enter"
-            key={`${table.id || table.name}-${page}`}
-            ref={cardRef}
-            transition={{
-              duration: reduceMotion ? 0.18 : 0.48,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            variants={variants}
-          >
+        <motion.div
+          animate="center"
+          className="absolute inset-x-0 top-0 grid gap-4"
+          custom={direction}
+          exit="exit"
+          initial="enter"
+          key={`tables-page-${page}-${tables.map(getTableRenderKey).join("|")}`}
+          ref={cardRef}
+          transition={{
+            duration: reduceMotion ? 0.18 : 0.48,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+          variants={variants}
+        >
+          {tables.map((table) => (
             <TableAnimatedInfoCard
+              key={getTableRenderKey(table)}
               onEdit={onEdit}
               onSeatClick={onSeatClick}
               reveal={false}
               table={table}
             />
-          </motion.div>
-        ))}
+          ))}
+        </motion.div>
       </AnimatePresence>
     </div>
   );
 }
 
-function createGuestOptionValue({ email, name }) {
-  return `${email || ""}|||${name || ""}`;
+function getTableRenderKey(table) {
+  const seatSignature = table.seats
+    .map((seat) => {
+      const guestName = seat.guest ? Guest.getFullName(seat.guest) : "";
+
+      return `${seat.seat}:${guestName}`;
+    })
+    .join(",");
+
+  return `${table.id || table.name}-${seatSignature}`;
+}
+
+function createGuestOptionValue({ email, guestIndex = "", name }) {
+  return `${email || ""}|||${guestIndex}|||${name || ""}`;
 }
 
 function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
   return (
     <div className="mt-5 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
       <p className="text-center">
-        {isMobileList ? "Mesa" : "Pagina"} {page} de {totalPages}
+        {isMobileList ? "Mesas" : "Pagina"} {page} de {totalPages}
       </p>
 
       <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">

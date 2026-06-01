@@ -55,7 +55,13 @@ export const Table = {
     const name = normalizeString(overrides.name || overrides.table || id).trim();
     const shape = getTableShapeOption(overrides.shape).value;
     const normalizedSeats = Table.normalizeSeats(overrides.seats);
-    const seatCount = Number(overrides.seatCount) || normalizedSeats.length;
+    const hasExplicitSeatCount =
+      overrides.seatCount !== undefined &&
+      overrides.seatCount !== null &&
+      String(overrides.seatCount).trim() !== "";
+    const seats = hasExplicitSeatCount
+      ? Table.resizeSeats(normalizedSeats, overrides.seatCount)
+      : normalizedSeats;
 
     return {
       ...TABLE_DEFAULTS,
@@ -64,10 +70,7 @@ export const Table = {
       group: normalizeString(overrides.group || overrides.groupName).trim(),
       notes: normalizeString(overrides.notes).trim(),
       shape,
-      seats:
-        normalizedSeats.length > 0
-          ? normalizedSeats
-          : Table.createSeatsFromCount(seatCount),
+      seats,
     };
   },
 
@@ -87,6 +90,19 @@ export const Table = {
     return Array.from({ length: nextSeatCount }, (_, index) =>
       Table.createSeat(String(index + 1)),
     );
+  },
+
+  resizeSeats(seats, seatCount) {
+    const nextSeatCount = Math.max(Number(seatCount) || 0, 0);
+    const seatsById = new Map(
+      Table.normalizeSeats(seats).map((seat) => [seat.seat, seat]),
+    );
+
+    return Array.from({ length: nextSeatCount }, (_, index) => {
+      const seatId = String(index + 1);
+
+      return seatsById.get(seatId) || Table.createSeat(seatId);
+    });
   },
 
   createSeat(overrides = {}) {

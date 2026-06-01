@@ -18,6 +18,10 @@ export const loadAdminTableGroups = async ({ password } = {}) => {
 export const loadAdminTables = async ({ password } = {}) => {
   const response = await findAllTables({ password });
 
+  if (response?.success === false) {
+    throw new Error(response.error || "No se pudieron cargar las mesas.");
+  }
+
   return Table.normalizeList(response?.tables || []);
 };
 
@@ -67,13 +71,58 @@ export const buildTables = ({ groups, manualTables }) => {
 
 export const buildTableStats = (tables) => Table.buildStats(tables);
 
-export const getPendingGuests = (groups) =>
-  Confirmation.getGuestsWithConfirmation(groups).filter(
-    (guest) => !guest.table || !guest.seat,
+const getGuestsWithGroupIndex = (groups) =>
+  Confirmation.normalizeList(groups).flatMap((confirmation) =>
+    confirmation.guests.map((guest, guestIndex) => ({
+      ...guest,
+      email: confirmation.email,
+      groupName: confirmation.groupName,
+      phone: confirmation.phone,
+      guestIndex,
+    })),
   );
 
-export const getAssignableGuests = (groups) =>
-  Confirmation.getGuestsWithConfirmation(groups);
+const getNormalizedGuestIndex = (guestIndex) => {
+  const rawGuestIndex = String(guestIndex ?? "").trim();
+
+  if (!rawGuestIndex) return null;
+
+  const normalizedGuestIndex = Number(rawGuestIndex);
+
+  return Number.isInteger(normalizedGuestIndex) && normalizedGuestIndex >= 0
+    ? normalizedGuestIndex
+    : null;
+};
+
+const doesGuestMatch = ({
+  group,
+  guest,
+  guestEmail,
+  guestId,
+  guestIndex,
+  guestName,
+  index,
+}) => {
+  if (group.email !== guestEmail) return false;
+
+  const normalizedGuestIndex = getNormalizedGuestIndex(guestIndex);
+
+  if (normalizedGuestIndex !== null) {
+    return index === normalizedGuestIndex;
+  }
+
+  const fullName = Guest.getFullName(guest);
+  const possibleNames = [guestId, guestName].filter(Boolean);
+
+  return possibleNames.some(
+    (name) => name === fullName || name === guest.name,
+  );
+};
+
+export const getPendingGuests = (groups) =>
+  getGuestsWithGroupIndex(groups).filter((guest) => !guest.table || !guest.seat);
+
+export const getAssignableGuests = (groups) => getGuestsWithGroupIndex(groups);
 
 export const createTableFormFromTable = (table) => {
   const normalizedTable = Table.normalize(table);
@@ -145,6 +194,7 @@ export const assignPendingGuestToSeat = async ({
   groups,
   guestEmail,
   guestId,
+  guestIndex,
   password,
   seatNumber,
   tableId,
@@ -156,32 +206,47 @@ export const assignPendingGuestToSeat = async ({
     throw new Error("Grupo de invitacion no encontrado");
   }
 
-  const guestIndex = confirmation.guests.findIndex(
-    (guest) => Guest.getFullName(guest) === guestId,
+  const nextGuestIndex = confirmation.guests.findIndex((guest, index) =>
+    doesGuestMatch({
+      group: confirmation,
+      guest,
+      guestEmail,
+      guestId,
+      guestIndex,
+      index,
+    }),
   );
 
-  if (guestIndex === -1) {
+  if (nextGuestIndex === -1) {
     throw new Error("Invitado no encontrado en el grupo");
   }
 
-  const table = tables.find((item) => getTableKey(item) === tableId);
+  const currentGuest = confirmation.guests[nextGuestIndex];
+
+  if (!currentGuest) {
+    throw new Error("Invitado no encontrado en el grupo");
+  }
+
+  const table = tables.find(
+    (item) => getTableKey(item) === String(tableId || "").trim(),
+  );
 
   if (!table) {
     throw new Error("Mesa no encontrada");
   }
 
-  const emptySeat = Table.getEmptySeats(table).find(
-    (seat) => seat.seat === seatNumber,
+  const occupiedByAnotherGuest = table.seats.some(
+    (seat) => seat.seat === seatNumber && seat.guest,
   );
 
-  if (!emptySeat) {
+  if (occupiedByAnotherGuest) {
     throw new Error("El asiento no esta disponible");
   }
 
   const updatedConfirmation = {
     ...confirmation,
     guests: confirmation.guests.map((guest, index) =>
-      index === guestIndex
+      index === nextGuestIndex
         ? {
             ...guest,
             table: tableId,
@@ -195,11 +260,16 @@ export const assignPendingGuestToSeat = async ({
     group: updatedConfirmation,
     password,
   });
+
+  return groups.map((group) =>
+    group.email === updatedConfirmation.email ? updatedConfirmation : group,
+  );
 };
 
 export const assignGuestToSeat = async ({
   groups,
   guestEmail,
+  guestIndex,
   guestName,
   password,
   seat,
@@ -207,11 +277,18 @@ export const assignGuestToSeat = async ({
 }) => {
   const tableId = getTableKey(table);
   const seatNumber = seat.seat;
+  let selectedGuestFound = false;
   const updatedGroups = groups.map((group) => {
     let changed = false;
-    const guests = group.guests.map((guest) => {
-      const isSelectedGuest =
-        group.email === guestEmail && Guest.getFullName(guest) === guestName;
+    const guests = group.guests.map((guest, index) => {
+      const isSelectedGuest = doesGuestMatch({
+        group,
+        guest,
+        guestEmail,
+        guestIndex,
+        guestName,
+        index,
+      });
       const isCurrentSeatGuest =
         guest.table === tableId && guest.seat === seatNumber;
 
@@ -220,6 +297,8 @@ export const assignGuestToSeat = async ({
       changed = true;
 
       if (isSelectedGuest) {
+        selectedGuestFound = true;
+
         return {
           ...guest,
           table: tableId,
@@ -240,6 +319,10 @@ export const assignGuestToSeat = async ({
     (group, index) => group !== groups[index],
   );
 
+  if (!selectedGuestFound) {
+    throw new Error("Invitado no encontrado en el grupo");
+  }
+
   await Promise.all(
     changedGroups.map((group) =>
       saveAdminGroup({
@@ -248,6 +331,8 @@ export const assignGuestToSeat = async ({
       }),
     ),
   );
+
+  return updatedGroups;
 };
 
 export const downloadTablesCsv = (tables) => {
