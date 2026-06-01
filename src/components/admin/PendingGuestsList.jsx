@@ -1,11 +1,6 @@
 import { useCallback, useState, useMemo } from "react";
-import { inputClassName, Label, FieldError } from "../rsvp/FormPrimitives";
+import { inputClassName, Label } from "../rsvp/FormPrimitives";
 import { Table, Guest } from "../../models";
-import {
-  getTableGroupOption,
-  TABLE_GROUP_OPTIONS,
-} from "../../constants/tables";
-import { GUEST_MENU_OPTIONS } from "../../constants/rsvp";
 import IconButton from "../ui/IconButton";
 import { Check, AlertCircle } from "lucide-react";
 
@@ -64,12 +59,13 @@ export default function PendingGuestsList({
       if (!tableId || !seatNumber) return;
 
       setError("");
-      setAssigningGuest(guest.name || "");
+      setAssigningGuest(getGuestRowKey(guest));
 
       try {
         await onAssignTable({
-          guestId: guest.name,
+          guestId: Guest.getFullName(guest),
           guestEmail: guest.email,
+          guestIndex: guest.guestIndex,
           tableId,
           seatNumber,
         });
@@ -161,7 +157,7 @@ export default function PendingGuestsList({
               guest={guest}
               tables={tablesWithSeats}
               onAssign={handleAssign}
-              isAssigning={assigningGuest === guest.name}
+              isAssigning={assigningGuest === getGuestRowKey(guest)}
             />
           ))}
         </div>
@@ -305,4 +301,8 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
       </div>
     </div>
   );
+}
+
+function getGuestRowKey(guest) {
+  return `${guest.email || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`;
 }

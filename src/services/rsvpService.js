@@ -90,6 +90,13 @@ export const findAllGroups = async ({ password } = {}) => {
   });
 };
 
+export const findAllTables = async ({ password } = {}) => {
+  return await requestJsonp({
+    action: "tables-list",
+    password,
+  });
+};
+
 export const saveGroup = async (payload) => {
   const confirmation = Confirmation.normalize(payload);
 
@@ -117,6 +124,19 @@ export const saveAdminGroup = async ({ group, password }) => {
   return {
     success: true,
     email: confirmation.email,
+  };
+};
+
+export const saveAdminTables = async ({ password, tables }) => {
+  await sendToRsvpApi({
+    action: "tables-save",
+    password,
+    tables,
+  });
+
+  return {
+    success: true,
+    tables,
   };
 };
 

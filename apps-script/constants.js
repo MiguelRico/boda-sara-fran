@@ -1,5 +1,6 @@
 /* eslint-disable */
 const SHEET_NAME = "Invitados";
+const TABLES_SHEET_NAME = "Mesas";
 const SPREADSHEET_ID = "1bNNIgd7F-tsmKtKu_vChwIJP8DabGOW1wXWlzPvxRdM";
 const ADMIN_PASSWORD = "sara-fran-admin";
 const ADMIN_EMAIL = "miguel.rico.vazquez@gmail.com";
