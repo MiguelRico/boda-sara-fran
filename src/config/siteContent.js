@@ -236,6 +236,14 @@ export const siteContent = {
         to: "/admin/stats",
         emoji: "📊",
       },
+      {
+        title: "Mesas",
+        subtitle: "Organiza asientos",
+        description:
+          "Consultar la distribución de mesas, asientos e invitados asignados.",
+        to: "/admin/tables",
+        emoji: "🪑",
+      },
     ],
   },
 };

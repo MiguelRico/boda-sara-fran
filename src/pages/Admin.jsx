@@ -169,10 +169,10 @@ function AdminLogin({
 
 function AdminDashboard() {
   return (
-    <div className="mx-auto w-full max-w-4xl">
-      <div className="grid gap-4 sm:grid-cols-2">
-        {siteContent.admin.cards.map((card) => (
-          <AnimatedInfoCard key={card.title} card={card} index={0} />
+    <div className="mx-auto w-full max-w-6xl">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {siteContent.admin.cards.map((card, index) => (
+          <AnimatedInfoCard key={card.title} card={card} index={index} />
         ))}
       </div>
     </div>

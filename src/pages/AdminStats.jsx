@@ -4,10 +4,13 @@ import { Navigate } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import {
+  AdminMetricGrid,
+  AdminMetricGridSkeleton,
+} from "../components/admin/AdminMetricGrid";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
@@ -190,13 +193,17 @@ function StatsOverview({ loading, onRefresh, stats }) {
         </IconButton>
       </div>
 
-      {loading ? <StatsSkeleton /> : <SummaryGrid stats={stats} />}
+      {loading ? (
+        <AdminMetricGridSkeleton />
+      ) : (
+        <AdminMetricGrid items={getSummaryItems(stats)} />
+      )}
     </section>
   );
 }
 
-function SummaryGrid({ stats }) {
-  const items = [
+function getSummaryItems(stats) {
+  return [
     {
       label: "Total confirmaciones",
       value: stats.totalGroups,
@@ -234,27 +241,6 @@ function SummaryGrid({ stats }) {
       emoji: "🚌",
     },
   ];
-
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-      {items.map((item, index) => (
-        <AnimatedInfoCard
-          card={{
-            className:
-              "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-4 sm:p-5",
-            description: item.detail,
-            emoji: item.emoji,
-            inlineTitleDescription: true,
-            showAction: false,
-            subtitle: item.label,
-            title: String(item.value),
-          }}
-          index={index}
-          key={item.label}
-        />
-      ))}
-    </div>
-  );
 }
 
 function DonutStatsCard({ emptyText, emoji, items, title }) {
@@ -574,23 +560,6 @@ function ChartLegend({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function StatsSkeleton() {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div
-          className="min-h-48 animate-pulse rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 sm:p-5"
-          key={index}
-        >
-          <div className="h-11 w-11 rounded-full bg-[var(--color-border)]" />
-          <div className="mt-8 h-4 w-24 rounded-full bg-[var(--color-border)]" />
-          <div className="mt-4 h-12 w-20 rounded-full bg-[var(--color-border)]" />
-        </div>
-      ))}
     </div>
   );
 }
