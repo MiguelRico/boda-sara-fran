@@ -105,7 +105,8 @@ const tableEditorContent = {
     },
     notes: {
       label: "Notas",
-      placeholder: "Ej: Cerca de la pista, mesa infantil, indicaciones del catering...",
+      placeholder:
+        "Ej: Cerca de la pista, mesa infantil, indicaciones del catering...",
     },
   },
 };
@@ -120,7 +121,7 @@ export default function AdminTables() {
   const pageScrollCancelRef = useRef(null);
   const tablesInView = useInView(tablesRef, {
     once: true,
-    amount: 0.2,
+    amount: 0.1,
   });
   const isAuthenticated =
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
@@ -147,41 +148,43 @@ export default function AdminTables() {
 
   const loadTables = useCallback(
     async ({ includeStoredTables = true, showLoading = true } = {}) => {
-    if (showLoading) {
-      setState((prev) => ({ ...prev, loading: true, error: "" }));
-    }
-
-    try {
-      const groupsPromise = loadAdminTableGroups({ password: ADMIN_PASSWORD });
-      const storedTablesPromise = includeStoredTables
-        ? loadAdminTables({ password: ADMIN_PASSWORD }).catch((error) => {
-            console.error("Error al cargar mesas guardadas:", error);
-            return readStoredTables();
-          })
-        : Promise.resolve(null);
-      const [groups, storedTables] = await Promise.all([
-        groupsPromise,
-        storedTablesPromise,
-      ]);
-
-      if (storedTables) {
-        setManualTables(storedTables);
+      if (showLoading) {
+        setState((prev) => ({ ...prev, loading: true, error: "" }));
       }
-      setState({
-        groups,
-        loading: false,
-        error: "",
-      });
-    } catch (error) {
-      console.error(error);
 
-      setState({
-        groups: [],
-        loading: false,
-        error:
-          "No se pudieron cargar las mesas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
-      });
-    }
+      try {
+        const groupsPromise = loadAdminTableGroups({
+          password: ADMIN_PASSWORD,
+        });
+        const storedTablesPromise = includeStoredTables
+          ? loadAdminTables({ password: ADMIN_PASSWORD }).catch((error) => {
+              console.error("Error al cargar mesas guardadas:", error);
+              return readStoredTables();
+            })
+          : Promise.resolve(null);
+        const [groups, storedTables] = await Promise.all([
+          groupsPromise,
+          storedTablesPromise,
+        ]);
+
+        if (storedTables) {
+          setManualTables(storedTables);
+        }
+        setState({
+          groups,
+          loading: false,
+          error: "",
+        });
+      } catch (error) {
+        console.error(error);
+
+        setState({
+          groups: [],
+          loading: false,
+          error:
+            "No se pudieron cargar las mesas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
+        });
+      }
     },
     [],
   );
@@ -292,13 +295,8 @@ export default function AdminTables() {
 
     if (clampedPage === currentPage || pageLoading) return;
 
-    const cardElement = tablesCardRef.current;
-    const cardRect = cardElement?.getBoundingClientRect();
     const tableElement = tablesStartRef.current;
     const tableRect = tableElement?.getBoundingClientRect();
-    const cardTop = cardRect
-      ? Math.max(0, cardRect.top + window.scrollY - pageScrollOffset)
-      : window.scrollY;
     const tableHeight = tableRect?.height || null;
     const direction = clampedPage > currentPage ? 1 : -1;
 
@@ -308,12 +306,6 @@ export default function AdminTables() {
       setPageLoadingMinHeight(tableHeight);
       setPageDirection(direction);
       setPage(clampedPage);
-      pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
-        pageScrollStartFrameRef.current = null;
-        pageScrollCancelRef.current = scrollToY(cardTop, {
-          duration: pageScrollDuration,
-        });
-      });
       pageRevealTimeoutRef.current = window.setTimeout(() => {
         setPageLoadingMinHeight(null);
         pageRevealTimeoutRef.current = null;
@@ -325,26 +317,16 @@ export default function AdminTables() {
     setPageDirection(direction);
     setPageLoadingMinHeight(tableHeight);
     setPageLoading(true);
-    pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
-      pageScrollStartFrameRef.current = window.requestAnimationFrame(() => {
-        pageScrollStartFrameRef.current = null;
-        pageScrollCancelRef.current = scrollToY(cardTop, {
-          duration: pageScrollDuration,
-        });
+    pageLoadingTimeoutRef.current = window.setTimeout(() => {
+      setPage(clampedPage);
+      pageLoadingTimeoutRef.current = null;
 
-        pageLoadingTimeoutRef.current = window.setTimeout(() => {
-          setPage(clampedPage);
-          pageLoadingTimeoutRef.current = null;
-          pageScrollCancelRef.current = null;
-
-          pageRevealTimeoutRef.current = window.setTimeout(() => {
-            setPageLoading(false);
-            setPageLoadingMinHeight(null);
-            pageRevealTimeoutRef.current = null;
-          }, pageRevealDelay);
-        }, pageDataSwapDelay);
-      });
-    });
+      pageRevealTimeoutRef.current = window.setTimeout(() => {
+        setPageLoading(false);
+        setPageLoadingMinHeight(null);
+        pageRevealTimeoutRef.current = null;
+      }, pageRevealDelay);
+    }, pageDataSwapDelay);
   };
 
   const handleTableFormChange = (field, value) => {
@@ -426,7 +408,11 @@ export default function AdminTables() {
     [spinner, state.groups, tables],
   );
 
-  const handleAssignGuestToSeat = async ({ guestEmail, guestIndex, guestName }) => {
+  const handleAssignGuestToSeat = async ({
+    guestEmail,
+    guestIndex,
+    guestName,
+  }) => {
     if (!seatAssignmentTarget || !guestEmail) return;
 
     setAssigningSeat(true);
@@ -531,7 +517,8 @@ export default function AdminTables() {
       setState((prev) => ({
         ...prev,
         error:
-          error.message || "No se pudieron guardar las mesas. Intenta de nuevo.",
+          error.message ||
+          "No se pudieron guardar las mesas. Intenta de nuevo.",
       }));
     } finally {
       spinner.hide();
@@ -649,6 +636,7 @@ export default function AdminTables() {
                             onSeatClick={handleSeatClick}
                             page={currentPage}
                             tables={pagedTables}
+                            allTables={tables}
                           />
                         </div>
 
@@ -1020,41 +1008,43 @@ function TablesGrid({ onEdit, onSeatClick, tables }) {
     </div>
   );
 }
-function MobileTablesList({ direction, onEdit, onSeatClick, page, tables }) {
+function MobileTablesList({
+  direction,
+  onEdit,
+  onSeatClick,
+  page,
+  tables,
+  allTables,
+}) {
   const reduceMotion = useReducedMotion();
   const cardRef = useRef(null);
+  const measureRefs = useRef([]);
   const [cardMinHeight, setCardMinHeight] = useState(null);
 
   useLayoutEffect(() => {
-    const node = cardRef.current;
-
-    if (!node) return undefined;
+    if (!allTables?.length) return undefined;
 
     const updateCardHeight = () => {
-      setCardMinHeight((currentHeight) => {
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        const stableHeight = Math.max(currentHeight || 0, nextHeight);
+      const maxHeight = allTables.reduce((max, _, index) => {
+        const node = measureRefs.current[index];
+        if (!node) return max;
 
-        return Math.abs((currentHeight || 0) - stableHeight) < 1
+        return Math.max(max, Math.ceil(node.getBoundingClientRect().height));
+      }, 0);
+
+      setCardMinHeight((currentHeight) => {
+        if (!maxHeight) return currentHeight;
+        return Math.abs((currentHeight || 0) - maxHeight) < 1
           ? currentHeight
-          : stableHeight;
+          : maxHeight;
       });
     };
 
     updateCardHeight();
+    window.addEventListener("resize", updateCardHeight);
 
-    if (!window.ResizeObserver) {
-      window.addEventListener("resize", updateCardHeight);
-
-      return () => window.removeEventListener("resize", updateCardHeight);
-    }
-
-    const resizeObserver = new ResizeObserver(updateCardHeight);
-
-    resizeObserver.observe(node);
-
-    return () => resizeObserver.disconnect();
-  }, [page, tables]);
+    return () => window.removeEventListener("resize", updateCardHeight);
+  }, [allTables]);
 
   const variants = reduceMotion
     ? {
@@ -1080,11 +1070,39 @@ function MobileTablesList({ direction, onEdit, onSeatClick, page, tables }) {
         }),
       };
 
+  measureRefs.current = [];
+
   return (
     <div
       className="relative overflow-hidden md:hidden"
-      style={cardMinHeight ? { height: `${cardMinHeight}px` } : undefined}
+      style={
+        cardMinHeight
+          ? { minHeight: `${cardMinHeight}px`, height: `${cardMinHeight}px` }
+          : undefined
+      }
     >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-0 top-0 z-[-1] h-auto w-full opacity-0"
+        style={{ width: "100%" }}
+      >
+        {allTables?.map((table, index) => (
+          <div
+            key={`measure-${getTableRenderKey(table)}`}
+            ref={(node) => {
+              measureRefs.current[index] = node;
+            }}
+          >
+            <TableAnimatedInfoCard
+              onEdit={() => {}}
+              onSeatClick={() => {}}
+              reveal={false}
+              table={table}
+            />
+          </div>
+        ))}
+      </div>
+
       <AnimatePresence custom={direction} initial={false}>
         <motion.div
           animate="center"
@@ -1230,5 +1248,3 @@ function TablesSkeleton() {
     </div>
   );
 }
-
-
