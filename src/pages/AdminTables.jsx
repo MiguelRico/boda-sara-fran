@@ -22,11 +22,18 @@ import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStagg
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
+import TabNavigation from "../components/ui/TabNavigation";
+import PendingGuestsList from "../components/admin/PendingGuestsList";
 import { Confirmation, Guest, Table } from "../models";
-import { findAllGroups } from "../services/rsvpService";
+import { findAllGroups, saveAdminGroup } from "../services/rsvpService";
 import { normalizeAdminGroups } from "../utils/rsvpGroups";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
 
+const ADMIN_ACTIVE_TAB_KEY = "admin-tables-active-tab";
+const SECTION_TABS = [
+  { id: "tables", label: "Mesas" },
+  { id: "pending", label: "Invitados Pendientes" },
+];
 const emptyState = {
   groups: [],
   loading: true,
@@ -57,6 +64,13 @@ export default function AdminTables() {
   const [tableForm, setTableForm] = useState(createEmptyTableForm);
   const [tableFormErrors, setTableFormErrors] = useState({});
   const [showTableForm, setShowTableForm] = useState(false);
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      return window.localStorage.getItem(ADMIN_ACTIVE_TAB_KEY) || "tables";
+    } catch {
+      return "tables";
+    }
+  });
 
   const loadTables = useCallback(async ({ showLoading = true } = {}) => {
     if (showLoading) {
@@ -104,6 +118,14 @@ export default function AdminTables() {
     }
   }, [manualTables]);
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(ADMIN_ACTIVE_TAB_KEY, activeTab);
+    } catch {
+      // Storage can be unavailable in private or locked browser contexts.
+    }
+  }, [activeTab]);
+
   const tables = useMemo(() => {
     const guests = Confirmation.getGuestsWithConfirmation(state.groups);
     const assignedTables = Table.fromGuests(guests);
@@ -111,6 +133,12 @@ export default function AdminTables() {
     return Table.mergeLists(manualTables, assignedTables);
   }, [manualTables, state.groups]);
   const tableStats = useMemo(() => Table.buildStats(tables), [tables]);
+
+  const guestsPending = useMemo(() => {
+    const guests = Confirmation.getGuestsWithConfirmation(state.groups);
+    return guests.filter((g) => !g.table || !g.seat);
+  }, [state.groups]);
+
   const handleTableFormChange = (field, value) => {
     setTableForm((current) => ({ ...current, [field]: value }));
     setTableFormErrors((current) => ({ ...current, [field]: "" }));
@@ -120,6 +148,65 @@ export default function AdminTables() {
     setTableForm(createEmptyTableForm());
     setTableFormErrors({});
   };
+
+  const handleAssignGuestToTable = useCallback(
+    async ({ guestId, guestEmail, tableId, seatNumber }) => {
+      try {
+        // Encontrar el grupo que contiene al guest
+        const confirmation = state.groups.find((g) => g.email === guestEmail);
+        if (!confirmation) {
+          throw new Error("Grupo de invitación no encontrado");
+        }
+
+        // Buscar el guest en el grupo
+        const guestIndex = confirmation.guests.findIndex(
+          (g) => Guest.getFullName(g) === guestId,
+        );
+        if (guestIndex === -1) {
+          throw new Error("Invitado no encontrado en el grupo");
+        }
+
+        // Validar que la mesa existe y tiene asiento disponible
+        const table = tables.find((t) => (t.id || t.name) === tableId);
+        if (!table) {
+          throw new Error("Mesa no encontrada");
+        }
+
+        const emptySeat = Table.getEmptySeats(table).find(
+          (s) => s.seat === seatNumber,
+        );
+        if (!emptySeat) {
+          throw new Error("El asiento no está disponible");
+        }
+
+        // Actualizar el guest
+        const updatedGuest = {
+          ...confirmation.guests[guestIndex],
+          table: tableId,
+          seat: seatNumber,
+        };
+        confirmation.guests[guestIndex] = updatedGuest;
+
+        // Guardar el grupo actualizado
+        await saveAdminGroup({
+          group: confirmation,
+          password: ADMIN_PASSWORD,
+        });
+
+        // Recargar tablas
+        await loadTables({ showLoading: false });
+      } catch (error) {
+        console.error("Error al asignar mesa:", error);
+        setState((prev) => ({
+          ...prev,
+          error:
+            error.message || "No se pudo asignar la mesa. Intenta de nuevo.",
+        }));
+      }
+    },
+    [state.groups, tables, loadTables],
+  );
+
   const handleTableSubmit = (event) => {
     event.preventDefault();
 
@@ -180,22 +267,39 @@ export default function AdminTables() {
                   </h2>
                 </div>
 
-                <IconButton
-                  className="w-full sm:w-auto"
-                  icon={<Plus size={16} strokeWidth={1.8} />}
-                  label="Crear mesa"
-                  onClick={() => setShowTableForm(true)}
-                  showText="always"
-                  tone="primary"
-                >
-                  Crear mesa
-                </IconButton>
+                {activeTab === "tables" && (
+                  <IconButton
+                    className="w-full sm:w-auto"
+                    icon={<Plus size={16} strokeWidth={1.8} />}
+                    label="Crear mesa"
+                    onClick={() => setShowTableForm(true)}
+                    showText="always"
+                    tone="primary"
+                  >
+                    Crear mesa
+                  </IconButton>
+                )}
               </div>
 
-              {state.loading ? (
-                <TablesSkeleton />
+              <TabNavigation
+                tabs={SECTION_TABS}
+                activeTab={activeTab}
+                onChange={setActiveTab}
+                className="mb-6"
+              />
+
+              {activeTab === "tables" ? (
+                state.loading ? (
+                  <TablesSkeleton />
+                ) : (
+                  <TablesGrid tables={tables} />
+                )
               ) : (
-                <TablesGrid tables={tables} />
+                <PendingGuestsList
+                  guests={guestsPending}
+                  tables={tables}
+                  onAssignTable={handleAssignGuestToTable}
+                />
               )}
             </section>
           </CinematicStaggeredRevealItem>
@@ -366,17 +470,20 @@ function TablesGrid({ tables }) {
               <h3 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
                 Mesa {table.name || table.id}
               </h3>
-          <p className="mt-2 text-sm text-[var(--color-muted)]">
-            {[getTableGroupOption(table.group)?.label, Table.getShapeLabel(table)]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
-          {table.notes && (
-            <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-              {table.notes}
-            </p>
-          )}
-        </div>
+              <p className="mt-2 text-sm text-[var(--color-muted)]">
+                {[
+                  getTableGroupOption(table.group)?.label,
+                  Table.getShapeLabel(table),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+              {table.notes && (
+                <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
+                  {table.notes}
+                </p>
+              )}
+            </div>
             <p className="text-sm text-[var(--color-muted)]">
               {Table.getAssignedGuests(table).length} invitados
             </p>
