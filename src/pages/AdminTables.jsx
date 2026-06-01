@@ -34,6 +34,7 @@ import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
+import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
 import TableForm from "../components/admin/TableForm";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
@@ -67,6 +68,31 @@ const emptyState = {
 };
 const TABLE_METRIC_GRID_CLASS =
   "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between";
+const tableEditorContent = {
+  eyebrow: "Mesa",
+  title: "Editar mesa",
+  submitText: "Guardar mesa",
+  cancelText: "Cancelar",
+  fields: {
+    name: {
+      label: "Nombre de la mesa *",
+      placeholder: "Ej: Mesa 1",
+    },
+    group: {
+      label: "Grupo *",
+    },
+    shape: {
+      label: "Forma *",
+    },
+    seatCount: {
+      label: "Numero de asientos *",
+    },
+    notes: {
+      label: "Notas",
+      placeholder: "Ej: Cerca de la pista, mesa infantil, indicaciones del catering...",
+    },
+  },
+};
 const readStoredTables = () => {
   try {
     return Table.normalizeList(
@@ -95,6 +121,7 @@ export default function AdminTables() {
   const [manualTables, setManualTables] = useState(readStoredTables);
   const [tableForm, setTableForm] = useState(createEmptyTableForm);
   const [tableFormErrors, setTableFormErrors] = useState({});
+  const [editingTable, setEditingTable] = useState(null);
   const [showTableForm, setShowTableForm] = useState(false);
   const [page, setPage] = useState(1);
   const [pageDirection, setPageDirection] = useState(1);
@@ -307,8 +334,23 @@ export default function AdminTables() {
   };
   const handleCloseTableForm = () => {
     setShowTableForm(false);
+    setEditingTable(null);
     setTableForm(createEmptyTableForm());
     setTableFormErrors({});
+  };
+
+  const handleCreateTable = () => {
+    setEditingTable(null);
+    setTableForm(createEmptyTableForm());
+    setTableFormErrors({});
+    setShowTableForm(true);
+  };
+
+  const handleEditTable = (table) => {
+    setEditingTable(table);
+    setTableForm(createTableFormFromTable(table));
+    setTableFormErrors({});
+    setShowTableForm(true);
   };
 
   const handleAssignGuestToTable = useCallback(
@@ -372,22 +414,31 @@ export default function AdminTables() {
   const handleTableSubmit = (event) => {
     event.preventDefault();
 
-    const errors = validateTableForm(tableForm, tables);
+    const errors = validateTableForm(tableForm, tables, editingTable);
 
     if (Object.keys(errors).length) {
       setTableFormErrors(errors);
       return;
     }
 
-    setManualTables((current) => [
-      ...current,
-      Table.create({
-        ...tableForm,
-        id: tableForm.name,
-        seatCount: tableForm.seatCount,
-      }),
-    ]);
-    setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
+    const nextTable = Table.create({
+      ...tableForm,
+      id: editingTable ? getTableKey(editingTable) : tableForm.name,
+      seatCount: tableForm.seatCount,
+    });
+
+    if (editingTable) {
+      const editingTableKey = getTableKey(editingTable);
+
+      setManualTables((current) => [
+        ...current.filter((table) => getTableKey(table) !== editingTableKey),
+        nextTable,
+      ]);
+    } else {
+      setManualTables((current) => [...current, nextTable]);
+      setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
+    }
+
     handleCloseTableForm();
   };
 
@@ -451,7 +502,7 @@ export default function AdminTables() {
                         <IconButton
                           className="!w-full border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] sm:!w-10"
                           label="Crear mesa"
-                          onClick={() => setShowTableForm(true)}
+                          onClick={handleCreateTable}
                         >
                           <Plus size={18} strokeWidth={2.4} />
                         </IconButton>
@@ -489,9 +540,13 @@ export default function AdminTables() {
                               : "opacity-100"
                           }
                         >
-                          <TablesGrid tables={pagedTables} />
+                          <TablesGrid
+                            onEdit={handleEditTable}
+                            tables={pagedTables}
+                          />
                           <MobileTablesList
                             direction={pageDirection}
+                            onEdit={handleEditTable}
                             page={currentPage}
                             tables={pagedTables}
                           />
@@ -537,8 +592,10 @@ export default function AdminTables() {
 
       {showTableForm && (
         <TableEditor
+          content={editingTable ? tableEditorContent : undefined}
           errors={tableFormErrors}
           form={tableForm}
+          title={editingTable ? "Editar mesa" : "Crear mesa"}
           onCancel={handleCloseTableForm}
           onChange={handleTableFormChange}
           onSubmit={handleTableSubmit}
@@ -548,7 +605,15 @@ export default function AdminTables() {
   );
 }
 
-function TableEditor({ errors, form, onCancel, onChange, onSubmit }) {
+function TableEditor({
+  content,
+  errors,
+  form,
+  onCancel,
+  onChange,
+  onSubmit,
+  title = "Crear mesa",
+}) {
   useViewportScrollLock(true);
 
   const dialog = (
@@ -566,7 +631,7 @@ function TableEditor({ errors, form, onCancel, onChange, onSubmit }) {
               className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
               id="table-editor-title"
             >
-              Crear mesa
+              {title}
             </h2>
           </div>
 
@@ -576,6 +641,7 @@ function TableEditor({ errors, form, onCancel, onChange, onSubmit }) {
         </div>
 
         <TableForm
+          content={content}
           errors={errors}
           form={form}
           onCancel={onCancel}
@@ -663,7 +729,7 @@ function getTableSummaryItems(stats) {
   ];
 }
 
-function TablesGrid({ tables }) {
+function TablesGrid({ onEdit, tables }) {
   if (!tables.length) {
     return (
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
@@ -674,6 +740,21 @@ function TablesGrid({ tables }) {
           Asigna mesa y asiento desde la edición de invitados para ver aquí la
           distribución.
         </p>
+      </div>
+    );
+  }
+
+  if (tables.length) {
+    return (
+      <div className="hidden gap-4 md:grid lg:grid-cols-2">
+        {tables.map((table, index) => (
+          <TableAnimatedInfoCard
+            index={index}
+            key={table.id || table.name}
+            onEdit={onEdit}
+            table={table}
+          />
+        ))}
       </div>
     );
   }
@@ -720,7 +801,7 @@ function TablesGrid({ tables }) {
   );
 }
 
-function MobileTablesList({ direction, page, tables }) {
+function MobileTablesList({ direction, onEdit, page, tables }) {
   const reduceMotion = useReducedMotion();
   const cardRef = useRef(null);
   const [cardMinHeight, setCardMinHeight] = useState(null);
@@ -787,9 +868,9 @@ function MobileTablesList({ direction, page, tables }) {
     >
       <AnimatePresence custom={direction} initial={false}>
         {tables.map((table) => (
-          <motion.article
+          <motion.div
             animate="center"
-            className="absolute inset-x-0 top-0 rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 shadow-[0_18px_45px_rgba(52,69,49,0.06)]"
+            className="absolute inset-x-0 top-0"
             custom={direction}
             exit="exit"
             initial="enter"
@@ -801,48 +882,42 @@ function MobileTablesList({ direction, page, tables }) {
             }}
             variants={variants}
           >
-            <div className="mb-4 flex items-baseline justify-between gap-4">
-              <div className="min-w-0">
-                <h3 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-                  Mesa {table.name || table.id}
-                </h3>
-                <p className="mt-2 text-sm text-[var(--color-muted)]">
-                  {[
-                    getTableGroupOption(table.group)?.label,
-                    Table.getShapeLabel(table),
-                  ]
-                    .filter(Boolean)
-                    .join(" - ")}
-                </p>
-                {table.notes && (
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-                    {table.notes}
-                  </p>
-                )}
-              </div>
-              <p className="shrink-0 text-sm text-[var(--color-muted)]">
-                {Table.getAssignedGuests(table).length} invitados
-              </p>
-            </div>
-
-            <div className="grid gap-3">
-              {table.seats.map((seat) => (
-                <SeatRow key={seat.seat} seat={seat} />
-              ))}
-            </div>
-          </motion.article>
+            <TableAnimatedInfoCard
+              onEdit={onEdit}
+              reveal={false}
+              table={table}
+            />
+          </motion.div>
         ))}
       </AnimatePresence>
     </div>
   );
 }
 
-function validateTableForm(form, tables) {
+function createTableFormFromTable(table) {
+  const normalizedTable = Table.normalize(table);
+
+  return {
+    group: normalizedTable.group,
+    name: normalizedTable.name || normalizedTable.id,
+    notes: normalizedTable.notes,
+    seatCount: normalizedTable.seats.length,
+    shape: normalizedTable.shape,
+  };
+}
+
+function getTableKey(table) {
+  return (table.id || table.name || "").trim();
+}
+
+function validateTableForm(form, tables, editingTable = null) {
   const errors = {};
   const tableName = form.name.trim();
+  const editingTableKey = editingTable ? getTableKey(editingTable) : "";
   const repeatedTable = tables.some(
     (table) =>
-      (table.id || table.name).trim().toLowerCase() === tableName.toLowerCase(),
+      getTableKey(table).toLowerCase() !== editingTableKey.toLowerCase() &&
+      getTableKey(table).toLowerCase() === tableName.toLowerCase(),
   );
 
   if (!tableName) {
