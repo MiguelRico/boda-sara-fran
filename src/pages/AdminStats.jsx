@@ -230,7 +230,7 @@ function getSummaryItems(stats) {
     },
     {
       label: "Con comentarios",
-      value: `${stats.guestsWithComments}%`,
+      value: `${stats.guestsWithComments}`,
       detail: "Comentarios",
       emoji: "...",
     },

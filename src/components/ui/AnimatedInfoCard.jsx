@@ -36,17 +36,19 @@ function InfoCard({
     >
       {summaryView ? (
         <div className="relative flex min-w-0 flex-col items-center justify-center gap-3 text-center">
-          {emoji && (
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
-              {emoji}
-            </span>
-          )}
+          <div className="flex min-w-0 items-center justify-center gap-3 sm:flex-col">
+            {emoji && (
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
+                {emoji}
+              </span>
+            )}
 
-          {title && (
-            <p className="font-serif text-3xl leading-tight text-[var(--color-text)] sm:text-4xl">
-              {title}
-            </p>
-          )}
+            {title && (
+              <p className="font-serif text-3xl leading-tight text-[var(--color-text)] sm:text-4xl">
+                {title}
+              </p>
+            )}
+          </div>
 
           {description && (
             <p className="min-w-0 break-words text-sm leading-relaxed text-[var(--color-accent)] sm:text-base">

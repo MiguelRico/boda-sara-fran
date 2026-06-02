@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import AnimatedInfoCard from "../ui/AnimatedInfoCard";
 
@@ -14,6 +14,7 @@ export function AdminMetricGrid({
 }) {
   const itemRefs = useRef([]);
   const [summarySize, setSummarySize] = useState(null);
+  const [shouldFitContent, setShouldFitContent] = useState(false);
   const sizeKey = useMemo(
     () =>
       items
@@ -22,6 +23,18 @@ export function AdminMetricGrid({
     [items],
   );
   const activeSummarySize = summarySize?.key === sizeKey ? summarySize : null;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const updateShouldFitContent = () =>
+      setShouldFitContent(mediaQuery.matches);
+
+    updateShouldFitContent();
+    mediaQuery.addEventListener("change", updateShouldFitContent);
+
+    return () =>
+      mediaQuery.removeEventListener("change", updateShouldFitContent);
+  }, []);
 
   useLayoutEffect(() => {
     if (activeSummarySize) return undefined;
@@ -64,10 +77,7 @@ export function AdminMetricGrid({
               inlineTitleDescription: true,
               showAction: false,
               style: activeSummarySize
-                ? {
-                    minHeight: `${activeSummarySize.height}px`,
-                    width: `${activeSummarySize.width}px`,
-                  }
+                ? getSummaryCardStyle(activeSummarySize, shouldFitContent)
                 : undefined,
               subtitle: item.label,
               title: String(item.value),
@@ -79,6 +89,19 @@ export function AdminMetricGrid({
       ))}
     </div>
   );
+}
+
+function getSummaryCardStyle(summarySize, shouldFitContent) {
+  if (shouldFitContent) {
+    return {
+      width: `${summarySize.width}px`,
+    };
+  }
+
+  return {
+    minHeight: `${summarySize.height}px`,
+    width: `${summarySize.width}px`,
+  };
 }
 
 export function AdminMetricGridSkeleton({
