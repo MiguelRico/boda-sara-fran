@@ -44,7 +44,7 @@ export default function CtaSection() {
               icon={<Home size={16} strokeWidth={1.8} />}
               showText="always"
               to="/"
-              tone="secondary"
+              tone="terciary"
             >
               {cta.secondaryAction}
             </IconButton>
