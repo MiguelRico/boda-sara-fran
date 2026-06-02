@@ -1,7 +1,15 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  BusFront,
+  ClipboardCheck,
+  MessageCircle,
+  RefreshCw,
+  Salad,
+  UsersRound,
+} from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import {
@@ -141,9 +149,10 @@ export default function AdminStats() {
               <div className="grid gap-5 lg:grid-cols-2">
                 <DonutStatsCard
                   emptyText="Sin alergias registradas"
-                  emoji="🥗"
+                  backgroundIcon={<Salad size={74} strokeWidth={1.5} />}
+                  icon={<Salad size={22} strokeWidth={1.8} />}
                   items={stats.allergiesByType}
-                  title="Alergias por tipo"
+                  title="Alergias"
                 />
 
                 <TransportCard stats={stats} />
@@ -167,14 +176,8 @@ export default function AdminStats() {
 
 function StatsOverview({ loading, onRefresh, stats }) {
   return (
-    <section className="premium-card mt-4 mb-5">
-      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-            Vision operativa
-          </h2>
-        </div>
-
+    <div className="mt-4 mb-5">
+      <div className="mb-4 flex justify-end">
         <IconButton
           className="w-full sm:w-auto"
           disabled={loading}
@@ -193,12 +196,20 @@ function StatsOverview({ loading, onRefresh, stats }) {
         </IconButton>
       </div>
 
-      {loading ? (
-        <AdminMetricGridSkeleton />
-      ) : (
-        <AdminMetricGrid items={getSummaryItems(stats)} />
-      )}
-    </section>
+      <section className="premium-card">
+        <div className="mb-5">
+          <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+            Confirmaciones
+          </h2>
+        </div>
+
+        {loading ? (
+          <AdminMetricGridSkeleton />
+        ) : (
+          <AdminMetricGrid items={getSummaryItems(stats)} />
+        )}
+      </section>
+    </div>
   );
 }
 
@@ -207,43 +218,43 @@ function getSummaryItems(stats) {
     {
       label: "Total confirmaciones",
       value: stats.totalGroups,
-      detail: "Confirmaciones",
-      emoji: "👥",
+      detail: "Recibidas",
+      emoji: <ClipboardCheck size={22} strokeWidth={1.8} />,
     },
     {
       label: "Total de personas",
       value: stats.totalGuests,
       detail: "Personas",
-      emoji: "+",
+      emoji: <UsersRound size={22} strokeWidth={1.8} />,
     },
     {
       label: "Personas con alergias",
       value: stats.guestsWithAllergies,
       detail: "Alergias",
-      emoji: "🥗",
+      emoji: <Salad size={22} strokeWidth={1.8} />,
     },
     {
       label: "Con otras alergias",
       value: stats.guestsWithOtherAllergies,
       detail: "Otras alergias",
-      emoji: "!",
+      emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
     },
     {
       label: "Con comentarios",
       value: `${stats.guestsWithComments}`,
       detail: "Comentarios",
-      emoji: "...",
+      emoji: <MessageCircle size={22} strokeWidth={1.8} />,
     },
     {
       label: "Usan transporte",
       value: `${stats.guestsUsingBus}`,
       detail: "Autobús",
-      emoji: "🚌",
+      emoji: <BusFront size={22} strokeWidth={1.8} />,
     },
   ];
 }
 
-function DonutStatsCard({ emptyText, emoji, items, title }) {
+function DonutStatsCard({ backgroundIcon, emptyText, icon, items, title }) {
   const [hoveredLabel, setHoveredLabel] = useState("");
   const [selectedLabel, setSelectedLabel] = useState("");
   const activeLabel = hoveredLabel || selectedLabel;
@@ -254,7 +265,7 @@ function DonutStatsCard({ emptyText, emoji, items, title }) {
 
   return (
     <article className="premium-card relative overflow-hidden">
-      <CardHeader emoji={emoji} title={title} />
+      <CardHeader backgroundIcon={backgroundIcon} icon={icon} title={title} />
 
       {items.length ? (
         <div className="grid items-center gap-6 sm:grid-cols-[minmax(168px,0.8fr)_1fr]">
@@ -285,7 +296,11 @@ function DonutStatsCard({ emptyText, emoji, items, title }) {
 function TransportCard({ stats }) {
   return (
     <article className="premium-card relative overflow-hidden">
-      <CardHeader emoji="🚌" title="Transporte" />
+      <CardHeader
+        backgroundIcon={<BusFront size={74} strokeWidth={1.5} />}
+        icon={<BusFront size={22} strokeWidth={1.8} />}
+        title="Transporte"
+      />
 
       <div className="grid gap-5 sm:grid-cols-2">
         <TransportGroup items={stats.outboundBusStats} title="Ida" />
@@ -334,15 +349,15 @@ function TransportGroup({ items, title }) {
   );
 }
 
-function CardHeader({ emoji, title }) {
+function CardHeader({ backgroundIcon, icon, title }) {
   return (
     <div className="relative mb-6 flex items-center gap-3">
-      <div className="pointer-events-none absolute -right-2 -top-5 text-6xl opacity-[0.08]">
-        {emoji}
+      <div className="pointer-events-none absolute -right-2 -top-5 text-[var(--color-accent-dark)] opacity-[0.08]">
+        {backgroundIcon || icon}
       </div>
 
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
-        {emoji}
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/70 text-[var(--color-accent-dark)]">
+        {icon}
       </span>
 
       <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">

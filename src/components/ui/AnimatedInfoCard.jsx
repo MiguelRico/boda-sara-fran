@@ -7,6 +7,7 @@ function InfoCard({
   description,
   to,
   emoji,
+  backgroundIcon,
   className = "",
   inlineTitleDescription = false,
   showAction = Boolean(to),
@@ -58,13 +59,13 @@ function InfoCard({
         </div>
       ) : (
         <>
-          <div className="pointer-events-none absolute right-6 top-6 text-5xl opacity-[0.08] transition-all duration-700 group-hover:scale-110 group-hover:opacity-[0.12]">
-            {emoji}
+          <div className="pointer-events-none absolute right-6 top-6 text-5xl text-[var(--color-accent-dark)] opacity-[0.08] transition-all duration-700 group-hover:scale-110 group-hover:opacity-[0.12]">
+            {backgroundIcon || emoji}
           </div>
 
           <div className="relative flex h-full flex-col">
             <div className="mb-4 flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl text-[var(--color-accent-dark)]">
                 {emoji}
               </span>
 

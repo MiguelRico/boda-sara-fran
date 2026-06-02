@@ -1,6 +1,13 @@
 import { useInView } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Home, LockKeyhole, LogIn } from "lucide-react";
+import {
+  Armchair,
+  ChartColumn,
+  ClipboardCheck,
+  Home,
+  LockKeyhole,
+  LogIn,
+} from "lucide-react";
 
 import {
   ADMIN_AUTH_EVENT,
@@ -20,6 +27,24 @@ import {
   Label,
 } from "../components/rsvp/FormPrimitives";
 import { siteContent } from "../config/siteContent";
+
+const adminCardIcons = {
+  Invitados: ClipboardCheck,
+  Resumen: ChartColumn,
+  Mesas: Armchair,
+};
+
+const getAdminCard = (card) => {
+  const Icon = adminCardIcons[card.title];
+
+  if (!Icon) return card;
+
+  return {
+    ...card,
+    backgroundIcon: <Icon size={72} strokeWidth={1.5} />,
+    emoji: <Icon size={22} strokeWidth={1.8} />,
+  };
+};
 
 export default function Admin() {
   const adminRef = useRef(null);
@@ -172,7 +197,11 @@ function AdminDashboard() {
     <div className="mx-auto w-full max-w-6xl">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {siteContent.admin.cards.map((card, index) => (
-          <AnimatedInfoCard key={card.title} card={card} index={index} />
+          <AnimatedInfoCard
+            key={card.title}
+            card={getAdminCard(card)}
+            index={index}
+          />
         ))}
       </div>
     </div>
