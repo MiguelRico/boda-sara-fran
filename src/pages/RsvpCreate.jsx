@@ -40,7 +40,11 @@ export default function RsvpCreate() {
 
       <RsvpForm
         contact={rsvp.contact}
-        disableContactFields={false}
+        disableContactFields={{
+          email: false,
+          groupName: false,
+          phone: false,
+        }}
         errors={rsvp.errors}
         guests={rsvp.guests}
         loading={spinner.loading}

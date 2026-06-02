@@ -1,6 +1,11 @@
 import { Home, Search } from "lucide-react";
 import IconButton from "../ui/IconButton";
-import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
+import {
+  FieldError,
+  FormCard,
+  inputClassName,
+  Label,
+} from "./FormPrimitives";
 
 export default function SearchInvitationCard({
   email,

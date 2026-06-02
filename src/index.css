@@ -103,6 +103,43 @@ body {
     transform: translateY(-4px);
   }
 
+  :where(div, form):has(> .form-field-error)
+    > :is(input, select, textarea) {
+    border-color: rgb(254 202 202);
+    background: rgb(254 242 242 / 0.7);
+    color: rgb(127 29 29);
+  }
+
+  :where(div, form):has(> .form-field-error)
+    > :is(input, select, textarea)::placeholder {
+    color: rgb(252 165 165);
+  }
+
+  :where(div, form):has(> .form-field-error)
+    > :is(input, select, textarea):focus {
+    border-color: rgb(252 165 165);
+    background: rgb(254 242 242);
+  }
+
+  :where(div):has(> .form-field-error) > .form-choice-group label {
+    border-color: rgb(254 202 202);
+    background: rgb(254 242 242 / 0.7);
+    color: rgb(127 29 29);
+  }
+
+  :where(div):has(> .form-field-error) > .form-choice-group label:hover {
+    border-color: rgb(252 165 165);
+    background: rgb(254 242 242);
+  }
+
+  :where(div):has(> .form-field-error)
+    > .form-choice-group
+    label:has(input:checked) {
+    border-color: var(--color-border-strong);
+    background: var(--color-accent-dark);
+    color: white;
+  }
+
   .surface-soft {
     background: var(--color-bg-soft);
   }

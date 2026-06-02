@@ -8,7 +8,15 @@ export function FormCard({ children, className = "" }) {
 export function FieldError({ children }) {
   if (!children) return null;
 
-  return <p className="mt-2 text-sm text-red-500">{children}</p>;
+  return (
+    <p className="form-field-error mt-2 flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50/80 px-3 py-2 text-left text-xs leading-relaxed text-red-700 shadow-[0_10px_24px_rgba(127,29,29,0.05)]">
+      <span
+        aria-hidden="true"
+        className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-red-400"
+      />
+      <span>{children}</span>
+    </p>
+  );
 }
 
 export function Label({ children }) {

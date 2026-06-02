@@ -1,4 +1,9 @@
-import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
+import {
+  FieldError,
+  FormCard,
+  inputClassName,
+  Label,
+} from "./FormPrimitives";
 
 export default function ContactDetailsCard({
   contact,

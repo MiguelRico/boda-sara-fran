@@ -88,7 +88,7 @@ export default function TableForm({
           <div>
             <Label>{content.fields.group.label}</Label>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="form-choice-group grid grid-cols-1 gap-3 sm:grid-cols-3">
               {TABLE_GROUP_OPTIONS.map((option) => {
                 const checked = form.group === option.value;
                 const GroupIcon = groupIcons[option.icon] || UsersRound;
@@ -125,7 +125,7 @@ export default function TableForm({
           <div>
             <Label>{content.fields.shape.label}</Label>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="form-choice-group grid grid-cols-2 gap-3">
               {TABLE_SHAPE_OPTIONS.map((option) => {
                 const checked = form.shape === option.value;
 

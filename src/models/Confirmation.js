@@ -168,7 +168,7 @@ export const Confirmation = {
     return values.length ? values.join(" | ") : "";
   },
 
-  getGroupRateText(value, total) {
+  getGroupRateText(value) {
     return `${value}`;
   },
 
@@ -177,17 +177,13 @@ export const Confirmation = {
 
     return Confirmation.getGroupRateText(
       guests.filter(Guest.hasAllergies).length,
-      guests.length,
     );
   },
 
   getTransportText(confirmation) {
     const { guests } = Confirmation.normalize(confirmation);
 
-    return Confirmation.getGroupRateText(
-      guests.filter(Guest.usesBus).length,
-      guests.length,
-    );
+    return Confirmation.getGroupRateText(guests.filter(Guest.usesBus).length);
   },
 
   getMenuText(confirmation, menu) {
@@ -195,7 +191,6 @@ export const Confirmation = {
 
     return Confirmation.getGroupRateText(
       guests.filter((guest) => guest.menu === menu).length,
-      guests.length,
     );
   },
 
@@ -204,7 +199,6 @@ export const Confirmation = {
 
     return Confirmation.getGroupRateText(
       guests.filter(Guest.hasComments).length,
-      guests.length,
     );
   },
 
@@ -242,7 +236,7 @@ export const Confirmation = {
     );
 
     if (invalidGuest)
-      return "Todos los invitados necesitan nombre y apellidos.";
+      return "Todos los invitados necesitan nombre, apellidos y seleccionar un menú.";
 
     return "";
   },

@@ -8,7 +8,12 @@ import {
   OUTBOUND_BUS_OPTIONS,
   RETURN_BUS_OPTIONS,
 } from "../../constants/rsvp";
-import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
+import {
+  FieldError,
+  FormCard,
+  inputClassName,
+  Label,
+} from "./FormPrimitives";
 
 export default function GuestCard({
   canRemove,
@@ -24,6 +29,10 @@ export default function GuestCard({
   const [showAllergiesPanel, setShowAllergiesPanel] = useState(false);
   const [showBusPanel, setShowBusPanel] = useState(false);
   const isAdmin = variant === "admin";
+  const nameError = errors[`guest_name_${index}`];
+  const lastnameError = errors[`guest_lastname_${index}`];
+  const menuError = errors[`guest_menu_${index}`];
+  const commentsError = errors[`guest_comments_${index}`];
   const panelHidden = reduceMotion
     ? { height: 0, opacity: 0 }
     : { height: 0, opacity: 0, y: -8, filter: "blur(4px)" };
@@ -62,7 +71,7 @@ export default function GuestCard({
             placeholder="Ej: Sara"
           />
 
-          <FieldError>{errors[`guest_name_${index}`]}</FieldError>
+          <FieldError>{nameError}</FieldError>
         </div>
 
         <div>
@@ -78,14 +87,14 @@ export default function GuestCard({
             placeholder="Ej: García"
           />
 
-          <FieldError>{errors[`guest_lastname_${index}`]}</FieldError>
+          <FieldError>{lastnameError}</FieldError>
         </div>
       </div>
 
       <div className="mt-4">
         <Label>Menú *</Label>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="form-choice-group grid grid-cols-2 gap-3">
           {GUEST_MENU_OPTIONS.map((menuOption) => {
             const checked = guest.menu === menuOption;
 
@@ -115,7 +124,7 @@ export default function GuestCard({
           })}
         </div>
 
-        <FieldError>{errors[`guest_menu_${index}`]}</FieldError>
+        <FieldError>{menuError}</FieldError>
       </div>
 
       <div className="mt-4">
@@ -131,7 +140,7 @@ export default function GuestCard({
           placeholder="Cualquier indicación que debamos tener en cuenta"
         />
 
-        <FieldError>{errors[`guest_comments_${index}`]}</FieldError>
+        <FieldError>{commentsError}</FieldError>
       </div>
 
       <div className="mt-2 rounded-[2rem] border border-[var(--color-border-strong)] bg-[var(--color-bg)]/70 p-5">

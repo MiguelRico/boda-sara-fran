@@ -49,6 +49,7 @@ import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
 import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
 import { normalizeAdminGroups } from "../utils/rsvpGroups";
+import { validateRsvpForm } from "../utils/rsvpValidation";
 
 const desktopPageSize = 8;
 const mobilePageSize = 1;
@@ -1001,7 +1002,8 @@ function MobileRowActions({ onDelete, onEdit }) {
 
 function GroupEditor({ group, isCreation, onClose, onSave }) {
   const [draft, setDraft] = useState(group);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
+  const [validationPopupOpen, setValidationPopupOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const renderFormItem = (index, children) => (
     <CinematicStaggeredRevealItem index={index} isVisible key={index}>
@@ -1036,15 +1038,19 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const groupToSave = normalizeAdminGroupBeforeSave(draft, { isCreation });
-    const validationError = Confirmation.validateForAdmin(groupToSave);
+    const validationErrors = validateRsvpForm({
+      contact: groupToSave,
+      guests: groupToSave.guests,
+    });
 
-    if (validationError) {
-      setError(validationError);
+    if (Object.keys(validationErrors).length) {
+      setErrors(validationErrors);
+      setValidationPopupOpen(true);
       return;
     }
 
     setSaving(true);
-    setError("");
+    setErrors({});
 
     try {
       await onSave(groupToSave);
@@ -1082,9 +1088,8 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
           cancelText="Cancelar"
           contact={draft}
           deleteContextText="editor"
-          disableContactFields={false}
-          errors={{}}
-          formError={error}
+          disableContactFields={{ groupName: !isCreation }}
+          errors={errors}
           guests={draft.guests}
           loading={saving}
           onAddGuest={addGuest}
@@ -1096,6 +1101,16 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
           renderItem={renderFormItem}
           submitText="Guardar"
           variant="admin"
+        />
+
+        <StatusDialog
+          closeText="Cerrar"
+          eyebrow="Aviso"
+          message="Hay campos obligatorios o con formato incorrecto. Corrígelos antes de guardar la confirmación."
+          onClose={() => setValidationPopupOpen(false)}
+          open={validationPopupOpen}
+          title="Revisa la confirmación"
+          type="error"
         />
       </div>
     </div>

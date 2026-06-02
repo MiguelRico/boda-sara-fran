@@ -1,5 +1,14 @@
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
-import { ArrowLeft, Check, Save, UserPlus, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Save,
+  UserPlus,
+  X,
+} from "lucide-react";
 
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
@@ -33,14 +42,16 @@ export default function RsvpForm({
   variant = "public",
 }) {
   const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
+  const [guestPage, setGuestPage] = useState(1);
+  const [guestPageDirection, setGuestPageDirection] = useState(1);
   const guestDeleteName = guestDeleteTarget
     ? Guest.getFullName(guestDeleteTarget.guest)
     : "";
+  const totalGuestPages = Math.max(guests.length, 1);
+  const currentGuestPage = Math.min(guestPage, totalGuestPages);
+  const currentGuestIndex = currentGuestPage - 1;
+  const currentGuest = guests[currentGuestIndex];
   const hasInvalidGuest = Guest.hasInvalidGuests(guests);
-  const shouldShowIncompleteGuestMessage =
-    Guest.hasIncompleteVisibleGuests(guests);
-  const incompleteGuestMessage =
-    "Completa nombre, apellidos y menú de todos los invitados antes de añadir otro o enviar el formulario.";
   const addIcon = <UserPlus size={16} strokeWidth={1.8} />;
   const submitIcon =
     variant === "admin" ? (
@@ -55,26 +66,44 @@ export default function RsvpForm({
       <ArrowLeft size={16} strokeWidth={1.8} />
     );
 
+  const handleGuestPageChange = (nextPage) => {
+    const clampedPage = Math.min(Math.max(nextPage, 1), totalGuestPages);
+
+    if (clampedPage === currentGuestPage) return;
+
+    setGuestPageDirection(clampedPage > currentGuestPage ? 1 : -1);
+    setGuestPage(clampedPage);
+  };
+
+  const handleAddGuest = () => {
+    onAddGuest();
+    setGuestPageDirection(1);
+    setGuestPage(Math.min(guests.length + 1, MAX_GUESTS));
+  };
+
   const handleConfirmGuestDelete = () => {
     if (!guestDeleteTarget) return;
 
     onRemoveGuest(guestDeleteTarget.index);
+    setGuestPageDirection(-1);
+    setGuestPage((current) =>
+      Math.min(current, Math.max(guests.length - 1, 1)),
+    );
     setGuestDeleteTarget(null);
   };
   const handleRemoveGuest = (guest, index) => {
     if (Guest.isEmpty(guest)) {
       onRemoveGuest(index);
+      setGuestPageDirection(-1);
+      setGuestPage((current) =>
+        Math.min(current, Math.max(guests.length - 1, 1)),
+      );
       return;
     }
 
     setGuestDeleteTarget({ guest, index });
   };
   const handleSubmit = (event) => {
-    if (hasInvalidGuest) {
-      event.preventDefault();
-      return;
-    }
-
     onSubmit(event);
   };
 
@@ -91,26 +120,25 @@ export default function RsvpForm({
           />,
         )}
 
-        {guests.map((guest, index) =>
+        {currentGuest &&
           renderItem(
-            2 + index,
-            <GuestCard
+            2,
+            <GuestPager
               canRemove={guests.length > 1}
+              currentGuest={currentGuest}
+              currentGuestIndex={currentGuestIndex}
+              currentGuestPage={currentGuestPage}
+              direction={guestPageDirection}
               errors={errors}
-              guest={guest}
-              index={index}
-              key={index}
               onGuestChange={onGuestChange}
-              onRemoveGuest={() => handleRemoveGuest(guest, index)}
+              onGuestPageChange={handleGuestPageChange}
+              onRemoveGuest={handleRemoveGuest}
+              totalGuestPages={totalGuestPages}
               variant={variant}
             />,
-          ),
-        )}
+          )}
 
         {formError && <FieldError>{formError}</FieldError>}
-        {shouldShowIncompleteGuestMessage && (
-          <FieldError>{incompleteGuestMessage}</FieldError>
-        )}
 
         {renderItem(
           2 + guests.length,
@@ -135,7 +163,7 @@ export default function RsvpForm({
                 disabled={loading || hasInvalidGuest}
                 icon={addIcon}
                 label={addText}
-                onClick={onAddGuest}
+                onClick={handleAddGuest}
                 showText="always"
                 tone="secondary"
                 type="button"
@@ -146,7 +174,7 @@ export default function RsvpForm({
 
             <IconButton
               className="order-2 sm:order-none"
-              disabled={loading || hasInvalidGuest}
+              disabled={loading}
               icon={submitIcon}
               label={submitText}
               showText="always"
@@ -176,5 +204,110 @@ export default function RsvpForm({
         />
       )}
     </>
+  );
+}
+
+function GuestPager({
+  canRemove,
+  currentGuest,
+  currentGuestIndex,
+  currentGuestPage,
+  direction,
+  errors,
+  onGuestChange,
+  onGuestPageChange,
+  onRemoveGuest,
+  totalGuestPages,
+  variant,
+}) {
+  const reduceMotion = useReducedMotion();
+  const variants = reduceMotion
+    ? {
+        enter: { opacity: 0 },
+        center: { opacity: 1 },
+        exit: { opacity: 0 },
+      }
+    : {
+        enter: (pageDirection) => ({
+          opacity: 0,
+          x: pageDirection > 0 ? 72 : -72,
+          filter: "blur(6px)",
+        }),
+        center: {
+          opacity: 1,
+          x: 0,
+          filter: "blur(0px)",
+        },
+        exit: (pageDirection) => ({
+          opacity: 0,
+          x: pageDirection > 0 ? -72 : 72,
+          filter: "blur(6px)",
+        }),
+      };
+
+  return (
+    <div>
+      <div className="relative overflow-hidden">
+        <AnimatePresence custom={direction} initial={false} mode="wait">
+          <motion.div
+            animate="center"
+            custom={direction}
+            exit="exit"
+            initial="enter"
+            key={`guest-${currentGuestIndex}`}
+            transition={{
+              duration: reduceMotion ? 0.18 : 0.48,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            variants={variants}
+          >
+            <GuestCard
+              canRemove={canRemove}
+              errors={errors}
+              guest={currentGuest}
+              index={currentGuestIndex}
+              onGuestChange={onGuestChange}
+              onRemoveGuest={() =>
+                onRemoveGuest(currentGuest, currentGuestIndex)
+              }
+              variant={variant}
+            />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-center">
+          Invitado {currentGuestPage} de {totalGuestPages}
+        </p>
+
+        <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
+          <IconButton
+            className="w-full sm:w-auto"
+            disabled={currentGuestPage === 1}
+            icon={<ChevronLeft size={16} strokeWidth={1.8} />}
+            label="Anterior"
+            onClick={() => onGuestPageChange(currentGuestPage - 1)}
+            showText="always"
+            tone="secondary"
+            type="button"
+          >
+            Anterior
+          </IconButton>
+          <IconButton
+            className="w-full sm:w-auto"
+            disabled={currentGuestPage === totalGuestPages}
+            icon={<ChevronRight size={16} strokeWidth={1.8} />}
+            label="Siguiente"
+            onClick={() => onGuestPageChange(currentGuestPage + 1)}
+            showText="always"
+            tone="secondary"
+            type="button"
+          >
+            Siguiente
+          </IconButton>
+        </div>
+      </div>
+    </div>
   );
 }
