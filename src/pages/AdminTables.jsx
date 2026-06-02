@@ -1291,7 +1291,7 @@ function TablesOverview({ loading, stats }) {
   return (
     <section className="premium-card mt-4 mb-5">
       <h2 className="mb-5 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-        Vision de mesas
+        Mesas y asientos
       </h2>
 
       {loading ? (

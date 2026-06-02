@@ -5,6 +5,7 @@ import {
   MessageCircle,
   Pencil,
   Trash2,
+  Armchair,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -145,7 +146,12 @@ function TableInfoCard({
   );
 }
 
-function AssignmentModal({ onUnassignSeat, table, onClose }) {
+function AssignmentModal({
+  onUnassignSeat,
+  table,
+  onClose,
+  title = "Asignados",
+}) {
   const assignedSeats = table.seats.filter((seat) => seat.guest);
   const [removingSeat, setRemovingSeat] = useState("");
 
@@ -170,26 +176,31 @@ function AssignmentModal({ onUnassignSeat, table, onClose }) {
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <p className="section-eyebrow mb-2">Mesa {table.name}</p>
+        <div className="mb-2 flex items-start justify-between gap-4">
+          <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
+              <Armchair size={22} strokeWidth={1.8} />
+            </span>
             <h2
               className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
               id="assigned-seats-title"
             >
-              Asientos asignados
+              {title}
             </h2>
-            <p className="mt-3 text-sm text-[var(--color-muted)]">
-              {assignedSeats.length}{" "}
-              {assignedSeats.length === 1
-                ? "invitado asignado"
-                : "invitados asignados"}
-            </p>
           </div>
 
           <IconButton label="Cerrar" onClick={onClose} tone="secondary">
             <X size={16} strokeWidth={1.8} />
           </IconButton>
+        </div>
+
+        <div className="flex flex-1 flex-wrap items-baseline">
+          <p className="inline-flex section-eyebrow mt-2 mb-2">
+            Mesa {table.name} {assignedSeats.length}{" "}
+            {assignedSeats.length === 1
+              ? "invitado asignado"
+              : "invitados asignados"}
+          </p>
         </div>
 
         {assignedSeats.length ? (
