@@ -195,19 +195,9 @@ export default function TableForm({
             onDelete ? "sm:grid-cols-3" : "sm:grid-cols-2"
           }`}
         >
-          <IconButton
-            disabled={loading}
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label={content.submitText}
-            showText="always"
-            tone="primary"
-            type="submit"
-          >
-            {content.submitText}
-          </IconButton>
-
           {onDelete && (
             <IconButton
+              className="w-full sm:w-auto"
               disabled={loading}
               icon={<Trash2 size={16} strokeWidth={1.8} />}
               label="Eliminar mesa"
@@ -221,12 +211,25 @@ export default function TableForm({
           )}
 
           <IconButton
+            className="w-full sm:w-auto"
+            disabled={loading}
+            icon={<Save size={16} strokeWidth={1.8} />}
+            label={content.submitText}
+            showText="always"
+            tone="primary"
+            type="submit"
+          >
+            {content.submitText}
+          </IconButton>
+
+          <IconButton
+            className="w-full sm:w-auto"
             disabled={loading}
             icon={<X size={16} strokeWidth={1.8} />}
             label={content.cancelText}
             onClick={onCancel}
             showText="always"
-            tone="secondary"
+            tone="terciary"
             type="button"
           >
             {content.cancelText}

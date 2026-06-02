@@ -17,11 +17,13 @@ import {
 
 export default function GuestCard({
   canRemove,
+  card = true,
   errors,
   guest,
   index,
   onGuestChange,
   onRemoveGuest,
+  showHeader = true,
   variant = "public",
 }) {
   const reduceMotion = useReducedMotion();
@@ -40,22 +42,24 @@ export default function GuestCard({
     ? { height: "auto", opacity: 1 }
     : { height: "auto", opacity: 1, y: 0, filter: "blur(0px)" };
 
-  return (
-    <FormCard>
-      <div className="flex items-center justify-between gap-4">
-        <p className={`section-eyebrow ${canRemove ? "mb-0" : ""}`}>
-          Invitado {index + 1}
-        </p>
+  const content = (
+    <>
+      {showHeader && (
+        <div className="flex items-center justify-between gap-4">
+          <p className={`section-eyebrow ${canRemove ? "mb-0" : ""}`}>
+            Invitado {index + 1}
+          </p>
 
-        {canRemove && (
-          <IconButton
-            icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label={`Eliminar invitado ${index + 1}`}
-            onClick={() => onRemoveGuest(index)}
-            tone="danger"
-          />
-        )}
-      </div>
+          {canRemove && (
+            <IconButton
+              icon={<Trash2 size={16} strokeWidth={1.8} />}
+              label={`Eliminar invitado ${index + 1}`}
+              onClick={() => onRemoveGuest(index)}
+              tone="danger"
+            />
+          )}
+        </div>
+      )}
 
       <div className="grid gap-5 md:grid-cols-2">
         <div>
@@ -357,8 +361,10 @@ export default function GuestCard({
           </AnimatePresence>
         </div>
       )}
-    </FormCard>
+    </>
   );
+
+  return card ? <FormCard>{content}</FormCard> : content;
 }
 
 function BusSelect({ label, onChange, options, value }) {

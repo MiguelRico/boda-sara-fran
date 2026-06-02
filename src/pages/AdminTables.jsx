@@ -19,12 +19,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Pencil,
   Plus,
   RefreshCw,
   Save,
   Trash2,
   Undo2,
   X,
+  Home,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -291,8 +293,7 @@ export default function AdminTables() {
 
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     return (
-      hasPendingChanges &&
-      currentLocation.pathname !== nextLocation.pathname
+      hasPendingChanges && currentLocation.pathname !== nextLocation.pathname
     );
   });
 
@@ -737,13 +738,7 @@ export default function AdminTables() {
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={2} isVisible={tablesInView}>
-            <TablesOverview
-              hasPendingChanges={hasPendingChanges}
-              loading={state.loading}
-              onDiscardChanges={handleDiscardPendingChanges}
-              onRefresh={handleRefreshTables}
-              stats={tableStats}
-            />
+            <TablesOverview loading={state.loading} stats={tableStats} />
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={tablesInView}>
@@ -759,10 +754,10 @@ export default function AdminTables() {
                     <p className="text-sm leading-relaxed text-[var(--color-muted)]">
                       {activeTab === "tables" ? (
                         <>
-                        {pagedTableCount}{" "}
-                        {pagedTableCount === 1 ? "mesa" : "mesas"} en esta
-                        pagina - {pagedSeatCount}{" "}
-                        {pagedSeatCount === 1 ? "asiento" : "asientos"}
+                          {pagedTableCount}{" "}
+                          {pagedTableCount === 1 ? "mesa" : "mesas"} en esta
+                          pagina - {pagedSeatCount}{" "}
+                          {pagedSeatCount === 1 ? "asiento" : "asientos"}
                         </>
                       ) : (
                         <>
@@ -774,32 +769,37 @@ export default function AdminTables() {
                       )}
                     </p>
 
-                    <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
+                    <div className="grid w-full grid-cols-3 gap-3">
                       <IconButton
-                        className="!w-full sm:!w-10 [var(--color-accent)]"
+                        className="w-full"
                         disabled={!tables.length}
-                        label="Exportar"
+                        icon={<Download size={16} strokeWidth={1.8} />}
+                        label="Exportar tabla"
                         onClick={() => downloadTablesCsv(tables)}
+                        tone="terciary"
                       >
-                        <Download size={16} strokeWidth={1.8} />
+                        Exportar tabla
                       </IconButton>
 
                       <IconButton
-                        className="!w-full sm:!w-10"
+                        className="w-full"
+                        icon={<Plus size={18} strokeWidth={2.4} />}
+                        label="Agregar mesa"
+                        onClick={handleCreateTable}
+                        tone="secondary"
+                      >
+                        Agregar mesa
+                      </IconButton>
+
+                      <IconButton
+                        className="w-full"
                         disabled={!hasPendingChanges || spinner.loading}
+                        icon={<Save size={16} strokeWidth={1.8} />}
                         label="Guardar cambios"
                         onClick={handleSavePendingChanges}
                         tone="primary"
                       >
-                        <Save size={16} strokeWidth={1.8} />
-                      </IconButton>
-
-                      <IconButton
-                        className="!w-full border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] sm:!w-10"
-                        label="Crear mesa"
-                        onClick={handleCreateTable}
-                      >
-                        <Plus size={18} strokeWidth={2.4} />
+                        Guardar cambios
                       </IconButton>
                     </div>
                   </div>
@@ -878,6 +878,15 @@ export default function AdminTables() {
                 />
               )}
             </section>
+          </CinematicStaggeredRevealItem>
+
+          <CinematicStaggeredRevealItem index={4} isVisible={tablesInView}>
+            <TablesPageActions
+              hasPendingChanges={hasPendingChanges}
+              loading={state.loading}
+              onDiscardChanges={handleDiscardPendingChanges}
+              onRefresh={handleRefreshTables}
+            />
           </CinematicStaggeredRevealItem>
         </div>
       </CinematicSection>
@@ -1091,17 +1100,6 @@ function SeatAssignmentDialog({
               canRemoveGuest ? "sm:grid-cols-3" : "sm:grid-cols-2"
             }`}
           >
-            <IconButton
-              disabled={!selectedGuest || assigning}
-              icon={<Check size={16} strokeWidth={1.8} />}
-              label={assigning ? "Asignando..." : "Asignar invitado"}
-              showText="always"
-              tone="primary"
-              type="submit"
-            >
-              {assigning ? "Asignando..." : "Asignar invitado"}
-            </IconButton>
-
             {canRemoveGuest && (
               <IconButton
                 disabled={assigning}
@@ -1117,12 +1115,23 @@ function SeatAssignmentDialog({
             )}
 
             <IconButton
+              disabled={!selectedGuest || assigning}
+              icon={<Check size={16} strokeWidth={1.8} />}
+              label={assigning ? "Asignando..." : "Asignar invitado"}
+              showText="always"
+              tone="primary"
+              type="submit"
+            >
+              {assigning ? "Asignando..." : "Asignar invitado"}
+            </IconButton>
+
+            <IconButton
               disabled={assigning}
               icon={<X size={16} strokeWidth={1.8} />}
               label="Cancelar"
               onClick={onCancel}
               showText="always"
-              tone="secondary"
+              tone="terciary"
               type="button"
             >
               Cancelar
@@ -1210,53 +1219,12 @@ function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
   return createPortal(dialog, document.body);
 }
 
-function TablesOverview({
-  hasPendingChanges,
-  loading,
-  onDiscardChanges,
-  onRefresh,
-  stats,
-}) {
+function TablesOverview({ loading, stats }) {
   return (
     <section className="premium-card mt-4 mb-5">
-      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-            Vision de mesas
-          </h2>
-        </div>
-
-        <div className="grid gap-3 sm:w-auto">
-          <IconButton
-            className="w-full sm:w-auto"
-            disabled={loading}
-            icon={
-              <RefreshCw
-                className={loading ? "animate-spin" : ""}
-                size={16}
-                strokeWidth={1.8}
-              />
-            }
-            label="Actualizar"
-            onClick={onRefresh}
-            showText="always"
-          >
-            Actualizar
-          </IconButton>
-          <IconButton
-            className="w-full sm:w-auto"
-            disabled={!hasPendingChanges || loading}
-            icon={<Undo2 size={16} strokeWidth={1.8} />}
-            label="Deshacer cambios"
-            onClick={onDiscardChanges}
-            showText="always"
-            tone="secondary"
-            type="button"
-          >
-            Deshacer cambios
-          </IconButton>
-        </div>
-      </div>
+      <h2 className="mb-5 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+        Vision de mesas
+      </h2>
 
       {loading ? (
         <AdminMetricGridSkeleton
@@ -1269,6 +1237,60 @@ function TablesOverview({
           items={getTableSummaryItems(stats)}
         />
       )}
+    </section>
+  );
+}
+
+function TablesPageActions({
+  hasPendingChanges,
+  loading,
+  onDiscardChanges,
+  onRefresh,
+}) {
+  return (
+    <section className="premium-card mt-5">
+      <p className="section-eyebrow mb-4">Acciones</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <IconButton
+          className="w-full"
+          disabled={!hasPendingChanges || loading}
+          icon={<Undo2 size={16} strokeWidth={1.8} />}
+          label="Deshacer cambios"
+          onClick={onDiscardChanges}
+          showText="always"
+          tone="secondary"
+          type="button"
+        >
+          Deshacer cambios
+        </IconButton>
+        <IconButton
+          className="w-full"
+          disabled={loading}
+          icon={
+            <RefreshCw
+              className={loading ? "animate-spin" : ""}
+              size={16}
+              strokeWidth={1.8}
+            />
+          }
+          label="Actualizar"
+          onClick={onRefresh}
+          showText="always"
+          type="button"
+        >
+          Actualizar
+        </IconButton>
+
+        <IconButton
+          className="flex-1"
+          icon={<Home size={16} strokeWidth={1.8} />}
+          showText="always"
+          to="/admin"
+          tone="terciary"
+        >
+          Administracion
+        </IconButton>
+      </div>
     </section>
   );
 }
@@ -1320,7 +1342,7 @@ function TablesGrid({ onDelete, onEdit, onSeatClick, onUnassignSeat, tables }) {
   return (
     <div className="hidden gap-4 md:grid lg:grid-cols-2">
       {tables.map((table, index) => (
-        <TableAnimatedInfoCard
+        <TableCardWithActions
           index={index}
           key={getTableRenderKey(table)}
           onDelete={onDelete}
@@ -1333,6 +1355,63 @@ function TablesGrid({ onDelete, onEdit, onSeatClick, onUnassignSeat, tables }) {
     </div>
   );
 }
+
+function TableCardWithActions({
+  index = 0,
+  onDelete,
+  onEdit,
+  onSeatClick,
+  onUnassignSeat,
+  reveal = true,
+  table,
+}) {
+  return (
+    <div className="grid gap-3">
+      <TableCardActions onDelete={onDelete} onEdit={onEdit} table={table} />
+      <TableAnimatedInfoCard
+        index={index}
+        onSeatClick={onSeatClick}
+        onUnassignSeat={onUnassignSeat}
+        reveal={reveal}
+        table={table}
+      />
+    </div>
+  );
+}
+
+function TableCardActions({ onDelete, onEdit, table }) {
+  if (!onEdit && !onDelete) return null;
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {onDelete && (
+        <IconButton
+          className="w-full"
+          icon={<Trash2 size={16} strokeWidth={1.8} />}
+          label="Eliminar mesa"
+          onClick={() => onDelete(table)}
+          tone="danger"
+          type="button"
+        >
+          Eliminar mesa
+        </IconButton>
+      )}
+      {onEdit && (
+        <IconButton
+          className="w-full"
+          icon={<Pencil size={16} strokeWidth={1.8} />}
+          label="Editar mesa"
+          onClick={() => onEdit(table)}
+          tone="primary"
+          type="button"
+        >
+          Editar mesa
+        </IconButton>
+      )}
+    </div>
+  );
+}
+
 function MobileTablesList({
   direction,
   onDelete,
@@ -1423,7 +1502,7 @@ function MobileTablesList({
               measureRefs.current[index] = node;
             }}
           >
-            <TableAnimatedInfoCard
+            <TableCardWithActions
               onDelete={() => {}}
               onEdit={() => {}}
               onSeatClick={() => {}}
@@ -1451,7 +1530,7 @@ function MobileTablesList({
           variants={variants}
         >
           {tables.map((table) => (
-            <TableAnimatedInfoCard
+            <TableCardWithActions
               key={getTableRenderKey(table)}
               onDelete={onDelete}
               onEdit={onEdit}
@@ -1494,7 +1573,9 @@ function buildPendingTableChanges({
 }
 
 function buildManualTableChanges(savedTables, currentTables) {
-  const savedByKey = new Map(savedTables.map((table) => [getTableKey(table), table]));
+  const savedByKey = new Map(
+    savedTables.map((table) => [getTableKey(table), table]),
+  );
   const currentByKey = new Map(
     currentTables.map((table) => [getTableKey(table), table]),
   );

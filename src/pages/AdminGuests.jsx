@@ -415,7 +415,7 @@ export default function AdminGuests() {
 
                     <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
                       <IconButton
-                        className="!w-full sm:!w-10 [var(--color-accent)]"
+                        className="w-full"
                         disabled={!rows.length}
                         label="Exportar"
                         tone="terciary"
@@ -425,7 +425,7 @@ export default function AdminGuests() {
                       </IconButton>
 
                       <IconButton
-                        className="!w-full sm:!w-10 [var(--color-accent)]"
+                        className="w-full"
                         disabled={state.loading}
                         label="Actualizar"
                         tone="secondary"
@@ -439,7 +439,7 @@ export default function AdminGuests() {
                       </IconButton>
 
                       <IconButton
-                        className="!w-full border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] sm:!w-10"
+                        className="w-full"
                         label="Crear"
                         tone="primary"
                         onClick={() => setEditingGroup(createDraftGroup())}

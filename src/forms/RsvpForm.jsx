@@ -6,13 +6,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Save,
+  Trash2,
   UserPlus,
   X,
 } from "lucide-react";
 
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
-import { FieldError } from "../components/rsvp/FormPrimitives";
+import { FieldError, FormCard } from "../components/rsvp/FormPrimitives";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import IconButton from "../components/ui/IconButton";
 import { MAX_GUESTS } from "../constants/rsvp";
@@ -142,48 +143,51 @@ export default function RsvpForm({
 
         {renderItem(
           2 + guests.length,
-          <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
-            <IconButton
-              className="order-3 sm:order-none"
-              disabled={loading}
-              icon={cancelIcon}
-              label={cancelText}
-              onClick={onCancel}
-              showText="always"
-              to={cancelTo}
-              tone="terciary"
-              type="button"
-            >
-              {cancelText}
-            </IconButton>
-
-            {guests.length < MAX_GUESTS && (
+          <FormCard>
+            <p className="section-eyebrow mb-4">Acciones</p>
+            <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
               <IconButton
-                className="order-1 sm:order-none"
-                disabled={loading || hasInvalidGuest}
-                icon={addIcon}
-                label={addText}
-                onClick={handleAddGuest}
+                className="order-3 sm:order-none"
+                disabled={loading}
+                icon={cancelIcon}
+                label={cancelText}
+                onClick={onCancel}
                 showText="always"
-                tone="secondary"
+                to={cancelTo}
+                tone="terciary"
                 type="button"
               >
-                {addText}
+                {cancelText}
               </IconButton>
-            )}
 
-            <IconButton
-              className="order-2 sm:order-none"
-              disabled={loading}
-              icon={submitIcon}
-              label={submitText}
-              showText="always"
-              tone="primary"
-              type="submit"
-            >
-              {submitText}
-            </IconButton>
-          </div>,
+              {guests.length < MAX_GUESTS && (
+                <IconButton
+                  className="order-1 sm:order-none"
+                  disabled={loading || hasInvalidGuest}
+                  icon={addIcon}
+                  label={addText}
+                  onClick={handleAddGuest}
+                  showText="always"
+                  tone="secondary"
+                  type="button"
+                >
+                  {addText}
+                </IconButton>
+              )}
+
+              <IconButton
+                className="order-2 sm:order-none"
+                disabled={loading}
+                icon={submitIcon}
+                label={submitText}
+                showText="always"
+                tone="primary"
+                type="submit"
+              >
+                {submitText}
+              </IconButton>
+            </div>
+          </FormCard>,
         )}
       </form>
 
@@ -246,7 +250,23 @@ function GuestPager({
       };
 
   return (
-    <div>
+    <FormCard>
+      <div className="flex items-center justify-between gap-4">
+        <p className={`section-eyebrow ${canRemove ? "mb-0" : ""}`}>
+          Invitado {currentGuestIndex + 1}
+        </p>
+
+        {canRemove && (
+          <IconButton
+            icon={<Trash2 size={16} strokeWidth={1.8} />}
+            label={`Eliminar invitado ${currentGuestIndex + 1}`}
+            onClick={() => onRemoveGuest(currentGuest, currentGuestIndex)}
+            tone="danger"
+            type="button"
+          />
+        )}
+      </div>
+
       <div className="relative overflow-hidden">
         <AnimatePresence custom={direction} initial={false} mode="wait">
           <motion.div
@@ -262,14 +282,14 @@ function GuestPager({
             variants={variants}
           >
             <GuestCard
-              canRemove={canRemove}
+              canRemove={false}
+              card={false}
               errors={errors}
               guest={currentGuest}
               index={currentGuestIndex}
               onGuestChange={onGuestChange}
-              onRemoveGuest={() =>
-                onRemoveGuest(currentGuest, currentGuestIndex)
-              }
+              onRemoveGuest={() => {}}
+              showHeader={false}
               variant={variant}
             />
           </motion.div>
@@ -288,7 +308,6 @@ function GuestPager({
             icon={<ChevronLeft size={16} strokeWidth={1.8} />}
             label="Anterior"
             onClick={() => onGuestPageChange(currentGuestPage - 1)}
-            showText="always"
             tone="secondary"
             type="button"
           >
@@ -300,7 +319,6 @@ function GuestPager({
             icon={<ChevronRight size={16} strokeWidth={1.8} />}
             label="Siguiente"
             onClick={() => onGuestPageChange(currentGuestPage + 1)}
-            showText="always"
             tone="secondary"
             type="button"
           >
@@ -308,6 +326,6 @@ function GuestPager({
           </IconButton>
         </div>
       </div>
-    </div>
+    </FormCard>
   );
 }
