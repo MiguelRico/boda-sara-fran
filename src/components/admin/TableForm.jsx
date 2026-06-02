@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   BriefcaseBusiness,
   HeartHandshake,
   Save,
@@ -40,6 +41,7 @@ export default function TableForm({
   onChange,
   onDelete,
   onSubmit,
+  seatReductionWarning = [],
 }) {
   const shapeOption = getShapeOption(form.shape);
   const seatOptions = Array.from(
@@ -173,6 +175,30 @@ export default function TableForm({
             </select>
 
             <FieldError>{errors.seatCount}</FieldError>
+
+            {seatReductionWarning.length > 0 && (
+              <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm leading-relaxed text-amber-900">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle
+                    className="mt-0.5 shrink-0"
+                    size={16}
+                    strokeWidth={1.8}
+                  />
+                  <div>
+                    <p className="font-medium">
+                      Al reducir la mesa, se desasignaran los ultimos asientos:
+                    </p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                      {seatReductionWarning.map((guest) => (
+                        <li key={`${guest.seat}-${guest.name}`}>
+                          Asiento {guest.seat}: {guest.name}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

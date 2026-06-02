@@ -323,6 +323,13 @@ export default function AdminTables() {
     () => getAssignableGuests(state.groups),
     [state.groups],
   );
+  const tableSeatReductionWarning = useMemo(
+    () =>
+      editingTable
+        ? getGuestsUnassignedBySeatReduction(editingTable, tableForm.seatCount)
+        : [],
+    [editingTable, tableForm.seatCount],
+  );
 
   const cancelPageLoading = () => {
     if (pageLoadingTimeoutRef.current) {
@@ -679,8 +686,21 @@ export default function AdminTables() {
       form: tableForm,
       manualTables,
     });
+    const updatedGroups = editingTable
+      ? unassignGuestsOutsideTableSize({
+          groups: state.groups,
+          seatCount: tableForm.seatCount,
+          table: editingTable,
+        })
+      : state.groups;
 
     setManualTables(nextManualTables);
+    setState((prev) => ({
+      ...prev,
+      groups: updatedGroups,
+      loading: false,
+      error: "",
+    }));
 
     if (!editingTable) {
       setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
@@ -905,6 +925,7 @@ export default function AdminTables() {
           content={editingTable ? tableEditorContent : undefined}
           errors={tableFormErrors}
           form={tableForm}
+          seatReductionWarning={tableSeatReductionWarning}
           title={editingTable ? "Editar mesa" : "Crear mesa"}
           onCancel={handleCloseTableForm}
           onChange={handleTableFormChange}
@@ -951,6 +972,7 @@ function TableEditor({
   onChange,
   onDelete,
   onSubmit,
+  seatReductionWarning = [],
   title = "Crear mesa",
 }) {
   useViewportScrollLock(true);
@@ -983,6 +1005,7 @@ function TableEditor({
           content={content}
           errors={errors}
           form={form}
+          seatReductionWarning={seatReductionWarning}
           onCancel={onCancel}
           onChange={onChange}
           onDelete={onDelete}
@@ -1647,6 +1670,45 @@ function getGuestAssignmentLabel(guest = {}) {
   if (!table && !seat) return "Sin asiento";
 
   return `Mesa ${table || "-"}, asiento ${seat || "-"}`;
+}
+
+function getGuestsUnassignedBySeatReduction(table, seatCount) {
+  const nextSeatCount = Number(seatCount) || 0;
+
+  return table.seats
+    .filter((seat) => seat.guest && Number(seat.seat) > nextSeatCount)
+    .sort((left, right) => Number(left.seat) - Number(right.seat))
+    .map((seat) => ({
+      name: Guest.getFullName(seat.guest, "Invitado"),
+      seat: seat.seat,
+    }));
+}
+
+function unassignGuestsOutsideTableSize({ groups, seatCount, table }) {
+  const tableKey = getTableKey(table);
+  const nextSeatCount = Number(seatCount) || 0;
+
+  if (!tableKey || !nextSeatCount) return groups;
+
+  return groups.map((group) => {
+    let changed = false;
+    const guests = group.guests.map((guest) => {
+      const isRemovedSeat =
+        guest.table === tableKey && Number(guest.seat) > nextSeatCount;
+
+      if (!isRemovedSeat) return guest;
+
+      changed = true;
+
+      return {
+        ...guest,
+        table: "",
+        seat: "",
+      };
+    });
+
+    return changed ? { ...group, guests } : group;
+  });
 }
 
 function getStableJson(value) {
