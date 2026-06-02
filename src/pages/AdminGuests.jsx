@@ -15,11 +15,18 @@ import { useRef } from "react";
 import { createPortal } from "react-dom";
 import { Navigate } from "react-router-dom";
 import {
+  AlertTriangle,
+  Beef,
+  BusFront,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
+  Fish,
+  Mail,
+  MessageCircle,
   Pencil,
+  Phone,
   Plus,
   RefreshCw,
   Search,
@@ -66,7 +73,7 @@ const filters = [
   { value: "all", label: "Todos" },
   { value: "allergies", label: "Con alergias" },
   { value: "bus", label: "Con bus" },
-  { value: "comments", label: "Con comentarios" },
+  { value: "comments", label: "Con notas" },
 ];
 
 const emptyState = {
@@ -840,18 +847,18 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
                 >
                   {row.groupName || "Grupo sin nombre"}
                 </p>
-                <p
-                  className="mt-2 break-words text-[var(--color-muted)] [overflow-wrap:anywhere]"
+                <IconTextLine
+                  className="mt-2"
+                  icon={<Mail size={14} strokeWidth={1.8} />}
                   style={detailTextStyle}
-                >
-                  {row.email || "-"}
-                </p>
-                <p
-                  className="mt-1 hidden break-words text-[var(--color-muted)] [overflow-wrap:anywhere] sm:block"
+                  value={row.email || "-"}
+                />
+                <IconTextLine
+                  className="mt-1 hidden sm:flex"
+                  icon={<Phone size={14} strokeWidth={1.8} />}
                   style={detailTextStyle}
-                >
-                  {row.phone || "-"}
-                </p>
+                  value={row.phone || "-"}
+                />
                 <p
                   className="mt-2 hidden text-[var(--color-muted)] sm:block"
                   style={detailTextStyle}
@@ -864,9 +871,10 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
                     className="min-w-0 text-[var(--color-muted)]"
                     style={detailTextStyle}
                   >
-                    <p className="break-words [overflow-wrap:anywhere]">
-                      {row.phone || "-"}
-                    </p>
+                    <IconTextLine
+                      icon={<Phone size={14} strokeWidth={1.8} />}
+                      value={row.phone || "-"}
+                    />
                     <p className="mt-1">
                       {row.groupSize}{" "}
                       {row.groupSize === 1 ? "persona" : "personas"}
@@ -888,11 +896,31 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
             </div>
 
             <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
-              <InfoLine label="Pescado" value={row.fishText} />
-              <InfoLine label="Carne" value={row.meatText} />
-              <InfoLine label="Alergias" value={row.allergyText} />
-              <InfoLine label="Transporte" value={row.transportText} />
-              <InfoLine label="Comentarios" value={row.commentsCountText} />
+              <InfoLine
+                icon={<Fish size={15} strokeWidth={1.8} />}
+                label="Pescado"
+                value={row.fishText}
+              />
+              <InfoLine
+                icon={<Beef size={15} strokeWidth={1.8} />}
+                label="Carne"
+                value={row.meatText}
+              />
+              <InfoLine
+                icon={<AlertTriangle size={15} strokeWidth={1.8} />}
+                label="Alergias"
+                value={row.allergyText}
+              />
+              <InfoLine
+                icon={<BusFront size={15} strokeWidth={1.8} />}
+                label="Transporte"
+                value={row.transportText}
+              />
+              <InfoLine
+                icon={<MessageCircle size={15} strokeWidth={1.8} />}
+                label="Notas"
+                value={row.commentsCountText}
+              />
             </div>
           </div>
         ))}
@@ -925,18 +953,18 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
                 >
                   {row.groupName || "Grupo sin nombre"}
                 </p>
-                <p
-                  className="mt-2 break-words text-[var(--color-muted)] [overflow-wrap:anywhere]"
+                <IconTextLine
+                  className="mt-2"
+                  icon={<Mail size={14} strokeWidth={1.8} />}
                   style={detailTextStyle}
-                >
-                  {row.email || "-"}
-                </p>
-                <p
-                  className="mt-1 hidden break-words text-[var(--color-muted)] [overflow-wrap:anywhere] sm:block"
+                  value={row.email || "-"}
+                />
+                <IconTextLine
+                  className="mt-1 hidden sm:flex"
+                  icon={<Phone size={14} strokeWidth={1.8} />}
                   style={detailTextStyle}
-                >
-                  {row.phone || "-"}
-                </p>
+                  value={row.phone || "-"}
+                />
                 <p
                   className="mt-2 hidden text-[var(--color-muted)] sm:block"
                   style={detailTextStyle}
@@ -949,9 +977,10 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
                     className="min-w-0 text-[var(--color-muted)]"
                     style={detailTextStyle}
                   >
-                    <p className="break-words [overflow-wrap:anywhere]">
-                      {row.phone || "-"}
-                    </p>
+                    <IconTextLine
+                      icon={<Phone size={14} strokeWidth={1.8} />}
+                      value={row.phone || "-"}
+                    />
                     <p className="mt-1">
                       {row.groupSize}{" "}
                       {row.groupSize === 1 ? "persona" : "personas"}
@@ -974,11 +1003,31 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
             </div>
 
             <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
-              <InfoLine label="Pescado" value={row.fishText} />
-              <InfoLine label="Carne" value={row.meatText} />
-              <InfoLine label="Alergias" value={row.allergyText} />
-              <InfoLine label="Transporte" value={row.transportText} />
-              <InfoLine label="Comentarios" value={row.commentsCountText} />
+              <InfoLine
+                icon={<Fish size={15} strokeWidth={1.8} />}
+                label="Pescado"
+                value={row.fishText}
+              />
+              <InfoLine
+                icon={<Beef size={15} strokeWidth={1.8} />}
+                label="Carne"
+                value={row.meatText}
+              />
+              <InfoLine
+                icon={<AlertTriangle size={15} strokeWidth={1.8} />}
+                label="Alergias"
+                value={row.allergyText}
+              />
+              <InfoLine
+                icon={<BusFront size={15} strokeWidth={1.8} />}
+                label="Transporte"
+                value={row.transportText}
+              />
+              <InfoLine
+                icon={<MessageCircle size={15} strokeWidth={1.8} />}
+                label="Notas"
+                value={row.commentsCountText}
+              />
             </div>
           </motion.article>
         ))}
@@ -1156,10 +1205,31 @@ function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
   );
 }
 
-function InfoLine({ label, value }) {
+function IconTextLine({ className = "", icon, style, value }) {
+  return (
+    <p
+      className={`flex min-w-0 items-center gap-1.5 break-words text-[var(--color-muted)] [overflow-wrap:anywhere] ${className}`}
+      style={style}
+    >
+      <span className="shrink-0 text-[var(--color-accent-dark)]">{icon}</span>
+      <span className="min-w-0 break-words [overflow-wrap:anywhere]">
+        {value}
+      </span>
+    </p>
+  );
+}
+
+function InfoLine({ icon, label, value }) {
   return (
     <div className="flex justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-white/40 p-3">
-      <span className="text-[var(--color-accent)]">{label}</span>
+      <span className="inline-flex min-w-0 items-center gap-2 text-[var(--color-accent)]">
+        {icon && (
+          <span className="shrink-0 text-[var(--color-accent-dark)]">
+            {icon}
+          </span>
+        )}
+        <span>{label}</span>
+      </span>
       <span className="text-right text-[var(--color-accent-dark)]">
         {value}
       </span>
@@ -1212,7 +1282,7 @@ function downloadCsv(rows) {
     "mesa_menu_asiento",
     "alergias",
     "transporte",
-    "comentarios",
+    "notas",
   ];
   const lines = rows.map((row) =>
     [

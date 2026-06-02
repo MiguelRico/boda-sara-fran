@@ -249,9 +249,9 @@ function getSummaryItems(stats) {
       emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
     },
     {
-      label: "Con comentarios",
+      label: "Con notas",
       value: `${stats.guestsWithComments}`,
-      detail: "Comentarios",
+      detail: "Notas",
       emoji: <MessageCircle size={22} strokeWidth={1.8} />,
     },
     {

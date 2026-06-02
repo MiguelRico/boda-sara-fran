@@ -2,14 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { selectClassName, Label } from "../rsvp/FormPrimitives";
 import { Table, Guest } from "../../models";
 import IconButton from "../ui/IconButton";
+import TableGuestCard from "./TableGuestCard";
 import {
   AlertCircle,
   Check,
   ChevronLeft,
   ChevronRight,
-  Mail,
-  Phone,
-  UsersRound,
 } from "lucide-react";
 
 /**
@@ -290,122 +288,80 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
   const handleAssignClick = () => {
     if (canAssign) {
       onAssign(guest, selectedTable, selectedSeat);
-      // Reset selectors tras asignar (opcional, comentado para flujo rápido)
-      // setSelectedTable("");
-      // setSelectedSeat("");
     }
   };
 
-  const guestName = Guest.getFullName(guest, "Invitado");
-
   return (
-    <article
-      className="
-        group relative grid gap-4 overflow-hidden rounded-[2rem]
-        border border-[var(--color-border-strong)] bg-white/55 p-5
-        shadow-[0_24px_70px_rgba(77,56,40,0.08)] backdrop-blur-sm
-        transition-all duration-700 hover:-translate-y-1
-        hover:border-[var(--color-border)] hover:bg-white/80
-        sm:grid-cols-5 sm:items-end
-      "
+    <TableGuestCard
+      decorativeText="?"
+      eyebrow={guest.groupName || "Invitado pendiente"}
+      guest={guest}
     >
-      <div className="min-w-0 sm:col-span-2">
-        <p className="section-eyebrow mb-2">
-          {guest.groupName || "Invitado pendiente"}
-        </p>
-        <p className="break-words font-serif text-2xl leading-none text-[var(--color-text)]">
-          {guestName}
-        </p>
-
-        <div className="mt-3 grid gap-2 text-xs text-[var(--color-muted)]">
-          {guest.email && (
-            <span className="inline-flex min-w-0 items-center gap-1.5">
-              <Mail size={13} strokeWidth={1.8} />
-              <span className="truncate">{guest.email}</span>
-            </span>
-          )}
-
-          <div className="flex flex-wrap items-center gap-2">
-            {guest.phone && (
-              <span className="inline-flex items-center gap-1.5">
-                <Phone size={13} strokeWidth={1.8} />
-                {guest.phone}
-              </span>
-            )}
-            {guest.menu && (
-              <span className="inline-flex items-center rounded-full border border-[var(--color-border-strong)] bg-white/60 px-3 py-1.5 text-[0.7rem] font-medium text-[var(--color-accent-dark)]">
-                <UsersRound className="mr-1.5" size={13} strokeWidth={1.8} />
-                {guest.menu}
-              </span>
-            )}
+      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:grid-cols-1">
+          <div>
+            <Label>Mesa</Label>
+            <select
+              value={selectedTable}
+              onChange={(e) => {
+                setSelectedTable(e.target.value);
+                setSelectedSeat("");
+              }}
+              disabled={isAssigning}
+              className={`${selectClassName} text-sm`}
+            >
+              <option value="">Seleccionar</option>
+              {tables.map((table) => {
+                const emptySeats = Table.getEmptySeats(table);
+                const label = `${table.name} (${emptySeats.length} asientos libres)`;
+                return (
+                  <option key={table.name} value={table.name}>
+                    {label}
+                  </option>
+                );
+              })}
+            </select>
           </div>
+
+          <div>
+            <Label>Asiento</Label>
+            <select
+              value={selectedSeat}
+              onChange={(e) => setSelectedSeat(e.target.value)}
+              disabled={!selectedTable || isAssigning}
+              className={`${selectClassName} text-sm disabled:opacity-50`}
+            >
+              <option value="">
+                {selectedTable ? "Seleccionar" : "Selecciona una mesa"}
+              </option>
+              {availableSeats.map((seatNum) => (
+                <option key={seatNum} value={seatNum}>
+                  Asiento {seatNum}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <IconButton
+            className="w-full"
+            disabled={!canAssign || isAssigning}
+            icon={
+              isAssigning ? (
+                <span className="inline-block animate-spin">...</span>
+              ) : (
+                <Check size={16} strokeWidth={2} />
+              )
+            }
+            label={isAssigning ? "Asignando..." : "Asignar"}
+            onClick={handleAssignClick}
+            showText="always"
+            tone={canAssign ? "primary" : "default"}
+          >
+            {isAssigning ? "Asignando..." : "Asignar"}
+          </IconButton>
         </div>
       </div>
-
-      {/* Selector Mesa */}
-      <div className="sm:col-span-1">
-        <Label className="mb-1 block text-xs">Mesa</Label>
-        <select
-          value={selectedTable}
-          onChange={(e) => {
-            setSelectedTable(e.target.value);
-            setSelectedSeat(""); // Reset asiento al cambiar mesa
-          }}
-          disabled={isAssigning}
-          className={`${selectClassName} text-xs`}
-        >
-          <option value="">Seleccionar</option>
-          {tables.map((table) => {
-            const emptySeats = Table.getEmptySeats(table);
-            const label = `${table.name} (${emptySeats.length} asientos libres)`;
-            return (
-              <option key={table.name} value={table.name}>
-                {label}
-              </option>
-            );
-          })}
-        </select>
-      </div>
-
-      {/* Selector Asiento */}
-      <div className="sm:col-span-1">
-        <Label className="mb-1 block text-xs">Asiento</Label>
-        <select
-          value={selectedSeat}
-          onChange={(e) => setSelectedSeat(e.target.value)}
-          disabled={!selectedTable || isAssigning}
-          className={`${selectClassName} text-xs disabled:opacity-50`}
-        >
-          <option value="">Seleccionar</option>
-          {availableSeats.map((seatNum) => (
-            <option key={seatNum} value={seatNum}>
-              Asiento {seatNum}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* BotÃ³n Asignar */}
-      <div className="sm:col-span-1">
-        <IconButton
-          className="w-full"
-          disabled={!canAssign || isAssigning}
-          icon={
-            isAssigning ? (
-              <span className="inline-block animate-spin">â³</span>
-            ) : (
-              <Check size={16} strokeWidth={2} />
-            )
-          }
-          label={isAssigning ? "Asignando..." : "Asignar"}
-          onClick={handleAssignClick}
-          showText="always"
-          tone={canAssign ? "primary" : "default"}
-        >
-          {isAssigning ? "Asignando..." : "Asignar"}
-        </IconButton>
-      </div>
-    </article>
+    </TableGuestCard>
   );
 }
 

@@ -8,12 +8,7 @@ import {
   OUTBOUND_BUS_OPTIONS,
   RETURN_BUS_OPTIONS,
 } from "../../constants/rsvp";
-import {
-  FieldError,
-  FormCard,
-  inputClassName,
-  Label,
-} from "./FormPrimitives";
+import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 
 export default function GuestCard({
   canRemove,
@@ -132,7 +127,7 @@ export default function GuestCard({
       </div>
 
       <div className="mt-4">
-        <Label>Comentarios adicionales</Label>
+        <Label>Notas</Label>
 
         <textarea
           rows={2}
@@ -221,7 +216,7 @@ export default function GuestCard({
                   onChange={(event) =>
                     onGuestChange(index, "otherAllergies", event.target.value)
                   }
-                  placeholder="Otros comentarios alimentarios"
+                  placeholder="Otras notas alimentarias"
                   rows={3}
                   value={guest.otherAllergies}
                 />

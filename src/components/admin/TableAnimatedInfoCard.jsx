@@ -1,4 +1,12 @@
-import { Pencil, Trash2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Beef,
+  Fish,
+  MessageCircle,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -6,6 +14,7 @@ import { Guest, Table } from "../../models";
 import { getTableGroupOption, TABLE_SHAPES } from "../../constants/tables";
 import IconButton from "../ui/IconButton";
 import RevealOnView from "../ui/RevealOnView";
+import TableGuestCard from "./TableGuestCard";
 
 export default function TableAnimatedInfoCard({
   index = 0,
@@ -41,7 +50,13 @@ export default function TableAnimatedInfoCard({
   );
 }
 
-function TableInfoCard({ onDelete, onEdit, onSeatClick, onUnassignSeat, table }) {
+function TableInfoCard({
+  onDelete,
+  onEdit,
+  onSeatClick,
+  onUnassignSeat,
+  table,
+}) {
   const [showAssignments, setShowAssignments] = useState(false);
   const assignedGuests = Table.getAssignedGuests(table);
   const tableLabel = table.name;
@@ -149,15 +164,27 @@ function AssignmentModal({ onUnassignSeat, table, onClose }) {
   return createPortal(
     <div className="rsvp-dialog-overlay" onClick={onClose}>
       <div
-        className="rsvp-dialog-card relative rounded-[2rem] border border-[var(--color-border)] bg-white p-6 text-left shadow-[0_24px_70px_rgba(77,56,40,0.08)]"
+        aria-labelledby="assigned-seats-title"
+        aria-modal="true"
+        className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-3xl overflow-y-auto p-5 text-left sm:max-h-[calc(100dvh-3rem)] sm:p-7"
         onClick={(event) => event.stopPropagation()}
+        role="dialog"
       >
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <p className="section-eyebrow mb-2">Invitados asignados</p>
-            <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-              {table.name}
+            <p className="section-eyebrow mb-2">Mesa {table.name}</p>
+            <h2
+              className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
+              id="assigned-seats-title"
+            >
+              Asientos asignados
             </h2>
+            <p className="mt-3 text-sm text-[var(--color-muted)]">
+              {assignedSeats.length}{" "}
+              {assignedSeats.length === 1
+                ? "invitado asignado"
+                : "invitados asignados"}
+            </p>
           </div>
 
           <IconButton label="Cerrar" onClick={onClose} tone="secondary">
@@ -179,9 +206,14 @@ function AssignmentModal({ onUnassignSeat, table, onClose }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-[var(--color-muted)]">
-            No hay invitados asignados a esta mesa.
-          </p>
+          <div className="rounded-[2rem] border border-[var(--color-border)] bg-white/45 p-6 text-center">
+            <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
+              Sin asientos asignados
+            </p>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+              No hay invitados asignados a esta mesa.
+            </p>
+          </div>
         )}
       </div>
     </div>,
@@ -190,36 +222,19 @@ function AssignmentModal({ onUnassignSeat, table, onClose }) {
 }
 
 function AssignedSeatCard({ isRemoving, onUnassign, seat }) {
-  return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <p className="font-medium text-[var(--color-accent-dark)]">
-            Asiento {seat.seat} - {Guest.getFullName(seat.guest, "Invitado")}
-          </p>
-          <div className="mt-3 grid gap-2 text-sm text-[var(--color-muted)]">
-            <AssignmentDetail label="Menu" value={seat.guest.menu} />
-            <AssignmentDetail
-              label="Alergias"
-              value={formatGuestAllergies(seat.guest)}
-            />
-            <AssignmentDetail
-              label="Otras alergias"
-              value={seat.guest.otherAllergies}
-            />
-            <AssignmentDetail
-              label="Comentarios"
-              value={seat.guest.comments}
-            />
-            {seat.guest.phone && (
-              <AssignmentDetail label="Telefono" value={seat.guest.phone} />
-            )}
-          </div>
-        </div>
+  const guestGroup = String(seat.guest.groupName || "").trim();
+  const eyebrow = `Asiento ${seat.seat}${guestGroup ? ` - ${guestGroup}` : ""}`;
 
+  return (
+    <TableGuestCard
+      decorativeText={seat.seat}
+      eyebrow={eyebrow}
+      guest={seat.guest}
+    >
+      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
         {onUnassign && (
           <IconButton
-            className="w-full sm:w-auto"
+            className="w-full"
             disabled={isRemoving}
             icon={<Trash2 size={16} strokeWidth={1.8} />}
             label="Liberar asiento"
@@ -231,27 +246,8 @@ function AssignedSeatCard({ isRemoving, onUnassign, seat }) {
           </IconButton>
         )}
       </div>
-    </div>
+    </TableGuestCard>
   );
-}
-
-function AssignmentDetail({ label, value }) {
-  const text = String(value || "").trim() || "-";
-
-  return (
-    <p>
-      <span className="text-[var(--color-accent)]">{label}: </span>
-      <span>{text}</span>
-    </p>
-  );
-}
-
-function formatGuestAllergies(guest) {
-  const normalizedGuest = Guest.normalize(guest);
-
-  return normalizedGuest.allergies.length
-    ? normalizedGuest.allergies.join(", ")
-    : "No";
 }
 
 function TableDiagram({ onSeatClick, onCenterClick, table }) {
@@ -297,6 +293,7 @@ function TableDiagram({ onSeatClick, onCenterClick, table }) {
       <div className="mt-2 flex flex-wrap gap-1.5 text-[0.78rem] text-[var(--color-muted)]">
         {summaryItems.map((item) => (
           <TableLegendItem
+            icon={item.icon}
             key={item.label}
             label={item.label}
             value={item.value}
@@ -307,10 +304,17 @@ function TableDiagram({ onSeatClick, onCenterClick, table }) {
   );
 }
 
-function TableLegendItem({ label, value }) {
+function TableLegendItem({ icon, label, value }) {
   return (
     <div className="flex min-w-0 flex-1 basis-[calc(50%-0.375rem)] items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-white/35 px-2.5 py-1.5 sm:basis-[calc(25%-0.375rem)]">
-      <span className="text-[var(--color-accent)]">{label}</span>
+      <span className="inline-flex min-w-0 items-center gap-1.5 text-[var(--color-accent)]">
+        {icon && (
+          <span className="shrink-0 text-[var(--color-accent-dark)]">
+            {icon}
+          </span>
+        )}
+        <span className="truncate">{label}</span>
+      </span>
       <span className="shrink-0 font-medium text-[var(--color-accent-dark)]">
         {value}
       </span>
@@ -323,19 +327,23 @@ function getTableLegendSummary(table) {
 
   return [
     {
+      icon: <Fish size={14} strokeWidth={1.8} />,
       label: "Pescado",
       value: assignedGuests.filter((guest) => guest.menu === "Pescado").length,
     },
     {
+      icon: <Beef size={14} strokeWidth={1.8} />,
       label: "Carne",
       value: assignedGuests.filter((guest) => guest.menu === "Carne").length,
     },
     {
+      icon: <AlertTriangle size={14} strokeWidth={1.8} />,
       label: "Alergias",
       value: assignedGuests.filter(Guest.hasAllergies).length,
     },
     {
-      label: "Comentarios",
+      icon: <MessageCircle size={14} strokeWidth={1.8} />,
+      label: "Notas",
       value: assignedGuests.filter(Guest.hasComments).length,
     },
   ];

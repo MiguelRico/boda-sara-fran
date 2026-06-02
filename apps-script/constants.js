@@ -23,7 +23,7 @@ const EMAIL_COPY = {
   footer: "Confirmación automática de asistencia",
   fallback: {
     noAllergies: "Ninguna",
-    noComments: "Sin comentarios",
+    noComments: "Sin notas",
     noBus: "No",
   },
   confirmation: {
@@ -59,7 +59,7 @@ const EMAIL_COPY = {
       return: "Vuelta",
       allergies: "Alergias",
       otherAllergies: "Otras alergias",
-      comments: "Comentarios",
+      comments: "Notas",
     },
   },
 };
