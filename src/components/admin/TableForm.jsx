@@ -19,6 +19,7 @@ import {
   FormCard,
   inputClassName,
   Label,
+  selectClassName,
 } from "../rsvp/FormPrimitives";
 import IconButton from "../ui/IconButton";
 
@@ -161,7 +162,7 @@ export default function TableForm({
             <Label>{content.fields.seatCount.label}</Label>
 
             <select
-              className={`${inputClassName} bg-white`}
+              className={selectClassName}
               onChange={(event) =>
                 onChange("seatCount", Number(event.target.value))
               }

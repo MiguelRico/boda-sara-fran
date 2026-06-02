@@ -1,8 +1,16 @@
-import { useCallback, useState, useMemo } from "react";
-import { inputClassName, Label } from "../rsvp/FormPrimitives";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { selectClassName, Label } from "../rsvp/FormPrimitives";
 import { Table, Guest } from "../../models";
 import IconButton from "../ui/IconButton";
-import { Check, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Mail,
+  Phone,
+  UsersRound,
+} from "lucide-react";
 
 /**
  * Lista de invitados sin mesa con filtros y selectores inline para asignar.
@@ -21,7 +29,20 @@ export default function PendingGuestsList({
   const [assigningGuest, setAssigningGuest] = useState(null);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 8;
+  const [isMobileList, setIsMobileList] = useState(false);
+  const pageSize = isMobileList ? 1 : 8;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateIsMobileList = () => setIsMobileList(mediaQuery.matches);
+
+    updateIsMobileList();
+    mediaQuery.addEventListener("change", updateIsMobileList);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateIsMobileList);
+    };
+  }, []);
 
   // Calcular grupos únicos de invitados pendientes
   const availableGroups = useMemo(() => {
@@ -107,13 +128,29 @@ export default function PendingGuestsList({
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <section
+        className="
+          overflow-hidden rounded-[2rem]
+          border border-[var(--color-border-strong)] bg-white/80 p-5
+          shadow-[0_24px_70px_rgba(77,56,40,0.08)] backdrop-blur-md
+        "
+      >
+        <div className="mb-4">
+          <div>
+            <p className="section-eyebrow mb-2">Filtros</p>
+            <h3 className="font-serif text-3xl leading-none text-[var(--color-text)]">
+              Invitados pendientes
+            </h3>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label>Grupo de invitación</Label>
           <select
             value={filters.group}
             onChange={(e) => handleFilterChange("group", e.target.value)}
-            className={inputClassName}
+            className={selectClassName}
           >
             <option value="">Todos los grupos</option>
             {availableGroups.map((group) => (
@@ -129,7 +166,7 @@ export default function PendingGuestsList({
           <select
             value={filters.menu}
             onChange={(e) => handleFilterChange("menu", e.target.value)}
-            className={inputClassName}
+            className={selectClassName}
           >
             <option value="">Todos los menús</option>
             {availableMenus.map((menu) => (
@@ -139,7 +176,8 @@ export default function PendingGuestsList({
             ))}
           </select>
         </div>
-      </div>
+        </div>
+      </section>
 
       {/* Error global */}
       {error && (
@@ -261,25 +299,47 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
   const guestName = Guest.getFullName(guest, "Invitado");
 
   return (
-    <div className="grid gap-3 rounded-2xl border border-[var(--color-border)] bg-white/50 p-4 sm:grid-cols-5 sm:items-end">
-      {/* Nombre */}
-      <div className="sm:col-span-1">
-        <p className="truncate font-medium text-[var(--color-accent-dark)]">
+    <article
+      className="
+        group relative grid gap-4 overflow-hidden rounded-[2rem]
+        border border-[var(--color-border-strong)] bg-white/55 p-5
+        shadow-[0_24px_70px_rgba(77,56,40,0.08)] backdrop-blur-sm
+        transition-all duration-700 hover:-translate-y-1
+        hover:border-[var(--color-border)] hover:bg-white/80
+        sm:grid-cols-5 sm:items-end
+      "
+    >
+      <div className="min-w-0 sm:col-span-2">
+        <p className="section-eyebrow mb-2">
+          {guest.groupName || "Invitado pendiente"}
+        </p>
+        <p className="break-words font-serif text-2xl leading-none text-[var(--color-text)]">
           {guestName}
         </p>
-        <p className="truncate text-xs text-[var(--color-muted)]">
-          {guest.email}
-        </p>
-      </div>
 
-      {/* Grupo + Menú */}
-      <div className="text-xs text-[var(--color-muted)] sm:col-span-1">
-        <span className="block">{guest.groupName}</span>
-        {guest.menu && (
-          <span className="inline-block rounded-full border border-[var(--color-border-strong)] px-2 py-1 text-[0.65rem] text-[var(--color-accent-dark)]">
-            {guest.menu}
-          </span>
-        )}
+        <div className="mt-3 grid gap-2 text-xs text-[var(--color-muted)]">
+          {guest.email && (
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <Mail size={13} strokeWidth={1.8} />
+              <span className="truncate">{guest.email}</span>
+            </span>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            {guest.phone && (
+              <span className="inline-flex items-center gap-1.5">
+                <Phone size={13} strokeWidth={1.8} />
+                {guest.phone}
+              </span>
+            )}
+            {guest.menu && (
+              <span className="inline-flex items-center rounded-full border border-[var(--color-border-strong)] bg-white/60 px-3 py-1.5 text-[0.7rem] font-medium text-[var(--color-accent-dark)]">
+                <UsersRound className="mr-1.5" size={13} strokeWidth={1.8} />
+                {guest.menu}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Selector Mesa */}
@@ -292,17 +352,14 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
             setSelectedSeat(""); // Reset asiento al cambiar mesa
           }}
           disabled={isAssigning}
-          className={`${inputClassName} text-xs`}
+          className={`${selectClassName} text-xs`}
         >
           <option value="">Seleccionar</option>
           {tables.map((table) => {
             const emptySeats = Table.getEmptySeats(table);
-            const label = `${table.name} (${emptySeats.length})`;
+            const label = `${table.name} (${emptySeats.length} asientos libres)`;
             return (
-              <option
-                key={table.name}
-                value={table.name}
-              >
+              <option key={table.name} value={table.name}>
                 {label}
               </option>
             );
@@ -317,7 +374,7 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
           value={selectedSeat}
           onChange={(e) => setSelectedSeat(e.target.value)}
           disabled={!selectedTable || isAssigning}
-          className={`${inputClassName} text-xs disabled:opacity-50`}
+          className={`${selectClassName} text-xs disabled:opacity-50`}
         >
           <option value="">Seleccionar</option>
           {availableSeats.map((seatNum) => (
@@ -328,14 +385,14 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
         </select>
       </div>
 
-      {/* Botón Asignar */}
+      {/* BotÃ³n Asignar */}
       <div className="sm:col-span-1">
         <IconButton
           className="w-full"
           disabled={!canAssign || isAssigning}
           icon={
             isAssigning ? (
-              <span className="inline-block animate-spin">⏳</span>
+              <span className="inline-block animate-spin">â³</span>
             ) : (
               <Check size={16} strokeWidth={2} />
             )
@@ -348,7 +405,7 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
           {isAssigning ? "Asignando..." : "Asignar"}
         </IconButton>
       </div>
-    </div>
+    </article>
   );
 }
 

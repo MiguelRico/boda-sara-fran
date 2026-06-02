@@ -51,7 +51,7 @@ import Spinner from "../components/ui/Spinner";
 import TabNavigation from "../components/ui/TabNavigation";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import PendingGuestsList from "../components/admin/PendingGuestsList";
-import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
+import { Label, selectClassName } from "../components/rsvp/FormPrimitives";
 import { Guest } from "../models";
 import {
   assignGuestToSeatLocal,
@@ -1131,7 +1131,7 @@ function SeatAssignmentDialog({
         <form noValidate onSubmit={handleSubmit}>
           <Label>Invitado</Label>
           <select
-            className={`${inputClassName} bg-white`}
+            className={selectClassName}
             disabled={assigning}
             onChange={(event) => setSelectedGuest(event.target.value)}
             value={selectedGuest}

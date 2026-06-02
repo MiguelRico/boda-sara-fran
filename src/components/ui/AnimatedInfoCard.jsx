@@ -12,6 +12,7 @@ function InfoCard({
   inlineTitleDescription = false,
   showAction = Boolean(to),
   style,
+  summaryCompact = false,
   summaryView = false,
 }) {
   const Component = to ? Link : "div";
@@ -36,8 +37,16 @@ function InfoCard({
       `}
     >
       {summaryView ? (
-        <div className="relative flex min-w-0 flex-col items-center justify-center gap-3 text-center">
-          <div className="flex min-w-0 items-center justify-center gap-3 sm:flex-col">
+        <div
+          className={`relative flex min-w-0 flex-col items-center justify-center text-center ${
+            summaryCompact ? "gap-2 sm:gap-3" : "gap-3"
+          }`}
+        >
+          <div
+            className={`flex min-w-0 items-center justify-center sm:flex-col ${
+              summaryCompact ? "gap-2 sm:gap-3" : "gap-3"
+            }`}
+          >
             {emoji && (
               <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
                 {emoji}
@@ -45,14 +54,22 @@ function InfoCard({
             )}
 
             {title && (
-              <p className="font-serif text-3xl leading-tight text-[var(--color-text)] sm:text-4xl">
+              <p
+                className={`font-serif leading-tight text-[var(--color-text)] ${
+                  summaryCompact ? "text-2xl sm:text-4xl" : "text-3xl sm:text-4xl"
+                }`}
+              >
                 {title}
               </p>
             )}
           </div>
 
           {description && (
-            <p className="min-w-0 break-words text-sm leading-relaxed text-[var(--color-accent)] sm:text-base">
+            <p
+              className={`min-w-0 break-words leading-relaxed text-[var(--color-accent)] ${
+                summaryCompact ? "text-xs sm:text-base" : "text-sm sm:text-base"
+              }`}
+            >
               {description}
             </p>
           )}

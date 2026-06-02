@@ -58,6 +58,10 @@ const emptyState = {
   loading: true,
   error: "",
 };
+const CONFIRMATIONS_METRIC_GRID_CLASS =
+  "grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-start sm:justify-center sm:gap-4";
+const CONFIRMATIONS_METRIC_CARD_CLASS =
+  "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-3 sm:p-5";
 
 export default function AdminStats() {
   const statsRef = useRef(null);
@@ -197,16 +201,21 @@ function StatsOverview({ loading, onRefresh, stats }) {
       </div>
 
       <section className="premium-card">
-        <div className="mb-5">
-          <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-            Confirmaciones
-          </h2>
-        </div>
+        <CardHeader
+          backgroundIcon={<ClipboardCheck size={74} strokeWidth={1.5} />}
+          icon={<ClipboardCheck size={22} strokeWidth={1.8} />}
+          title="Confirmaciones"
+        />
 
         {loading ? (
           <AdminMetricGridSkeleton />
         ) : (
-          <AdminMetricGrid items={getSummaryItems(stats)} />
+          <AdminMetricGrid
+            cardClassName={CONFIRMATIONS_METRIC_CARD_CLASS}
+            className={CONFIRMATIONS_METRIC_GRID_CLASS}
+            compactSummary
+            items={getSummaryItems(stats)}
+          />
         )}
       </section>
     </div>
@@ -236,7 +245,7 @@ function getSummaryItems(stats) {
     {
       label: "Con otras alergias",
       value: stats.guestsWithOtherAllergies,
-      detail: "Otras alergias",
+      detail: "Otras...",
       emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
     },
     {
@@ -299,7 +308,7 @@ function TransportCard({ stats }) {
       <CardHeader
         backgroundIcon={<BusFront size={74} strokeWidth={1.5} />}
         icon={<BusFront size={22} strokeWidth={1.8} />}
-        title="Transporte"
+        title="Autobús"
       />
 
       <div className="grid gap-5 sm:grid-cols-2">

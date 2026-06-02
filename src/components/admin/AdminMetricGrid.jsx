@@ -11,6 +11,7 @@ export function AdminMetricGrid({
   items,
   className = DEFAULT_GRID_CLASS,
   cardClassName = DEFAULT_CARD_CLASS,
+  compactSummary = false,
 }) {
   const itemRefs = useRef([]);
   const [summarySize, setSummarySize] = useState(null);
@@ -76,6 +77,7 @@ export function AdminMetricGrid({
               emoji: item.emoji,
               inlineTitleDescription: true,
               showAction: false,
+              summaryCompact: compactSummary,
               style: activeSummarySize
                 ? getSummaryCardStyle(activeSummarySize, shouldFitContent)
                 : undefined,
