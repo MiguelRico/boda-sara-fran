@@ -805,38 +805,40 @@ export default function AdminTables() {
                       )}
                     </p>
 
-                    <div className="mt-4 grid w-full grid-cols-3 gap-3">
-                      <IconButton
-                        className="w-full"
-                        disabled={!tables.length}
-                        icon={<Download size={16} strokeWidth={1.8} />}
-                        label="Exportar tabla"
-                        onClick={() => downloadTablesCsv(tables)}
-                        tone="terciary"
-                      >
-                        Exportar tabla
-                      </IconButton>
+                    <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+                      <div className="grid w-full grid-cols-3 gap-3">
+                        <IconButton
+                          className="w-full"
+                          disabled={!tables.length}
+                          icon={<Download size={16} strokeWidth={1.8} />}
+                          label="Exportar tabla"
+                          onClick={() => downloadTablesCsv(tables)}
+                          tone="terciary"
+                        >
+                          Exportar tabla
+                        </IconButton>
 
-                      <IconButton
-                        className="w-full"
-                        icon={<Plus size={18} strokeWidth={2.4} />}
-                        label="Agregar mesa"
-                        onClick={handleCreateTable}
-                        tone="secondary"
-                      >
-                        Agregar mesa
-                      </IconButton>
+                        <IconButton
+                          className="w-full"
+                          icon={<Plus size={18} strokeWidth={2.4} />}
+                          label="Agregar mesa"
+                          onClick={handleCreateTable}
+                          tone="secondary"
+                        >
+                          Agregar mesa
+                        </IconButton>
 
-                      <IconButton
-                        className="w-full"
-                        disabled={!hasPendingChanges || spinner.loading}
-                        icon={<Save size={16} strokeWidth={1.8} />}
-                        label="Guardar cambios"
-                        onClick={handleSavePendingChanges}
-                        tone="primary"
-                      >
-                        Guardar cambios
-                      </IconButton>
+                        <IconButton
+                          className="w-full"
+                          disabled={!hasPendingChanges || spinner.loading}
+                          icon={<Save size={16} strokeWidth={1.8} />}
+                          label="Guardar cambios"
+                          onClick={handleSavePendingChanges}
+                          tone="primary"
+                        >
+                          Guardar cambios
+                        </IconButton>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1312,46 +1314,48 @@ function TablesPageActions({
   return (
     <section className="premium-card mt-5">
       <p className="section-eyebrow mb-4">Acciones</p>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <IconButton
-          className="w-full"
-          disabled={!hasPendingChanges || loading}
-          icon={<Undo2 size={16} strokeWidth={1.8} />}
-          label="Deshacer cambios"
-          onClick={onDiscardChanges}
-          showText="always"
-          tone="secondary"
-          type="button"
-        >
-          Deshacer cambios
-        </IconButton>
-        <IconButton
-          className="w-full"
-          disabled={loading}
-          icon={
-            <RefreshCw
-              className={loading ? "animate-spin" : ""}
-              size={16}
-              strokeWidth={1.8}
-            />
-          }
-          label="Actualizar"
-          onClick={onRefresh}
-          showText="always"
-          type="button"
-        >
-          Actualizar
-        </IconButton>
+      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <IconButton
+            className="w-full"
+            disabled={!hasPendingChanges || loading}
+            icon={<Undo2 size={16} strokeWidth={1.8} />}
+            label="Deshacer cambios"
+            onClick={onDiscardChanges}
+            showText="always"
+            tone="secondary"
+            type="button"
+          >
+            Deshacer cambios
+          </IconButton>
+          <IconButton
+            className="w-full"
+            disabled={loading}
+            icon={
+              <RefreshCw
+                className={loading ? "animate-spin" : ""}
+                size={16}
+                strokeWidth={1.8}
+              />
+            }
+            label="Actualizar"
+            onClick={onRefresh}
+            showText="always"
+            type="button"
+          >
+            Actualizar
+          </IconButton>
 
-        <IconButton
-          className="flex-1"
-          icon={<Home size={16} strokeWidth={1.8} />}
-          showText="always"
-          to="/admin"
-          tone="terciary"
-        >
-          Administracion
-        </IconButton>
+          <IconButton
+            className="flex-1"
+            icon={<Home size={16} strokeWidth={1.8} />}
+            showText="always"
+            to="/admin"
+            tone="terciary"
+          >
+            Administracion
+          </IconButton>
+        </div>
       </div>
     </section>
   );

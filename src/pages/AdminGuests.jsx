@@ -23,10 +23,8 @@ import {
   ChevronRight,
   Download,
   Fish,
-  Mail,
   MessageCircle,
   Pencil,
-  Phone,
   Plus,
   RefreshCw,
   Search,
@@ -44,6 +42,7 @@ import IconButton from "../components/ui/IconButton";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
+import TableGuestCard from "../components/admin/TableGuestCard";
 import RsvpForm from "../forms/RsvpForm";
 import { MAX_GUESTS } from "../constants/rsvp";
 import { Confirmation } from "../models";
@@ -65,8 +64,6 @@ const pageRevealDelay = 160;
 const mobilePageHeightLockDelay = 560;
 const mobileGroupNameBaseFontSize = 30;
 const mobileGroupNameMinFontSize = 10;
-const mobileDetailBaseFontSize = 14;
-const mobileDetailMinFontSize = 10;
 const ADMIN_DEFAULT_EMAIL = "admin@admin.com";
 const ADMIN_DEFAULT_PHONE = "666666666";
 const filters = [
@@ -711,15 +708,6 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
   const [groupNameFontSize, setGroupNameFontSize] = useState(
     mobileGroupNameBaseFontSize,
   );
-  const detailFontSize = Math.max(
-    mobileDetailMinFontSize,
-    Math.min(
-      mobileDetailBaseFontSize,
-      (groupNameFontSize / mobileGroupNameBaseFontSize) *
-        mobileDetailBaseFontSize,
-    ),
-  );
-  const detailTextStyle = { fontSize: `${detailFontSize}px` };
 
   useLayoutEffect(() => {
     const updateGroupNameFontSize = () => {
@@ -837,100 +825,22 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
             ref={(node) => {
               measureRefs.current[index] = node;
             }}
-            className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 shadow-[0_18px_45px_rgba(52,69,49,0.06)] sm:p-5"
           >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0 flex-1">
-                <p
-                  className="overflow-hidden whitespace-nowrap font-serif leading-none text-[var(--color-accent-dark)]"
-                  style={{ fontSize: `${groupNameFontSize}px` }}
-                >
-                  {row.groupName || "Grupo sin nombre"}
-                </p>
-                <IconTextLine
-                  className="mt-2"
-                  icon={<Mail size={14} strokeWidth={1.8} />}
-                  style={detailTextStyle}
-                  value={row.email || "-"}
-                />
-                <IconTextLine
-                  className="mt-1 hidden sm:flex"
-                  icon={<Phone size={14} strokeWidth={1.8} />}
-                  style={detailTextStyle}
-                  value={row.phone || "-"}
-                />
-                <p
-                  className="mt-2 hidden text-[var(--color-muted)] sm:block"
-                  style={detailTextStyle}
-                >
-                  {row.groupSize} {row.groupSize === 1 ? "persona" : "personas"}
-                </p>
-
-                <div className="mt-3 flex items-center justify-between gap-3 sm:hidden">
-                  <div
-                    className="min-w-0 text-[var(--color-muted)]"
-                    style={detailTextStyle}
-                  >
-                    <IconTextLine
-                      icon={<Phone size={14} strokeWidth={1.8} />}
-                      value={row.phone || "-"}
-                    />
-                    <p className="mt-1">
-                      {row.groupSize}{" "}
-                      {row.groupSize === 1 ? "persona" : "personas"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="hidden sm:block">
-                <div className="flex shrink-0 justify-end gap-2">
-                  <IconButton label="Eliminar" tone="danger">
-                    <Trash2 size={16} strokeWidth={1.8} />
-                  </IconButton>
-                  <IconButton label="Editar" tone="primary">
-                    <Pencil size={16} strokeWidth={1.8} />
-                  </IconButton>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
-              <InfoLine
-                icon={<Fish size={15} strokeWidth={1.8} />}
-                label="Pescado"
-                value={row.fishText}
-              />
-              <InfoLine
-                icon={<Beef size={15} strokeWidth={1.8} />}
-                label="Carne"
-                value={row.meatText}
-              />
-              <InfoLine
-                icon={<AlertTriangle size={15} strokeWidth={1.8} />}
-                label="Alergias"
-                value={row.allergyText}
-              />
-              <InfoLine
-                icon={<BusFront size={15} strokeWidth={1.8} />}
-                label="Transporte"
-                value={row.transportText}
-              />
-              <InfoLine
-                icon={<MessageCircle size={15} strokeWidth={1.8} />}
-                label="Notas"
-                value={row.commentsCountText}
-              />
-            </div>
+            <AdminGuestConfirmationCard
+              onDelete={() => {}}
+              onEdit={() => {}}
+              row={row}
+              titleStyle={{ fontSize: `${groupNameFontSize}px` }}
+            />
           </div>
         ))}
       </div>
 
       <AnimatePresence custom={direction} initial={false}>
         {rows.map((row, index) => (
-          <motion.article
+          <motion.div
             animate="center"
-            className="absolute inset-x-0 top-0 rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 shadow-[0_18px_45px_rgba(52,69,49,0.06)]"
+            className="absolute inset-x-0 top-0"
             custom={direction}
             exit="exit"
             initial="enter"
@@ -942,94 +852,16 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
             }}
             variants={variants}
           >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0 flex-1">
-                <p
-                  className="overflow-hidden whitespace-nowrap font-serif leading-none text-[var(--color-accent-dark)]"
-                  ref={(node) => {
-                    groupNameRefs.current[index] = node;
-                  }}
-                  style={{ fontSize: `${groupNameFontSize}px` }}
-                >
-                  {row.groupName || "Grupo sin nombre"}
-                </p>
-                <IconTextLine
-                  className="mt-2"
-                  icon={<Mail size={14} strokeWidth={1.8} />}
-                  style={detailTextStyle}
-                  value={row.email || "-"}
-                />
-                <IconTextLine
-                  className="mt-1 hidden sm:flex"
-                  icon={<Phone size={14} strokeWidth={1.8} />}
-                  style={detailTextStyle}
-                  value={row.phone || "-"}
-                />
-                <p
-                  className="mt-2 hidden text-[var(--color-muted)] sm:block"
-                  style={detailTextStyle}
-                >
-                  {row.groupSize} {row.groupSize === 1 ? "persona" : "personas"}
-                </p>
-
-                <div className="mt-3 flex items-center justify-between gap-3 sm:hidden">
-                  <div
-                    className="min-w-0 text-[var(--color-muted)]"
-                    style={detailTextStyle}
-                  >
-                    <IconTextLine
-                      icon={<Phone size={14} strokeWidth={1.8} />}
-                      value={row.phone || "-"}
-                    />
-                    <p className="mt-1">
-                      {row.groupSize}{" "}
-                      {row.groupSize === 1 ? "persona" : "personas"}
-                    </p>
-                  </div>
-
-                  <MobileRowActions
-                    onDelete={() => onDelete(row.group)}
-                    onEdit={() => onEdit(row.group)}
-                  />
-                </div>
-              </div>
-
-              <div className="hidden sm:block">
-                <MobileRowActions
-                  onDelete={() => onDelete(row.group)}
-                  onEdit={() => onEdit(row.group)}
-                />
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
-              <InfoLine
-                icon={<Fish size={15} strokeWidth={1.8} />}
-                label="Pescado"
-                value={row.fishText}
-              />
-              <InfoLine
-                icon={<Beef size={15} strokeWidth={1.8} />}
-                label="Carne"
-                value={row.meatText}
-              />
-              <InfoLine
-                icon={<AlertTriangle size={15} strokeWidth={1.8} />}
-                label="Alergias"
-                value={row.allergyText}
-              />
-              <InfoLine
-                icon={<BusFront size={15} strokeWidth={1.8} />}
-                label="Transporte"
-                value={row.transportText}
-              />
-              <InfoLine
-                icon={<MessageCircle size={15} strokeWidth={1.8} />}
-                label="Notas"
-                value={row.commentsCountText}
-              />
-            </div>
-          </motion.article>
+            <AdminGuestConfirmationCard
+              onDelete={onDelete}
+              onEdit={onEdit}
+              row={row}
+              titleRef={(node) => {
+                groupNameRefs.current[index] = node;
+              }}
+              titleStyle={{ fontSize: `${groupNameFontSize}px` }}
+            />
+          </motion.div>
         ))}
       </AnimatePresence>
     </div>
@@ -1038,13 +870,90 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
 
 function MobileRowActions({ onDelete, onEdit }) {
   return (
-    <div className="flex shrink-0 justify-end gap-2">
-      <IconButton label="Eliminar" onClick={onDelete} tone="danger">
-        <Trash2 size={16} strokeWidth={1.8} />
-      </IconButton>
-      <IconButton label="Editar" onClick={onEdit} tone="primary">
-        <Pencil size={16} strokeWidth={1.8} />
-      </IconButton>
+    <div className="grid w-full min-w-0 grid-cols-2 gap-2">
+      {onDelete && (
+        <IconButton
+          className="w-full min-w-0 basis-0 !shrink !gap-1.5 !px-3"
+          icon={<Trash2 size={16} strokeWidth={1.8} />}
+          label="Eliminar"
+          onClick={onDelete}
+          tone="danger"
+        >
+          Eliminar
+        </IconButton>
+      )}
+      {onEdit && (
+        <IconButton
+          className="w-full min-w-0 basis-0 !shrink !gap-1.5 !px-3"
+          icon={<Pencil size={16} strokeWidth={1.8} />}
+          label="Editar"
+          onClick={onEdit}
+          tone="primary"
+        >
+          Editar
+        </IconButton>
+      )}
+    </div>
+  );
+}
+
+function AdminGuestConfirmationCard({
+  onDelete,
+  onEdit,
+  row,
+  titleRef,
+  titleStyle,
+}) {
+  return (
+    <div className="grid gap-3">
+      {(onDelete || onEdit) && (
+        <MobileRowActions
+          onDelete={onDelete ? () => onDelete(row.group) : undefined}
+          onEdit={onEdit ? () => onEdit(row.group) : undefined}
+        />
+      )}
+
+      <TableGuestCard
+        decorativeText={row.groupSize}
+        eyebrow={`${row.groupSize} ${row.groupSize === 1 ? "persona" : "personas"}`}
+        guest={{
+          email: row.email,
+          phone: row.phone,
+        }}
+        title={row.groupName || "Grupo sin nombre"}
+        titleRef={titleRef}
+        titleStyle={titleStyle}
+      >
+        <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+          <div className="grid gap-3 text-sm text-[var(--color-muted)]">
+            <InfoLine
+              icon={<Fish size={15} strokeWidth={1.8} />}
+              label="Pescado"
+              value={row.fishText}
+            />
+            <InfoLine
+              icon={<Beef size={15} strokeWidth={1.8} />}
+              label="Carne"
+              value={row.meatText}
+            />
+            <InfoLine
+              icon={<AlertTriangle size={15} strokeWidth={1.8} />}
+              label="Alergias"
+              value={row.allergyText}
+            />
+            <InfoLine
+              icon={<BusFront size={15} strokeWidth={1.8} />}
+              label="Transporte"
+              value={row.transportText}
+            />
+            <InfoLine
+              icon={<MessageCircle size={15} strokeWidth={1.8} />}
+              label="Notas"
+              value={row.commentsCountText}
+            />
+          </div>
+        </div>
+      </TableGuestCard>
     </div>
   );
 }
@@ -1202,20 +1111,6 @@ function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
         </IconButton>
       </div>
     </div>
-  );
-}
-
-function IconTextLine({ className = "", icon, style, value }) {
-  return (
-    <p
-      className={`flex min-w-0 items-center gap-1.5 break-words text-[var(--color-muted)] [overflow-wrap:anywhere] ${className}`}
-      style={style}
-    >
-      <span className="shrink-0 text-[var(--color-accent-dark)]">{icon}</span>
-      <span className="min-w-0 break-words [overflow-wrap:anywhere]">
-        {value}
-      </span>
-    </p>
   );
 }
 

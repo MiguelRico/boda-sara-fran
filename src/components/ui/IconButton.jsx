@@ -40,7 +40,7 @@ export default function IconButton({
       )}
       {hasText && (
         <span
-          className={`${textClass} truncate text-[0.68rem] uppercase tracking-[0.22em] sm:text-xs`}
+          className={`${textClass} min-w-0 truncate text-[0.68rem] uppercase tracking-[0.22em] sm:text-xs`}
         >
           {children}
         </span>

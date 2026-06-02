@@ -231,8 +231,8 @@ function AssignedSeatCard({ isRemoving, onUnassign, seat }) {
       eyebrow={eyebrow}
       guest={seat.guest}
     >
-      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-        {onUnassign && (
+      {onUnassign && (
+        <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
           <IconButton
             className="w-full"
             disabled={isRemoving}
@@ -244,8 +244,8 @@ function AssignedSeatCard({ isRemoving, onUnassign, seat }) {
           >
             {isRemoving ? "Liberando..." : "Liberar asiento"}
           </IconButton>
-        )}
-      </div>
+        </div>
+      )}
     </TableGuestCard>
   );
 }

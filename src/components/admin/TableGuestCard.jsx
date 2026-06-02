@@ -12,16 +12,27 @@ import { Guest } from "../../models";
 
 export default function TableGuestCard({
   children,
+  chips = [],
   decorativeText = "?",
   eyebrow,
-  guest,
+  guest = {},
+  title,
+  titleRef,
+  titleStyle,
 }) {
-  const guestName = Guest.getFullName(guest, "Invitado");
+  const guestName = title || Guest.getFullName(guest, "Invitado");
   const guestEmail = String(guest.email || "").trim();
   const guestPhone = String(guest.phone || "").trim();
   const guestMenu = String(guest.menu || "").trim();
   const allergyText = formatGuestAllergies(guest);
   const comments = String(guest.comments || "").trim();
+  const hasChips =
+    guestEmail ||
+    guestPhone ||
+    guestMenu ||
+    allergyText ||
+    comments ||
+    chips.length > 0;
 
   return (
     <article
@@ -42,12 +53,16 @@ export default function TableGuestCard({
           <p className="section-eyebrow mb-2">
             {eyebrow || guest.groupName || "Invitado"}
           </p>
-          <h3 className="break-words font-serif text-3xl leading-none text-[var(--color-text)]">
+          <h3
+            className="break-words font-serif text-3xl leading-none text-[var(--color-text)]"
+            ref={titleRef}
+            style={titleStyle}
+          >
             {guestName}
           </h3>
 
           <div className="mt-4 text-sm text-[var(--color-muted)]">
-            {(guestEmail || guestPhone || guestMenu || allergyText || comments) && (
+            {hasChips && (
               <div className="flex flex-wrap gap-2 text-xs">
                 {guestEmail && (
                   <TableGuestChip
@@ -86,6 +101,16 @@ export default function TableGuestCard({
                     value={`Notas: ${comments}`}
                   />
                 )}
+                {chips.map((chip) => (
+                  <TableGuestChip
+                    icon={chip.icon}
+                    key={`${chip.label || ""}-${chip.value}`}
+                    strong={chip.strong}
+                    value={
+                      chip.label ? `${chip.label}: ${chip.value}` : chip.value
+                    }
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -127,7 +152,9 @@ function formatGuestAllergies(guest) {
 }
 
 function TableGuestMenuIcon({ menu, ...props }) {
-  const normalizedMenu = String(menu || "").trim().toLowerCase();
+  const normalizedMenu = String(menu || "")
+    .trim()
+    .toLowerCase();
   const Icon =
     normalizedMenu === "pescado"
       ? Fish
