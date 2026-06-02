@@ -42,29 +42,29 @@ export default function Rsvp() {
           title={siteContent.rsvp.title}
           titleAs="h1"
           text={siteContent.rsvp.text}
+          hideTextOnMobile={true}
         />
       </CinematicStaggeredRevealItem>
 
       <CinematicStaggeredRevealItem index={1} isVisible={rsvpInView}>
         <div className="mt-4">
-          <CreateInvitationCard onCreateNew={rsvp.handleCreateNew} />
+          <CreateInvitationCard
+            hideTextOnMobile={true}
+            onCreateNew={rsvp.handleCreateNew}
+          />
 
           <SearchInvitationCard
-            groupName={rsvp.contact.groupName}
-            groupNameError={rsvp.errors.groupName}
+            hideTextOnMobile={true}
+            email={rsvp.contact.email}
+            emailError={rsvp.errors.email}
             loading={spinner.loading}
-            onGroupNameChange={(value) =>
-              rsvp.handleContactChange("groupName", value)
-            }
+            onEmailChange={(value) => rsvp.handleContactChange("email", value)}
             onSearchInvitation={rsvp.handleSearchInvitation}
           />
         </div>
       </CinematicStaggeredRevealItem>
 
-      <RsvpStatus
-        closePopup={rsvp.closePopup}
-        popup={rsvp.popup}
-      />
+      <RsvpStatus closePopup={rsvp.closePopup} popup={rsvp.popup} />
     </RsvpPageShell>
   );
 }
@@ -100,4 +100,3 @@ export function RsvpStatus({ closePopup, popup }) {
     />
   );
 }
-

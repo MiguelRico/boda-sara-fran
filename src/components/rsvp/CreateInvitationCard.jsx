@@ -2,7 +2,13 @@ import { FormCard } from "./FormPrimitives";
 import { Plus } from "lucide-react";
 import IconButton from "../ui/IconButton";
 
-export default function CreateInvitationCard({ onCreateNew }) {
+export default function CreateInvitationCard({
+  onCreateNew,
+  hideTextOnMobile = false,
+}) {
+  const textClassName = hideTextOnMobile
+    ? "hidden sm:block mt-3 text-sm leading-relaxed"
+    : " mt-3 text-sm leading-relaxed";
   return (
     <FormCard>
       <div className="mb-4">
@@ -10,7 +16,7 @@ export default function CreateInvitationCard({ onCreateNew }) {
 
         <h2 className="font-serif text-3xl">Confirmar asistencia</h2>
 
-        <p className="mt-2 text-sm leading-relaxed">
+        <p className={textClassName}>
           Confirma tu asistencia y la de tu familia.
         </p>
       </div>

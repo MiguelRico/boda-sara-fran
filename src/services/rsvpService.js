@@ -126,6 +126,16 @@ export const findGroupByName = async (groupName) => {
   );
 };
 
+export const findGroupByEmail = async (email) => {
+  return decodeApiResponse(
+    await requestJsonp({
+      email: String(email || "").trim(),
+      entity: "confirmations",
+      method: "GET",
+    }),
+  );
+};
+
 export const findAllGroups = async ({ password } = {}) => {
   return decodeApiResponse(
     await requestJsonp({

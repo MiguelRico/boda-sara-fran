@@ -417,6 +417,7 @@ export default function AdminGuests() {
                         className="!w-full sm:!w-10 [var(--color-accent)]"
                         disabled={!rows.length}
                         label="Exportar"
+                        tone="terciary"
                         onClick={() => downloadCsv(rows)}
                       >
                         <Download size={16} strokeWidth={1.8} />
@@ -426,6 +427,7 @@ export default function AdminGuests() {
                         className="!w-full sm:!w-10 [var(--color-accent)]"
                         disabled={state.loading}
                         label="Actualizar"
+                        tone="secondary"
                         onClick={loadGuests}
                       >
                         <RefreshCw
@@ -438,6 +440,7 @@ export default function AdminGuests() {
                       <IconButton
                         className="!w-full border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] sm:!w-10"
                         label="Crear"
+                        tone="primary"
                         onClick={() => setEditingGroup(createDraftGroup())}
                       >
                         <Plus size={18} strokeWidth={2.4} />
@@ -667,15 +670,19 @@ function DesktopTable({ onDelete, onEdit, rows }) {
               </td>
               <td className="px-5 py-4">
                 <div className="flex min-w-10 flex-wrap justify-end gap-2">
-                  <IconButton label="Editar" onClick={() => onEdit(row.group)}>
-                    <Pencil size={16} strokeWidth={1.8} />
-                  </IconButton>
                   <IconButton
                     label="Eliminar"
                     onClick={() => onDelete(row.group)}
                     tone="danger"
                   >
                     <Trash2 size={16} strokeWidth={1.8} />
+                  </IconButton>
+                  <IconButton
+                    label="Editar"
+                    onClick={() => onEdit(row.group)}
+                    tone="primary"
+                  >
+                    <Pencil size={16} strokeWidth={1.8} />
                   </IconButton>
                 </div>
               </td>
@@ -869,21 +876,18 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
 
               <div className="hidden sm:block">
                 <div className="flex shrink-0 justify-end gap-2">
-                  <IconButton label="Editar" tone="secondary">
-                    <Pencil size={16} strokeWidth={1.8} />
-                  </IconButton>
                   <IconButton label="Eliminar" tone="danger">
                     <Trash2 size={16} strokeWidth={1.8} />
+                  </IconButton>
+                  <IconButton label="Editar" tone="primary">
+                    <Pencil size={16} strokeWidth={1.8} />
                   </IconButton>
                 </div>
               </div>
             </div>
 
             <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
-              <InfoLine
-                label="Pescado"
-                value={row.fishText}
-              />
+              <InfoLine label="Pescado" value={row.fishText} />
               <InfoLine label="Carne" value={row.meatText} />
               <InfoLine label="Alergias" value={row.allergyText} />
               <InfoLine label="Transporte" value={row.transportText} />
@@ -969,10 +973,7 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
             </div>
 
             <div className="mt-5 grid gap-3 text-sm text-[var(--color-muted)]">
-              <InfoLine
-                label="Pescado"
-                value={row.fishText}
-              />
+              <InfoLine label="Pescado" value={row.fishText} />
               <InfoLine label="Carne" value={row.meatText} />
               <InfoLine label="Alergias" value={row.allergyText} />
               <InfoLine label="Transporte" value={row.transportText} />
@@ -988,11 +989,11 @@ function MobileList({ direction, onDelete, onEdit, page, rows, allRows }) {
 function MobileRowActions({ onDelete, onEdit }) {
   return (
     <div className="flex shrink-0 justify-end gap-2">
-      <IconButton label="Editar" onClick={onEdit}>
-        <Pencil size={16} strokeWidth={1.8} />
-      </IconButton>
       <IconButton label="Eliminar" onClick={onDelete} tone="danger">
         <Trash2 size={16} strokeWidth={1.8} />
+      </IconButton>
+      <IconButton label="Editar" onClick={onEdit} tone="primary">
+        <Pencil size={16} strokeWidth={1.8} />
       </IconButton>
     </div>
   );

@@ -47,7 +47,9 @@ export const Confirmation = {
 
   normalizeList(confirmations) {
     return Array.isArray(confirmations)
-      ? confirmations.map((confirmation) => Confirmation.normalize(confirmation))
+      ? confirmations.map((confirmation) =>
+          Confirmation.normalize(confirmation),
+        )
       : [];
   },
 
@@ -167,7 +169,7 @@ export const Confirmation = {
   },
 
   getGroupRateText(value, total) {
-    return `${value} personas de ${total}`;
+    return `${value}`;
   },
 
   getAllergyText(confirmation) {
@@ -229,7 +231,8 @@ export const Confirmation = {
     if (!normalizedConfirmation.groupName.trim()) {
       return "El nombre de grupo es obligatorio.";
     }
-    if (!normalizedConfirmation.phone.trim()) return "El teléfono es obligatorio.";
+    if (!normalizedConfirmation.phone.trim())
+      return "El teléfono es obligatorio.";
     if (!normalizedConfirmation.guests.length) {
       return "Debe haber al menos un invitado.";
     }
@@ -238,7 +241,8 @@ export const Confirmation = {
       (guest) => !Guest.isValid(guest),
     );
 
-    if (invalidGuest) return "Todos los invitados necesitan nombre y apellidos.";
+    if (invalidGuest)
+      return "Todos los invitados necesitan nombre y apellidos.";
 
     return "";
   },
@@ -289,8 +293,9 @@ export const Confirmation = {
     return {
       allergyText: Confirmation.getAllergyText(normalizedConfirmation),
       assignmentText: Confirmation.getAssignmentText(normalizedConfirmation),
-      commentsCountText:
-        Confirmation.getCommentsCountText(normalizedConfirmation),
+      commentsCountText: Confirmation.getCommentsCountText(
+        normalizedConfirmation,
+      ),
       commentsText: Confirmation.getCommentsText(normalizedConfirmation),
       email: normalizedConfirmation.email,
       fishText: Confirmation.getMenuText(normalizedConfirmation, "Pescado"),
@@ -311,8 +316,8 @@ export const Confirmation = {
   },
 
   toAdminRows(confirmations) {
-    return Confirmation.normalizeList(confirmations).map((confirmation, index) =>
-      Confirmation.toAdminRow(confirmation, index),
+    return Confirmation.normalizeList(confirmations).map(
+      (confirmation, index) => Confirmation.toAdminRow(confirmation, index),
     );
   },
 
@@ -352,7 +357,9 @@ export const Confirmation = {
     { allergies = [], outboundBusOptions = [], returnBusOptions = [] } = {},
   ) {
     const normalizedConfirmations = Confirmation.normalizeList(confirmations);
-    const guests = Confirmation.getGuestsWithConfirmation(normalizedConfirmations);
+    const guests = Confirmation.getGuestsWithConfirmation(
+      normalizedConfirmations,
+    );
     const totalGuests = guests.length;
     const totalGroups = normalizedConfirmations.length;
     const guestsWithAllergies = guests.filter(Guest.hasAllergies).length;
@@ -391,7 +398,8 @@ export const Confirmation = {
     return allergies
       .map((allergy) => ({
         label: allergy,
-        value: guests.filter((guest) => Guest.hasAllergy(guest, allergy)).length,
+        value: guests.filter((guest) => Guest.hasAllergy(guest, allergy))
+          .length,
       }))
       .filter((item) => item.value > 0);
   },

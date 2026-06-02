@@ -122,7 +122,7 @@ export default function GuestCard({
         <Label>Comentarios adicionales</Label>
 
         <textarea
-          rows={4}
+          rows={2}
           value={guest.comments}
           onChange={(event) =>
             onGuestChange(index, "comments", event.target.value)
@@ -135,16 +135,11 @@ export default function GuestCard({
       </div>
 
       <div className="mt-2 rounded-[2rem] border border-[var(--color-border-strong)] bg-[var(--color-bg)]/70 p-5">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h3 className="font-serif text-2xl text-[var(--color-accent-dark)]">
-              Intolerancias o alergias
+              Intolerancias
             </h3>
-
-            <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
-              Indica cualquier necesidad alimentaria para que podamos tenerla en
-              cuenta.
-            </p>
           </div>
 
           <label className="relative inline-flex cursor-pointer items-center">
@@ -172,6 +167,10 @@ export default function GuestCard({
                 ease: [0.22, 1, 0.36, 1],
               }}
             >
+              <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
+                Indica cualquier necesidad alimentaria para que podamos tenerla
+                en cuenta.
+              </p>
               <div className="mt-4">
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                   {COMMON_ALLERGIES.map((allergy) => {
@@ -220,16 +219,11 @@ export default function GuestCard({
       </div>
 
       <div className="mt-4 rounded-[2rem] border border-[var(--color-border-strong)] bg-[var(--color-bg)]/70 p-5">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h3 className="font-serif text-2xl text-[var(--color-accent-dark)]">
-              Servicio de autobús
+              Transporte
             </h3>
-
-            <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
-              Tendremos autobús para facilitar el desplazamiento de ida y
-              vuelta.
-            </p>
           </div>
 
           <label className="relative inline-flex cursor-pointer items-center">
@@ -257,6 +251,10 @@ export default function GuestCard({
               }}
               className="overflow-hidden"
             >
+              <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
+                Tendremos autobús para facilitar el desplazamiento de ida y
+                vuelta.
+              </p>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <BusSelect
                   label="Autobús de ida"
@@ -281,15 +279,11 @@ export default function GuestCard({
 
       {isAdmin && (
         <div className="mt-4 rounded-[2rem] border border-[var(--color-border-strong)] bg-[var(--color-bg)]/70 p-5">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h3 className="font-serif text-2xl text-[var(--color-accent-dark)]">
                 Mesa y asiento
               </h3>
-
-              <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
-                Datos internos para organizar la disposición de invitados.
-              </p>
             </div>
 
             <label className="relative inline-flex cursor-pointer items-center">
@@ -317,6 +311,9 @@ export default function GuestCard({
                   ease: [0.22, 1, 0.36, 1],
                 }}
               >
+                <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
+                  Datos internos para organizar la disposición de invitados.
+                </p>
                 <div className="mt-4 grid gap-5 md:grid-cols-2">
                   <div>
                     <Label>Mesa</Label>

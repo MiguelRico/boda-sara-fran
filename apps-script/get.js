@@ -23,7 +23,7 @@ function routeGet(e) {
   const entity = readParam(e.parameter.entity);
 
   if (entity === "confirmations") {
-    if (e.parameter.groupName) {
+    if (e.parameter.email || e.parameter.groupName) {
       return getConfirmation(e);
     }
 
@@ -73,13 +73,14 @@ function executeRedirection() {
 
 function getConfirmation(e) {
   const groupName = decodeGroupName(readParam(e.parameter.groupName));
+  const email = readParam(e.parameter.email).toLowerCase();
 
-  if (!groupName) {
+  if (!groupName && !email) {
     return jsonResponse(
       {
         success: false,
         found: false,
-        error: "Missing groupName",
+        error: "Missing groupName or email",
       },
       e,
     );
@@ -93,11 +94,16 @@ function getConfirmation(e) {
 
   for (let i = 1; i < confirmationRows.length; i++) {
     const row = confirmationRows[i];
+    const rowGroupName = String(row[CONFIRMATIONS_COLUMNS.groupName])
+      .trim()
+      .toLowerCase();
+    const rowEmail = String(row[CONFIRMATIONS_COLUMNS.email])
+      .trim()
+      .toLowerCase();
+    const groupNameMatches = groupName && rowGroupName === groupName.toLowerCase();
+    const emailMatches = email && rowEmail === email;
 
-    if (
-      String(row[CONFIRMATIONS_COLUMNS.groupName]).trim().toLowerCase() ===
-      groupName.toLowerCase()
-    ) {
+    if (groupNameMatches || emailMatches) {
       confirmation = buildConfirmationFromRow(row, []);
       break;
     }
@@ -109,6 +115,7 @@ function getConfirmation(e) {
         success: true,
         found: false,
         groupName: encodeGroupName(groupName),
+        email: email,
         guests: [],
       },
       e,
@@ -120,7 +127,7 @@ function getConfirmation(e) {
 
     if (
       String(row[GUESTS_COLUMNS.groupName]).trim().toLowerCase() ===
-      groupName.toLowerCase()
+      confirmation.groupName.toLowerCase()
     ) {
       confirmation.guests.push(buildGuestFromRow(row, confirmation));
     }

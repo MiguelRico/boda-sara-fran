@@ -24,6 +24,7 @@ export default function HelpAccessButton() {
           label="Abrir ayuda"
           onClick={() => setIsOpen(true)}
           type="button"
+          tone="terciary"
         >
           Ayuda
         </IconButton>
@@ -57,7 +58,7 @@ export default function HelpAccessButton() {
                   }
                   icon={<Phone size={16} strokeWidth={1.8} />}
                   showText="always"
-                  tone="secondary"
+                  tone="terciary"
                 >
                   {contact.phone || "Telefono pendiente"}
                 </IconButton>
@@ -68,7 +69,7 @@ export default function HelpAccessButton() {
                   href={contact.email ? `mailto:${contact.email}` : undefined}
                   icon={<Mail size={16} strokeWidth={1.8} />}
                   showText="always"
-                  tone="secondary"
+                  tone="terciary"
                 >
                   {contact.email || "Email pendiente"}
                 </IconButton>

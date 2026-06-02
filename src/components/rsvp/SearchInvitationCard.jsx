@@ -1,14 +1,18 @@
-import IconButton from "../ui/IconButton";
 import { Home, Search } from "lucide-react";
+import IconButton from "../ui/IconButton";
 import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 
 export default function SearchInvitationCard({
-  groupName,
-  groupNameError,
+  email,
+  emailError,
   loading,
-  onGroupNameChange,
+  onEmailChange,
   onSearchInvitation,
+  hideTextOnMobile = false,
 }) {
+  const textClassName = hideTextOnMobile
+    ? "hidden sm:block mt-3 text-sm leading-relaxed"
+    : " mt-3 text-sm leading-relaxed";
   return (
     <FormCard className="mt-6">
       <div className="mb-4">
@@ -16,34 +20,34 @@ export default function SearchInvitationCard({
 
         <h2 className="font-serif text-3xl">Modificar tu confirmación</h2>
 
-        <p className="mt-3 text-sm leading-relaxed">
-          Introduce el nombre de grupo asociado a tu confirmación.
+        <p className={textClassName}>
+          Busca por email asociado a tu confirmación.
         </p>
       </div>
 
       <div className="mb-4">
-        <Label>Nombre de grupo</Label>
+        <Label>Email</Label>
 
         <input
-          type="text"
-          value={groupName}
-          onChange={(event) => onGroupNameChange(event.target.value)}
           className={inputClassName}
-          placeholder="Ej: Familia Garcia"
+          onChange={(event) => onEmailChange(event.target.value)}
+          placeholder="Ej: ejemplo@email.com"
+          type="email"
+          value={email}
         />
 
-        <FieldError>{groupNameError}</FieldError>
+        <FieldError>{emailError}</FieldError>
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row">
+      <div className="flex flex-col gap-4 sm:flex-row-reverse">
         <IconButton
           className="flex-1"
+          disabled={loading}
           icon={<Search size={16} strokeWidth={1.8} />}
+          onClick={onSearchInvitation}
           showText="always"
           tone="primary"
           type="button"
-          onClick={onSearchInvitation}
-          disabled={loading}
         >
           Buscar mi confirmación
         </IconButton>
@@ -53,7 +57,7 @@ export default function SearchInvitationCard({
           icon={<Home size={16} strokeWidth={1.8} />}
           showText="always"
           to="/"
-          tone="secondary"
+          tone="terciary"
         >
           Volver al inicio
         </IconButton>

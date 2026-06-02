@@ -3,9 +3,13 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { MAX_GUESTS } from "../constants/rsvp";
 import { Confirmation, Guest } from "../models";
-import { findGroupByName, saveGroup } from "../services/rsvpService";
+import {
+  findGroupByEmail,
+  findGroupByName,
+  saveGroup,
+} from "../services/rsvpService";
 import { decodeGroupName, getGroupNameUrl } from "../utils/groupNameCodec";
-import { validateRsvpForm } from "../utils/rsvpValidation";
+import { validateRsvpEmail, validateRsvpForm } from "../utils/rsvpValidation";
 
 const createInitialPopup = () => ({
   closeText: "Cerrar",
@@ -103,9 +107,8 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   };
 
   const handleSearchInvitation = async () => {
-    const validationErrors = !contact.groupName.trim()
-      ? { groupName: "El nombre de grupo es obligatorio" }
-      : {};
+    const emailError = validateRsvpEmail(contact.email);
+    const validationErrors = emailError ? { email: emailError } : {};
     let keepSpinnerUntilNavigation = false;
 
     setErrors(validationErrors);
@@ -115,7 +118,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     try {
       show("Buscando confirmación...");
 
-      const response = await findGroupByName(contact.groupName);
+      const response = await findGroupByEmail(contact.email);
 
       if (!response.found) {
         setPopup({

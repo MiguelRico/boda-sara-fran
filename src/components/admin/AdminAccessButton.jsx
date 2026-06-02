@@ -84,6 +84,7 @@ export default function AdminAccessButton() {
       <IconButton
         aria-expanded={isAuthenticated ? isOpen : undefined}
         aria-haspopup={isAuthenticated ? "menu" : undefined}
+        tone="terciary"
         className="bg-white/70 shadow-[0_18px_45px_rgba(52,69,49,0.12)] backdrop-blur-md hover:bg-white/90"
         icon={
           isAuthenticated ? (
@@ -113,6 +114,7 @@ export default function AdminAccessButton() {
             role="menuitem"
             showText="always"
             type="button"
+            tone="terciary"
           >
             Panel admin
           </IconButton>
@@ -125,6 +127,7 @@ export default function AdminAccessButton() {
             role="menuitem"
             showText="always"
             type="button"
+            tone="terciary"
           >
             Cerrar sesion
           </IconButton>

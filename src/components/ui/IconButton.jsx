@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 const toneClasses = {
   danger: "border-red-200 bg-red-50 text-red-500 hover:bg-red-100",
   primary:
-    "border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-[var(--shadow-button)] hover:bg-[var(--color-accent-dark)]",
+    "border-[var(--color-accent)] bg-[var(--color-accent-dark)] text-white shadow-[var(--shadow-button)] hover:bg-[var(--color-accent-dark)]/75",
   secondary:
+    "border-[var(--color-border-strong)] bg-[var(--color-accent)] text-white  hover:bg-[var(--color-accent)]/75",
+  terciary:
     "border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)] hover:bg-white/75",
 };
 
@@ -23,14 +25,12 @@ export default function IconButton({
   type = "button",
   ...props
 }) {
-  const accessibleLabel = label || (typeof children === "string" ? children : "");
+  const accessibleLabel =
+    label || (typeof children === "string" ? children : "");
   const hasText = Boolean(
     showText && (typeof children === "string" || typeof children === "number"),
   );
-  const textClass =
-    showText === "always"
-      ? "inline"
-      : "hidden sm:inline";
+  const textClass = showText === "always" ? "inline" : "hidden sm:inline";
   const content = (
     <>
       {(icon || !hasText) && (

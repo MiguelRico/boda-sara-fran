@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Check, Plus, Save, UserPlus, X } from "lucide-react";
+import { ArrowLeft, Check, Save, UserPlus, X } from "lucide-react";
 
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
@@ -41,12 +41,7 @@ export default function RsvpForm({
     Guest.hasIncompleteVisibleGuests(guests);
   const incompleteGuestMessage =
     "Completa nombre, apellidos y menú de todos los invitados antes de añadir otro o enviar el formulario.";
-  const addIcon =
-    variant === "admin" ? (
-      <Plus size={16} strokeWidth={1.8} />
-    ) : (
-      <UserPlus size={16} strokeWidth={1.8} />
-    );
+  const addIcon = <UserPlus size={16} strokeWidth={1.8} />;
   const submitIcon =
     variant === "admin" ? (
       <Save size={16} strokeWidth={1.8} />
@@ -120,8 +115,23 @@ export default function RsvpForm({
         {renderItem(
           2 + guests.length,
           <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
+            <IconButton
+              className="order-3 sm:order-none"
+              disabled={loading}
+              icon={cancelIcon}
+              label={cancelText}
+              onClick={onCancel}
+              showText="always"
+              to={cancelTo}
+              tone="terciary"
+              type="button"
+            >
+              {cancelText}
+            </IconButton>
+
             {guests.length < MAX_GUESTS && (
               <IconButton
+                className="order-1 sm:order-none"
                 disabled={loading || hasInvalidGuest}
                 icon={addIcon}
                 label={addText}
@@ -135,6 +145,7 @@ export default function RsvpForm({
             )}
 
             <IconButton
+              className="order-2 sm:order-none"
               disabled={loading || hasInvalidGuest}
               icon={submitIcon}
               label={submitText}
@@ -143,19 +154,6 @@ export default function RsvpForm({
               type="submit"
             >
               {submitText}
-            </IconButton>
-
-            <IconButton
-              disabled={loading}
-              icon={cancelIcon}
-              label={cancelText}
-              onClick={onCancel}
-              showText="always"
-              to={cancelTo}
-              tone="secondary"
-              type="button"
-            >
-              {cancelText}
             </IconButton>
           </div>,
         )}
