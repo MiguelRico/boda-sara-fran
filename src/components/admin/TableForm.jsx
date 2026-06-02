@@ -67,13 +67,13 @@ export default function TableForm({
   return (
     <form className="mt-4" noValidate onSubmit={onSubmit}>
       <FormCard>
-        <p className="section-eyebrow mb-4">{content.eyebrow}</p>
+        {/* <p className="section-eyebrow mb-4">{content.eyebrow}</p>
 
         <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
           {content.title}
-        </h2>
+        </h2> */}
 
-        <div className="mt-4 grid gap-5 md:grid-cols-2">
+        <div className="mt-2 grid gap-5 md:grid-cols-2">
           <div>
             <Label>{content.fields.name.label}</Label>
 
@@ -218,7 +218,7 @@ export default function TableForm({
         </div>
 
         <div
-          className={`mt-6 flex flex-col gap-4 sm:grid ${
+          className={`mt-2 flex flex-col gap-4 sm:grid ${
             onDelete ? "sm:grid-cols-3" : "sm:grid-cols-2"
           }`}
         >
@@ -233,7 +233,7 @@ export default function TableForm({
               tone="danger"
               type="button"
             >
-              Eliminar mesa
+              Eliminar
             </IconButton>
           )}
 

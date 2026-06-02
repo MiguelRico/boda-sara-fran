@@ -40,9 +40,9 @@ export const TABLE_GROUP_OPTIONS = [
 export const DEFAULT_TABLE_GROUP = TABLE_GROUP_OPTIONS[0]?.value || "";
 
 export const tableFormContent = {
-  eyebrow: "Nueva mesa",
+  eyebrow: "Crear mesa",
   title: "Crear mesa",
-  submitText: "Guardar mesa",
+  submitText: "Guardar",
   cancelText: "Cancelar",
   fields: {
     name: {
@@ -60,7 +60,8 @@ export const tableFormContent = {
     },
     notes: {
       label: "Notas",
-      placeholder: "Ej: Cerca de la pista, mesa infantil, indicaciones del catering...",
+      placeholder:
+        "Ej: Cerca de la pista, mesa infantil, indicaciones del catering...",
     },
   },
 };
@@ -70,8 +71,9 @@ export const getTableGroupOption = (group) =>
 
 export const createEmptyTableForm = () => {
   const shapeOption =
-    TABLE_SHAPE_OPTIONS.find((option) => option.value === DEFAULT_TABLE_SHAPE) ||
-    TABLE_SHAPE_OPTIONS[0];
+    TABLE_SHAPE_OPTIONS.find(
+      (option) => option.value === DEFAULT_TABLE_SHAPE,
+    ) || TABLE_SHAPE_OPTIONS[0];
 
   return {
     name: "",

@@ -56,7 +56,9 @@ function InfoCard({
             {title && (
               <p
                 className={`font-serif leading-tight text-[var(--color-text)] ${
-                  summaryCompact ? "text-2xl sm:text-4xl" : "text-3xl sm:text-4xl"
+                  summaryCompact
+                    ? "text-2xl sm:text-4xl"
+                    : "text-3xl sm:text-4xl"
                 }`}
               >
                 {title}

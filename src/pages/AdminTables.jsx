@@ -99,7 +99,7 @@ const TABLE_METRIC_GRID_CLASS =
 const tableEditorContent = {
   eyebrow: "Mesa",
   title: "Editar mesa",
-  submitText: "Guardar mesa",
+  submitText: "Guardar",
   cancelText: "Cancelar",
   fields: {
     name: {
@@ -1026,9 +1026,13 @@ function TableEditor({
         className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-7"
         role="dialog"
       >
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <p className="section-eyebrow mb-2">Mesa</p>
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
+            {/* <p className="section-eyebrow mb-2">Mesa</p> */}
+
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
+              <Armchair size={22} strokeWidth={1.8} />
+            </span>
             <h2
               className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
               id="table-editor-title"
