@@ -259,37 +259,86 @@ function TableDiagram({ onSeatClick, onCenterClick, table }) {
     table.shape === TABLE_SHAPES.round
       ? getRoundSeatPositions(table.seats)
       : getRectangularSeatPositions(table.seats);
+  const summaryItems = getTableLegendSummary(table);
 
   return (
-    <div className="relative mt-2 h-60 overflow-hidden rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 sm:h-64">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.85),transparent_62%)]" />
+    <div>
+      <div className="relative mt-2 h-60 overflow-hidden rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 sm:h-64">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.85),transparent_62%)]" />
 
-      {table.shape === TABLE_SHAPES.round ? <RoundTable /> : <RectTable />}
+        {table.shape === TABLE_SHAPES.round ? <RoundTable /> : <RectTable />}
 
-      {onCenterClick && (
-        <button
-          type="button"
-          onClick={onCenterClick}
-          className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 px-3 py-1 text-center text-[0.75rem] font-semibold text-[var(--color-accent-dark)] transition hover:text-[var(--color-accent)] focus:outline-none"
-        >
-          Ver asientos
-        </button>
-      )}
+        {onCenterClick && (
+          <button
+            type="button"
+            onClick={onCenterClick}
+            className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 px-3 py-1 text-center text-[0.75rem] font-semibold text-[var(--color-accent-dark)] transition hover:text-[var(--color-accent)] focus:outline-none"
+          >
+            Ver asientos
+          </button>
+        )}
 
-      {seats.map(({ seat, transform, x, y }) => (
-        <SeatDot
-          onClick={onSeatClick ? () => onSeatClick({ seat, table }) : undefined}
-          key={seat.seat}
-          seat={seat}
-          style={{
-            left: transform ? `${x}%` : `calc(${x}% - 0.65rem)`,
-            top: transform ? `${y}%` : `calc(${y}% - 0.65rem)`,
-            transform,
-          }}
-        />
-      ))}
+        {seats.map(({ seat, transform, x, y }) => (
+          <SeatDot
+            onClick={
+              onSeatClick ? () => onSeatClick({ seat, table }) : undefined
+            }
+            key={seat.seat}
+            seat={seat}
+            style={{
+              left: transform ? `${x}%` : `calc(${x}% - 0.65rem)`,
+              top: transform ? `${y}%` : `calc(${y}% - 0.65rem)`,
+              transform,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="mt-3 grid gap-2 text-sm text-[var(--color-muted)] sm:grid-cols-2">
+        {summaryItems.map((item) => (
+          <TableLegendItem
+            key={item.label}
+            label={item.label}
+            value={item.value}
+          />
+        ))}
+      </div>
     </div>
   );
+}
+
+function TableLegendItem({ label, value }) {
+  return (
+    <div className="flex justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-white/40 p-3">
+      <span className="text-[var(--color-accent)]">{label}</span>
+      <span className="text-right text-[var(--color-accent-dark)]">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function getTableLegendSummary(table) {
+  const assignedGuests = Table.getAssignedGuests(table);
+
+  return [
+    {
+      label: "Pescado",
+      value: assignedGuests.filter((guest) => guest.menu === "Pescado").length,
+    },
+    {
+      label: "Carne",
+      value: assignedGuests.filter((guest) => guest.menu === "Carne").length,
+    },
+    {
+      label: "Alergias",
+      value: assignedGuests.filter(Guest.hasAllergies).length,
+    },
+    {
+      label: "Comentarios",
+      value: assignedGuests.filter(Guest.hasComments).length,
+    },
+  ];
 }
 
 function RectTable() {
