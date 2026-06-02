@@ -132,6 +132,7 @@ export default function AdminTables() {
     once: true,
     amount: 0.1,
   });
+  const reduceMotion = useReducedMotion();
   const isAuthenticated =
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   const [state, setState] = useState(emptyState);
@@ -330,6 +331,17 @@ export default function AdminTables() {
         : [],
     [editingTable, tableForm.seatCount],
   );
+  const tabContentVariants = reduceMotion
+    ? {
+        enter: { opacity: 0 },
+        center: { opacity: 1 },
+        exit: { opacity: 0 },
+      }
+    : {
+        enter: { opacity: 0, y: 16, filter: "blur(6px)" },
+        center: { opacity: 1, y: 0, filter: "blur(0px)" },
+        exit: { opacity: 0, y: -12, filter: "blur(6px)" },
+      };
 
   const cancelPageLoading = () => {
     if (pageLoadingTimeoutRef.current) {
@@ -770,7 +782,7 @@ export default function AdminTables() {
                     Asientos asignados
                   </h2>
 
-                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="mt-3">
                     <p className="text-sm leading-relaxed text-[var(--color-muted)]">
                       {activeTab === "tables" ? (
                         <>
@@ -789,7 +801,7 @@ export default function AdminTables() {
                       )}
                     </p>
 
-                    <div className="grid w-full grid-cols-3 gap-3">
+                    <div className="mt-4 grid w-full grid-cols-3 gap-3">
                       <IconButton
                         className="w-full"
                         disabled={!tables.length}
@@ -833,70 +845,93 @@ export default function AdminTables() {
                 className="mb-6"
               />
 
-              {activeTab === "tables" ? (
-                <div
-                  ref={tablesStartRef}
-                  style={
-                    pageLoadingMinHeight
-                      ? { minHeight: `${pageLoadingMinHeight}px` }
-                      : undefined
-                  }
-                >
-                  {state.loading ? (
-                    <TablesSkeleton />
-                  ) : (
-                    <>
-                      <div className="relative">
-                        <div
-                          className={
-                            pageLoading
-                              ? "pointer-events-none opacity-0"
-                              : "opacity-100"
-                          }
-                        >
-                          <TablesGrid
-                            onDelete={handleRequestDeleteTable}
-                            onEdit={handleEditTable}
-                            onSeatClick={handleSeatClick}
-                            onUnassignSeat={handleRemoveGuestFromSeat}
-                            tables={pagedTables}
-                          />
-                          <MobileTablesList
-                            direction={pageDirection}
-                            onDelete={handleRequestDeleteTable}
-                            onEdit={handleEditTable}
-                            onSeatClick={handleSeatClick}
-                            onUnassignSeat={handleRemoveGuestFromSeat}
-                            page={currentPage}
-                            tables={pagedTables}
-                            allTables={tables}
-                          />
+              <AnimatePresence mode="wait" initial={false}>
+                {activeTab === "tables" ? (
+                  <motion.div
+                    animate="center"
+                    exit="exit"
+                    initial="enter"
+                    key="tables-tab"
+                    ref={tablesStartRef}
+                    transition={{
+                      duration: reduceMotion ? 0.18 : 0.42,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    variants={tabContentVariants}
+                    style={
+                      pageLoadingMinHeight
+                        ? { minHeight: `${pageLoadingMinHeight}px` }
+                        : undefined
+                    }
+                  >
+                    {state.loading ? (
+                      <TablesSkeleton />
+                    ) : (
+                      <>
+                        <div className="relative">
+                          <div
+                            className={
+                              pageLoading
+                                ? "pointer-events-none opacity-0"
+                                : "opacity-100"
+                            }
+                          >
+                            <TablesGrid
+                              onDelete={handleRequestDeleteTable}
+                              onEdit={handleEditTable}
+                              onSeatClick={handleSeatClick}
+                              onUnassignSeat={handleRemoveGuestFromSeat}
+                              tables={pagedTables}
+                            />
+                            <MobileTablesList
+                              direction={pageDirection}
+                              onDelete={handleRequestDeleteTable}
+                              onEdit={handleEditTable}
+                              onSeatClick={handleSeatClick}
+                              onUnassignSeat={handleRemoveGuestFromSeat}
+                              page={currentPage}
+                              tables={pagedTables}
+                              allTables={tables}
+                            />
+                          </div>
+
+                          {pageLoading && (
+                            <div className="absolute inset-x-0 top-0 z-10">
+                              <TablesSkeleton />
+                            </div>
+                          )}
                         </div>
 
-                        {pageLoading && (
-                          <div className="absolute inset-x-0 top-0 z-10">
-                            <TablesSkeleton />
-                          </div>
-                        )}
-                      </div>
-
-                      <Pagination
-                        isMobileList={isMobileList}
-                        page={currentPage}
-                        totalPages={totalPages}
-                        onNext={() => handlePageChange(currentPage + 1)}
-                        onPrev={() => handlePageChange(currentPage - 1)}
-                      />
-                    </>
-                  )}
-                </div>
-              ) : (
-                <PendingGuestsList
-                  guests={guestsPending}
-                  tables={tables}
-                  onAssignTable={handleAssignGuestToTable}
-                />
-              )}
+                        <Pagination
+                          isMobileList={isMobileList}
+                          page={currentPage}
+                          totalPages={totalPages}
+                          onNext={() => handlePageChange(currentPage + 1)}
+                          onPrev={() => handlePageChange(currentPage - 1)}
+                        />
+                      </>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    animate="center"
+                    exit="exit"
+                    initial="enter"
+                    key="pending-tab"
+                    transition={{
+                      duration: reduceMotion ? 0.18 : 0.42,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    variants={tabContentVariants}
+                  >
+                    <PendingGuestsList
+                      guests={guestsPending}
+                      tables={tables}
+                      onAssignTable={handleAssignGuestToTable}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </section>
           </CinematicStaggeredRevealItem>
 
