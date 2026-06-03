@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { Guest } from "../../models";
+import Chip from "../ui/Chip";
 
 export default function TableGuestCard({
   children,
@@ -65,19 +66,19 @@ export default function TableGuestCard({
             {hasChips && (
               <div className="flex flex-wrap gap-2 text-xs">
                 {guestEmail && (
-                  <TableGuestChip
+                  <Chip
                     icon={<Mail size={13} strokeWidth={1.8} />}
                     value={guestEmail}
                   />
                 )}
                 {guestPhone && (
-                  <TableGuestChip
+                  <Chip
                     icon={<Phone size={13} strokeWidth={1.8} />}
                     value={guestPhone}
                   />
                 )}
                 {guestMenu && (
-                  <TableGuestChip
+                  <Chip
                     icon={
                       <TableGuestMenuIcon
                         menu={guestMenu}
@@ -90,19 +91,19 @@ export default function TableGuestCard({
                   />
                 )}
                 {allergyText && (
-                  <TableGuestChip
+                  <Chip
                     icon={<AlertTriangle size={13} strokeWidth={1.8} />}
                     value={`Alergias: ${allergyText}`}
                   />
                 )}
                 {comments && (
-                  <TableGuestChip
+                  <Chip
                     icon={<MessageCircle size={13} strokeWidth={1.8} />}
                     value={`Notas: ${comments}`}
                   />
                 )}
                 {chips.map((chip) => (
-                  <TableGuestChip
+                  <Chip
                     icon={chip.icon}
                     key={`${chip.label || ""}-${chip.value}`}
                     strong={chip.strong}
@@ -119,21 +120,6 @@ export default function TableGuestCard({
         {children}
       </div>
     </article>
-  );
-}
-
-function TableGuestChip({ icon, strong = false, value }) {
-  return (
-    <span
-      className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 ${
-        strong
-          ? "border-[var(--color-border-strong)] bg-white/60 font-medium text-[var(--color-accent-dark)]"
-          : "border-[var(--color-border)] bg-white/45 text-[var(--color-muted)]"
-      }`}
-    >
-      <span className="shrink-0 text-[var(--color-accent-dark)]">{icon}</span>
-      <span className="truncate">{value}</span>
-    </span>
   );
 }
 

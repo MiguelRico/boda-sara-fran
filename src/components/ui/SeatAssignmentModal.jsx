@@ -1,0 +1,46 @@
+import { X } from "lucide-react";
+import { createPortal } from "react-dom";
+
+import useViewportScrollLock from "../../hooks/useViewportScrollLock";
+import IconButton from "./IconButton";
+
+export default function SeatAssignmentModal({
+  children,
+  eyebrow,
+  maxWidthClassName = "max-w-3xl",
+  onClose,
+  title,
+}) {
+  useViewportScrollLock(true);
+
+  return createPortal(
+    <div className="rsvp-dialog-overlay" onClick={onClose}>
+      <div
+        aria-labelledby="seat-assignment-modal-title"
+        aria-modal="true"
+        className={`premium-card max-h-[calc(100dvh-2rem)] w-full ${maxWidthClassName} overflow-y-auto p-5 text-left sm:max-h-[calc(100dvh-3rem)] sm:p-7`}
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+      >
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            {eyebrow && <p className="section-eyebrow mb-2">{eyebrow}</p>}
+            <h2
+              className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
+              id="seat-assignment-modal-title"
+            >
+              {title}
+            </h2>
+          </div>
+
+          <IconButton label="Cerrar" onClick={onClose}>
+            <X size={17} strokeWidth={1.8} />
+          </IconButton>
+        </div>
+
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}

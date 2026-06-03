@@ -3,18 +3,18 @@ import {
   Beef,
   Fish,
   MessageCircle,
-  Pencil,
   Trash2,
   Armchair,
-  X,
 } from "lucide-react";
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Guest, Table } from "../../models";
 import { getTableGroupOption, TABLE_SHAPES } from "../../constants/tables";
 import IconButton from "../ui/IconButton";
 import RevealOnView from "../ui/RevealOnView";
+import SeatAssignmentModal from "../ui/SeatAssignmentModal";
+import Card from "./Card";
+import CardActions from "./CardActions";
 import TableGuestCard from "./TableGuestCard";
 
 export default function TableAnimatedInfoCard({
@@ -66,74 +66,35 @@ function TableInfoCard({
 
   return (
     <>
-      <div
-        className="
-          group relative block h-full overflow-hidden rounded-[2rem]
-          border border-[var(--color-border-strong)] bg-white/55 p-5
-          shadow-[0_24px_70px_rgba(77,56,40,0.08)] backdrop-blur-sm
-          transition-all duration-700 hover:-translate-y-1
-          hover:border-[var(--color-border)] hover:bg-white/80 sm:p-6
-        "
-      >
-        <div className="pointer-events-none absolute right-6 top-6 text-5xl opacity-[0.08] transition-all duration-700 group-hover:scale-110 group-hover:opacity-[0.12]">
-          {table.shape === TABLE_SHAPES.round ? "O" : "[]"}
-        </div>
-
-        <div className="relative flex h-full flex-col">
-          <div className="mb-4">
-            <div className="min-w-0">
-              <p className="section-eyebrow mb-2">{groupLabel || "Mesa"}</p>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0 flex-1">
-                  <h3 className="break-words font-serif text-3xl leading-none text-[var(--color-text)] sm:truncate sm:text-4xl">
-                    {tableLabel}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
-                    {shapeLabel} - {assignedGuests.length}/{table.seats.length}{" "}
-                    asientos
-                  </p>
-                </div>
-
-                {(onEdit || onDelete) && (
-                  <div className="grid w-full shrink-0 grid-cols-2 gap-3 sm:w-auto sm:flex sm:items-center sm:justify-end sm:gap-2 sm:self-center">
-                    {onEdit && (
-                      <IconButton
-                        className="!w-full sm:!w-11"
-                        label="Editar mesa"
-                        onClick={() => onEdit(table)}
-                      >
-                        <Pencil size={16} strokeWidth={1.8} />
-                      </IconButton>
-                    )}
-                    {onDelete && (
-                      <IconButton
-                        className="!w-full sm:!w-11"
-                        label="Eliminar mesa"
-                        onClick={() => onDelete(table)}
-                        tone="danger"
-                      >
-                        <Trash2 size={16} strokeWidth={1.8} />
-                      </IconButton>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <TableDiagram
-            onSeatClick={onSeatClick}
-            onCenterClick={() => setShowAssignments(true)}
-            table={table}
+      <Card
+        actions={
+          <CardActions
+            className="grid w-full shrink-0 grid-cols-2 gap-3 sm:w-auto sm:flex sm:items-center sm:justify-end sm:gap-2 sm:self-center"
+            deleteLabel="Eliminar mesa"
+            editLabel="Editar mesa"
+            item={table}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            showText={false}
           />
+        }
+        decorativeText={table.shape === TABLE_SHAPES.round ? "O" : "[]"}
+        detail={`${shapeLabel} - ${assignedGuests.length}/${table.seats.length} asientos`}
+        eyebrow={groupLabel || "Mesa"}
+        title={tableLabel}
+      >
+        <TableDiagram
+          onSeatClick={onSeatClick}
+          onCenterClick={() => setShowAssignments(true)}
+          table={table}
+        />
 
-          {table.notes && (
-            <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
-              {table.notes}
-            </p>
-          )}
-        </div>
-      </div>
+        {table.notes && (
+          <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
+            {table.notes}
+          </p>
+        )}
+      </Card>
 
       {showAssignments && (
         <AssignmentModal
@@ -167,41 +128,21 @@ function AssignmentModal({
     }
   };
 
-  return createPortal(
-    <div className="rsvp-dialog-overlay" onClick={onClose}>
-      <div
-        aria-labelledby="assigned-seats-title"
-        aria-modal="true"
-        className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-3xl overflow-y-auto p-5 text-left sm:max-h-[calc(100dvh-3rem)] sm:p-7"
-        onClick={(event) => event.stopPropagation()}
-        role="dialog"
-      >
-        <div className="mb-2 flex items-start justify-between gap-4">
-          <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
-              <Armchair size={22} strokeWidth={1.8} />
-            </span>
-            <h2
-              className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
-              id="assigned-seats-title"
-            >
-              {title}
-            </h2>
-          </div>
-
-          <IconButton label="Cerrar" onClick={onClose} tone="secondary">
-            <X size={16} strokeWidth={1.8} />
-          </IconButton>
-        </div>
-
-        <div className="flex flex-1 flex-wrap items-baseline">
-          <p className="inline-flex section-eyebrow mt-2 mb-2">
-            Mesa {table.name} {assignedSeats.length}{" "}
-            {assignedSeats.length === 1
-              ? "invitado asignado"
-              : "invitados asignados"}
-          </p>
-        </div>
+  return (
+    <SeatAssignmentModal
+      eyebrow={`Mesa ${table.name} ${assignedSeats.length} ${
+        assignedSeats.length === 1
+          ? "invitado asignado"
+          : "invitados asignados"
+      }`}
+      onClose={onClose}
+      title={
+        <span className="inline-flex items-center gap-2">
+          <Armchair size={22} strokeWidth={1.8} />
+          {title}
+        </span>
+      }
+    >
 
         {assignedSeats.length ? (
           <div className="space-y-4">
@@ -226,9 +167,7 @@ function AssignmentModal({
             </p>
           </div>
         )}
-      </div>
-    </div>,
-    document.body,
+    </SeatAssignmentModal>
   );
 }
 

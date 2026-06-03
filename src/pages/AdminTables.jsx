@@ -4,26 +4,16 @@ import {
   useInView,
   useReducedMotion,
 } from "framer-motion";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
 import {
   Check,
-  ChevronLeft,
-  ChevronRight,
   CircleCheckBig,
   CircleDashed,
   Download,
   Grid2X2,
   Armchair,
-  Pencil,
   Plus,
   RefreshCw,
   Save,
@@ -34,11 +24,14 @@ import {
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
-import { createEmptyTableForm } from "../constants/tables";
 import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
+import CardActions from "../components/admin/CardActions";
+import CardGrid from "../components/admin/CardGrid";
+import EditorDialog from "../components/admin/EditorDialog";
+import PagedList from "../components/admin/PagedList";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
 import TableForm from "../components/admin/TableForm";
 import CinematicPage from "../components/cinematic/CinematicPage";
@@ -50,6 +43,9 @@ import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import TabNavigation from "../components/ui/TabNavigation";
 import DeleteDialog from "../components/ui/DeleteDialog";
+import CardListSkeleton from "../components/ui/CardListSkeleton";
+import Pagination from "../components/ui/Pagination";
+import SeatAssignmentModal from "../components/ui/SeatAssignmentModal";
 import PendingGuestsList from "../components/admin/PendingGuestsList";
 import { Label, selectClassName } from "../components/rsvp/FormPrimitives";
 import { Guest } from "../models";
@@ -74,6 +70,10 @@ import {
 import { saveAdminGroup } from "../services/rsvpService";
 import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
+import usePagedData from "../hooks/usePagedData";
+import usePageTransition from "../hooks/usePageTransition";
+import { createEmptyTableForm } from "../constants/tables";
+import { getTableRenderKey } from "../utils/renderKeys";
 
 const ADMIN_ACTIVE_TAB_KEY = "admin-tables-active-tab";
 const SECTION_TABS = [
@@ -82,9 +82,6 @@ const SECTION_TABS = [
 ];
 const desktopPageSize = 4;
 const mobilePageSize = 1;
-const pageDataSwapDelay = 680;
-const pageRevealDelay = 160;
-const mobilePageHeightLockDelay = 560;
 const emptySavedSnapshot = {
   groups: [],
   manualTables: [],
@@ -128,10 +125,6 @@ export default function AdminTables() {
   const tablesCardRef = useRef(null);
   const tablesStartRef = useRef(null);
   const manualTablesRef = useRef(null);
-  const pageLoadingTimeoutRef = useRef(null);
-  const pageRevealTimeoutRef = useRef(null);
-  const pageScrollStartFrameRef = useRef(null);
-  const pageScrollCancelRef = useRef(null);
   const tablesInView = useInView(tablesRef, {
     once: true,
     amount: 0.1,
@@ -150,10 +143,6 @@ export default function AdminTables() {
   const [seatAssignmentTarget, setSeatAssignmentTarget] = useState(null);
   const [assigningSeat, setAssigningSeat] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageDirection, setPageDirection] = useState(1);
-  const [isMobileList, setIsMobileList] = useState(false);
-  const [pageLoading, setPageLoading] = useState(false);
-  const [pageLoadingMinHeight, setPageLoadingMinHeight] = useState(null);
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
     useState(false);
   const [activeTab, setActiveTab] = useState(() => {
@@ -234,47 +223,33 @@ export default function AdminTables() {
     }
   }, [activeTab]);
 
-  useEffect(() => {
-    return () => {
-      if (pageLoadingTimeoutRef.current) {
-        window.clearTimeout(pageLoadingTimeoutRef.current);
-      }
-
-      if (pageRevealTimeoutRef.current) {
-        window.clearTimeout(pageRevealTimeoutRef.current);
-      }
-
-      if (pageScrollStartFrameRef.current) {
-        window.cancelAnimationFrame(pageScrollStartFrameRef.current);
-      }
-
-      pageScrollCancelRef.current?.();
-    };
-  }, []);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const updateIsMobileList = () => setIsMobileList(mediaQuery.matches);
-
-    updateIsMobileList();
-    mediaQuery.addEventListener("change", updateIsMobileList);
-
-    return () => {
-      mediaQuery.removeEventListener("change", updateIsMobileList);
-    };
-  }, []);
-
   const tables = useMemo(() => {
     return buildTables({ groups: state.groups, manualTables });
   }, [manualTables, state.groups]);
   const tableStats = useMemo(() => buildTableStats(tables), [tables]);
-  const pageSize = isMobileList ? mobilePageSize : desktopPageSize;
-  const totalPages = Math.max(Math.ceil(tables.length / pageSize), 1);
-  const currentPage = Math.min(page, totalPages);
-  const pagedTables = tables.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const {
+    currentPage,
+    isMobileList,
+    pageSize,
+    pagedItems: pagedTables,
+    totalPages,
+  } = usePagedData({
+    desktopPageSize,
+    items: tables,
+    mobilePageSize,
+    page,
+  });
+  const {
+    handlePageChange,
+    pageDirection,
+    pageLoading,
+    pageLoadingMinHeight,
+  } = usePageTransition({
+    currentPage,
+    isMobileList,
+    onPageChange: setPage,
+    totalPages,
+  });
   const pagedTableCount = pagedTables.length;
   const pagedSeatCount = pagedTables.reduce(
     (total, table) => total + table.seats.length,
@@ -346,68 +321,6 @@ export default function AdminTables() {
         center: { opacity: 1, y: 0, filter: "blur(0px)" },
         exit: { opacity: 0, y: -12, filter: "blur(6px)" },
       };
-
-  const cancelPageLoading = () => {
-    if (pageLoadingTimeoutRef.current) {
-      window.clearTimeout(pageLoadingTimeoutRef.current);
-      pageLoadingTimeoutRef.current = null;
-    }
-
-    if (pageRevealTimeoutRef.current) {
-      window.clearTimeout(pageRevealTimeoutRef.current);
-      pageRevealTimeoutRef.current = null;
-    }
-
-    if (pageScrollStartFrameRef.current) {
-      window.cancelAnimationFrame(pageScrollStartFrameRef.current);
-      pageScrollStartFrameRef.current = null;
-    }
-
-    pageScrollCancelRef.current?.();
-    pageScrollCancelRef.current = null;
-
-    setPageLoading(false);
-    setPageLoadingMinHeight(null);
-  };
-
-  const handlePageChange = (nextPage) => {
-    const clampedPage = Math.min(Math.max(nextPage, 1), totalPages);
-
-    if (clampedPage === currentPage || pageLoading) return;
-
-    const tableElement = tablesStartRef.current;
-    const tableRect = tableElement?.getBoundingClientRect();
-    const tableHeight = tableRect?.height || null;
-    const direction = clampedPage > currentPage ? 1 : -1;
-
-    cancelPageLoading();
-
-    if (isMobileList) {
-      setPageLoadingMinHeight(tableHeight);
-      setPageDirection(direction);
-      setPage(clampedPage);
-      pageRevealTimeoutRef.current = window.setTimeout(() => {
-        setPageLoadingMinHeight(null);
-        pageRevealTimeoutRef.current = null;
-      }, mobilePageHeightLockDelay);
-
-      return;
-    }
-
-    setPageDirection(direction);
-    setPageLoadingMinHeight(tableHeight);
-    setPageLoading(true);
-    pageLoadingTimeoutRef.current = window.setTimeout(() => {
-      setPage(clampedPage);
-      pageLoadingTimeoutRef.current = null;
-
-      pageRevealTimeoutRef.current = window.setTimeout(() => {
-        setPageLoading(false);
-        setPageLoadingMinHeight(null);
-        pageRevealTimeoutRef.current = null;
-      }, pageRevealDelay);
-    }, pageDataSwapDelay);
-  };
 
   const handleTableFormChange = (field, value) => {
     setTableForm((current) => ({ ...current, [field]: value }));
@@ -871,7 +784,11 @@ export default function AdminTables() {
                     }
                   >
                     {state.loading ? (
-                      <TablesSkeleton />
+                      <CardListSkeleton
+                        columnsClassName="lg:grid-cols-2"
+                        itemClassName="min-h-40"
+                        lines={2}
+                      />
                     ) : (
                       <>
                         <div className="relative">
@@ -882,28 +799,59 @@ export default function AdminTables() {
                                 : "opacity-100"
                             }
                           >
-                            <TablesGrid
-                              onDelete={handleRequestDeleteTable}
-                              onEdit={handleEditTable}
-                              onSeatClick={handleSeatClick}
-                              onUnassignSeat={handleRemoveGuestFromSeat}
-                              tables={pagedTables}
+                            <CardGrid
+                              emptyState={<TablesEmptyState />}
+                              getKey={getTableRenderKey}
+                              items={pagedTables}
+                              renderCard={(table, index) => (
+                                <TableCardWithActions
+                                  index={index}
+                                  onDelete={handleRequestDeleteTable}
+                                  onEdit={handleEditTable}
+                                  onSeatClick={handleSeatClick}
+                                  onUnassignSeat={handleRemoveGuestFromSeat}
+                                  table={table}
+                                />
+                              )}
                             />
-                            <MobileTablesList
+                            <PagedList
+                              allItems={tables}
+                              className="bg-transparent"
                               direction={pageDirection}
-                              onDelete={handleRequestDeleteTable}
-                              onEdit={handleEditTable}
-                              onSeatClick={handleSeatClick}
-                              onUnassignSeat={handleRemoveGuestFromSeat}
+                              getKey={getTableRenderKey}
+                              itemClassName="absolute inset-x-0 top-0 grid gap-4"
+                              items={pagedTables}
                               page={currentPage}
-                              tables={pagedTables}
-                              allTables={tables}
+                              renderItem={(table) => (
+                                <TableCardWithActions
+                                  onDelete={handleRequestDeleteTable}
+                                  onEdit={handleEditTable}
+                                  onSeatClick={handleSeatClick}
+                                  onUnassignSeat={handleRemoveGuestFromSeat}
+                                  reveal={false}
+                                  table={table}
+                                />
+                              )}
+                              renderMeasureItem={(table) => (
+                                <TableCardWithActions
+                                  onDelete={() => {}}
+                                  onEdit={() => {}}
+                                  onSeatClick={() => {}}
+                                  onUnassignSeat={() => {}}
+                                  reveal={false}
+                                  table={table}
+                                />
+                              )}
                             />
                           </div>
 
                           {pageLoading && (
                             <div className="absolute inset-x-0 top-0 z-10">
-                              <TablesSkeleton />
+                              <CardListSkeleton
+                                columnsClassName="lg:grid-cols-2"
+                                itemClassName="min-h-40"
+                                lines={2}
+                              />
                             </div>
                           )}
                         </div>
@@ -912,8 +860,20 @@ export default function AdminTables() {
                           isMobileList={isMobileList}
                           page={currentPage}
                           totalPages={totalPages}
-                          onNext={() => handlePageChange(currentPage + 1)}
-                          onPrev={() => handlePageChange(currentPage - 1)}
+                          currentLabel="Pagina"
+                          mobileLabel="Mesas"
+                          onNext={() =>
+                            handlePageChange(
+                              currentPage + 1,
+                              tablesStartRef.current,
+                            )
+                          }
+                          onPrev={() =>
+                            handlePageChange(
+                              currentPage - 1,
+                              tablesStartRef.current,
+                            )
+                          }
                         />
                       </>
                     )}
@@ -1016,51 +976,25 @@ function TableEditor({
   seatReductionWarning = [],
   title = "Crear mesa",
 }) {
-  useViewportScrollLock(true);
-
-  const dialog = (
-    <div className="rsvp-dialog-overlay">
-      <div
-        aria-labelledby="table-editor-title"
-        aria-modal="true"
-        className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-7"
-        role="dialog"
-      >
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
-            {/* <p className="section-eyebrow mb-2">Mesa</p> */}
-
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
-              <Armchair size={22} strokeWidth={1.8} />
-            </span>
-            <h2
-              className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
-              id="table-editor-title"
-            >
-              {title}
-            </h2>
-          </div>
-
-          <IconButton label="Cerrar" onClick={onCancel}>
-            <X size={17} strokeWidth={1.8} />
-          </IconButton>
-        </div>
-
-        <TableForm
-          content={content}
-          errors={errors}
-          form={form}
-          seatReductionWarning={seatReductionWarning}
-          onCancel={onCancel}
-          onChange={onChange}
-          onDelete={onDelete}
-          onSubmit={onSubmit}
-        />
-      </div>
-    </div>
+  return (
+    <EditorDialog
+      icon={<Armchair size={22} strokeWidth={1.8} />}
+      onClose={onCancel}
+      title={title}
+      titleId="table-editor-title"
+    >
+      <TableForm
+        content={content}
+        errors={errors}
+        form={form}
+        seatReductionWarning={seatReductionWarning}
+        onCancel={onCancel}
+        onChange={onChange}
+        onDelete={onDelete}
+        onSubmit={onSubmit}
+      />
+    </EditorDialog>
   );
-
-  return createPortal(dialog, document.body);
 }
 
 function SeatAssignmentDialog({
@@ -1072,8 +1006,6 @@ function SeatAssignmentDialog({
   seat,
   table,
 }) {
-  useViewportScrollLock(true);
-
   const tableKey = table.name;
   const tableLabel = table.name;
   const currentGuest = guests.find(
@@ -1103,36 +1035,18 @@ function SeatAssignmentDialog({
     onAssign({ guestGroupName, guestIndex, guestName });
   };
 
-  const dialog = (
-    <div className="rsvp-dialog-overlay">
-      <div
-        aria-labelledby="seat-assignment-title"
-        aria-modal="true"
-        className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-7"
-        role="dialog"
-      >
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <p className="section-eyebrow mb-2">
-              Mesa {tableLabel} - Asiento {seat.seat}
-            </p>
-            <h2
-              className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
-              id="seat-assignment-title"
-            >
-              Asignar invitado
-            </h2>
-            {currentGuestName && (
-              <p className="mt-3 text-sm text-[var(--color-muted)]">
-                Actualmente asignado a {currentGuestName}.
-              </p>
-            )}
-          </div>
-
-          <IconButton disabled={assigning} label="Cerrar" onClick={onCancel}>
-            <X size={17} strokeWidth={1.8} />
-          </IconButton>
-        </div>
+  return (
+    <SeatAssignmentModal
+      eyebrow={`Mesa ${tableLabel} - Asiento ${seat.seat}`}
+      maxWidthClassName="max-w-2xl"
+      onClose={onCancel}
+      title="Asignar invitado"
+    >
+        {currentGuestName && (
+          <p className="mb-6 text-sm text-[var(--color-muted)]">
+            Actualmente asignado a {currentGuestName}.
+          </p>
+        )}
 
         <form noValidate onSubmit={handleSubmit}>
           <Label>Invitado</Label>
@@ -1206,11 +1120,8 @@ function SeatAssignmentDialog({
             </IconButton>
           </div>
         </form>
-      </div>
-    </div>
+    </SeatAssignmentModal>
   );
-
-  return createPortal(dialog, document.body);
 }
 
 function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
@@ -1394,34 +1305,16 @@ function getTableSummaryItems(stats) {
   ];
 }
 
-function TablesGrid({ onDelete, onEdit, onSeatClick, onUnassignSeat, tables }) {
-  if (!tables.length) {
-    return (
-      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
-        <p className="font-serif text-3xl text-[var(--color-accent-dark)]">
-          Sin mesas asignadas
-        </p>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-          Asigna mesa y asiento desde la edicion de invitados para ver aqui la
-          distribucion.
-        </p>
-      </div>
-    );
-  }
-
+function TablesEmptyState() {
   return (
-    <div className="hidden gap-4 md:grid lg:grid-cols-2">
-      {tables.map((table, index) => (
-        <TableCardWithActions
-          index={index}
-          key={getTableRenderKey(table)}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          onSeatClick={onSeatClick}
-          onUnassignSeat={onUnassignSeat}
-          table={table}
-        />
-      ))}
+    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
+      <p className="font-serif text-3xl text-[var(--color-accent-dark)]">
+        Sin mesas asignadas
+      </p>
+      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+        Asigna mesa y asiento desde la edicion de invitados para ver aqui la
+        distribucion.
+      </p>
     </div>
   );
 }
@@ -1437,7 +1330,14 @@ function TableCardWithActions({
 }) {
   return (
     <div className="grid gap-3">
-      <TableCardActions onDelete={onDelete} onEdit={onEdit} table={table} />
+      <CardActions
+        className="grid grid-cols-2 gap-3"
+        deleteLabel="Eliminar mesa"
+        editLabel="Editar mesa"
+        item={table}
+        onDelete={onDelete}
+        onEdit={onEdit}
+      />
       <TableAnimatedInfoCard
         index={index}
         onSeatClick={onSeatClick}
@@ -1447,185 +1347,6 @@ function TableCardWithActions({
       />
     </div>
   );
-}
-
-function TableCardActions({ onDelete, onEdit, table }) {
-  if (!onEdit && !onDelete) return null;
-
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {onDelete && (
-        <IconButton
-          className="w-full"
-          icon={<Trash2 size={16} strokeWidth={1.8} />}
-          label="Eliminar mesa"
-          onClick={() => onDelete(table)}
-          tone="danger"
-          type="button"
-        >
-          Eliminar mesa
-        </IconButton>
-      )}
-      {onEdit && (
-        <IconButton
-          className="w-full"
-          icon={<Pencil size={16} strokeWidth={1.8} />}
-          label="Editar mesa"
-          onClick={() => onEdit(table)}
-          tone="primary"
-          type="button"
-        >
-          Editar mesa
-        </IconButton>
-      )}
-    </div>
-  );
-}
-
-function MobileTablesList({
-  direction,
-  onDelete,
-  onEdit,
-  onSeatClick,
-  onUnassignSeat,
-  page,
-  tables,
-  allTables,
-}) {
-  const reduceMotion = useReducedMotion();
-  const cardRef = useRef(null);
-  const measureRefs = useRef([]);
-  const [cardMinHeight, setCardMinHeight] = useState(null);
-
-  useLayoutEffect(() => {
-    if (!allTables?.length) return undefined;
-
-    const updateCardHeight = () => {
-      const maxHeight = allTables.reduce((max, _, index) => {
-        const node = measureRefs.current[index];
-        if (!node) return max;
-
-        return Math.max(max, Math.ceil(node.getBoundingClientRect().height));
-      }, 0);
-
-      setCardMinHeight((currentHeight) => {
-        if (!maxHeight) return currentHeight;
-        return Math.abs((currentHeight || 0) - maxHeight) < 1
-          ? currentHeight
-          : maxHeight;
-      });
-    };
-
-    updateCardHeight();
-    window.addEventListener("resize", updateCardHeight);
-
-    return () => window.removeEventListener("resize", updateCardHeight);
-  }, [allTables]);
-
-  const variants = reduceMotion
-    ? {
-        enter: { opacity: 0 },
-        center: { opacity: 1 },
-        exit: { opacity: 0 },
-      }
-    : {
-        enter: (pageDirection) => ({
-          opacity: 0,
-          x: pageDirection > 0 ? 72 : -72,
-          filter: "blur(6px)",
-        }),
-        center: {
-          opacity: 1,
-          x: 0,
-          filter: "blur(0px)",
-        },
-        exit: (pageDirection) => ({
-          opacity: 0,
-          x: pageDirection > 0 ? -72 : 72,
-          filter: "blur(6px)",
-        }),
-      };
-
-  return (
-    <div
-      className="relative overflow-hidden md:hidden bg-transparent"
-      style={
-        cardMinHeight
-          ? {
-              minHeight: `${cardMinHeight}px`,
-              height: `${cardMinHeight}px`,
-            }
-          : {
-              undefined,
-            }
-      }
-    >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-0 top-0 z-[-1] h-auto w-full opacity-0 bg-transparent"
-        style={{ width: "100%" }}
-      >
-        {allTables?.map((table, index) => (
-          <div
-            key={`measure-${getTableRenderKey(table)}`}
-            ref={(node) => {
-              measureRefs.current[index] = node;
-            }}
-          >
-            <TableCardWithActions
-              onDelete={() => {}}
-              onEdit={() => {}}
-              onSeatClick={() => {}}
-              onUnassignSeat={() => {}}
-              reveal={false}
-              table={table}
-            />
-          </div>
-        ))}
-      </div>
-
-      <AnimatePresence custom={direction} initial={false}>
-        <motion.div
-          animate="center"
-          className="absolute inset-x-0 top-0 grid gap-4"
-          custom={direction}
-          exit="exit"
-          initial="enter"
-          key={`tables-page-${page}-${tables.map(getTableRenderKey).join("|")}`}
-          ref={cardRef}
-          transition={{
-            duration: reduceMotion ? 0.18 : 0.48,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          variants={variants}
-        >
-          {tables.map((table) => (
-            <TableCardWithActions
-              key={getTableRenderKey(table)}
-              onDelete={onDelete}
-              onEdit={onEdit}
-              onSeatClick={onSeatClick}
-              onUnassignSeat={onUnassignSeat}
-              reveal={false}
-              table={table}
-            />
-          ))}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function getTableRenderKey(table) {
-  const seatSignature = table.seats
-    .map((seat) => {
-      const guestName = seat.guest ? Guest.getFullName(seat.guest) : "";
-
-      return `${seat.seat}:${guestName}`;
-    })
-    .join(",");
-
-  return `${table.name}-${seatSignature}`;
 }
 
 function buildPendingTableChanges({
@@ -1766,58 +1487,3 @@ function createGuestOptionValue({ groupName, guestIndex = "", name }) {
   return `${groupName || ""}|||${guestIndex}|||${name || ""}`;
 }
 
-function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
-  return (
-    <div className="mt-5 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-center">
-        {isMobileList ? "Mesas" : "Pagina"} {page} de {totalPages}
-      </p>
-
-      <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
-        <IconButton
-          className="w-full sm:w-auto"
-          disabled={page === 1}
-          icon={<ChevronLeft size={16} strokeWidth={1.8} />}
-          label="Anterior"
-          onClick={onPrev}
-          showText
-          tone="secondary"
-          type="button"
-        >
-          Anterior
-        </IconButton>
-        <IconButton
-          className="w-full sm:w-auto"
-          disabled={page === totalPages}
-          icon={<ChevronRight size={16} strokeWidth={1.8} />}
-          label="Siguiente"
-          onClick={onNext}
-          showText
-          tone="secondary"
-          type="button"
-        >
-          Siguiente
-        </IconButton>
-      </div>
-    </div>
-  );
-}
-
-function TablesSkeleton() {
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div
-          className="min-h-40 animate-pulse rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-5"
-          key={index}
-        >
-          <div className="h-5 w-32 rounded-full bg-[var(--color-border)]" />
-          <div className="mt-5 space-y-3">
-            <div className="h-10 rounded-2xl bg-[var(--color-border)]" />
-            <div className="h-10 rounded-2xl bg-[var(--color-border)]" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}

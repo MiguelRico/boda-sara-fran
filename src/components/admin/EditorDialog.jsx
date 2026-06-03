@@ -1,0 +1,49 @@
+import { X } from "lucide-react";
+import { createPortal } from "react-dom";
+
+import useViewportScrollLock from "../../hooks/useViewportScrollLock";
+import IconButton from "../ui/IconButton";
+
+export default function EditorDialog({
+  children,
+  icon,
+  onClose,
+  title,
+  titleId = "editor-dialog-title",
+}) {
+  useViewportScrollLock(true);
+
+  return createPortal(
+    <div className="rsvp-dialog-overlay">
+      <div
+        aria-labelledby={titleId}
+        aria-modal="true"
+        className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-7"
+        role="dialog"
+      >
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
+            {icon && (
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
+                {icon}
+              </span>
+            )}
+            <h2
+              className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
+              id={titleId}
+            >
+              {title}
+            </h2>
+          </div>
+
+          <IconButton label="Cerrar" onClick={onClose}>
+            <X size={17} strokeWidth={1.8} />
+          </IconButton>
+        </div>
+
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}
