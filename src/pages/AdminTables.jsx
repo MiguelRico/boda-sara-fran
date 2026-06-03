@@ -74,12 +74,12 @@ import usePagedData from "../hooks/usePagedData";
 import usePageTransition from "../hooks/usePageTransition";
 import { createEmptyTableForm } from "../constants/tables";
 import { getTableRenderKey } from "../utils/renderKeys";
+import { adminContent } from "../constants/adminContent";
+import { tableContent } from "../constants/tableContent";
+import { rsvpContent } from "../constants/rsvpContent";
 
 const ADMIN_ACTIVE_TAB_KEY = "admin-tables-active-tab";
-const SECTION_TABS = [
-  { id: "tables", label: "Mesas" },
-  { id: "pending", label: "Invitados Pendientes" },
-];
+const SECTION_TABS = adminContent.tables.tabs;
 const desktopPageSize = 4;
 const mobilePageSize = 1;
 const emptySavedSnapshot = {
@@ -93,32 +93,6 @@ const emptyState = {
 };
 const TABLE_METRIC_GRID_CLASS =
   "grid grid-cols-2 gap-3 sm:flex sm:items-start sm:justify-between";
-const tableEditorContent = {
-  eyebrow: "Mesa",
-  title: "Editar mesa",
-  submitText: "Guardar",
-  cancelText: "Cancelar",
-  fields: {
-    name: {
-      label: "Nombre de la mesa *",
-      placeholder: "Ej: Mesa 1",
-    },
-    group: {
-      label: "Grupo *",
-    },
-    shape: {
-      label: "Forma *",
-    },
-    seatCount: {
-      label: "Numero de asientos *",
-    },
-    notes: {
-      label: "Notas",
-      placeholder:
-        "Ej: Cerca de la pista, mesa infantil, indicaciones del catering...",
-    },
-  },
-};
 export default function AdminTables() {
   const spinner = useSpinner();
   const tablesRef = useRef(null);
@@ -194,7 +168,7 @@ export default function AdminTables() {
           groups: [],
           loading: false,
           error:
-            "No se pudieron cargar las mesas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
+            adminContent.tables.errors.load,
         });
       }
     },
@@ -420,13 +394,13 @@ export default function AdminTables() {
       setState((prev) => ({
         ...prev,
         error:
-          "Guarda o descarta los cambios pendientes antes de actualizar las mesas.",
+          adminContent.tables.errors.refreshWithPending,
       }));
       return;
     }
 
     try {
-      spinner.show("Actualizando mesas...");
+      spinner.show(adminContent.tables.spinner.refresh);
       await loadTables({ showLoading: false });
     } finally {
       spinner.hide();
@@ -437,7 +411,7 @@ export default function AdminTables() {
     if (!hasPendingChanges) return;
 
     try {
-      spinner.show("Guardando cambios...");
+      spinner.show(adminContent.tables.spinner.save);
 
       const persistencePromises = [
         persistAdminTables({
@@ -464,7 +438,7 @@ export default function AdminTables() {
         ...prev,
         error:
           error.message ||
-          "No se pudieron guardar los cambios. Intenta de nuevo.",
+          adminContent.tables.errors.save,
       }));
     } finally {
       spinner.hide();
@@ -521,7 +495,7 @@ export default function AdminTables() {
         setState((prev) => ({
           ...prev,
           error:
-            error.message || "No se pudo asignar la mesa. Intenta de nuevo.",
+            error.message || adminContent.tables.errors.assignTable,
         }));
         throw error;
       }
@@ -560,7 +534,7 @@ export default function AdminTables() {
       setState((prev) => ({
         ...prev,
         error:
-          error.message || "No se pudo asignar el asiento. Intenta de nuevo.",
+          error.message || adminContent.tables.errors.assign,
       }));
     } finally {
       setAssigningSeat(false);
@@ -593,7 +567,7 @@ export default function AdminTables() {
       setState((prev) => ({
         ...prev,
         error:
-          error.message || "No se pudo liberar el asiento. Intenta de nuevo.",
+          error.message || adminContent.tables.errors.unassign,
       }));
     } finally {
       setAssigningSeat(false);
@@ -679,10 +653,10 @@ export default function AdminTables() {
         <div ref={tablesRef}>
           <CinematicStaggeredRevealItem index={0} isVisible={tablesInView}>
             <HeaderSection
-              eyebrow="Panel privado"
-              title="Mesas"
+              eyebrow={adminContent.tables.header.adminEyebrow}
+              title={adminContent.tables.header.title}
               titleAs="h1"
-              text="Organización de mesas, asientos e invitados asignados."
+              text={adminContent.tables.header.text}
             />
           </CinematicStaggeredRevealItem>
 
@@ -694,7 +668,7 @@ export default function AdminTables() {
             <section className="premium-card" ref={tablesCardRef}>
               <div className="mb-5">
                 <div>
-                  <p className="section-eyebrow mb-2">Distribución</p>
+                  <p className="section-eyebrow mb-2">{adminContent.tables.header.eyebrow}</p>
                   <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
                     Asientos asignados
                   </h2>
@@ -724,7 +698,7 @@ export default function AdminTables() {
                           className="w-full"
                           disabled={!tables.length}
                           icon={<Download size={16} strokeWidth={1.8} />}
-                          label="Exportar tabla"
+                          label={adminContent.tables.header.exportTable}
                           onClick={() => downloadTablesCsv(tables)}
                           tone="terciary"
                         >
@@ -734,7 +708,7 @@ export default function AdminTables() {
                         <IconButton
                           className="w-full"
                           icon={<Plus size={18} strokeWidth={2.4} />}
-                          label="Agregar mesa"
+                          label={adminContent.tables.actions.addTable}
                           onClick={handleCreateTable}
                           tone="secondary"
                         >
@@ -745,7 +719,7 @@ export default function AdminTables() {
                           className="w-full"
                           disabled={!hasPendingChanges || spinner.loading}
                           icon={<Save size={16} strokeWidth={1.8} />}
-                          label="Guardar cambios"
+                          label={adminContent.tables.actions.saveChanges}
                           onClick={handleSavePendingChanges}
                           tone="primary"
                         >
@@ -860,8 +834,8 @@ export default function AdminTables() {
                           isMobileList={isMobileList}
                           page={currentPage}
                           totalPages={totalPages}
-                          currentLabel="Pagina"
-                          mobileLabel="Mesas"
+                          currentLabel={adminContent.tables.header.pageLabel}
+                          mobileLabel={adminContent.tables.header.mobilePageLabel}
                           onNext={() =>
                             handlePageChange(
                               currentPage + 1,
@@ -913,21 +887,21 @@ export default function AdminTables() {
       </CinematicSection>
 
       <StatusDialog
-        eyebrow="Aviso"
+        eyebrow={adminContent.tables.dialogs.warningEyebrow}
         message={state.error}
         onClose={() => setState((current) => ({ ...current, error: "" }))}
         open={Boolean(state.error)}
-        title="Ha ocurrido un problema"
+        title={adminContent.tables.dialogs.problemTitle}
         type="error"
       />
 
       {showTableForm && (
         <TableEditor
-          content={editingTable ? tableEditorContent : undefined}
+          content={editingTable ? tableContent.form : undefined}
           errors={tableFormErrors}
           form={tableForm}
           seatReductionWarning={tableSeatReductionWarning}
-          title={editingTable ? "Editar mesa" : "Crear mesa"}
+          title={editingTable ? adminContent.tables.dialogs.editTitle : adminContent.tables.dialogs.createTitle}
           onCancel={handleCloseTableForm}
           onChange={handleTableFormChange}
           onDelete={
@@ -941,10 +915,8 @@ export default function AdminTables() {
 
       {tableToDelete && (
         <DeleteDialog
-          title="Eliminar mesa"
-          message={`¿Estás seguro que deseas eliminar la mesa ${
-            tableToDelete.name
-          }? Esta acción liberará cualquier asiento asignado a esta mesa.`}
+          title={adminContent.tables.dialogs.deleteTitle}
+          message={adminContent.tables.dialogs.deleteMessage(tableToDelete.name)}
           onCancel={handleCancelDeleteTable}
           onConfirm={handleConfirmDeleteTable}
         />
@@ -1037,26 +1009,31 @@ function SeatAssignmentDialog({
 
   return (
     <SeatAssignmentModal
-      eyebrow={`Mesa ${tableLabel} - Asiento ${seat.seat}`}
+      eyebrow={tableContent.card.seatAssignmentEyebrow({
+        seat: seat.seat,
+        table: tableLabel,
+      })}
       maxWidthClassName="max-w-2xl"
       onClose={onCancel}
-      title="Asignar invitado"
+      title={adminContent.tables.dialogs.assignmentTitle}
     >
         {currentGuestName && (
           <p className="mb-6 text-sm text-[var(--color-muted)]">
-            Actualmente asignado a {currentGuestName}.
+            {adminContent.tables.dialogs.currentGuest(currentGuestName)}
           </p>
         )}
 
         <form noValidate onSubmit={handleSubmit}>
-          <Label>Invitado</Label>
+          <Label>{adminContent.tables.dialogs.guestLabel}</Label>
           <select
             className={selectClassName}
             disabled={assigning}
             onChange={(event) => setSelectedGuest(event.target.value)}
             value={selectedGuest}
           >
-            <option value="">Seleccionar invitado</option>
+            <option value="">
+              {adminContent.tables.dialogs.guestPlaceholder}
+            </option>
             {guests.map((guest, index) => {
               const guestName = Guest.getFullName(guest, "Invitado");
               const assignmentText = Guest.getAssignmentText(guest);
@@ -1086,37 +1063,43 @@ function SeatAssignmentDialog({
               <IconButton
                 disabled={assigning}
                 icon={<Trash2 size={16} strokeWidth={1.8} />}
-                label="Eliminar"
+                label={adminContent.tables.dialogs.remove}
                 onClick={onRemove}
                 showText="always"
                 tone="secondary"
                 type="button"
               >
-                Eliminar
+                {adminContent.tables.dialogs.remove}
               </IconButton>
             )}
 
             <IconButton
               disabled={!selectedGuest || assigning}
               icon={<Check size={16} strokeWidth={1.8} />}
-              label={assigning ? "Asignando..." : "Asignar invitado"}
+              label={
+                assigning
+                  ? adminContent.tables.dialogs.assigning
+                  : adminContent.tables.dialogs.assign
+              }
               showText="always"
               tone="primary"
               type="submit"
             >
-              {assigning ? "Asignando..." : "Asignar invitado"}
+              {assigning
+                ? adminContent.tables.dialogs.assigning
+                : adminContent.tables.dialogs.assign}
             </IconButton>
 
             <IconButton
               disabled={assigning}
               icon={<X size={16} strokeWidth={1.8} />}
-              label="Cancelar"
+              label={adminContent.tables.dialogs.cancel}
               onClick={onCancel}
               showText="always"
               tone="terciary"
               type="button"
             >
-              Cancelar
+              {adminContent.tables.dialogs.cancel}
             </IconButton>
           </div>
         </form>
@@ -1135,16 +1118,17 @@ function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
         className="premium-card rsvp-dialog-card"
         role="alertdialog"
       >
-        <p className="section-eyebrow mb-3">Cambios sin guardar</p>
+        <p className="section-eyebrow mb-3">
+          {adminContent.tables.dialogs.unsavedEyebrow}
+        </p>
         <h2
           className="font-serif text-3xl text-[var(--color-accent-dark)]"
           id="unsaved-table-changes-title"
         >
-          Se perderan los cambios
+          {adminContent.tables.dialogs.unsavedTitle}
         </h2>
         <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
-          Tienes cambios pendientes en mesas. Si sales ahora, no se enviaran a
-          Apps Script.
+          {adminContent.tables.dialogs.unsavedText}
         </p>
         <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
           {changes.map((change, index) => (
@@ -1160,35 +1144,35 @@ function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
           <IconButton
             className="flex-1"
             icon={<X size={16} strokeWidth={1.8} />}
-            label="Seguir editando"
+            label={adminContent.tables.dialogs.keepEditing}
             onClick={onCancel}
             showText="always"
             tone="secondary"
             type="button"
           >
-            Seguir editando
+            {adminContent.tables.dialogs.keepEditing}
           </IconButton>
           <IconButton
             className="flex-1"
             icon={<Undo2 size={16} strokeWidth={1.8} />}
-            label="Deshacer cambios"
+            label={adminContent.tables.actions.discardChanges}
             onClick={onDiscard}
             showText="always"
             tone="secondary"
             type="button"
           >
-            Deshacer cambios
+            {adminContent.tables.actions.discardChanges}
           </IconButton>
           <IconButton
             className="flex-1"
             icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label="Salir sin guardar"
+            label={adminContent.tables.dialogs.exitWithoutSaving}
             onClick={onConfirm}
             showText="always"
             tone="danger"
             type="button"
           >
-            Salir sin guardar
+            {adminContent.tables.dialogs.exitWithoutSaving}
           </IconButton>
         </div>
       </div>
@@ -1202,7 +1186,7 @@ function TablesOverview({ loading, stats }) {
   return (
     <section className="premium-card mt-4 mb-5">
       <h2 className="mb-5 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-        Mesas y asientos
+        {adminContent.tables.overview.title}
       </h2>
 
       {loading ? (
@@ -1228,20 +1212,22 @@ function TablesPageActions({
 }) {
   return (
     <section className="premium-card mt-5">
-      <p className="section-eyebrow mb-4">Acciones</p>
+      <p className="section-eyebrow mb-4">
+        {adminContent.tables.actions.sectionEyebrow}
+      </p>
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <IconButton
             className="w-full"
             disabled={!hasPendingChanges || loading}
             icon={<Undo2 size={16} strokeWidth={1.8} />}
-            label="Deshacer cambios"
+            label={adminContent.tables.actions.discardChanges}
             onClick={onDiscardChanges}
             showText="always"
             tone="secondary"
             type="button"
           >
-            Deshacer cambios
+            {adminContent.tables.actions.discardChanges}
           </IconButton>
           <IconButton
             className="w-full"
@@ -1253,12 +1239,12 @@ function TablesPageActions({
                 strokeWidth={1.8}
               />
             }
-            label="Actualizar"
+            label={adminContent.tables.actions.refresh}
             onClick={onRefresh}
             showText="always"
             type="button"
           >
-            Actualizar
+            {adminContent.tables.actions.refresh}
           </IconButton>
 
           <IconButton
@@ -1268,7 +1254,7 @@ function TablesPageActions({
             to="/admin"
             tone="terciary"
           >
-            Administracion
+            {adminContent.tables.actions.admin}
           </IconButton>
         </div>
       </div>
@@ -1279,27 +1265,27 @@ function TablesPageActions({
 function getTableSummaryItems(stats) {
   return [
     {
-      label: "Numero de mesas",
+      label: adminContent.tables.overview.metrics.tableCount,
       value: stats.totalTables,
-      detail: "Mesas",
+      detail: adminContent.tables.overview.metrics.tables,
       emoji: <Grid2X2 size={22} strokeWidth={1.8} />,
     },
     {
-      label: "Total asientos",
+      label: adminContent.tables.overview.metrics.seatCount,
       value: stats.totalSeats,
-      detail: "Asientos",
+      detail: adminContent.tables.overview.metrics.seats,
       emoji: <Armchair size={22} strokeWidth={1.8} />,
     },
     {
-      label: "Asientos asignados",
+      label: adminContent.tables.overview.metrics.assignedSeats,
       value: stats.assignedSeats,
-      detail: "Asignados",
+      detail: adminContent.tables.overview.metrics.assigned,
       emoji: <CircleCheckBig size={22} strokeWidth={1.8} />,
     },
     {
-      label: "Asientos pendientes",
+      label: adminContent.tables.overview.metrics.pendingSeats,
       value: stats.pendingSeats,
-      detail: "Pendientes",
+      detail: adminContent.tables.overview.metrics.pending,
       emoji: <CircleDashed size={22} strokeWidth={1.8} />,
     },
   ];
@@ -1309,11 +1295,10 @@ function TablesEmptyState() {
   return (
     <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
       <p className="font-serif text-3xl text-[var(--color-accent-dark)]">
-        Sin mesas asignadas
+        {adminContent.tables.empty.title}
       </p>
       <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-        Asigna mesa y asiento desde la edicion de invitados para ver aqui la
-        distribucion.
+        {adminContent.tables.empty.text}
       </p>
     </div>
   );
@@ -1332,8 +1317,8 @@ function TableCardWithActions({
     <div className="grid gap-3">
       <CardActions
         className="grid grid-cols-2 gap-3"
-        deleteLabel="Eliminar mesa"
-        editLabel="Editar mesa"
+        deleteLabel={adminContent.tables.actions.deleteTable}
+        editLabel={adminContent.tables.actions.editTable}
         item={table}
         onDelete={onDelete}
         onEdit={onEdit}
@@ -1378,18 +1363,18 @@ function buildManualTableChanges(savedTables, currentTables) {
     const savedTable = savedByKey.get(tableKey);
 
     if (!savedTable) {
-      changes.push(`Mesa creada: ${table.name}`);
+      changes.push(adminContent.tables.changes.created(table.name));
       return;
     }
 
     if (getStableJson(savedTable) !== getStableJson(table)) {
-      changes.push(`Mesa modificada: ${table.name}`);
+      changes.push(adminContent.tables.changes.modified(table.name));
     }
   });
 
   savedByKey.forEach((table, tableKey) => {
     if (tableKey && !currentByKey.has(tableKey)) {
-      changes.push(`Mesa eliminada: ${table.name}`);
+      changes.push(adminContent.tables.changes.deleted(table.name));
     }
   });
 
@@ -1413,7 +1398,10 @@ function buildSeatAssignmentChanges(savedGroups, currentGroups) {
       if (previousAssignment === currentAssignment) return;
 
       changes.push(
-        `${Guest.getFullName(guest, `Invitado ${index + 1}`)}: ${previousAssignment} -> ${currentAssignment}`,
+        `${Guest.getFullName(
+          guest,
+          rsvpContent.guest.fallbackName(index + 1),
+        )}: ${previousAssignment} -> ${currentAssignment}`,
       );
     });
   });
@@ -1435,9 +1423,9 @@ function getGuestAssignmentLabel(guest = {}) {
   const table = String(guest.table || "").trim();
   const seat = String(guest.seat || "").trim();
 
-  if (!table && !seat) return "Sin asiento";
+  if (!table && !seat) return adminContent.tables.changes.noSeat;
 
-  return `Mesa ${table || "-"}, asiento ${seat || "-"}`;
+  return adminContent.tables.changes.assignmentLabel({ seat, table });
 }
 
 function getGuestsUnassignedBySeatReduction(table, seatCount) {

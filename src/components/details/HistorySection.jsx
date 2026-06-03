@@ -1,7 +1,7 @@
 import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../ui/HeaderSection";
 import ImageCarousel from "../ui/ImageCarousel";
-import { siteContent } from "../../config/siteContent";
+import { siteContent } from "../../constants/siteContent";
 
 export default function HistorySection() {
   const { history } = siteContent.details;

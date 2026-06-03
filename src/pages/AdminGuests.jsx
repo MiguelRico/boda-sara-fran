@@ -50,17 +50,13 @@ import {
   createDraftGroup,
   normalizeAdminGroupBeforeSave,
 } from "../utils/drafts";
+import { adminContent } from "../constants/adminContent";
 import { normalizeAdminGroups } from "../utils/rsvpGroups";
 import { validateRsvpForm } from "../utils/rsvpValidation";
 
 const desktopPageSize = 8;
 const mobilePageSize = 1;
-const filters = [
-  { value: "all", label: "Todos" },
-  { value: "allergies", label: "Con alergias" },
-  { value: "bus", label: "Con bus" },
-  { value: "comments", label: "Con notas" },
-];
+const filters = adminContent.guests.filters.options;
 
 const emptyState = {
   groups: [],
@@ -69,7 +65,7 @@ const emptyState = {
 };
 
 const createInitialPopup = () => ({
-  closeText: "Cerrar",
+  closeText: adminContent.guests.dialogs.close,
   closeTo: null,
   eyebrow: "",
   message: "",
@@ -79,9 +75,9 @@ const createInitialPopup = () => ({
 });
 
 const createAdminPopup = ({ message, title, type = "success" }) => ({
-  closeText: "Cerrar",
+  closeText: adminContent.guests.dialogs.close,
   closeTo: null,
-  eyebrow: type === "success" ? "Confirmación" : "Aviso",
+  eyebrow: type === "success" ? adminContent.guests.dialogs.successEyebrow : adminContent.guests.dialogs.warningEyebrow,
   message,
   open: true,
   title,
@@ -128,7 +124,7 @@ export default function AdminGuests() {
         groups: [],
         loading: false,
         error:
-          "No se pudieron cargar los invitados. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
+          adminContent.guests.dialogs.loadError,
       });
     }
   }, []);
@@ -195,7 +191,7 @@ export default function AdminGuests() {
 
     try {
       spinner.show(
-        isCreation ? "Creando confirmación..." : "Guardando confirmación...",
+        isCreation ? adminContent.guests.spinner.create : adminContent.guests.spinner.save,
       );
 
       await saveAdminGroup({
@@ -209,9 +205,11 @@ export default function AdminGuests() {
       setPopup(
         createAdminPopup({
           message: isCreation
-            ? "La confirmación se ha creado correctamente."
-            : "La confirmación se ha actualizado correctamente.",
-          title: isCreation ? "Confirmación creada" : "Cambios guardados",
+            ? adminContent.guests.dialogs.createdMessage
+            : adminContent.guests.dialogs.updatedMessage,
+          title: isCreation
+            ? adminContent.guests.dialogs.createdTitle
+            : adminContent.guests.dialogs.updatedTitle,
         }),
       );
     } catch (error) {
@@ -219,8 +217,8 @@ export default function AdminGuests() {
       setPopup(
         createAdminPopup({
           message:
-            "No se ha podido guardar la confirmación. Revisa los datos e inténtalo de nuevo.",
-          title: "Ha ocurrido un problema",
+            adminContent.guests.dialogs.saveError,
+          title: adminContent.guests.dialogs.problemTitle,
           type: "error",
         }),
       );
@@ -233,7 +231,7 @@ export default function AdminGuests() {
     if (!deleteTarget) return;
 
     try {
-      spinner.show("Eliminando confirmación...");
+      spinner.show(adminContent.guests.spinner.delete);
 
       await deleteAdminGroup({
         groupName: deleteTarget.groupName,
@@ -244,8 +242,8 @@ export default function AdminGuests() {
       await loadGuests({ showLoading: false });
       setPopup(
         createAdminPopup({
-          message: "La confirmación se ha eliminado correctamente.",
-          title: "Confirmación eliminada",
+          message: adminContent.guests.dialogs.deletedMessage,
+          title: adminContent.guests.dialogs.deletedTitle,
         }),
       );
     } catch (error) {
@@ -253,8 +251,8 @@ export default function AdminGuests() {
       setPopup(
         createAdminPopup({
           message:
-            "No se ha podido eliminar la confirmación. Inténtalo de nuevo en unos minutos.",
-          title: "Ha ocurrido un problema",
+            adminContent.guests.dialogs.deleteError,
+          title: adminContent.guests.dialogs.problemTitle,
           type: "error",
         }),
       );
@@ -279,11 +277,10 @@ export default function AdminGuests() {
         <div ref={guestsRef}>
           <CinematicStaggeredRevealItem index={0} isVisible={guestsInView}>
             <HeaderSection
-              eyebrow="Panel privado"
-              title="Lista de invitados"
+              eyebrow={adminContent.guests.header.eyebrow}
+              title={adminContent.guests.header.title}
               titleAs="h1"
-              text="Gestión de confirmaciones, datos de contacto, alergias y
-                  transporte"
+              text={adminContent.guests.header.text}
             />
           </CinematicStaggeredRevealItem>
 
@@ -308,24 +305,21 @@ export default function AdminGuests() {
             <section className="premium-card" ref={tableCardRef}>
               <div className="mb-5">
                 <div>
-                  <p className="section-eyebrow mb-2">Invitados</p>
+                  <p className="section-eyebrow mb-2">{adminContent.guests.list.eyebrow}</p>
                   <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-                    Confirmaciones
+                    {adminContent.guests.list.title}
                   </h2>
 
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-                      {pagedGroupCount}{" "}
-                      {pagedGroupCount === 1 ? "grupo" : "grupos"} en esta
-                      página · {pagedGuestCount}{" "}
-                      {pagedGuestCount === 1 ? "persona" : "personas"}
+                      {adminContent.guests.list.countLabel({ groups: pagedGroupCount, guests: pagedGuestCount })}
                     </p>
 
                     <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
                       <IconButton
                         className="w-full"
                         disabled={!rows.length}
-                        label="Exportar"
+                        label={adminContent.guests.actions.export}
                         tone="terciary"
                         onClick={() => downloadGuestsCsv(rows)}
                       >
@@ -335,7 +329,7 @@ export default function AdminGuests() {
                       <IconButton
                         className="w-full"
                         disabled={state.loading}
-                        label="Actualizar"
+                        label={adminContent.guests.actions.refresh}
                         tone="secondary"
                         onClick={loadGuests}
                       >
@@ -348,7 +342,7 @@ export default function AdminGuests() {
 
                       <IconButton
                         className="w-full"
-                        label="Crear"
+                        label={adminContent.guests.actions.create}
                         tone="primary"
                         onClick={() => setEditingGroup(createDraftGroup())}
                       >
@@ -422,11 +416,10 @@ export default function AdminGuests() {
                               strokeWidth={1.7}
                             />
                             <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
-                              Sin resultados
+                              {adminContent.guests.list.emptyTitle}
                             </p>
                             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-                              Prueba con otra búsqueda o cambia el filtro
-                              seleccionado.
+                              {adminContent.guests.list.emptyText}
                             </p>
                           </div>
                         )}
@@ -443,8 +436,8 @@ export default function AdminGuests() {
                       isMobileList={isMobileList}
                       page={currentPage}
                       totalPages={totalPages}
-                      currentLabel="PÃ¡gina"
-                      mobileLabel="ConfirmaciÃ³n"
+                      currentLabel={adminContent.guests.list.pageLabel}
+                      mobileLabel={adminContent.guests.list.mobilePageLabel}
                       onNext={() =>
                         handlePageChange(currentPage + 1, tableStartRef.current)
                       }
@@ -471,16 +464,11 @@ export default function AdminGuests() {
 
       {deleteTarget && (
         <DeleteDialog
-          message={
-            <>
-              Se eliminará el grupo asociado a{" "}
-              {deleteTarget.groupName || deleteTarget.email}. Esta acción no se
-              puede deshacer desde el panel.
-            </>
-          }
-          onCancel={() => setDeleteTarget(null)}
+          message={adminContent.guests.dialogs.deleteMessage(
+            deleteTarget.groupName || deleteTarget.email,
+          )}          onCancel={() => setDeleteTarget(null)}
           onConfirm={handleDeleteGroup}
-          title="Eliminar confirmación"
+          title={adminContent.guests.dialogs.deleteTitle}
         />
       )}
 
@@ -496,11 +484,11 @@ export default function AdminGuests() {
       />
 
       <StatusDialog
-        eyebrow="Aviso"
+        eyebrow={adminContent.guests.dialogs.warningEyebrow}
         message={state.error}
         onClose={() => setState((current) => ({ ...current, error: "" }))}
         open={Boolean(state.error)}
-        title="Ha ocurrido un problema"
+        title={adminContent.guests.dialogs.problemTitle}
         type="error"
       />
     </CinematicPage>
@@ -510,11 +498,11 @@ export default function AdminGuests() {
 function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
   return (
     <section className="premium-card mt-4 mb-5">
-      <p className="section-eyebrow mb-4">Filtros</p>
+      <p className="section-eyebrow mb-4">{adminContent.guests.filters.eyebrow}</p>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_18rem] lg:items-end">
         <div>
-          <Label>Busqueda</Label>
+          <Label>{adminContent.guests.filters.searchLabel}</Label>
           <label className="relative block">
             <Search
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
@@ -524,7 +512,7 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
             <input
               className={`${inputClassName} pl-12`}
               onChange={(event) => onQueryChange(event.target.value)}
-              placeholder="Email, teléfono, grupo, nombre o apellidos"
+              placeholder={adminContent.guests.filters.searchPlaceholder}
               type="search"
               value={query}
             />
@@ -532,7 +520,7 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
         </div>
 
         <div>
-          <Label>Mostrar</Label>
+          <Label>{adminContent.guests.filters.showLabel}</Label>
           <div className="relative">
             <select
               className={`${inputClassName} appearance-none bg-white pr-11`}
@@ -677,7 +665,7 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
   return (
     <EditorDialog
       onClose={onClose}
-      title="Editar grupo"
+      title={adminContent.guests.dialogs.groupEditorTitle}
       titleId="group-editor-title"
     >
       <RsvpForm
@@ -702,11 +690,11 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
 
       <StatusDialog
         closeText="Cerrar"
-        eyebrow="Aviso"
-        message="Hay campos obligatorios o con formato incorrecto. Corrigelos antes de guardar la confirmacion."
+        eyebrow={adminContent.guests.dialogs.warningEyebrow}
+        message={adminContent.guests.dialogs.validationMessage}
         onClose={() => setValidationPopupOpen(false)}
         open={validationPopupOpen}
-        title="Revisa la confirmacion"
+        title={adminContent.guests.dialogs.validationTitle}
         type="error"
       />
     </EditorDialog>
@@ -714,7 +702,7 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
 }
 function downloadGuestsCsv(rows) {
   downloadGenericCsv({
-    filename: "grupos-invitados.csv",
+    filename: adminContent.guests.csv.filename,
     headers: [
       "email",
       "telefono",

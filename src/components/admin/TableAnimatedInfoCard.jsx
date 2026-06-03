@@ -10,6 +10,8 @@ import { useState } from "react";
 
 import { Guest, Table } from "../../models";
 import { getTableGroupOption, TABLE_SHAPES } from "../../constants/tables";
+import { adminContent } from "../../constants/adminContent";
+import { tableContent } from "../../constants/tableContent";
 import IconButton from "../ui/IconButton";
 import RevealOnView from "../ui/RevealOnView";
 import SeatAssignmentModal from "../ui/SeatAssignmentModal";
@@ -79,8 +81,12 @@ function TableInfoCard({
           />
         }
         decorativeText={table.shape === TABLE_SHAPES.round ? "O" : "[]"}
-        detail={`${shapeLabel} - ${assignedGuests.length}/${table.seats.length} asientos`}
-        eyebrow={groupLabel || "Mesa"}
+        detail={tableContent.card.detail({
+          assigned: assignedGuests.length,
+          seats: table.seats.length,
+          shape: shapeLabel,
+        })}
+        eyebrow={groupLabel || tableContent.card.defaultEyebrow}
         title={tableLabel}
       >
         <TableDiagram
@@ -111,7 +117,7 @@ function AssignmentModal({
   onUnassignSeat,
   table,
   onClose,
-  title = "Asignados",
+  title = adminContent.tables.dialogs.assignedTitle,
 }) {
   const assignedSeats = table.seats.filter((seat) => seat.guest);
   const [removingSeat, setRemovingSeat] = useState("");
@@ -160,10 +166,10 @@ function AssignmentModal({
         ) : (
           <div className="rounded-[2rem] border border-[var(--color-border)] bg-white/45 p-6 text-center">
             <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-              Sin asientos asignados
+              {tableContent.card.emptyAssignmentsTitle}
             </p>
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-              No hay invitados asignados a esta mesa.
+              {tableContent.card.emptyAssignmentsText}
             </p>
           </div>
         )}
@@ -173,7 +179,10 @@ function AssignmentModal({
 
 function AssignedSeatCard({ isRemoving, onUnassign, seat }) {
   const guestGroup = String(seat.guest.groupName || "").trim();
-  const eyebrow = `Asiento ${seat.seat}${guestGroup ? ` - ${guestGroup}` : ""}`;
+  const eyebrow = tableContent.card.seatEyebrow({
+    group: guestGroup,
+    seat: seat.seat,
+  });
 
   return (
     <TableGuestCard
@@ -187,12 +196,14 @@ function AssignedSeatCard({ isRemoving, onUnassign, seat }) {
             className="w-full"
             disabled={isRemoving}
             icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label="Liberar asiento"
+            label={adminContent.tables.dialogs.unassignSeat}
             onClick={onUnassign}
             showText="always"
             tone="danger"
           >
-            {isRemoving ? "Liberando..." : "Liberar asiento"}
+            {isRemoving
+              ? adminContent.tables.dialogs.unassigningSeat
+              : adminContent.tables.dialogs.unassignSeat}
           </IconButton>
         </div>
       )}
@@ -220,7 +231,7 @@ function TableDiagram({ onSeatClick, onCenterClick, table }) {
             onClick={onCenterClick}
             className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 px-3 py-1 text-center text-[0.75rem] font-semibold text-[var(--color-accent-dark)] transition hover:text-[var(--color-accent)] focus:outline-none"
           >
-            Ver asientos
+            {tableContent.card.centerAction}
           </button>
         )}
 
@@ -278,22 +289,22 @@ function getTableLegendSummary(table) {
   return [
     {
       icon: <Fish size={14} strokeWidth={1.8} />,
-      label: "Pescado",
+      label: tableContent.card.legend.fish,
       value: assignedGuests.filter((guest) => guest.menu === "Pescado").length,
     },
     {
       icon: <Beef size={14} strokeWidth={1.8} />,
-      label: "Carne",
+      label: tableContent.card.legend.meat,
       value: assignedGuests.filter((guest) => guest.menu === "Carne").length,
     },
     {
       icon: <AlertTriangle size={14} strokeWidth={1.8} />,
-      label: "Alergias",
+      label: tableContent.card.legend.allergies,
       value: assignedGuests.filter(Guest.hasAllergies).length,
     },
     {
       icon: <MessageCircle size={14} strokeWidth={1.8} />,
-      label: "Notas",
+      label: tableContent.card.legend.notes,
       value: assignedGuests.filter(Guest.hasComments).length,
     },
   ];
@@ -331,7 +342,10 @@ function SeatDot({ onClick, seat, style }) {
 
   return (
     <Component
-      aria-label={`Asiento ${seat.seat}${guestName ? ` - ${guestName}` : ""}`}
+      aria-label={tableContent.card.seatAriaLabel({
+        guestName,
+        seat: seat.seat,
+      })}
       className={`
         absolute z-10 flex h-5 w-5 items-center justify-center rounded-full
         border text-[0.58rem] font-semibold shadow-[0_8px_18px_rgba(77,56,40,0.12)]
@@ -344,7 +358,7 @@ function SeatDot({ onClick, seat, style }) {
         }
       `}
       onClick={onClick}
-      title={guestName || `Asiento ${seat.seat}`}
+      title={tableContent.card.seatTitle({ guestName, seat: seat.seat })}
       type={onClick ? "button" : undefined}
       style={style}
     >

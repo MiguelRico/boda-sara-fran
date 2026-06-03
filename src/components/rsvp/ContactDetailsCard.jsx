@@ -4,6 +4,7 @@ import {
   inputClassName,
   Label,
 } from "./FormPrimitives";
+import { rsvpContent } from "../../constants/rsvpContent";
 
 export default function ContactDetailsCard({
   contact,
@@ -22,7 +23,7 @@ export default function ContactDetailsCard({
 
   return (
     <FormCard>
-      <p className="section-eyebrow mb-4">Contacto</p>
+      <p className="section-eyebrow mb-4">{rsvpContent.contact.eyebrow}</p>
 
       <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
         Datos de contacto
@@ -30,7 +31,7 @@ export default function ContactDetailsCard({
 
       <div className="mt-4 grid gap-5 md:grid-cols-3">
         <div>
-          <Label>Nombre de grupo *</Label>
+          <Label>{rsvpContent.contact.fields.groupName.label}</Label>
 
           <input
             type="text"
@@ -39,7 +40,7 @@ export default function ContactDetailsCard({
               onContactChange("groupName", event.target.value)
             }
             className={inputClassName}
-            placeholder="Ej: Familia Garcia"
+            placeholder={rsvpContent.contact.fields.groupName.placeholder}
             disabled={disabledFields.groupName}
           />
 
@@ -47,14 +48,14 @@ export default function ContactDetailsCard({
         </div>
 
         <div>
-          <Label>Email de contacto *</Label>
+          <Label>{rsvpContent.contact.fields.email.label}</Label>
 
           <input
             type="email"
             value={contact.email}
             onChange={(event) => onContactChange("email", event.target.value)}
             className={inputClassName}
-            placeholder="Ej: ejemplo@email.com"
+            placeholder={rsvpContent.contact.fields.email.placeholder}
             disabled={disabledFields.email}
           />
 
@@ -62,14 +63,14 @@ export default function ContactDetailsCard({
         </div>
 
         <div>
-          <Label>Teléfono de contacto *</Label>
+          <Label>{rsvpContent.contact.fields.phone.label}</Label>
 
           <input
             type="tel"
             value={contact.phone}
             onChange={(event) => onContactChange("phone", event.target.value)}
             className={inputClassName}
-            placeholder="Ej: 600123456"
+            placeholder={rsvpContent.contact.fields.phone.placeholder}
             disabled={disabledFields.phone}
           />
 

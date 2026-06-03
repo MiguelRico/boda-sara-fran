@@ -8,6 +8,7 @@ import {
 } from "./rsvpService";
 import { normalizeAdminGroups } from "../utils/rsvpGroups";
 import { getTableGroupOption, TABLE_GROUP_OPTIONS } from "../constants/tables";
+import { tableContent } from "../constants/tableContent";
 
 export const loadAdminTableGroups = async ({ password } = {}) => {
   const response = await findAllGroups({ password });
@@ -165,7 +166,7 @@ export const validateTableForm = (form, tables, editingTable = null) => {
   if (!Table.isSeatCountAllowed(form.shape, form.seatCount)) {
     const range = Table.getSeatRange(form.shape);
 
-    errors.seatCount = `Selecciona entre ${range.min} y ${range.max} asientos.`;
+    errors.seatCount = tableContent.validation.seatCountRange(range);
   }
 
   return errors;

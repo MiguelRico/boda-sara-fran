@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../ui/HeaderSection";
-import { siteContent } from "../../config/siteContent";
+import { siteContent } from "../../constants/siteContent";
 
 function getTimeLeft(targetDate) {
   const difference = targetDate.getTime() - new Date().getTime();

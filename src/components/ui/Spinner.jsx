@@ -1,7 +1,8 @@
 import { createPortal } from "react-dom";
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
+import { uiContent } from "../../constants/uiContent";
 
-export default function Spinner({ text = "Preparando todo..." }) {
+export default function Spinner({ text = uiContent.spinner.defaultText }) {
   useViewportScrollLock();
 
   const spinner = (
@@ -21,7 +22,7 @@ export default function Spinner({ text = "Preparando todo..." }) {
           />
         </div>
 
-        <p className="section-eyebrow">Un momento</p>
+        <p className="section-eyebrow">{uiContent.spinner.eyebrow}</p>
 
         <p className="section-text">{text}</p>
       </div>

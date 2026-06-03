@@ -9,7 +9,7 @@ import CreateInvitationCard from "../components/rsvp/CreateInvitationCard";
 import StatusDialog from "../components/ui/StatusDialog";
 import SearchInvitationCard from "../components/rsvp/SearchInvitationCard";
 import Spinner from "../components/ui/Spinner";
-import { siteContent } from "../config/siteContent";
+import { siteContent } from "../constants/siteContent";
 import useRsvp from "../hooks/useRsvp";
 import useSpinner from "../hooks/useSpinner.js";
 

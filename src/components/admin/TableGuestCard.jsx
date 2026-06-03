@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { Guest } from "../../models";
+import { rsvpContent } from "../../constants/rsvpContent";
 import Chip from "../ui/Chip";
 
 export default function TableGuestCard({
@@ -93,13 +94,13 @@ export default function TableGuestCard({
                 {allergyText && (
                   <Chip
                     icon={<AlertTriangle size={13} strokeWidth={1.8} />}
-                    value={`Alergias: ${allergyText}`}
+                    value={`${rsvpContent.guest.chipLabels.allergies}: ${allergyText}`}
                   />
                 )}
                 {comments && (
                   <Chip
                     icon={<MessageCircle size={13} strokeWidth={1.8} />}
-                    value={`Notas: ${comments}`}
+                    value={`${rsvpContent.guest.chipLabels.notes}: ${comments}`}
                   />
                 )}
                 {chips.map((chip) => (
