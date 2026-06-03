@@ -22,19 +22,22 @@ export default function TableGuestCard({
   titleRef,
   titleStyle,
 }) {
+  const normalizedGuest = Guest.normalize(guest);
   const guestName = title || Guest.getFullName(guest, "Invitado");
   const guestEmail = String(guest.email || "").trim();
   const guestPhone = String(guest.phone || "").trim();
   const guestMenu = String(guest.menu || "").trim();
-  const allergyText = formatGuestAllergies(guest);
-  const comments = String(guest.comments || "").trim();
-  const hasChips =
+  const allergies = normalizedGuest.allergies;
+  const otherAllergies = String(normalizedGuest.otherAllergies || "").trim();
+  const comments = String(normalizedGuest.comments || "").trim();
+  const hasSummaryChips = chips.length > 0;
+  const hasDetailChips =
     guestEmail ||
     guestPhone ||
     guestMenu ||
-    allergyText ||
-    comments ||
-    chips.length > 0;
+    allergies.length > 0 ||
+    otherAllergies ||
+    comments;
 
   return (
     <article
@@ -64,45 +67,8 @@ export default function TableGuestCard({
           </h3>
 
           <div className="mt-4 text-sm text-[var(--color-muted)]">
-            {hasChips && (
+            {hasSummaryChips && (
               <div className="flex flex-wrap gap-2 text-xs">
-                {guestEmail && (
-                  <Chip
-                    icon={<Mail size={13} strokeWidth={1.8} />}
-                    value={guestEmail}
-                  />
-                )}
-                {guestPhone && (
-                  <Chip
-                    icon={<Phone size={13} strokeWidth={1.8} />}
-                    value={guestPhone}
-                  />
-                )}
-                {guestMenu && (
-                  <Chip
-                    icon={
-                      <TableGuestMenuIcon
-                        menu={guestMenu}
-                        size={13}
-                        strokeWidth={1.8}
-                      />
-                    }
-                    strong
-                    value={guestMenu}
-                  />
-                )}
-                {allergyText && (
-                  <Chip
-                    icon={<AlertTriangle size={13} strokeWidth={1.8} />}
-                    value={`${rsvpContent.guest.chipLabels.allergies}: ${allergyText}`}
-                  />
-                )}
-                {comments && (
-                  <Chip
-                    icon={<MessageCircle size={13} strokeWidth={1.8} />}
-                    value={`${rsvpContent.guest.chipLabels.notes}: ${comments}`}
-                  />
-                )}
                 {chips.map((chip) => (
                   <Chip
                     icon={chip.icon}
@@ -115,6 +81,63 @@ export default function TableGuestCard({
                 ))}
               </div>
             )}
+
+            {hasDetailChips && (
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                {guestEmail && (
+                  <Chip
+                    className="col-span-2 w-full"
+                    icon={<Mail size={13} strokeWidth={1.8} />}
+                    value={guestEmail}
+                  />
+                )}
+                {guestPhone && (
+                  <Chip
+                    className="w-full"
+                    icon={<Phone size={13} strokeWidth={1.8} />}
+                    value={guestPhone}
+                  />
+                )}
+                {guestMenu && (
+                  <Chip
+                    className="w-full"
+                    icon={
+                      <TableGuestMenuIcon
+                        menu={guestMenu}
+                        size={13}
+                        strokeWidth={1.8}
+                      />
+                    }
+                    strong
+                    value={guestMenu}
+                  />
+                )}
+                {allergies.map((allergy) => (
+                  <Chip
+                    className="w-full"
+                    icon={<AlertTriangle size={13} strokeWidth={1.8} />}
+                    key={allergy}
+                    value={allergy}
+                  />
+                ))}
+                {otherAllergies && (
+                  <Chip
+                    className="col-span-2 w-full items-start"
+                    icon={<AlertTriangle size={13} strokeWidth={1.8} />}
+                    value={`${rsvpContent.guest.chipLabels.otherAllergies}: ${otherAllergies}`}
+                    valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
+                  />
+                )}
+                {comments && (
+                  <Chip
+                    className="col-span-2 w-full items-start"
+                    icon={<MessageCircle size={13} strokeWidth={1.8} />}
+                    value={`${rsvpContent.guest.chipLabels.notes}: ${comments}`}
+                    valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
+                  />
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -122,20 +145,6 @@ export default function TableGuestCard({
       </div>
     </article>
   );
-}
-
-function formatGuestAllergies(guest) {
-  const normalizedGuest = Guest.normalize(guest);
-  const allergyText = normalizedGuest.allergies.length
-    ? normalizedGuest.allergies.join(", ")
-    : "";
-  const otherAllergies = String(normalizedGuest.otherAllergies || "").trim();
-
-  if (allergyText && otherAllergies) {
-    return `${allergyText}. ${otherAllergies}`;
-  }
-
-  return allergyText || otherAllergies;
 }
 
 function TableGuestMenuIcon({ menu, ...props }) {

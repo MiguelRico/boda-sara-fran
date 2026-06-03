@@ -2,9 +2,11 @@ import { GUEST_MENU_OPTIONS } from "../constants/rsvp";
 import { rsvpContent } from "../constants/rsvpContent";
 
 const GUEST_DEFAULTS = {
+  email: "",
   groupName: "",
   name: "",
   lastname: "",
+  phone: "",
   allergies: [],
   otherAllergies: "",
   comments: "",
@@ -33,9 +35,11 @@ export const Guest = {
   create(overrides = {}) {
     return {
       ...GUEST_DEFAULTS,
+      email: normalizeString(overrides.email),
       groupName: normalizeString(overrides.groupName),
       name: normalizeString(overrides.name),
       lastname: normalizeString(overrides.lastname),
+      phone: normalizeString(overrides.phone),
       allergies: Array.isArray(overrides.allergies)
         ? [...overrides.allergies]
         : [],

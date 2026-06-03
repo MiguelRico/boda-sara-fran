@@ -66,6 +66,7 @@ export const rsvpContent = {
     },
     chipLabels: {
       allergies: "Alergias",
+      otherAllergies: "Otras alergias",
       notes: "Notas",
     },
     assignment: {
