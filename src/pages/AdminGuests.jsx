@@ -30,6 +30,7 @@ import CardActions from "../components/admin/CardActions";
 import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
 import CardListSkeleton from "../components/ui/CardListSkeleton";
+import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import InfoLine from "../components/ui/InfoLine";
 import PaginatedContent from "../components/ui/PaginatedContent";
 import Pagination from "../components/ui/Pagination";
@@ -77,7 +78,10 @@ const createInitialPopup = () => ({
 const createAdminPopup = ({ message, title, type = "success" }) => ({
   closeText: adminContent.guests.dialogs.close,
   closeTo: null,
-  eyebrow: type === "success" ? adminContent.guests.dialogs.successEyebrow : adminContent.guests.dialogs.warningEyebrow,
+  eyebrow:
+    type === "success"
+      ? adminContent.guests.dialogs.successEyebrow
+      : adminContent.guests.dialogs.warningEyebrow,
   message,
   open: true,
   title,
@@ -123,8 +127,7 @@ export default function AdminGuests() {
       setState({
         groups: [],
         loading: false,
-        error:
-          adminContent.guests.dialogs.loadError,
+        error: adminContent.guests.dialogs.loadError,
       });
     }
   }, []);
@@ -161,16 +164,13 @@ export default function AdminGuests() {
     mobilePageSize,
     page,
   });
-  const {
-    cancelPageLoading,
-    handlePageChange,
-    pageDirection,
-  } = usePageTransition({
-    currentPage,
-    isMobileList,
-    onPageChange: setPage,
-    totalPages,
-  });
+  const { cancelPageLoading, handlePageChange, pageDirection } =
+    usePageTransition({
+      currentPage,
+      isMobileList,
+      onPageChange: setPage,
+      totalPages,
+    });
   const pagedGroupCount = pagedRows.length;
   const pagedGuestCount = pagedRows.reduce(
     (total, row) => total + row.groupSize,
@@ -189,7 +189,9 @@ export default function AdminGuests() {
 
     try {
       spinner.show(
-        isCreation ? adminContent.guests.spinner.create : adminContent.guests.spinner.save,
+        isCreation
+          ? adminContent.guests.spinner.create
+          : adminContent.guests.spinner.save,
       );
 
       await saveAdminGroup({
@@ -214,8 +216,7 @@ export default function AdminGuests() {
       console.error(error);
       setPopup(
         createAdminPopup({
-          message:
-            adminContent.guests.dialogs.saveError,
+          message: adminContent.guests.dialogs.saveError,
           title: adminContent.guests.dialogs.problemTitle,
           type: "error",
         }),
@@ -248,8 +249,7 @@ export default function AdminGuests() {
       console.error(error);
       setPopup(
         createAdminPopup({
-          message:
-            adminContent.guests.dialogs.deleteError,
+          message: adminContent.guests.dialogs.deleteError,
           title: adminContent.guests.dialogs.problemTitle,
           type: "error",
         }),
@@ -282,35 +282,23 @@ export default function AdminGuests() {
             />
           </CinematicStaggeredRevealItem>
 
-          <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
-            <FiltersCard
-              filter={filter}
-              onFilterChange={(value) => {
-                cancelPageLoading();
-                setFilter(value);
-                setPage(1);
-              }}
-              onQueryChange={(value) => {
-                cancelPageLoading();
-                setQuery(value);
-                setPage(1);
-              }}
-              query={query}
-            />
-          </CinematicStaggeredRevealItem>
-
           <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
             <section className="premium-card" ref={tableCardRef}>
               <div className="mb-5">
                 <div>
-                  <p className="section-eyebrow mb-2">{adminContent.guests.list.eyebrow}</p>
+                  <p className="section-eyebrow mb-2">
+                    {adminContent.guests.list.eyebrow}
+                  </p>
                   <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
                     {adminContent.guests.list.title}
                   </h2>
 
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-                      {adminContent.guests.list.countLabel({ groups: pagedGroupCount, guests: pagedGuestCount })}
+                      {adminContent.guests.list.countLabel({
+                        groups: pagedGroupCount,
+                        guests: pagedGuestCount,
+                      })}
                     </p>
 
                     <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
@@ -353,6 +341,21 @@ export default function AdminGuests() {
                 </div>
               </div>
 
+              <FiltersCard
+                filter={filter}
+                onFilterChange={(value) => {
+                  cancelPageLoading();
+                  setFilter(value);
+                  setPage(1);
+                }}
+                onQueryChange={(value) => {
+                  cancelPageLoading();
+                  setQuery(value);
+                  setPage(1);
+                }}
+                query={query}
+              />
+
               <div ref={tableStartRef}>
                 {state.loading ? (
                   <CardListSkeleton />
@@ -382,24 +385,27 @@ export default function AdminGuests() {
                         />
                       )}
                     />
-
-                    <Pagination
-                      isMobileList={isMobileList}
-                      page={currentPage}
-                      totalPages={totalPages}
-                      currentLabel={adminContent.guests.list.pageLabel}
-                      mobileLabel={adminContent.guests.list.mobilePageLabel}
-                      onNext={() =>
-                        handlePageChange(currentPage + 1, tableStartRef.current)
-                      }
-                      onPrev={() =>
-                        handlePageChange(currentPage - 1, tableStartRef.current)
-                      }
-                    />
                   </>
                 )}
               </div>
             </section>
+
+            {!state.loading && (
+              <Pagination
+                className="mt-5"
+                isMobileList={isMobileList}
+                page={currentPage}
+                totalPages={totalPages}
+                currentLabel={adminContent.guests.list.pageLabel}
+                mobileLabel={adminContent.guests.list.mobilePageLabel}
+                onNext={() =>
+                  handlePageChange(currentPage + 1, tableStartRef.current)
+                }
+                onPrev={() =>
+                  handlePageChange(currentPage - 1, tableStartRef.current)
+                }
+              />
+            )}
           </CinematicStaggeredRevealItem>
         </div>
       </CinematicSection>
@@ -417,7 +423,8 @@ export default function AdminGuests() {
         <DeleteDialog
           message={adminContent.guests.dialogs.deleteMessage(
             deleteTarget.groupName || deleteTarget.email,
-          )}          onCancel={() => setDeleteTarget(null)}
+          )}
+          onCancel={() => setDeleteTarget(null)}
           onConfirm={handleDeleteGroup}
           title={adminContent.guests.dialogs.deleteTitle}
         />
@@ -448,9 +455,10 @@ export default function AdminGuests() {
 
 function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
   return (
-    <section className="premium-card mt-4 mb-5">
-      <p className="section-eyebrow mb-4">{adminContent.guests.filters.eyebrow}</p>
-
+    <CollapsiblePanel
+      className="mb-5"
+      title={adminContent.guests.filters.eyebrow}
+    >
       <div className="grid gap-4 lg:grid-cols-[1fr_18rem] lg:items-end">
         <div>
           <Label>{adminContent.guests.filters.searchLabel}</Label>
@@ -492,7 +500,7 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
           </div>
         </div>
       </div>
-    </section>
+    </CollapsiblePanel>
   );
 }
 

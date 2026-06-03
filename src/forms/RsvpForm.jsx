@@ -218,47 +218,49 @@ function GuestPager({
   variant,
 }) {
   return (
-    <FormCard>
-      <div className="flex items-center justify-between gap-4">
-        <p className={`section-eyebrow ${canRemove ? "mb-0" : ""}`}>
-          {rsvpContent.form.guestLabel(currentGuestIndex + 1)}
-        </p>
+    <>
+      <FormCard>
+        <div className="flex items-center justify-between gap-4">
+          <p className={`section-eyebrow ${canRemove ? "mb-0" : ""}`}>
+            {rsvpContent.form.guestLabel(currentGuestIndex + 1)}
+          </p>
 
-        {canRemove && (
-          <IconButton
-            icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
-            onClick={() => onRemoveGuest(currentGuest, currentGuestIndex)}
-            tone="danger"
-            type="button"
-          />
-        )}
-      </div>
+          {canRemove && (
+            <IconButton
+              icon={<Trash2 size={16} strokeWidth={1.8} />}
+              label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
+              onClick={() => onRemoveGuest(currentGuest, currentGuestIndex)}
+              tone="danger"
+              type="button"
+            />
+          )}
+        </div>
 
-      <PaginatedContent
-        allItems={guests}
-        direction={direction}
-        getKey={(guest, { index }) => `${index}-${Guest.getFullName(guest)}`}
-        page={currentGuestPage}
-        pageSize={1}
-        totalPages={totalGuestPages}
-        renderPage={(items, pageNumber) => (
-          <GuestCard
-            canRemove={false}
-            card={false}
-            errors={errors}
-            guest={items[0]}
-            index={pageNumber - 1}
-            onGuestChange={onGuestChange}
-            onRemoveGuest={() => {}}
-            showHeader={false}
-            variant={variant}
-          />
-        )}
-      />
+        <PaginatedContent
+          allItems={guests}
+          direction={direction}
+          getKey={(guest, { index }) => `${index}-${Guest.getFullName(guest)}`}
+          page={currentGuestPage}
+          pageSize={1}
+          totalPages={totalGuestPages}
+          renderPage={(items, pageNumber) => (
+            <GuestCard
+              canRemove={false}
+              card={false}
+              errors={errors}
+              guest={items[0]}
+              index={pageNumber - 1}
+              onGuestChange={onGuestChange}
+              onRemoveGuest={() => {}}
+              showHeader={false}
+              variant={variant}
+            />
+          )}
+        />
+      </FormCard>
 
       <Pagination
-        className="mt-4"
+        className="mt-5"
         label={rsvpContent.form.guestPageLabel({
           page: currentGuestPage,
           total: totalGuestPages,
@@ -270,6 +272,6 @@ function GuestPager({
         previousLabel={rsvpContent.form.previous}
         totalPages={totalGuestPages}
       />
-    </FormCard>
+    </>
   );
 }

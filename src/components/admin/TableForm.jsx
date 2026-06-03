@@ -99,12 +99,6 @@ export default function TableForm({
       </div>
 
       <FormCard>
-        {/* <p className="section-eyebrow mb-4">{content.eyebrow}</p>
-
-        <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-          {content.title}
-        </h2> */}
-
         <div className="mt-2 grid gap-5 md:grid-cols-2">
           <div>
             <Label>{content.fields.name.label}</Label>
@@ -155,7 +149,6 @@ export default function TableForm({
             <FieldError>{errors.group}</FieldError>
           </div>
         </div>
-
         <div className="mt-5 grid gap-5 md:grid-cols-2">
           <div>
             <Label>{content.fields.shape.label}</Label>
@@ -234,7 +227,6 @@ export default function TableForm({
             )}
           </div>
         </div>
-
         <div className="mt-5">
           <Label>{content.fields.notes.label}</Label>
 

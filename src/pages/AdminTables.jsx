@@ -211,13 +211,12 @@ export default function AdminTables() {
     mobilePageSize,
     page,
   });
-  const { handlePageChange, pageDirection } =
-    usePageTransition({
-      currentPage,
-      isMobileList,
-      onPageChange: setPage,
-      totalPages,
-    });
+  const { handlePageChange, pageDirection } = usePageTransition({
+    currentPage,
+    isMobileList,
+    onPageChange: setPage,
+    totalPages,
+  });
   const pagedTableCount = pagedTables.length;
   const pagedSeatCount = pagedTables.reduce(
     (total, table) => total + table.seats.length,

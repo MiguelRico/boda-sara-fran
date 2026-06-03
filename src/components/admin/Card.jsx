@@ -25,7 +25,7 @@ export default function Card({
       )}
 
       <div className="relative flex h-full flex-col">
-        <div className="mb-4">
+        <div>
           <p className="section-eyebrow mb-2">{eyebrow}</p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 flex-1">

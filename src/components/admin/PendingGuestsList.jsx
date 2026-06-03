@@ -4,6 +4,7 @@ import { AlertCircle, Check } from "lucide-react";
 import { adminContent } from "../../constants/adminContent";
 import { Table, Guest } from "../../models";
 import usePageTransition from "../../hooks/usePageTransition";
+import CollapsiblePanel from "../ui/CollapsiblePanel";
 import IconButton from "../ui/IconButton";
 import PaginatedContent from "../ui/PaginatedContent";
 import Pagination from "../ui/Pagination";
@@ -124,25 +125,7 @@ export default function PendingGuestsList({
 
   return (
     <div className="space-y-4">
-      {/* Filtros */}
-      <section
-        className="
-          overflow-hidden rounded-[2rem]
-          border border-[var(--color-border-strong)] bg-white/80 p-5
-          shadow-[0_24px_70px_rgba(77,56,40,0.08)] backdrop-blur-md
-        "
-      >
-        <div className="mb-4">
-          <div>
-            <p className="section-eyebrow mb-2">
-              {adminContent.pendingGuests.filtersEyebrow}
-            </p>
-            <h3 className="font-serif text-3xl leading-none text-[var(--color-text)]">
-              {adminContent.pendingGuests.title}
-            </h3>
-          </div>
-        </div>
-
+      <CollapsiblePanel title={adminContent.pendingGuests.filtersEyebrow}>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <Label>{adminContent.pendingGuests.groupLabel}</Label>
@@ -176,7 +159,7 @@ export default function PendingGuestsList({
             </select>
           </div>
         </div>
-      </section>
+      </CollapsiblePanel>
 
       {/* Error global */}
       {error && (
@@ -225,7 +208,7 @@ export default function PendingGuestsList({
 
           {totalPages > 1 && (
             <Pagination
-              className="mt-4"
+              className="mt-5"
               label={adminContent.pendingGuests.pageLabel({
                 page: currentPage,
                 total: totalPages,
