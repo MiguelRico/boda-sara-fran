@@ -90,7 +90,7 @@ const emptyState = {
   error: "",
 };
 const TABLE_METRIC_GRID_CLASS =
-  "grid grid-cols-2 gap-3 sm:flex sm:items-start sm:justify-between";
+  "grid grid-cols-4 gap-2 sm:flex sm:items-start sm:justify-between sm:gap-3";
 export default function AdminTables() {
   const spinner = useSpinner();
   const tablesRef = useRef(null);

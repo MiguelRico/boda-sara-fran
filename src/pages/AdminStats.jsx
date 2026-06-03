@@ -59,9 +59,9 @@ const emptyState = {
   error: "",
 };
 const CONFIRMATIONS_METRIC_GRID_CLASS =
-  "grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-start sm:justify-center sm:gap-4";
+  "grid grid-cols-4 gap-2 sm:flex sm:flex-wrap sm:items-start sm:justify-center sm:gap-4";
 const CONFIRMATIONS_METRIC_CARD_CLASS =
-  "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-3 sm:p-5";
+  "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-2 sm:p-5";
 
 export default function AdminStats() {
   const statsRef = useRef(null);

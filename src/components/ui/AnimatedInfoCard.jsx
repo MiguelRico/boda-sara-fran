@@ -18,7 +18,7 @@ function InfoCard({
   const Component = to ? Link : "div";
   const componentProps = to ? { to } : {};
   const cardSizeClass = summaryView
-    ? "inline-flex w-fit max-w-full items-center justify-center"
+    ? "inline-flex w-full max-w-full items-center justify-center"
     : "block h-full";
 
   return (
@@ -39,32 +39,38 @@ function InfoCard({
       {summaryView ? (
         <div
           className={`relative flex min-w-0 flex-col items-center justify-center text-center ${
-            summaryCompact ? "gap-2 sm:gap-3" : "gap-3"
+            summaryCompact ? "gap-1.5 sm:gap-3" : "gap-1.5 sm:gap-3"
           }`}
         >
-          <div
-            className={`flex min-w-0 items-center justify-center sm:flex-col ${
-              summaryCompact ? "gap-2 sm:gap-3" : "gap-3"
-            }`}
-          >
-            {emoji && (
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
-                {emoji}
-              </span>
-            )}
+          {emoji && (
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-base sm:h-11 sm:w-11 sm:text-xl">
+              {emoji}
+            </span>
+          )}
 
-            {title && (
-              <p
-                className={`font-serif leading-tight text-[var(--color-text)] ${
-                  summaryCompact
-                    ? "text-2xl sm:text-4xl"
-                    : "text-3xl sm:text-4xl"
-                }`}
-              >
-                {title}
-              </p>
-            )}
-          </div>
+          {subtitle && (
+            <p
+              className={`min-w-0 break-words leading-relaxed text-[var(--color-accent)] ${
+                summaryCompact
+                  ? "text-[0.6rem] sm:text-sm"
+                  : "text-[0.6rem] sm:text-base"
+              }`}
+            >
+              {subtitle}
+            </p>
+          )}
+
+          {title && (
+            <p
+              className={`font-serif leading-tight text-[var(--color-text)] ${
+                summaryCompact
+                  ? "text-xl sm:text-4xl"
+                  : "text-xl sm:text-4xl"
+              }`}
+            >
+              {title}
+            </p>
+          )}
 
           {description && (
             <p

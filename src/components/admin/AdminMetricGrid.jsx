@@ -3,9 +3,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import AnimatedInfoCard from "../ui/AnimatedInfoCard";
 
 const DEFAULT_GRID_CLASS =
-  "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6";
+  "grid grid-cols-4 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6";
 const DEFAULT_CARD_CLASS =
-  "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-4 sm:p-5";
+  "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-2 sm:p-5";
 
 export function AdminMetricGrid({
   items,
@@ -64,7 +64,7 @@ export function AdminMetricGrid({
     <div className={className}>
       {items.map((item, index) => (
         <div
-          className="flex justify-center"
+          className="flex min-w-0 justify-center"
           key={item.label}
           ref={(node) => {
             itemRefs.current[index] = node;
@@ -73,9 +73,7 @@ export function AdminMetricGrid({
           <AnimatedInfoCard
             card={{
               className: cardClassName,
-              description: item.detail,
               emoji: item.emoji,
-              inlineTitleDescription: true,
               showAction: false,
               summaryCompact: compactSummary,
               style: activeSummarySize
@@ -96,7 +94,7 @@ export function AdminMetricGrid({
 function getSummaryCardStyle(summarySize, shouldFitContent) {
   if (shouldFitContent) {
     return {
-      width: `${summarySize.width}px`,
+      width: "100%",
     };
   }
 
@@ -114,12 +112,12 @@ export function AdminMetricGridSkeleton({
     <div className={className}>
       {Array.from({ length: count }).map((_, index) => (
         <div
-          className="min-h-48 animate-pulse rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 sm:p-5"
+          className="min-h-24 animate-pulse rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-2 sm:min-h-48 sm:p-5"
           key={index}
         >
-          <div className="h-11 w-11 rounded-full bg-[var(--color-border)]" />
-          <div className="mt-8 h-4 w-24 rounded-full bg-[var(--color-border)]" />
-          <div className="mt-4 h-12 w-20 rounded-full bg-[var(--color-border)]" />
+          <div className="h-8 w-8 rounded-full bg-[var(--color-border)] sm:h-11 sm:w-11" />
+          <div className="mt-4 h-3 w-full rounded-full bg-[var(--color-border)] sm:mt-8 sm:h-4 sm:w-24" />
+          <div className="mt-3 h-8 w-12 rounded-full bg-[var(--color-border)] sm:mt-4 sm:h-12 sm:w-20" />
         </div>
       ))}
     </div>

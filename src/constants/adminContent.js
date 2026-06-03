@@ -156,13 +156,13 @@ export const adminContent = {
     overview: {
       title: "Mesas y asientos",
       metrics: {
-        tableCount: "Numero de mesas",
+        tableCount: "Mesas",
         tables: "Mesas",
-        seatCount: "Total asientos",
+        seatCount: "Asientos",
         seats: "Asientos",
-        assignedSeats: "Asientos asignados",
+        assignedSeats: "Asignados",
         assigned: "Asignados",
-        pendingSeats: "Asientos pendientes",
+        pendingSeats: "Pendientes",
         pending: "Pendientes",
       },
     },
@@ -181,7 +181,8 @@ export const adminContent = {
       modified: (name) => `Mesa modificada: ${name}`,
       deleted: (name) => `Mesa eliminada: ${name}`,
       noSeat: "Sin asiento",
-      assignmentLabel: ({ table, seat }) => `Mesa ${table || "-"}, asiento ${seat || "-"}`,
+      assignmentLabel: ({ table, seat }) =>
+        `Mesa ${table || "-"}, asiento ${seat || "-"}`,
     },
   },
   pendingGuests: {
