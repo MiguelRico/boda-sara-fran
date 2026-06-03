@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 export default function PaginatedContent({
   allItems = [],
@@ -14,6 +14,7 @@ export default function PaginatedContent({
 }) {
   const reduceMotion = useReducedMotion();
   const measureRefs = useRef([]);
+  const visiblePageRef = useRef(null);
   const [height, setHeight] = useState(null);
   const pageGroups = useMemo(
     () =>
@@ -66,10 +67,31 @@ export default function PaginatedContent({
     return () => window.removeEventListener("resize", updateHeight);
   }, [pageGroups, renderMeasurePage, renderPage]);
 
+  useEffect(() => {
+    const node = visiblePageRef.current;
+    if (!node) return undefined;
+
+    const updateVisibleHeight = () => {
+      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+      setHeight((current) => {
+        if (Math.abs((current || 0) - nextHeight) < 1) return current;
+        return nextHeight;
+      });
+    };
+
+    updateVisibleHeight();
+    const observer = new ResizeObserver(updateVisibleHeight);
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [pageKey]);
+
   return (
     <div
       className={`relative overflow-hidden ${className}`}
-      style={height ? { minHeight: `${height}px`, height: `${height}px` } : undefined}
+      style={
+        height ? { minHeight: `${height}px`, height: `${height}px` } : undefined
+      }
     >
       <div
         aria-hidden="true"
@@ -102,7 +124,7 @@ export default function PaginatedContent({
           }}
           variants={variants}
         >
-          {renderPage(currentItems, page)}
+          <div ref={visiblePageRef}>{renderPage(currentItems, page)}</div>
         </motion.div>
       </AnimatePresence>
     </div>
