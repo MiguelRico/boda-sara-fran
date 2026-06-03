@@ -5,7 +5,6 @@ import {
   Save,
   Trash2,
   UsersRound,
-  X,
 } from "lucide-react";
 
 import {
@@ -39,7 +38,6 @@ export default function TableForm({
   errors = {},
   form,
   loading = false,
-  onCancel,
   onChange,
   onDelete,
   onSubmit,
@@ -67,6 +65,39 @@ export default function TableForm({
 
   return (
     <form className="mt-4" noValidate onSubmit={onSubmit}>
+      <div className="mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+        <div
+          className={`grid w-full gap-3 ${
+            onDelete ? "grid-cols-2" : "grid-cols-1"
+          }`}
+        >
+          {onDelete && (
+            <IconButton
+              className="w-full"
+              disabled={loading}
+              icon={<Trash2 size={16} strokeWidth={1.8} />}
+              label="Eliminar mesa"
+              onClick={onDelete}
+              tone="danger"
+              type="button"
+            >
+              Eliminar
+            </IconButton>
+          )}
+
+          <IconButton
+            className="w-full"
+            disabled={loading}
+            icon={<Save size={16} strokeWidth={1.8} />}
+            label={content.submitText}
+            tone="primary"
+            type="submit"
+          >
+            {content.submitText}
+          </IconButton>
+        </div>
+      </div>
+
       <FormCard>
         {/* <p className="section-eyebrow mb-4">{content.eyebrow}</p>
 
@@ -216,52 +247,6 @@ export default function TableForm({
           />
 
           <FieldError>{errors.notes}</FieldError>
-        </div>
-
-        <div
-          className={`mt-2 flex flex-col gap-4 sm:grid ${
-            onDelete ? "sm:grid-cols-3" : "sm:grid-cols-2"
-          }`}
-        >
-          {onDelete && (
-            <IconButton
-              className="w-full sm:w-auto"
-              disabled={loading}
-              icon={<Trash2 size={16} strokeWidth={1.8} />}
-              label="Eliminar mesa"
-              onClick={onDelete}
-              showText="always"
-              tone="danger"
-              type="button"
-            >
-              Eliminar
-            </IconButton>
-          )}
-
-          <IconButton
-            className="w-full sm:w-auto"
-            disabled={loading}
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label={content.submitText}
-            showText="always"
-            tone="primary"
-            type="submit"
-          >
-            {content.submitText}
-          </IconButton>
-
-          <IconButton
-            className="w-full sm:w-auto"
-            disabled={loading}
-            icon={<X size={16} strokeWidth={1.8} />}
-            label={content.cancelText}
-            onClick={onCancel}
-            showText="always"
-            tone="terciary"
-            type="button"
-          >
-            {content.cancelText}
-          </IconButton>
         </div>
       </FormCard>
     </form>

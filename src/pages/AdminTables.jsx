@@ -14,6 +14,7 @@ import {
   Download,
   Grid2X2,
   Armchair,
+  Pencil,
   Plus,
   Save,
   Trash2,
@@ -26,10 +27,8 @@ import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
-import CardActions from "../components/admin/CardActions";
 import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
-import PagedList from "../components/admin/PagedList";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
 import TableForm from "../components/admin/TableForm";
 import CinematicPage from "../components/cinematic/CinematicPage";
@@ -42,9 +41,11 @@ import Spinner from "../components/ui/Spinner";
 import TabNavigation from "../components/ui/TabNavigation";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import CardListSkeleton from "../components/ui/CardListSkeleton";
+import PaginatedContent from "../components/ui/PaginatedContent";
 import Pagination from "../components/ui/Pagination";
 import SeatAssignmentModal from "../components/ui/SeatAssignmentModal";
 import PendingGuestsList from "../components/admin/PendingGuestsList";
+import { GuestDetailChips } from "../components/admin/TableGuestCard";
 import { Label, selectClassName } from "../components/rsvp/FormPrimitives";
 import { Guest } from "../models";
 import {
@@ -210,7 +211,7 @@ export default function AdminTables() {
     mobilePageSize,
     page,
   });
-  const { handlePageChange, pageDirection, pageLoading, pageLoadingMinHeight } =
+  const { handlePageChange, pageDirection } =
     usePageTransition({
       currentPage,
       isMobileList,
@@ -735,11 +736,6 @@ export default function AdminTables() {
                       ease: [0.22, 1, 0.36, 1],
                     }}
                     variants={tabContentVariants}
-                    style={
-                      pageLoadingMinHeight
-                        ? { minHeight: `${pageLoadingMinHeight}px` }
-                        : undefined
-                    }
                   >
                     {state.loading ? (
                       <CardListSkeleton
@@ -749,70 +745,88 @@ export default function AdminTables() {
                       />
                     ) : (
                       <>
-                        <div className="relative">
-                          <div
-                            className={
-                              pageLoading
-                                ? "pointer-events-none opacity-0"
-                                : "opacity-100"
-                            }
-                          >
-                            <CardGrid
-                              emptyState={<TablesEmptyState />}
-                              getKey={getTableRenderKey}
-                              items={pagedTables}
-                              renderCard={(table, index) => (
-                                <TableCardWithActions
-                                  index={index}
-                                  onDelete={handleRequestDeleteTable}
-                                  onEdit={handleEditTable}
-                                  onSeatClick={handleSeatClick}
-                                  onUnassignSeat={handleRemoveGuestFromSeat}
-                                  table={table}
-                                />
-                              )}
-                            />
-                            <PagedList
-                              allItems={tables}
-                              className="bg-transparent"
-                              direction={pageDirection}
-                              getKey={getTableRenderKey}
-                              itemClassName="absolute inset-x-0 top-0 grid gap-4"
-                              items={pagedTables}
-                              page={currentPage}
-                              renderItem={(table) => (
-                                <TableCardWithActions
-                                  onDelete={handleRequestDeleteTable}
-                                  onEdit={handleEditTable}
-                                  onSeatClick={handleSeatClick}
-                                  onUnassignSeat={handleRemoveGuestFromSeat}
-                                  reveal={false}
-                                  table={table}
-                                />
-                              )}
-                              renderMeasureItem={(table) => (
-                                <TableCardWithActions
-                                  onDelete={() => {}}
-                                  onEdit={() => {}}
-                                  onSeatClick={() => {}}
-                                  onUnassignSeat={() => {}}
-                                  reveal={false}
-                                  table={table}
-                                />
-                              )}
-                            />
-                          </div>
-
-                          {pageLoading && (
-                            <div className="absolute inset-x-0 top-0 z-10">
-                              <CardListSkeleton
-                                columnsClassName="lg:grid-cols-2"
-                                itemClassName="min-h-40"
-                                lines={2}
+                        <PaginatedContent
+                          allItems={tables}
+                          direction={pageDirection}
+                          getKey={getTableRenderKey}
+                          page={currentPage}
+                          pageSize={pageSize}
+                          totalPages={totalPages}
+                          renderMeasurePage={(items) => (
+                            <>
+                              <CardGrid
+                                emptyState={<TablesEmptyState />}
+                                getKey={getTableRenderKey}
+                                items={items}
+                                renderCard={(table, index) => (
+                                  <TableCardWithActions
+                                    index={index}
+                                    onDelete={() => {}}
+                                    onEdit={() => {}}
+                                    onSeatClick={() => {}}
+                                    onUnassignSeat={() => {}}
+                                    table={table}
+                                  />
+                                )}
                               />
-                            </div>
+                              <div className="grid gap-4 md:hidden">
+                                {items.map((table, index) => (
+                                  <TableCardWithActions
+                                    key={getTableRenderKey(table, { index })}
+                                    onDelete={() => {}}
+                                    onEdit={() => {}}
+                                    onSeatClick={() => {}}
+                                    onUnassignSeat={() => {}}
+                                    reveal={false}
+                                    table={table}
+                                  />
+                                ))}
+                              </div>
+                              {!items.length && (
+                                <div className="md:hidden">
+                                  <TablesEmptyState />
+                                </div>
+                              )}
+                            </>
                           )}
-                        </div>
+                          renderPage={(items) => (
+                            <>
+                              <CardGrid
+                                emptyState={<TablesEmptyState />}
+                                getKey={getTableRenderKey}
+                                items={items}
+                                renderCard={(table, index) => (
+                                  <TableCardWithActions
+                                    index={index}
+                                    onDelete={handleRequestDeleteTable}
+                                    onEdit={handleEditTable}
+                                    onSeatClick={handleSeatClick}
+                                    onUnassignSeat={handleRemoveGuestFromSeat}
+                                    table={table}
+                                  />
+                                )}
+                              />
+                              <div className="grid gap-4 md:hidden">
+                                {items.map((table, index) => (
+                                  <TableCardWithActions
+                                    key={getTableRenderKey(table, { index })}
+                                    onDelete={handleRequestDeleteTable}
+                                    onEdit={handleEditTable}
+                                    onSeatClick={handleSeatClick}
+                                    onUnassignSeat={handleRemoveGuestFromSeat}
+                                    reveal={false}
+                                    table={table}
+                                  />
+                                ))}
+                              </div>
+                              {!items.length && (
+                                <div className="md:hidden">
+                                  <TablesEmptyState />
+                                </div>
+                              )}
+                            </>
+                          )}
+                        />
 
                         <Pagination
                           isMobileList={isMobileList}
@@ -981,6 +995,36 @@ function SeatAssignmentDialog({
     : "";
   const canRemoveGuest = Boolean(currentGuest);
   const [selectedGuest, setSelectedGuest] = useState(currentGuestValue);
+  const [selectedGuestDirection, setSelectedGuestDirection] = useState(1);
+  const selectedGuestDetails = getGuestFromOptionValue(guests, selectedGuest);
+  const reduceMotion = useReducedMotion();
+  const selectedGuestDetailsVariants = reduceMotion
+    ? {
+        enter: { opacity: 0 },
+        center: { opacity: 1 },
+        exit: { opacity: 0 },
+      }
+    : {
+        enter: (direction) => ({
+          opacity: 0,
+          x: direction > 0 ? 72 : -72,
+          filter: "blur(6px)",
+        }),
+        center: { opacity: 1, x: 0, filter: "blur(0px)" },
+        exit: (direction) => ({
+          opacity: 0,
+          x: direction > 0 ? -72 : 72,
+          filter: "blur(6px)",
+        }),
+      };
+
+  const handleSelectedGuestChange = (nextValue) => {
+    const currentIndex = getGuestOptionIndex(guests, selectedGuest);
+    const nextIndex = getGuestOptionIndex(guests, nextValue);
+
+    setSelectedGuestDirection(nextIndex >= currentIndex ? 1 : -1);
+    setSelectedGuest(nextValue);
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -1000,18 +1044,51 @@ function SeatAssignmentDialog({
       onClose={onCancel}
       title={adminContent.tables.dialogs.assignmentTitle}
     >
-      {currentGuestName && (
-        <p className="mb-6 text-sm text-[var(--color-muted)]">
-          {adminContent.tables.dialogs.currentGuest(currentGuestName)}
-        </p>
-      )}
-
       <form noValidate onSubmit={handleSubmit}>
+        <div className="mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+          <div
+            className={`grid w-full gap-3 ${
+              canRemoveGuest ? "grid-cols-2" : "grid-cols-1"
+            }`}
+          >
+            {canRemoveGuest && (
+              <IconButton
+                className="w-full"
+                disabled={assigning}
+                icon={<Trash2 size={16} strokeWidth={1.8} />}
+                label={adminContent.tables.dialogs.remove}
+                onClick={onRemove}
+                tone="danger"
+                type="button"
+              >
+                {adminContent.tables.dialogs.remove}
+              </IconButton>
+            )}
+
+            <IconButton
+              className="w-full"
+              disabled={!selectedGuest || assigning}
+              icon={<Check size={16} strokeWidth={1.8} />}
+              label={
+                assigning
+                  ? adminContent.tables.dialogs.assigning
+                  : adminContent.tables.dialogs.assign
+              }
+              tone="primary"
+              type="submit"
+            >
+              {assigning
+                ? adminContent.tables.dialogs.assigning
+                : adminContent.tables.dialogs.assign}
+            </IconButton>
+          </div>
+        </div>
+
         <Label>{adminContent.tables.dialogs.guestLabel}</Label>
         <select
           className={selectClassName}
           disabled={assigning}
-          onChange={(event) => setSelectedGuest(event.target.value)}
+          onChange={(event) => handleSelectedGuestChange(event.target.value)}
           value={selectedGuest}
         >
           <option value="">
@@ -1037,56 +1114,45 @@ function SeatAssignmentDialog({
           })}
         </select>
 
-        <div
-          className={`mt-6 flex flex-col gap-4 sm:grid ${
-            canRemoveGuest ? "sm:grid-cols-3" : "sm:grid-cols-2"
-          }`}
-        >
-          {canRemoveGuest && (
-            <IconButton
-              disabled={assigning}
-              icon={<Trash2 size={16} strokeWidth={1.8} />}
-              label={adminContent.tables.dialogs.remove}
-              onClick={onRemove}
-              showText="always"
-              tone="danger"
-              type="button"
-            >
-              {adminContent.tables.dialogs.remove}
-            </IconButton>
-          )}
+        {selectedGuestDetails && (
+          <div className="relative mt-4 overflow-hidden">
+            <div aria-hidden="true" className="pointer-events-none invisible">
+              <SelectedGuestDetailsCard guest={selectedGuestDetails} />
+            </div>
 
-          <IconButton
-            disabled={!selectedGuest || assigning}
-            icon={<Check size={16} strokeWidth={1.8} />}
-            label={
-              assigning
-                ? adminContent.tables.dialogs.assigning
-                : adminContent.tables.dialogs.assign
-            }
-            showText="always"
-            tone="primary"
-            type="submit"
-          >
-            {assigning
-              ? adminContent.tables.dialogs.assigning
-              : adminContent.tables.dialogs.assign}
-          </IconButton>
-
-          <IconButton
-            disabled={assigning}
-            icon={<X size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.dialogs.cancel}
-            onClick={onCancel}
-            showText="always"
-            tone="terciary"
-            type="button"
-          >
-            {adminContent.tables.dialogs.cancel}
-          </IconButton>
-        </div>
+            <AnimatePresence custom={selectedGuestDirection} initial={false}>
+              <motion.div
+                animate="center"
+                className="absolute inset-x-0 top-0"
+                custom={selectedGuestDirection}
+                exit="exit"
+                initial="enter"
+                key={selectedGuest}
+                transition={{
+                  duration: reduceMotion ? 0.18 : 0.48,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                variants={selectedGuestDetailsVariants}
+              >
+                <SelectedGuestDetailsCard guest={selectedGuestDetails} />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        )}
       </form>
     </SeatAssignmentModal>
+  );
+}
+
+function SelectedGuestDetailsCard({ guest }) {
+  return (
+    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+      <p className="section-eyebrow mb-2">{guest.groupName || "Invitado"}</p>
+      <h3 className="break-words font-serif text-2xl leading-none text-[var(--color-text)]">
+        {Guest.getFullName(guest, "Invitado")}
+      </h3>
+      <GuestDetailChips className="mt-3" guest={guest} />
+    </div>
   );
 }
 
@@ -1240,15 +1306,31 @@ function TableCardWithActions({
 }) {
   return (
     <div className="grid gap-3">
-      <CardActions
-        className="grid grid-cols-2 gap-3"
-        deleteLabel={adminContent.tables.actions.deleteTable}
-        editLabel={adminContent.tables.actions.editTable}
-        item={table}
-        onDelete={onDelete}
-        onEdit={onEdit}
-        showText={false}
-      />
+      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+        <div className="grid w-full grid-cols-2 gap-3">
+          <IconButton
+            className="w-full"
+            icon={<Trash2 size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.actions.deleteTable}
+            onClick={() => onDelete(table)}
+            tone="danger"
+            type="button"
+          >
+            {adminContent.tables.actions.deleteTable}
+          </IconButton>
+
+          <IconButton
+            className="w-full"
+            icon={<Pencil size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.actions.editTable}
+            onClick={() => onEdit(table)}
+            tone="primary"
+            type="button"
+          >
+            {adminContent.tables.actions.editTable}
+          </IconButton>
+        </div>
+      </div>
       <TableAnimatedInfoCard
         index={index}
         onSeatClick={onSeatClick}
@@ -1399,4 +1481,38 @@ function getStableJson(value) {
 
 function createGuestOptionValue({ groupName, guestIndex = "", name }) {
   return `${groupName || ""}|||${guestIndex}|||${name || ""}`;
+}
+
+function getGuestFromOptionValue(guests, value) {
+  if (!value) return null;
+
+  const [guestGroupName, guestIndex, guestName] = value.split("|||");
+
+  return (
+    guests.find((guest) => {
+      if (guest.groupName !== guestGroupName) return false;
+
+      if (guestIndex !== "") {
+        return String(guest.guestIndex) === guestIndex;
+      }
+
+      return Guest.getFullName(guest, "Invitado") === guestName;
+    }) || null
+  );
+}
+
+function getGuestOptionIndex(guests, value) {
+  if (!value) return -1;
+
+  const [guestGroupName, guestIndex, guestName] = value.split("|||");
+
+  return guests.findIndex((guest) => {
+    if (guest.groupName !== guestGroupName) return false;
+
+    if (guestIndex !== "") {
+      return String(guest.guestIndex) === guestIndex;
+    }
+
+    return Guest.getFullName(guest, "Invitado") === guestName;
+  });
 }

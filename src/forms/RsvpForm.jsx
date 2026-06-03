@@ -1,21 +1,13 @@
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
-import {
-  ArrowLeft,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Save,
-  Trash2,
-  UserPlus,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Check, Save, Trash2, UserPlus, X } from "lucide-react";
 
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
 import { FieldError, FormCard } from "../components/rsvp/FormPrimitives";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import IconButton from "../components/ui/IconButton";
+import PaginatedContent from "../components/ui/PaginatedContent";
+import Pagination from "../components/ui/Pagination";
 import { MAX_GUESTS } from "../constants/rsvp";
 import { rsvpContent } from "../constants/rsvpContent";
 import { Guest } from "../models";
@@ -132,6 +124,7 @@ export default function RsvpForm({
               currentGuestPage={currentGuestPage}
               direction={guestPageDirection}
               errors={errors}
+              guests={guests}
               onGuestChange={onGuestChange}
               onGuestPageChange={handleGuestPageChange}
               onRemoveGuest={handleRemoveGuest}
@@ -145,7 +138,9 @@ export default function RsvpForm({
         {renderItem(
           2 + guests.length,
           <FormCard>
-            <p className="section-eyebrow mb-4">{rsvpContent.form.actionsEyebrow}</p>
+            <p className="section-eyebrow mb-4">
+              {rsvpContent.form.actionsEyebrow}
+            </p>
             <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
               <IconButton
                 className="order-3 sm:order-none"
@@ -198,7 +193,8 @@ export default function RsvpForm({
             context: deleteContextText,
             guestName: guestDeleteName,
             guestNumber: guestDeleteTarget.index + 1,
-          })}          onCancel={() => setGuestDeleteTarget(null)}
+          })}
+          onCancel={() => setGuestDeleteTarget(null)}
           onConfirm={handleConfirmGuestDelete}
           title={rsvpContent.form.deleteGuestTitle}
         />
@@ -214,37 +210,13 @@ function GuestPager({
   currentGuestPage,
   direction,
   errors,
+  guests,
   onGuestChange,
   onGuestPageChange,
   onRemoveGuest,
   totalGuestPages,
   variant,
 }) {
-  const reduceMotion = useReducedMotion();
-  const variants = reduceMotion
-    ? {
-        enter: { opacity: 0 },
-        center: { opacity: 1 },
-        exit: { opacity: 0 },
-      }
-    : {
-        enter: (pageDirection) => ({
-          opacity: 0,
-          x: pageDirection > 0 ? 72 : -72,
-          filter: "blur(6px)",
-        }),
-        center: {
-          opacity: 1,
-          x: 0,
-          filter: "blur(0px)",
-        },
-        exit: (pageDirection) => ({
-          opacity: 0,
-          x: pageDirection > 0 ? -72 : 72,
-          filter: "blur(6px)",
-        }),
-      };
-
   return (
     <FormCard>
       <div className="flex items-center justify-between gap-4">
@@ -263,65 +235,41 @@ function GuestPager({
         )}
       </div>
 
-      <div className="relative overflow-hidden">
-        <AnimatePresence custom={direction} initial={false} mode="wait">
-          <motion.div
-            animate="center"
-            custom={direction}
-            exit="exit"
-            initial="enter"
-            key={`guest-${currentGuestIndex}`}
-            transition={{
-              duration: reduceMotion ? 0.18 : 0.48,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            variants={variants}
-          >
-            <GuestCard
-              canRemove={false}
-              card={false}
-              errors={errors}
-              guest={currentGuest}
-              index={currentGuestIndex}
-              onGuestChange={onGuestChange}
-              onRemoveGuest={() => {}}
-              showHeader={false}
-              variant={variant}
-            />
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      <PaginatedContent
+        allItems={guests}
+        direction={direction}
+        getKey={(guest, { index }) => `${index}-${Guest.getFullName(guest)}`}
+        page={currentGuestPage}
+        pageSize={1}
+        totalPages={totalGuestPages}
+        renderPage={(items, pageNumber) => (
+          <GuestCard
+            canRemove={false}
+            card={false}
+            errors={errors}
+            guest={items[0]}
+            index={pageNumber - 1}
+            onGuestChange={onGuestChange}
+            onRemoveGuest={() => {}}
+            showHeader={false}
+            variant={variant}
+          />
+        )}
+      />
 
-      <div className="mt-4 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-center">
-          {rsvpContent.form.guestPageLabel({ page: currentGuestPage, total: totalGuestPages })}
-        </p>
-
-        <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
-          <IconButton
-            className="w-full sm:w-auto"
-            disabled={currentGuestPage === 1}
-            icon={<ChevronLeft size={16} strokeWidth={1.8} />}
-            label={rsvpContent.form.previous}
-            onClick={() => onGuestPageChange(currentGuestPage - 1)}
-            tone="secondary"
-            type="button"
-          >
-            Anterior
-          </IconButton>
-          <IconButton
-            className="w-full sm:w-auto"
-            disabled={currentGuestPage === totalGuestPages}
-            icon={<ChevronRight size={16} strokeWidth={1.8} />}
-            label={rsvpContent.form.next}
-            onClick={() => onGuestPageChange(currentGuestPage + 1)}
-            tone="secondary"
-            type="button"
-          >
-            Siguiente
-          </IconButton>
-        </div>
-      </div>
+      <Pagination
+        className="mt-4"
+        label={rsvpContent.form.guestPageLabel({
+          page: currentGuestPage,
+          total: totalGuestPages,
+        })}
+        nextLabel={rsvpContent.form.next}
+        onNext={() => onGuestPageChange(currentGuestPage + 1)}
+        onPrev={() => onGuestPageChange(currentGuestPage - 1)}
+        page={currentGuestPage}
+        previousLabel={rsvpContent.form.previous}
+        totalPages={totalGuestPages}
+      />
     </FormCard>
   );
 }

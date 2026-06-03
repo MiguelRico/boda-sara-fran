@@ -44,29 +44,31 @@ export default function DeleteDialog({
         >
           {message}
         </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <IconButton
-            className="flex-1"
-            icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label={confirmText}
-            onClick={onConfirm}
-            showText="always"
-            tone="danger"
-            type="button"
-          >
-            {confirmText}
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<X size={16} strokeWidth={1.8} />}
-            label={cancelText}
-            onClick={onCancel}
-            showText="always"
-            tone="secondary"
-            type="button"
-          >
-            {cancelText}
-          </IconButton>
+        <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <IconButton
+              className="flex-1"
+              icon={<Trash2 size={16} strokeWidth={1.8} />}
+              label={confirmText}
+              onClick={onConfirm}
+              showText="always"
+              tone="danger"
+              type="button"
+            >
+              {confirmText}
+            </IconButton>
+            <IconButton
+              className="flex-1"
+              icon={<X size={16} strokeWidth={1.8} />}
+              label={cancelText}
+              onClick={onCancel}
+              showText="always"
+              tone="secondary"
+              type="button"
+            >
+              {cancelText}
+            </IconButton>
+          </div>
         </div>
       </div>
     </div>

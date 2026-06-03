@@ -29,9 +29,9 @@ import Card from "../components/admin/Card";
 import CardActions from "../components/admin/CardActions";
 import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
-import PagedList from "../components/admin/PagedList";
 import CardListSkeleton from "../components/ui/CardListSkeleton";
 import InfoLine from "../components/ui/InfoLine";
+import PaginatedContent from "../components/ui/PaginatedContent";
 import Pagination from "../components/ui/Pagination";
 import RsvpForm from "../forms/RsvpForm";
 import { MAX_GUESTS } from "../constants/rsvp";
@@ -165,8 +165,6 @@ export default function AdminGuests() {
     cancelPageLoading,
     handlePageChange,
     pageDirection,
-    pageLoading,
-    pageLoadingMinHeight,
   } = usePageTransition({
     currentPage,
     isMobileList,
@@ -315,122 +313,75 @@ export default function AdminGuests() {
                       {adminContent.guests.list.countLabel({ groups: pagedGroupCount, guests: pagedGuestCount })}
                     </p>
 
-                    <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
-                      <IconButton
-                        className="w-full"
-                        disabled={!rows.length}
-                        label={adminContent.guests.actions.export}
-                        tone="terciary"
-                        onClick={() => downloadGuestsCsv(rows)}
-                      >
-                        <Download size={16} strokeWidth={1.8} />
-                      </IconButton>
+                    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+                      <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
+                        <IconButton
+                          className="w-full"
+                          disabled={!rows.length}
+                          label={adminContent.guests.actions.export}
+                          tone="terciary"
+                          onClick={() => downloadGuestsCsv(rows)}
+                        >
+                          <Download size={16} strokeWidth={1.8} />
+                        </IconButton>
 
-                      <IconButton
-                        className="w-full"
-                        disabled={state.loading}
-                        label={adminContent.guests.actions.refresh}
-                        tone="secondary"
-                        onClick={loadGuests}
-                      >
-                        <RefreshCw
-                          className={state.loading ? "animate-spin" : ""}
-                          size={16}
-                          strokeWidth={1.8}
-                        />
-                      </IconButton>
+                        <IconButton
+                          className="w-full"
+                          disabled={state.loading}
+                          label={adminContent.guests.actions.refresh}
+                          tone="secondary"
+                          onClick={loadGuests}
+                        >
+                          <RefreshCw
+                            className={state.loading ? "animate-spin" : ""}
+                            size={16}
+                            strokeWidth={1.8}
+                          />
+                        </IconButton>
 
-                      <IconButton
-                        className="w-full"
-                        label={adminContent.guests.actions.create}
-                        tone="primary"
-                        onClick={() => setEditingGroup(createDraftGroup())}
-                      >
-                        <Plus size={18} strokeWidth={2.4} />
-                      </IconButton>
+                        <IconButton
+                          className="w-full"
+                          label={adminContent.guests.actions.create}
+                          tone="primary"
+                          onClick={() => setEditingGroup(createDraftGroup())}
+                        >
+                          <Plus size={18} strokeWidth={2.4} />
+                        </IconButton>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div
-                ref={tableStartRef}
-                style={
-                  pageLoadingMinHeight
-                    ? { minHeight: `${pageLoadingMinHeight}px` }
-                    : undefined
-                }
-              >
+              <div ref={tableStartRef}>
                 {state.loading ? (
                   <CardListSkeleton />
                 ) : (
                   <>
-                    <div className="relative">
-                      <div
-                        className={
-                          pageLoading
-                            ? "pointer-events-none opacity-0"
-                            : "opacity-100"
-                        }
-                      >
-                        <CardGrid
-                          className="hidden gap-4 md:grid lg:grid-cols-2"
-                          getKey={(row) => row.rowId}
-                          items={pagedRows}
-                          renderCard={(row) => (
-                            <AdminGuestConfirmationCard
-                              onDelete={setDeleteTarget}
-                              onEdit={(group) =>
-                                setEditingGroup(createDraftGroup(group))
-                              }
-                              row={row}
-                            />
-                          )}
+                    <PaginatedContent
+                      allItems={visibleRows}
+                      direction={pageDirection}
+                      getKey={(row) => row.rowId}
+                      page={currentPage}
+                      pageSize={isMobileList ? mobilePageSize : desktopPageSize}
+                      totalPages={totalPages}
+                      renderMeasurePage={(items) => (
+                        <AdminGuestPage
+                          items={items}
+                          onDelete={() => {}}
+                          onEdit={() => {}}
                         />
-
-                        <PagedList
-                          allItems={visibleRows}
-                          direction={pageDirection}
-                          getKey={(row) => row.rowId}
-                          items={pagedRows}
-                          page={currentPage}
-                          renderItem={(row) => (
-                            <AdminGuestConfirmationCard
-                              onDelete={setDeleteTarget}
-                              onEdit={(group) =>
-                                setEditingGroup(createDraftGroup(group))
-                              }
-                              row={row}
-                            />
-                          )}
-                          renderMeasureItem={(row) => (
-                            <AdminGuestConfirmationCard row={row} />
-                          )}
-                        />
-
-                        {!visibleRows.length && (
-                          <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
-                            <UsersRound
-                              className="mx-auto text-[var(--color-accent-dark)]"
-                              size={28}
-                              strokeWidth={1.7}
-                            />
-                            <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
-                              {adminContent.guests.list.emptyTitle}
-                            </p>
-                            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-                              {adminContent.guests.list.emptyText}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {pageLoading && (
-                        <div className="absolute inset-x-0 top-0 z-10">
-                          <CardListSkeleton />
-                        </div>
                       )}
-                    </div>
+                      renderPage={(items) => (
+                        <AdminGuestPage
+                          items={items}
+                          onDelete={setDeleteTarget}
+                          onEdit={(group) =>
+                            setEditingGroup(createDraftGroup(group))
+                          }
+                        />
+                      )}
+                    />
 
                     <Pagination
                       isMobileList={isMobileList}
@@ -545,6 +496,52 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
   );
 }
 
+function AdminGuestPage({ items, onDelete, onEdit }) {
+  return (
+    <>
+      <CardGrid
+        className="hidden gap-4 md:grid lg:grid-cols-2"
+        getKey={(row) => row.rowId}
+        items={items}
+        renderCard={(row) => (
+          <AdminGuestConfirmationCard
+            onDelete={onDelete}
+            onEdit={onEdit}
+            row={row}
+          />
+        )}
+      />
+
+      <div className="grid gap-4 md:hidden">
+        {items.map((row) => (
+          <AdminGuestConfirmationCard
+            key={row.rowId}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            row={row}
+          />
+        ))}
+      </div>
+
+      {!items.length && (
+        <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
+          <UsersRound
+            className="mx-auto text-[var(--color-accent-dark)]"
+            size={28}
+            strokeWidth={1.7}
+          />
+          <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
+            {adminContent.guests.list.emptyTitle}
+          </p>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+            {adminContent.guests.list.emptyText}
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
+
 function AdminGuestConfirmationCard({
   onDelete,
   onEdit,
@@ -555,13 +552,15 @@ function AdminGuestConfirmationCard({
   return (
     <Card
       actions={
-        <CardActions
-          className="grid w-full shrink-0 grid-cols-2 gap-3 sm:w-auto sm:flex sm:items-center sm:justify-end sm:gap-2"
-          item={row.group}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          showText={false}
-        />
+        <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+          <CardActions
+            className="grid w-full shrink-0 grid-cols-2 gap-3 sm:w-auto sm:flex sm:items-center sm:justify-end sm:gap-2"
+            item={row.group}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            showText={false}
+          />
+        </div>
       }
       decorativeText={row.groupSize}
       detail={`${row.email || "-"} · ${row.phone || "-"}`}

@@ -1,0 +1,110 @@
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+
+export default function PaginatedContent({
+  allItems = [],
+  className = "",
+  direction = 1,
+  getKey = (_item, { index }) => index,
+  page,
+  pageSize,
+  renderMeasurePage,
+  renderPage,
+  totalPages,
+}) {
+  const reduceMotion = useReducedMotion();
+  const measureRefs = useRef([]);
+  const [height, setHeight] = useState(null);
+  const pageGroups = useMemo(
+    () =>
+      Array.from({ length: totalPages }, (_, pageIndex) =>
+        allItems.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize),
+      ),
+    [allItems, pageSize, totalPages],
+  );
+  const currentItems = pageGroups[page - 1] || [];
+  const pageKey = `${page}-${currentItems
+    .map((item, index) => getKey(item, { index }))
+    .join("|")}`;
+  const variants = reduceMotion
+    ? {
+        enter: { opacity: 0 },
+        center: { opacity: 1 },
+        exit: { opacity: 0 },
+      }
+    : {
+        enter: (pageDirection) => ({
+          opacity: 0,
+          x: pageDirection > 0 ? 72 : -72,
+          filter: "blur(6px)",
+        }),
+        center: { opacity: 1, x: 0, filter: "blur(0px)" },
+        exit: (pageDirection) => ({
+          opacity: 0,
+          x: pageDirection > 0 ? -72 : 72,
+          filter: "blur(6px)",
+        }),
+      };
+
+  useLayoutEffect(() => {
+    const updateHeight = () => {
+      const nextHeight = measureRefs.current.reduce((max, node) => {
+        if (!node) return max;
+
+        return Math.max(max, Math.ceil(node.getBoundingClientRect().height));
+      }, 0);
+
+      setHeight((current) => {
+        if (!nextHeight) return current;
+        return Math.abs((current || 0) - nextHeight) < 1 ? current : nextHeight;
+      });
+    };
+
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+
+    return () => window.removeEventListener("resize", updateHeight);
+  }, [pageGroups, renderMeasurePage, renderPage]);
+
+  return (
+    <div
+      className={`relative overflow-hidden ${className}`}
+      style={height ? { minHeight: `${height}px`, height: `${height}px` } : undefined}
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-0 top-0 z-[-1] h-auto w-full opacity-0"
+        inert=""
+      >
+        {pageGroups.map((items, index) => (
+          <div
+            key={`measure-page-${index}`}
+            ref={(node) => {
+              measureRefs.current[index] = node;
+            }}
+          >
+            {(renderMeasurePage || renderPage)(items, index + 1)}
+          </div>
+        ))}
+      </div>
+
+      <AnimatePresence custom={direction} initial={false}>
+        <motion.div
+          animate="center"
+          className="absolute inset-x-0 top-0"
+          custom={direction}
+          exit="exit"
+          initial="enter"
+          key={pageKey}
+          transition={{
+            duration: reduceMotion ? 0.18 : 0.48,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+          variants={variants}
+        >
+          {renderPage(currentItems, page)}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}

@@ -133,7 +133,7 @@ export const adminContent = {
       assignmentTitle: "Asignar invitado",
       guestLabel: "Invitado",
       guestPlaceholder: "Seleccionar invitado",
-      currentGuest: (guestName) => `Actualmente asignado a ${guestName}.`,
+      currentGuest: (guestName) => `Asignado a ${guestName}.`,
       assignedTitle: "Asignados",
       unassignedTitle: "Sin asientos asignados",
       unassignedText: "No hay invitados asignados a esta mesa.",

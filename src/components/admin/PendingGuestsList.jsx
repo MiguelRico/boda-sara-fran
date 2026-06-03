@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  AlertCircle,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { AlertCircle, Check } from "lucide-react";
 
 import { adminContent } from "../../constants/adminContent";
 import { Table, Guest } from "../../models";
+import usePageTransition from "../../hooks/usePageTransition";
 import IconButton from "../ui/IconButton";
+import PaginatedContent from "../ui/PaginatedContent";
+import Pagination from "../ui/Pagination";
 import TableGuestCard from "./TableGuestCard";
 import { selectClassName, Label } from "../rsvp/FormPrimitives";
 
@@ -67,10 +65,11 @@ export default function PendingGuestsList({
 
   const totalPages = Math.max(Math.ceil(filteredGuests.length / pageSize), 1);
   const currentPage = Math.min(page, totalPages);
-  const pagedGuests = filteredGuests.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const { handlePageChange, pageDirection } = usePageTransition({
+    currentPage,
+    onPageChange: setPage,
+    totalPages,
+  });
 
   // Mesas con asientos disponibles
   const tablesWithSeats = useMemo(() => {
@@ -103,9 +102,7 @@ export default function PendingGuestsList({
         // Limpiar estado tras éxito
         setAssigningGuest(null);
       } catch (err) {
-        setError(
-          err.message || adminContent.tables.errors.assignTable,
-        );
+        setError(err.message || adminContent.tables.errors.assignTable);
         setAssigningGuest(null);
       }
     },
@@ -119,7 +116,8 @@ export default function PendingGuestsList({
           {adminContent.pendingGuests.emptyTitle}
         </p>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-          {adminContent.pendingGuests.emptyText}</p>
+          {adminContent.pendingGuests.emptyText}
+        </p>
       </div>
     );
   }
@@ -136,7 +134,9 @@ export default function PendingGuestsList({
       >
         <div className="mb-4">
           <div>
-            <p className="section-eyebrow mb-2">{adminContent.pendingGuests.filtersEyebrow}</p>
+            <p className="section-eyebrow mb-2">
+              {adminContent.pendingGuests.filtersEyebrow}
+            </p>
             <h3 className="font-serif text-3xl leading-none text-[var(--color-text)]">
               {adminContent.pendingGuests.title}
             </h3>
@@ -144,37 +144,37 @@ export default function PendingGuestsList({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <Label>{adminContent.pendingGuests.groupLabel}</Label>
-          <select
-            value={filters.group}
-            onChange={(e) => handleFilterChange("group", e.target.value)}
-            className={selectClassName}
-          >
-            <option value="">{adminContent.pendingGuests.allGroups}</option>
-            {availableGroups.map((group) => (
-              <option key={group} value={group}>
-                {group}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div>
+            <Label>{adminContent.pendingGuests.groupLabel}</Label>
+            <select
+              value={filters.group}
+              onChange={(e) => handleFilterChange("group", e.target.value)}
+              className={selectClassName}
+            >
+              <option value="">{adminContent.pendingGuests.allGroups}</option>
+              {availableGroups.map((group) => (
+                <option key={group} value={group}>
+                  {group}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <Label>{adminContent.pendingGuests.menuLabel}</Label>
-          <select
-            value={filters.menu}
-            onChange={(e) => handleFilterChange("menu", e.target.value)}
-            className={selectClassName}
-          >
-            <option value="">{adminContent.pendingGuests.allMenus}</option>
-            {availableMenus.map((menu) => (
-              <option key={menu} value={menu}>
-                {menu}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div>
+            <Label>{adminContent.pendingGuests.menuLabel}</Label>
+            <select
+              value={filters.menu}
+              onChange={(e) => handleFilterChange("menu", e.target.value)}
+              className={selectClassName}
+            >
+              <option value="">{adminContent.pendingGuests.allMenus}</option>
+              {availableMenus.map((menu) => (
+                <option key={menu} value={menu}>
+                  {menu}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </section>
 
@@ -198,66 +198,48 @@ export default function PendingGuestsList({
         </div>
       ) : (
         <>
-          <div className="space-y-3">
-            {pagedGuests.map((guest, index) => (
-              <GuestAssignmentRow
-                key={`${guest.groupName}-${guest.name}-${index}`}
-                guest={guest}
+          <PaginatedContent
+            allItems={filteredGuests}
+            direction={pageDirection}
+            getKey={getGuestRowKey}
+            page={currentPage}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            renderMeasurePage={(items) => (
+              <PendingGuestsPage
+                assigningGuest=""
+                guests={items}
+                onAssign={() => {}}
                 tables={tablesWithSeats}
-                onAssign={handleAssign}
-                isAssigning={assigningGuest === getGuestRowKey(guest)}
               />
-            ))}
-          </div>
+            )}
+            renderPage={(items) => (
+              <PendingGuestsPage
+                assigningGuest={assigningGuest}
+                guests={items}
+                onAssign={handleAssign}
+                tables={tablesWithSeats}
+              />
+            )}
+          />
 
           {totalPages > 1 && (
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-[var(--color-muted)]">
-                {adminContent.pendingGuests.pageLabel({ page: currentPage, total: totalPages })}
-              </p>
-
-              <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
-                <IconButton
-                  className="w-full sm:w-auto"
-                  disabled={currentPage === 1}
-                  icon={<ChevronLeft size={16} strokeWidth={1.8} />}
-                  label={adminContent.pendingGuests.previous}
-                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                  showText
-                  tone="secondary"
-                  type="button"
-                >
-                  {adminContent.pendingGuests.previous}
-                </IconButton>
-                <IconButton
-                  className="w-full sm:w-auto"
-                  disabled={currentPage === totalPages}
-                  icon={<ChevronRight size={16} strokeWidth={1.8} />}
-                  label={adminContent.pendingGuests.next}
-                  onClick={() =>
-                    setPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  showText
-                  tone="secondary"
-                  type="button"
-                >
-                  {adminContent.pendingGuests.next}
-                </IconButton>
-              </div>
-            </div>
+            <Pagination
+              className="mt-4"
+              label={adminContent.pendingGuests.pageLabel({
+                page: currentPage,
+                total: totalPages,
+              })}
+              nextLabel={adminContent.pendingGuests.next}
+              onNext={() => handlePageChange(currentPage + 1)}
+              onPrev={() => handlePageChange(currentPage - 1)}
+              page={currentPage}
+              previousLabel={adminContent.pendingGuests.previous}
+              totalPages={totalPages}
+            />
           )}
         </>
       )}
-
-      {/* Resumen */}
-      <div className="rounded-2xl border border-[var(--color-border)] bg-white/30 p-4">
-        <p className="text-xs text-[var(--color-muted)]">
-          {adminContent.pendingGuests.showingLabel({
-            filtered: filteredGuests.length,
-            total: guests.length,
-          })}
-        </p>
-      </div>
     </div>
   );
 }
@@ -265,6 +247,22 @@ export default function PendingGuestsList({
 /**
  * Fila individual de invitado con selectores inline para mesa/asiento.
  */
+function PendingGuestsPage({ assigningGuest, guests, onAssign, tables }) {
+  return (
+    <div className="space-y-3">
+      {guests.map((guest) => (
+        <GuestAssignmentRow
+          guest={guest}
+          isAssigning={assigningGuest === getGuestRowKey(guest)}
+          key={getGuestRowKey(guest)}
+          onAssign={onAssign}
+          tables={tables}
+        />
+      ))}
+    </div>
+  );
+}
+
 function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
   const [selectedTable, setSelectedTable] = useState("");
   const [selectedSeat, setSelectedSeat] = useState("");
@@ -306,7 +304,9 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
               disabled={isAssigning}
               className={`${selectClassName} text-sm`}
             >
-              <option value="">{adminContent.pendingGuests.tablePlaceholder}</option>
+              <option value="">
+                {adminContent.pendingGuests.tablePlaceholder}
+              </option>
               {tables.map((table) => {
                 const emptySeats = Table.getEmptySeats(table);
                 const label = `${table.name} (${adminContent.pendingGuests.emptySeatsLabel(emptySeats.length)})`;
@@ -328,7 +328,9 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
               className={`${selectClassName} text-sm disabled:opacity-50`}
             >
               <option value="">
-                {selectedTable ? adminContent.pendingGuests.tablePlaceholder : adminContent.pendingGuests.selectTableFirst}
+                {selectedTable
+                  ? adminContent.pendingGuests.tablePlaceholder
+                  : adminContent.pendingGuests.selectTableFirst}
               </option>
               {availableSeats.map((seatNum) => (
                 <option key={seatNum} value={seatNum}>
@@ -348,12 +350,18 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
                 <Check size={16} strokeWidth={2} />
               )
             }
-            label={isAssigning ? adminContent.pendingGuests.assigning : adminContent.pendingGuests.assign}
+            label={
+              isAssigning
+                ? adminContent.pendingGuests.assigning
+                : adminContent.pendingGuests.assign
+            }
             onClick={handleAssignClick}
             showText="always"
             tone={canAssign ? "primary" : "default"}
           >
-            {isAssigning ? adminContent.pendingGuests.assigning : adminContent.pendingGuests.assign}
+            {isAssigning
+              ? adminContent.pendingGuests.assigning
+              : adminContent.pendingGuests.assign}
           </IconButton>
         </div>
       </div>
