@@ -149,8 +149,8 @@ export default function AdminStats() {
             />
           </CinematicStaggeredRevealItem>
 
-          {!state.loading && (
-            <CinematicStaggeredRevealItem index={3} isVisible={statsInView}>
+          <CinematicStaggeredRevealItem index={3} isVisible={statsInView}>
+            {!state.loading ? (
               <div className="grid gap-5 lg:grid-cols-2">
                 <DonutStatsCard
                   chartSize="sm"
@@ -165,8 +165,12 @@ export default function AdminStats() {
 
                 <TransportCard stats={stats} />
               </div>
-            </CinematicStaggeredRevealItem>
-          )}
+            ) : (
+              <div className="premium-card">
+                <AdminMetricGridSkeleton count={1} />
+              </div>
+            )}
+          </CinematicStaggeredRevealItem>
         </div>
       </CinematicSection>
 

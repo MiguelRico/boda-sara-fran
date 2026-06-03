@@ -19,7 +19,9 @@ export function AdminMetricGrid({
   const sizeKey = useMemo(
     () =>
       items
-        .map((item) => `${item.label}|${item.value}|${item.detail}|${item.emoji}`)
+        .map(
+          (item) => `${item.label}|${item.value}|${item.detail}|${item.emoji}`,
+        )
         .join("::"),
     [items],
   );
@@ -105,7 +107,7 @@ function getSummaryCardStyle(summarySize, shouldFitContent) {
 }
 
 export function AdminMetricGridSkeleton({
-  count = 6,
+  count = 3,
   className = DEFAULT_GRID_CLASS,
 }) {
   return (
