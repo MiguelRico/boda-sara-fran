@@ -1,6 +1,7 @@
 import { FormCard } from "./FormPrimitives";
 import { Plus } from "lucide-react";
 import IconButton from "../ui/IconButton";
+import { rsvpContent } from "../../constants/rsvpContent";
 
 export default function CreateInvitationCard({
   onCreateNew,
@@ -12,12 +13,12 @@ export default function CreateInvitationCard({
   return (
     <FormCard>
       <div className="mb-4">
-        <p className="section-eyebrow mb-3">Confirma tu invitación</p>
+        <p className="section-eyebrow mb-3">{rsvpContent.createInvitation.eyebrow}</p>
 
-        <h2 className="font-serif text-3xl">Confirmar asistencia</h2>
+        <h2 className="font-serif text-3xl">{rsvpContent.createInvitation.title}</h2>
 
         <p className={textClassName}>
-          Confirma tu asistencia y la de tu familia.
+          {rsvpContent.createInvitation.text}
         </p>
       </div>
 

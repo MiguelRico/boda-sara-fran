@@ -4,7 +4,7 @@ import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeroSection from "../components/home/HeroSection";
-import { siteContent } from "../config/siteContent";
+import { siteContent } from "../constants/siteContent";
 
 const homeCardIcons = {
   Ceremonia: HeartHandshake,

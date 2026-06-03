@@ -3,7 +3,7 @@ import { useInView } from "framer-motion";
 
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import HeaderSection from "../components/ui/HeaderSection";
-import { siteContent } from "../config/siteContent";
+import { siteContent } from "../constants/siteContent";
 import RsvpForm from "../forms/RsvpForm";
 import useRsvp from "../hooks/useRsvp";
 import useSpinner from "../hooks/useSpinner.js";

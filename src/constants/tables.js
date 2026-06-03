@@ -39,32 +39,7 @@ export const TABLE_GROUP_OPTIONS = [
 
 export const DEFAULT_TABLE_GROUP = TABLE_GROUP_OPTIONS[0]?.value || "";
 
-export const tableFormContent = {
-  eyebrow: "Crear mesa",
-  title: "Crear mesa",
-  submitText: "Guardar",
-  cancelText: "Cancelar",
-  fields: {
-    name: {
-      label: "Nombre de la mesa *",
-      placeholder: "Ej: Mesa 1",
-    },
-    group: {
-      label: "Grupo *",
-    },
-    shape: {
-      label: "Forma *",
-    },
-    seatCount: {
-      label: "Numero de asientos *",
-    },
-    notes: {
-      label: "Notas",
-      placeholder:
-        "Ej: Cerca de la pista, mesa infantil, indicaciones del catering...",
-    },
-  },
-};
+export const tableFormContent = tableContent.form;
 
 export const getTableGroupOption = (group) =>
   TABLE_GROUP_OPTIONS.find((option) => option.value === group) || null;
@@ -83,3 +58,4 @@ export const createEmptyTableForm = () => {
     seatCount: shapeOption.seatRange.min,
   };
 };
+import { tableContent } from "./tableContent";

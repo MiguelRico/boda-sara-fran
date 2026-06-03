@@ -8,6 +8,7 @@ import {
   OUTBOUND_BUS_OPTIONS,
   RETURN_BUS_OPTIONS,
 } from "../../constants/rsvp";
+import { rsvpContent } from "../../constants/rsvpContent";
 import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 
 export default function GuestCard({
@@ -42,13 +43,13 @@ export default function GuestCard({
       {showHeader && (
         <div className="flex items-center justify-between gap-4">
           <p className={`section-eyebrow ${canRemove ? "mb-0" : ""}`}>
-            Invitado {index + 1}
+            {rsvpContent.form.guestLabel(index + 1)}
           </p>
 
           {canRemove && (
             <IconButton
               icon={<Trash2 size={16} strokeWidth={1.8} />}
-              label={`Eliminar invitado ${index + 1}`}
+              label={rsvpContent.form.removeGuestLabel(index + 1)}
               onClick={() => onRemoveGuest(index)}
               tone="danger"
             />
@@ -58,7 +59,7 @@ export default function GuestCard({
 
       <div className="grid gap-5 md:grid-cols-2">
         <div>
-          <Label>Nombre *</Label>
+          <Label>{rsvpContent.guest.fields.name.label}</Label>
 
           <input
             type="text"
@@ -67,14 +68,14 @@ export default function GuestCard({
               onGuestChange(index, "name", event.target.value)
             }
             className={inputClassName}
-            placeholder="Ej: Sara"
+            placeholder={rsvpContent.guest.fields.name.placeholder}
           />
 
           <FieldError>{nameError}</FieldError>
         </div>
 
         <div>
-          <Label>Apellidos *</Label>
+          <Label>{rsvpContent.guest.fields.lastname.label}</Label>
 
           <input
             type="text"
@@ -83,7 +84,7 @@ export default function GuestCard({
               onGuestChange(index, "lastname", event.target.value)
             }
             className={inputClassName}
-            placeholder="Ej: García"
+            placeholder={rsvpContent.guest.fields.lastname.placeholder}
           />
 
           <FieldError>{lastnameError}</FieldError>
@@ -91,7 +92,7 @@ export default function GuestCard({
       </div>
 
       <div className="mt-4">
-        <Label>Menú *</Label>
+        <Label>{rsvpContent.guest.fields.menu.label}</Label>
 
         <div className="form-choice-group grid grid-cols-2 gap-3">
           {GUEST_MENU_OPTIONS.map((menuOption) => {
@@ -127,7 +128,7 @@ export default function GuestCard({
       </div>
 
       <div className="mt-4">
-        <Label>Notas</Label>
+        <Label>{rsvpContent.guest.fields.comments.label}</Label>
 
         <textarea
           rows={2}
@@ -136,7 +137,7 @@ export default function GuestCard({
             onGuestChange(index, "comments", event.target.value)
           }
           className={`${inputClassName} resize-none`}
-          placeholder="Cualquier indicación que debamos tener en cuenta"
+          placeholder={rsvpContent.guest.fields.comments.placeholder}
         />
 
         <FieldError>{commentsError}</FieldError>
@@ -176,8 +177,7 @@ export default function GuestCard({
               }}
             >
               <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
-                Indica cualquier necesidad alimentaria para que podamos tenerla
-                en cuenta.
+                {rsvpContent.guest.panels.allergies.text}
               </p>
               <div className="mt-4">
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -216,7 +216,7 @@ export default function GuestCard({
                   onChange={(event) =>
                     onGuestChange(index, "otherAllergies", event.target.value)
                   }
-                  placeholder="Otras notas alimentarias"
+                  placeholder={rsvpContent.guest.fields.otherAllergies.placeholder}
                   rows={3}
                   value={guest.otherAllergies}
                 />
@@ -260,12 +260,11 @@ export default function GuestCard({
               className="overflow-hidden"
             >
               <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
-                Tendremos autobús para facilitar el desplazamiento de ida y
-                vuelta.
+                {rsvpContent.guest.panels.bus.text}
               </p>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <BusSelect
-                  label="Autobús de ida"
+                  label={rsvpContent.guest.fields.outboundBus.label}
                   value={guest.outboundBus}
                   options={OUTBOUND_BUS_OPTIONS}
                   onChange={(value) =>
@@ -274,7 +273,7 @@ export default function GuestCard({
                 />
 
                 <BusSelect
-                  label="Autobús de vuelta"
+                  label={rsvpContent.guest.fields.returnBus.label}
                   value={guest.returnBus}
                   options={RETURN_BUS_OPTIONS}
                   onChange={(value) => onGuestChange(index, "returnBus", value)}
@@ -320,32 +319,32 @@ export default function GuestCard({
                 }}
               >
                 <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
-                  Datos internos para organizar la disposición de invitados.
+                  {rsvpContent.guest.panels.seating.text}
                 </p>
                 <div className="mt-4 grid gap-5 md:grid-cols-2">
                   <div>
-                    <Label>Mesa</Label>
+                    <Label>{rsvpContent.guest.fields.table.label}</Label>
 
                     <input
                       className={inputClassName}
                       onChange={(event) =>
                         onGuestChange(index, "table", event.target.value)
                       }
-                      placeholder="Ej: 4"
+                      placeholder={rsvpContent.guest.fields.table.placeholder}
                       type="text"
                       value={guest.table}
                     />
                   </div>
 
                   <div>
-                    <Label>Asiento</Label>
+                    <Label>{rsvpContent.guest.fields.seat.label}</Label>
 
                     <input
                       className={inputClassName}
                       onChange={(event) =>
                         onGuestChange(index, "seat", event.target.value)
                       }
-                      placeholder="Ej: 7"
+                      placeholder={rsvpContent.guest.fields.seat.placeholder}
                       type="text"
                       value={guest.seat}
                     />

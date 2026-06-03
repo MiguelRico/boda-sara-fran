@@ -6,6 +6,7 @@ import {
   inputClassName,
   Label,
 } from "./FormPrimitives";
+import { rsvpContent } from "../../constants/rsvpContent";
 
 export default function SearchInvitationCard({
   email,
@@ -21,22 +22,22 @@ export default function SearchInvitationCard({
   return (
     <FormCard className="mt-6">
       <div className="mb-4">
-        <p className="section-eyebrow mb-3">Buscar invitación</p>
+        <p className="section-eyebrow mb-3">{rsvpContent.searchInvitation.eyebrow}</p>
 
-        <h2 className="font-serif text-3xl">Modificar tu confirmación</h2>
+        <h2 className="font-serif text-3xl">{rsvpContent.searchInvitation.title}</h2>
 
         <p className={textClassName}>
-          Busca por email asociado a tu confirmación.
+          {rsvpContent.searchInvitation.text}
         </p>
       </div>
 
       <div className="mb-4">
-        <Label>Email</Label>
+        <Label>{rsvpContent.searchInvitation.emailLabel}</Label>
 
         <input
           className={inputClassName}
           onChange={(event) => onEmailChange(event.target.value)}
-          placeholder="Ej: ejemplo@email.com"
+          placeholder={rsvpContent.searchInvitation.emailPlaceholder}
           type="email"
           value={email}
         />

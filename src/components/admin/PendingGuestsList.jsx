@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { selectClassName, Label } from "../rsvp/FormPrimitives";
-import { Table, Guest } from "../../models";
-import IconButton from "../ui/IconButton";
-import TableGuestCard from "./TableGuestCard";
 import {
   AlertCircle,
   Check,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+
+import { adminContent } from "../../constants/adminContent";
+import { Table, Guest } from "../../models";
+import IconButton from "../ui/IconButton";
+import TableGuestCard from "./TableGuestCard";
+import { selectClassName, Label } from "../rsvp/FormPrimitives";
 
 /**
  * Lista de invitados sin mesa con filtros y selectores inline para asignar.
@@ -102,7 +104,7 @@ export default function PendingGuestsList({
         setAssigningGuest(null);
       } catch (err) {
         setError(
-          err.message || "No se pudo asignar la mesa. Intenta de nuevo.",
+          err.message || adminContent.tables.errors.assignTable,
         );
         setAssigningGuest(null);
       }
@@ -114,11 +116,10 @@ export default function PendingGuestsList({
     return (
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
         <p className="font-serif text-3xl text-[var(--color-accent-dark)]">
-          Sin invitados pendientes
+          {adminContent.pendingGuests.emptyTitle}
         </p>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-          Todos los invitados confirmados tienen mesa asignada. 🎉
-        </p>
+          {adminContent.pendingGuests.emptyText}</p>
       </div>
     );
   }
@@ -135,22 +136,22 @@ export default function PendingGuestsList({
       >
         <div className="mb-4">
           <div>
-            <p className="section-eyebrow mb-2">Filtros</p>
+            <p className="section-eyebrow mb-2">{adminContent.pendingGuests.filtersEyebrow}</p>
             <h3 className="font-serif text-3xl leading-none text-[var(--color-text)]">
-              Invitados pendientes
+              {adminContent.pendingGuests.title}
             </h3>
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label>Grupo de invitación</Label>
+          <Label>{adminContent.pendingGuests.groupLabel}</Label>
           <select
             value={filters.group}
             onChange={(e) => handleFilterChange("group", e.target.value)}
             className={selectClassName}
           >
-            <option value="">Todos los grupos</option>
+            <option value="">{adminContent.pendingGuests.allGroups}</option>
             {availableGroups.map((group) => (
               <option key={group} value={group}>
                 {group}
@@ -160,13 +161,13 @@ export default function PendingGuestsList({
         </div>
 
         <div>
-          <Label>Preferencia de menú</Label>
+          <Label>{adminContent.pendingGuests.menuLabel}</Label>
           <select
             value={filters.menu}
             onChange={(e) => handleFilterChange("menu", e.target.value)}
             className={selectClassName}
           >
-            <option value="">Todos los menús</option>
+            <option value="">{adminContent.pendingGuests.allMenus}</option>
             {availableMenus.map((menu) => (
               <option key={menu} value={menu}>
                 {menu}
@@ -192,7 +193,7 @@ export default function PendingGuestsList({
       {filteredGuests.length === 0 ? (
         <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center">
           <p className="text-sm text-[var(--color-muted)]">
-            No hay invitados que coincidan con los filtros.
+            {adminContent.pendingGuests.noFilterResults}
           </p>
         </div>
       ) : (
@@ -212,7 +213,7 @@ export default function PendingGuestsList({
           {totalPages > 1 && (
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-[var(--color-muted)]">
-                Página {currentPage} de {totalPages}
+                {adminContent.pendingGuests.pageLabel({ page: currentPage, total: totalPages })}
               </p>
 
               <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
@@ -220,19 +221,19 @@ export default function PendingGuestsList({
                   className="w-full sm:w-auto"
                   disabled={currentPage === 1}
                   icon={<ChevronLeft size={16} strokeWidth={1.8} />}
-                  label="Anterior"
+                  label={adminContent.pendingGuests.previous}
                   onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
                   showText
                   tone="secondary"
                   type="button"
                 >
-                  Anterior
+                  {adminContent.pendingGuests.previous}
                 </IconButton>
                 <IconButton
                   className="w-full sm:w-auto"
                   disabled={currentPage === totalPages}
                   icon={<ChevronRight size={16} strokeWidth={1.8} />}
-                  label="Siguiente"
+                  label={adminContent.pendingGuests.next}
                   onClick={() =>
                     setPage((prev) => Math.min(prev + 1, totalPages))
                   }
@@ -240,7 +241,7 @@ export default function PendingGuestsList({
                   tone="secondary"
                   type="button"
                 >
-                  Siguiente
+                  {adminContent.pendingGuests.next}
                 </IconButton>
               </div>
             </div>
@@ -251,15 +252,10 @@ export default function PendingGuestsList({
       {/* Resumen */}
       <div className="rounded-2xl border border-[var(--color-border)] bg-white/30 p-4">
         <p className="text-xs text-[var(--color-muted)]">
-          Mostrando{" "}
-          <span className="font-medium text-[var(--color-accent-dark)]">
-            {filteredGuests.length}
-          </span>{" "}
-          de{" "}
-          <span className="font-medium text-[var(--color-accent-dark)]">
-            {guests.length}
-          </span>{" "}
-          invitados pendientes
+          {adminContent.pendingGuests.showingLabel({
+            filtered: filteredGuests.length,
+            total: guests.length,
+          })}
         </p>
       </div>
     </div>
@@ -294,13 +290,13 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
   return (
     <TableGuestCard
       decorativeText="?"
-      eyebrow={guest.groupName || "Invitado pendiente"}
+      eyebrow={guest.groupName || adminContent.pendingGuests.pendingEyebrow}
       guest={guest}
     >
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:grid-cols-1">
           <div>
-            <Label>Mesa</Label>
+            <Label>{adminContent.pendingGuests.tableLabel}</Label>
             <select
               value={selectedTable}
               onChange={(e) => {
@@ -310,10 +306,10 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
               disabled={isAssigning}
               className={`${selectClassName} text-sm`}
             >
-              <option value="">Seleccionar</option>
+              <option value="">{adminContent.pendingGuests.tablePlaceholder}</option>
               {tables.map((table) => {
                 const emptySeats = Table.getEmptySeats(table);
-                const label = `${table.name} (${emptySeats.length} asientos libres)`;
+                const label = `${table.name} (${adminContent.pendingGuests.emptySeatsLabel(emptySeats.length)})`;
                 return (
                   <option key={table.name} value={table.name}>
                     {label}
@@ -324,7 +320,7 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
           </div>
 
           <div>
-            <Label>Asiento</Label>
+            <Label>{adminContent.pendingGuests.seatLabel}</Label>
             <select
               value={selectedSeat}
               onChange={(e) => setSelectedSeat(e.target.value)}
@@ -332,11 +328,11 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
               className={`${selectClassName} text-sm disabled:opacity-50`}
             >
               <option value="">
-                {selectedTable ? "Seleccionar" : "Selecciona una mesa"}
+                {selectedTable ? adminContent.pendingGuests.tablePlaceholder : adminContent.pendingGuests.selectTableFirst}
               </option>
               {availableSeats.map((seatNum) => (
                 <option key={seatNum} value={seatNum}>
-                  Asiento {seatNum}
+                  {adminContent.pendingGuests.seatOption(seatNum)}
                 </option>
               ))}
             </select>
@@ -352,12 +348,12 @@ function GuestAssignmentRow({ guest, tables, onAssign, isAssigning }) {
                 <Check size={16} strokeWidth={2} />
               )
             }
-            label={isAssigning ? "Asignando..." : "Asignar"}
+            label={isAssigning ? adminContent.pendingGuests.assigning : adminContent.pendingGuests.assign}
             onClick={handleAssignClick}
             showText="always"
             tone={canAssign ? "primary" : "default"}
           >
-            {isAssigning ? "Asignando..." : "Asignar"}
+            {isAssigning ? adminContent.pendingGuests.assigning : adminContent.pendingGuests.assign}
           </IconButton>
         </div>
       </div>

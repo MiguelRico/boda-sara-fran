@@ -14,6 +14,7 @@ import {
   TABLE_GROUP_OPTIONS,
   TABLE_SHAPE_OPTIONS,
 } from "../../constants/tables";
+import { tableContent } from "../../constants/tableContent";
 import {
   FieldError,
   FormCard,
@@ -187,12 +188,12 @@ export default function TableForm({
                   />
                   <div>
                     <p className="font-medium">
-                      Al reducir la mesa, se desasignaran los ultimos asientos:
+                      {tableContent.form.seatReductionWarning}
                     </p>
                     <ul className="mt-2 list-disc space-y-1 pl-5">
                       {seatReductionWarning.map((guest) => (
                         <li key={`${guest.seat}-${guest.name}`}>
-                          Asiento {guest.seat}: {guest.name}
+                          {tableContent.form.seatReductionItem(guest)}
                         </li>
                       ))}
                     </ul>

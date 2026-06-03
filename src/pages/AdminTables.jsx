@@ -4,41 +4,32 @@ import {
   useInView,
   useReducedMotion,
 } from "framer-motion";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
 import {
   Check,
-  ChevronLeft,
-  ChevronRight,
   CircleCheckBig,
   CircleDashed,
   Download,
   Grid2X2,
   Armchair,
-  Pencil,
   Plus,
-  RefreshCw,
   Save,
   Trash2,
   Undo2,
   X,
-  Home,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
-import { createEmptyTableForm } from "../constants/tables";
 import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
+import CardActions from "../components/admin/CardActions";
+import CardGrid from "../components/admin/CardGrid";
+import EditorDialog from "../components/admin/EditorDialog";
+import PagedList from "../components/admin/PagedList";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
 import TableForm from "../components/admin/TableForm";
 import CinematicPage from "../components/cinematic/CinematicPage";
@@ -50,6 +41,9 @@ import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import TabNavigation from "../components/ui/TabNavigation";
 import DeleteDialog from "../components/ui/DeleteDialog";
+import CardListSkeleton from "../components/ui/CardListSkeleton";
+import Pagination from "../components/ui/Pagination";
+import SeatAssignmentModal from "../components/ui/SeatAssignmentModal";
 import PendingGuestsList from "../components/admin/PendingGuestsList";
 import { Label, selectClassName } from "../components/rsvp/FormPrimitives";
 import { Guest } from "../models";
@@ -74,17 +68,18 @@ import {
 import { saveAdminGroup } from "../services/rsvpService";
 import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
+import usePagedData from "../hooks/usePagedData";
+import usePageTransition from "../hooks/usePageTransition";
+import { createEmptyTableForm } from "../constants/tables";
+import { getTableRenderKey } from "../utils/renderKeys";
+import { adminContent } from "../constants/adminContent";
+import { tableContent } from "../constants/tableContent";
+import { rsvpContent } from "../constants/rsvpContent";
 
 const ADMIN_ACTIVE_TAB_KEY = "admin-tables-active-tab";
-const SECTION_TABS = [
-  { id: "tables", label: "Mesas" },
-  { id: "pending", label: "Invitados Pendientes" },
-];
+const SECTION_TABS = adminContent.tables.tabs;
 const desktopPageSize = 4;
 const mobilePageSize = 1;
-const pageDataSwapDelay = 680;
-const pageRevealDelay = 160;
-const mobilePageHeightLockDelay = 560;
 const emptySavedSnapshot = {
   groups: [],
   manualTables: [],
@@ -96,42 +91,12 @@ const emptyState = {
 };
 const TABLE_METRIC_GRID_CLASS =
   "grid grid-cols-2 gap-3 sm:flex sm:items-start sm:justify-between";
-const tableEditorContent = {
-  eyebrow: "Mesa",
-  title: "Editar mesa",
-  submitText: "Guardar",
-  cancelText: "Cancelar",
-  fields: {
-    name: {
-      label: "Nombre de la mesa *",
-      placeholder: "Ej: Mesa 1",
-    },
-    group: {
-      label: "Grupo *",
-    },
-    shape: {
-      label: "Forma *",
-    },
-    seatCount: {
-      label: "Numero de asientos *",
-    },
-    notes: {
-      label: "Notas",
-      placeholder:
-        "Ej: Cerca de la pista, mesa infantil, indicaciones del catering...",
-    },
-  },
-};
 export default function AdminTables() {
   const spinner = useSpinner();
   const tablesRef = useRef(null);
   const tablesCardRef = useRef(null);
   const tablesStartRef = useRef(null);
   const manualTablesRef = useRef(null);
-  const pageLoadingTimeoutRef = useRef(null);
-  const pageRevealTimeoutRef = useRef(null);
-  const pageScrollStartFrameRef = useRef(null);
-  const pageScrollCancelRef = useRef(null);
   const tablesInView = useInView(tablesRef, {
     once: true,
     amount: 0.1,
@@ -150,10 +115,6 @@ export default function AdminTables() {
   const [seatAssignmentTarget, setSeatAssignmentTarget] = useState(null);
   const [assigningSeat, setAssigningSeat] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageDirection, setPageDirection] = useState(1);
-  const [isMobileList, setIsMobileList] = useState(false);
-  const [pageLoading, setPageLoading] = useState(false);
-  const [pageLoadingMinHeight, setPageLoadingMinHeight] = useState(null);
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
     useState(false);
   const [activeTab, setActiveTab] = useState(() => {
@@ -204,8 +165,7 @@ export default function AdminTables() {
         setState({
           groups: [],
           loading: false,
-          error:
-            "No se pudieron cargar las mesas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
+          error: adminContent.tables.errors.load,
         });
       }
     },
@@ -234,47 +194,29 @@ export default function AdminTables() {
     }
   }, [activeTab]);
 
-  useEffect(() => {
-    return () => {
-      if (pageLoadingTimeoutRef.current) {
-        window.clearTimeout(pageLoadingTimeoutRef.current);
-      }
-
-      if (pageRevealTimeoutRef.current) {
-        window.clearTimeout(pageRevealTimeoutRef.current);
-      }
-
-      if (pageScrollStartFrameRef.current) {
-        window.cancelAnimationFrame(pageScrollStartFrameRef.current);
-      }
-
-      pageScrollCancelRef.current?.();
-    };
-  }, []);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const updateIsMobileList = () => setIsMobileList(mediaQuery.matches);
-
-    updateIsMobileList();
-    mediaQuery.addEventListener("change", updateIsMobileList);
-
-    return () => {
-      mediaQuery.removeEventListener("change", updateIsMobileList);
-    };
-  }, []);
-
   const tables = useMemo(() => {
     return buildTables({ groups: state.groups, manualTables });
   }, [manualTables, state.groups]);
   const tableStats = useMemo(() => buildTableStats(tables), [tables]);
-  const pageSize = isMobileList ? mobilePageSize : desktopPageSize;
-  const totalPages = Math.max(Math.ceil(tables.length / pageSize), 1);
-  const currentPage = Math.min(page, totalPages);
-  const pagedTables = tables.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const {
+    currentPage,
+    isMobileList,
+    pageSize,
+    pagedItems: pagedTables,
+    totalPages,
+  } = usePagedData({
+    desktopPageSize,
+    items: tables,
+    mobilePageSize,
+    page,
+  });
+  const { handlePageChange, pageDirection, pageLoading, pageLoadingMinHeight } =
+    usePageTransition({
+      currentPage,
+      isMobileList,
+      onPageChange: setPage,
+      totalPages,
+    });
   const pagedTableCount = pagedTables.length;
   const pagedSeatCount = pagedTables.reduce(
     (total, table) => total + table.seats.length,
@@ -346,68 +288,6 @@ export default function AdminTables() {
         center: { opacity: 1, y: 0, filter: "blur(0px)" },
         exit: { opacity: 0, y: -12, filter: "blur(6px)" },
       };
-
-  const cancelPageLoading = () => {
-    if (pageLoadingTimeoutRef.current) {
-      window.clearTimeout(pageLoadingTimeoutRef.current);
-      pageLoadingTimeoutRef.current = null;
-    }
-
-    if (pageRevealTimeoutRef.current) {
-      window.clearTimeout(pageRevealTimeoutRef.current);
-      pageRevealTimeoutRef.current = null;
-    }
-
-    if (pageScrollStartFrameRef.current) {
-      window.cancelAnimationFrame(pageScrollStartFrameRef.current);
-      pageScrollStartFrameRef.current = null;
-    }
-
-    pageScrollCancelRef.current?.();
-    pageScrollCancelRef.current = null;
-
-    setPageLoading(false);
-    setPageLoadingMinHeight(null);
-  };
-
-  const handlePageChange = (nextPage) => {
-    const clampedPage = Math.min(Math.max(nextPage, 1), totalPages);
-
-    if (clampedPage === currentPage || pageLoading) return;
-
-    const tableElement = tablesStartRef.current;
-    const tableRect = tableElement?.getBoundingClientRect();
-    const tableHeight = tableRect?.height || null;
-    const direction = clampedPage > currentPage ? 1 : -1;
-
-    cancelPageLoading();
-
-    if (isMobileList) {
-      setPageLoadingMinHeight(tableHeight);
-      setPageDirection(direction);
-      setPage(clampedPage);
-      pageRevealTimeoutRef.current = window.setTimeout(() => {
-        setPageLoadingMinHeight(null);
-        pageRevealTimeoutRef.current = null;
-      }, mobilePageHeightLockDelay);
-
-      return;
-    }
-
-    setPageDirection(direction);
-    setPageLoadingMinHeight(tableHeight);
-    setPageLoading(true);
-    pageLoadingTimeoutRef.current = window.setTimeout(() => {
-      setPage(clampedPage);
-      pageLoadingTimeoutRef.current = null;
-
-      pageRevealTimeoutRef.current = window.setTimeout(() => {
-        setPageLoading(false);
-        setPageLoadingMinHeight(null);
-        pageRevealTimeoutRef.current = null;
-      }, pageRevealDelay);
-    }, pageDataSwapDelay);
-  };
 
   const handleTableFormChange = (field, value) => {
     setTableForm((current) => ({ ...current, [field]: value }));
@@ -502,29 +382,11 @@ export default function AdminTables() {
     setSeatAssignmentTarget(null);
   };
 
-  const handleRefreshTables = useCallback(async () => {
-    if (hasPendingChanges) {
-      setState((prev) => ({
-        ...prev,
-        error:
-          "Guarda o descarta los cambios pendientes antes de actualizar las mesas.",
-      }));
-      return;
-    }
-
-    try {
-      spinner.show("Actualizando mesas...");
-      await loadTables({ showLoading: false });
-    } finally {
-      spinner.hide();
-    }
-  }, [hasPendingChanges, loadTables, spinner]);
-
   const handleSavePendingChanges = async () => {
     if (!hasPendingChanges) return;
 
     try {
-      spinner.show("Guardando cambios...");
+      spinner.show(adminContent.tables.spinner.save);
 
       const persistencePromises = [
         persistAdminTables({
@@ -549,9 +411,7 @@ export default function AdminTables() {
       console.error("Error al guardar cambios de mesas:", error);
       setState((prev) => ({
         ...prev,
-        error:
-          error.message ||
-          "No se pudieron guardar los cambios. Intenta de nuevo.",
+        error: error.message || adminContent.tables.errors.save,
       }));
     } finally {
       spinner.hide();
@@ -607,8 +467,7 @@ export default function AdminTables() {
         console.error("Error al asignar mesa:", error);
         setState((prev) => ({
           ...prev,
-          error:
-            error.message || "No se pudo asignar la mesa. Intenta de nuevo.",
+          error: error.message || adminContent.tables.errors.assignTable,
         }));
         throw error;
       }
@@ -646,8 +505,7 @@ export default function AdminTables() {
       console.error("Error al asignar asiento:", error);
       setState((prev) => ({
         ...prev,
-        error:
-          error.message || "No se pudo asignar el asiento. Intenta de nuevo.",
+        error: error.message || adminContent.tables.errors.assign,
       }));
     } finally {
       setAssigningSeat(false);
@@ -679,8 +537,7 @@ export default function AdminTables() {
       console.error("Error al liberar asiento:", error);
       setState((prev) => ({
         ...prev,
-        error:
-          error.message || "No se pudo liberar el asiento. Intenta de nuevo.",
+        error: error.message || adminContent.tables.errors.unassign,
       }));
     } finally {
       setAssigningSeat(false);
@@ -766,10 +623,10 @@ export default function AdminTables() {
         <div ref={tablesRef}>
           <CinematicStaggeredRevealItem index={0} isVisible={tablesInView}>
             <HeaderSection
-              eyebrow="Panel privado"
-              title="Mesas"
+              eyebrow={adminContent.tables.header.adminEyebrow}
+              title={adminContent.tables.header.title}
               titleAs="h1"
-              text="Organización de mesas, asientos e invitados asignados."
+              text={adminContent.tables.header.text}
             />
           </CinematicStaggeredRevealItem>
 
@@ -781,7 +638,9 @@ export default function AdminTables() {
             <section className="premium-card" ref={tablesCardRef}>
               <div className="mb-5">
                 <div>
-                  <p className="section-eyebrow mb-2">Distribución</p>
+                  <p className="section-eyebrow mb-2">
+                    {adminContent.tables.header.eyebrow}
+                  </p>
                   <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
                     Asientos asignados
                   </h2>
@@ -806,37 +665,49 @@ export default function AdminTables() {
                     </p>
 
                     <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-                      <div className="grid w-full grid-cols-3 gap-3">
+                      <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
                         <IconButton
                           className="w-full"
                           disabled={!tables.length}
                           icon={<Download size={16} strokeWidth={1.8} />}
-                          label="Exportar tabla"
+                          label={adminContent.tables.header.exportTable}
                           onClick={() => downloadTablesCsv(tables)}
                           tone="terciary"
                         >
-                          Exportar tabla
+                          {adminContent.tables.header.exportTable}
                         </IconButton>
 
                         <IconButton
                           className="w-full"
                           icon={<Plus size={18} strokeWidth={2.4} />}
-                          label="Agregar mesa"
+                          label={adminContent.tables.actions.addTable}
                           onClick={handleCreateTable}
                           tone="secondary"
                         >
-                          Agregar mesa
+                          {adminContent.tables.actions.addTable}
+                        </IconButton>
+
+                        <IconButton
+                          className="w-full"
+                          disabled={!hasPendingChanges || state.loading}
+                          icon={<Undo2 size={16} strokeWidth={1.8} />}
+                          label={adminContent.tables.actions.discardChanges}
+                          onClick={handleDiscardPendingChanges}
+                          tone="terciary"
+                          type="button"
+                        >
+                          {adminContent.tables.actions.discardChanges}
                         </IconButton>
 
                         <IconButton
                           className="w-full"
                           disabled={!hasPendingChanges || spinner.loading}
                           icon={<Save size={16} strokeWidth={1.8} />}
-                          label="Guardar cambios"
+                          label={adminContent.tables.actions.saveChanges}
                           onClick={handleSavePendingChanges}
                           tone="primary"
                         >
-                          Guardar cambios
+                          {adminContent.tables.actions.saveChanges}
                         </IconButton>
                       </div>
                     </div>
@@ -871,7 +742,11 @@ export default function AdminTables() {
                     }
                   >
                     {state.loading ? (
-                      <TablesSkeleton />
+                      <CardListSkeleton
+                        columnsClassName="lg:grid-cols-2"
+                        itemClassName="min-h-40"
+                        lines={2}
+                      />
                     ) : (
                       <>
                         <div className="relative">
@@ -882,28 +757,59 @@ export default function AdminTables() {
                                 : "opacity-100"
                             }
                           >
-                            <TablesGrid
-                              onDelete={handleRequestDeleteTable}
-                              onEdit={handleEditTable}
-                              onSeatClick={handleSeatClick}
-                              onUnassignSeat={handleRemoveGuestFromSeat}
-                              tables={pagedTables}
+                            <CardGrid
+                              emptyState={<TablesEmptyState />}
+                              getKey={getTableRenderKey}
+                              items={pagedTables}
+                              renderCard={(table, index) => (
+                                <TableCardWithActions
+                                  index={index}
+                                  onDelete={handleRequestDeleteTable}
+                                  onEdit={handleEditTable}
+                                  onSeatClick={handleSeatClick}
+                                  onUnassignSeat={handleRemoveGuestFromSeat}
+                                  table={table}
+                                />
+                              )}
                             />
-                            <MobileTablesList
+                            <PagedList
+                              allItems={tables}
+                              className="bg-transparent"
                               direction={pageDirection}
-                              onDelete={handleRequestDeleteTable}
-                              onEdit={handleEditTable}
-                              onSeatClick={handleSeatClick}
-                              onUnassignSeat={handleRemoveGuestFromSeat}
+                              getKey={getTableRenderKey}
+                              itemClassName="absolute inset-x-0 top-0 grid gap-4"
+                              items={pagedTables}
                               page={currentPage}
-                              tables={pagedTables}
-                              allTables={tables}
+                              renderItem={(table) => (
+                                <TableCardWithActions
+                                  onDelete={handleRequestDeleteTable}
+                                  onEdit={handleEditTable}
+                                  onSeatClick={handleSeatClick}
+                                  onUnassignSeat={handleRemoveGuestFromSeat}
+                                  reveal={false}
+                                  table={table}
+                                />
+                              )}
+                              renderMeasureItem={(table) => (
+                                <TableCardWithActions
+                                  onDelete={() => {}}
+                                  onEdit={() => {}}
+                                  onSeatClick={() => {}}
+                                  onUnassignSeat={() => {}}
+                                  reveal={false}
+                                  table={table}
+                                />
+                              )}
                             />
                           </div>
 
                           {pageLoading && (
                             <div className="absolute inset-x-0 top-0 z-10">
-                              <TablesSkeleton />
+                              <CardListSkeleton
+                                columnsClassName="lg:grid-cols-2"
+                                itemClassName="min-h-40"
+                                lines={2}
+                              />
                             </div>
                           )}
                         </div>
@@ -912,8 +818,22 @@ export default function AdminTables() {
                           isMobileList={isMobileList}
                           page={currentPage}
                           totalPages={totalPages}
-                          onNext={() => handlePageChange(currentPage + 1)}
-                          onPrev={() => handlePageChange(currentPage - 1)}
+                          currentLabel={adminContent.tables.header.pageLabel}
+                          mobileLabel={
+                            adminContent.tables.header.mobilePageLabel
+                          }
+                          onNext={() =>
+                            handlePageChange(
+                              currentPage + 1,
+                              tablesStartRef.current,
+                            )
+                          }
+                          onPrev={() =>
+                            handlePageChange(
+                              currentPage - 1,
+                              tablesStartRef.current,
+                            )
+                          }
                         />
                       </>
                     )}
@@ -940,34 +860,29 @@ export default function AdminTables() {
               </AnimatePresence>
             </section>
           </CinematicStaggeredRevealItem>
-
-          <CinematicStaggeredRevealItem index={4} isVisible={tablesInView}>
-            <TablesPageActions
-              hasPendingChanges={hasPendingChanges}
-              loading={state.loading}
-              onDiscardChanges={handleDiscardPendingChanges}
-              onRefresh={handleRefreshTables}
-            />
-          </CinematicStaggeredRevealItem>
         </div>
       </CinematicSection>
 
       <StatusDialog
-        eyebrow="Aviso"
+        eyebrow={adminContent.tables.dialogs.warningEyebrow}
         message={state.error}
         onClose={() => setState((current) => ({ ...current, error: "" }))}
         open={Boolean(state.error)}
-        title="Ha ocurrido un problema"
+        title={adminContent.tables.dialogs.problemTitle}
         type="error"
       />
 
       {showTableForm && (
         <TableEditor
-          content={editingTable ? tableEditorContent : undefined}
+          content={editingTable ? tableContent.form : undefined}
           errors={tableFormErrors}
           form={tableForm}
           seatReductionWarning={tableSeatReductionWarning}
-          title={editingTable ? "Editar mesa" : "Crear mesa"}
+          title={
+            editingTable
+              ? adminContent.tables.dialogs.editTitle
+              : adminContent.tables.dialogs.createTitle
+          }
           onCancel={handleCloseTableForm}
           onChange={handleTableFormChange}
           onDelete={
@@ -981,10 +896,10 @@ export default function AdminTables() {
 
       {tableToDelete && (
         <DeleteDialog
-          title="Eliminar mesa"
-          message={`¿Estás seguro que deseas eliminar la mesa ${
-            tableToDelete.name
-          }? Esta acción liberará cualquier asiento asignado a esta mesa.`}
+          title={adminContent.tables.dialogs.deleteTitle}
+          message={adminContent.tables.dialogs.deleteMessage(
+            tableToDelete.name,
+          )}
           onCancel={handleCancelDeleteTable}
           onConfirm={handleConfirmDeleteTable}
         />
@@ -1016,51 +931,25 @@ function TableEditor({
   seatReductionWarning = [],
   title = "Crear mesa",
 }) {
-  useViewportScrollLock(true);
-
-  const dialog = (
-    <div className="rsvp-dialog-overlay">
-      <div
-        aria-labelledby="table-editor-title"
-        aria-modal="true"
-        className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-7"
-        role="dialog"
-      >
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
-            {/* <p className="section-eyebrow mb-2">Mesa</p> */}
-
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
-              <Armchair size={22} strokeWidth={1.8} />
-            </span>
-            <h2
-              className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
-              id="table-editor-title"
-            >
-              {title}
-            </h2>
-          </div>
-
-          <IconButton label="Cerrar" onClick={onCancel}>
-            <X size={17} strokeWidth={1.8} />
-          </IconButton>
-        </div>
-
-        <TableForm
-          content={content}
-          errors={errors}
-          form={form}
-          seatReductionWarning={seatReductionWarning}
-          onCancel={onCancel}
-          onChange={onChange}
-          onDelete={onDelete}
-          onSubmit={onSubmit}
-        />
-      </div>
-    </div>
+  return (
+    <EditorDialog
+      icon={<Armchair size={22} strokeWidth={1.8} />}
+      onClose={onCancel}
+      title={title}
+      titleId="table-editor-title"
+    >
+      <TableForm
+        content={content}
+        errors={errors}
+        form={form}
+        seatReductionWarning={seatReductionWarning}
+        onCancel={onCancel}
+        onChange={onChange}
+        onDelete={onDelete}
+        onSubmit={onSubmit}
+      />
+    </EditorDialog>
   );
-
-  return createPortal(dialog, document.body);
 }
 
 function SeatAssignmentDialog({
@@ -1072,8 +961,6 @@ function SeatAssignmentDialog({
   seat,
   table,
 }) {
-  useViewportScrollLock(true);
-
   const tableKey = table.name;
   const tableLabel = table.name;
   const currentGuest = guests.find(
@@ -1103,114 +990,104 @@ function SeatAssignmentDialog({
     onAssign({ guestGroupName, guestIndex, guestName });
   };
 
-  const dialog = (
-    <div className="rsvp-dialog-overlay">
-      <div
-        aria-labelledby="seat-assignment-title"
-        aria-modal="true"
-        className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-7"
-        role="dialog"
-      >
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <p className="section-eyebrow mb-2">
-              Mesa {tableLabel} - Asiento {seat.seat}
-            </p>
-            <h2
-              className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
-              id="seat-assignment-title"
-            >
-              Asignar invitado
-            </h2>
-            {currentGuestName && (
-              <p className="mt-3 text-sm text-[var(--color-muted)]">
-                Actualmente asignado a {currentGuestName}.
-              </p>
-            )}
-          </div>
+  return (
+    <SeatAssignmentModal
+      eyebrow={tableContent.card.seatAssignmentEyebrow({
+        seat: seat.seat,
+        table: tableLabel,
+      })}
+      maxWidthClassName="max-w-2xl"
+      onClose={onCancel}
+      title={adminContent.tables.dialogs.assignmentTitle}
+    >
+      {currentGuestName && (
+        <p className="mb-6 text-sm text-[var(--color-muted)]">
+          {adminContent.tables.dialogs.currentGuest(currentGuestName)}
+        </p>
+      )}
 
-          <IconButton disabled={assigning} label="Cerrar" onClick={onCancel}>
-            <X size={17} strokeWidth={1.8} />
-          </IconButton>
-        </div>
+      <form noValidate onSubmit={handleSubmit}>
+        <Label>{adminContent.tables.dialogs.guestLabel}</Label>
+        <select
+          className={selectClassName}
+          disabled={assigning}
+          onChange={(event) => setSelectedGuest(event.target.value)}
+          value={selectedGuest}
+        >
+          <option value="">
+            {adminContent.tables.dialogs.guestPlaceholder}
+          </option>
+          {guests.map((guest, index) => {
+            const guestName = Guest.getFullName(guest, "Invitado");
+            const assignmentText = Guest.getAssignmentText(guest);
 
-        <form noValidate onSubmit={handleSubmit}>
-          <Label>Invitado</Label>
-          <select
-            className={selectClassName}
-            disabled={assigning}
-            onChange={(event) => setSelectedGuest(event.target.value)}
-            value={selectedGuest}
-          >
-            <option value="">Seleccionar invitado</option>
-            {guests.map((guest, index) => {
-              const guestName = Guest.getFullName(guest, "Invitado");
-              const assignmentText = Guest.getAssignmentText(guest);
-
-              return (
-                <option
-                  key={`${guest.groupName}-${guestName}-${index}`}
-                  value={createGuestOptionValue({
-                    groupName: guest.groupName,
-                    guestIndex: guest.guestIndex,
-                    name: guestName,
-                  })}
-                >
-                  {guestName} - {guest.groupName}
-                  {assignmentText ? ` (${assignmentText})` : ""}
-                </option>
-              );
-            })}
-          </select>
-
-          <div
-            className={`mt-6 flex flex-col gap-4 sm:grid ${
-              canRemoveGuest ? "sm:grid-cols-3" : "sm:grid-cols-2"
-            }`}
-          >
-            {canRemoveGuest && (
-              <IconButton
-                disabled={assigning}
-                icon={<Trash2 size={16} strokeWidth={1.8} />}
-                label="Eliminar"
-                onClick={onRemove}
-                showText="always"
-                tone="secondary"
-                type="button"
+            return (
+              <option
+                key={`${guest.groupName}-${guestName}-${index}`}
+                value={createGuestOptionValue({
+                  groupName: guest.groupName,
+                  guestIndex: guest.guestIndex,
+                  name: guestName,
+                })}
               >
-                Eliminar
-              </IconButton>
-            )}
+                {guestName} - {guest.groupName}
+                {assignmentText ? ` (${assignmentText})` : ""}
+              </option>
+            );
+          })}
+        </select>
 
-            <IconButton
-              disabled={!selectedGuest || assigning}
-              icon={<Check size={16} strokeWidth={1.8} />}
-              label={assigning ? "Asignando..." : "Asignar invitado"}
-              showText="always"
-              tone="primary"
-              type="submit"
-            >
-              {assigning ? "Asignando..." : "Asignar invitado"}
-            </IconButton>
-
+        <div
+          className={`mt-6 flex flex-col gap-4 sm:grid ${
+            canRemoveGuest ? "sm:grid-cols-3" : "sm:grid-cols-2"
+          }`}
+        >
+          {canRemoveGuest && (
             <IconButton
               disabled={assigning}
-              icon={<X size={16} strokeWidth={1.8} />}
-              label="Cancelar"
-              onClick={onCancel}
+              icon={<Trash2 size={16} strokeWidth={1.8} />}
+              label={adminContent.tables.dialogs.remove}
+              onClick={onRemove}
               showText="always"
-              tone="terciary"
+              tone="secondary"
               type="button"
             >
-              Cancelar
+              {adminContent.tables.dialogs.remove}
             </IconButton>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+          )}
 
-  return createPortal(dialog, document.body);
+          <IconButton
+            disabled={!selectedGuest || assigning}
+            icon={<Check size={16} strokeWidth={1.8} />}
+            label={
+              assigning
+                ? adminContent.tables.dialogs.assigning
+                : adminContent.tables.dialogs.assign
+            }
+            showText="always"
+            tone="primary"
+            type="submit"
+          >
+            {assigning
+              ? adminContent.tables.dialogs.assigning
+              : adminContent.tables.dialogs.assign}
+          </IconButton>
+
+          <IconButton
+            disabled={assigning}
+            icon={<X size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.dialogs.cancel}
+            onClick={onCancel}
+            showText="always"
+            tone="terciary"
+            type="button"
+          >
+            {adminContent.tables.dialogs.cancel}
+          </IconButton>
+        </div>
+      </form>
+    </SeatAssignmentModal>
+  );
 }
 
 function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
@@ -1224,16 +1101,17 @@ function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
         className="premium-card rsvp-dialog-card"
         role="alertdialog"
       >
-        <p className="section-eyebrow mb-3">Cambios sin guardar</p>
+        <p className="section-eyebrow mb-3">
+          {adminContent.tables.dialogs.unsavedEyebrow}
+        </p>
         <h2
           className="font-serif text-3xl text-[var(--color-accent-dark)]"
           id="unsaved-table-changes-title"
         >
-          Se perderan los cambios
+          {adminContent.tables.dialogs.unsavedTitle}
         </h2>
         <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
-          Tienes cambios pendientes en mesas. Si sales ahora, no se enviaran a
-          Apps Script.
+          {adminContent.tables.dialogs.unsavedText}
         </p>
         <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
           {changes.map((change, index) => (
@@ -1249,35 +1127,35 @@ function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
           <IconButton
             className="flex-1"
             icon={<X size={16} strokeWidth={1.8} />}
-            label="Seguir editando"
+            label={adminContent.tables.dialogs.keepEditing}
             onClick={onCancel}
             showText="always"
             tone="secondary"
             type="button"
           >
-            Seguir editando
+            {adminContent.tables.dialogs.keepEditing}
           </IconButton>
           <IconButton
             className="flex-1"
             icon={<Undo2 size={16} strokeWidth={1.8} />}
-            label="Deshacer cambios"
+            label={adminContent.tables.actions.discardChanges}
             onClick={onDiscard}
             showText="always"
             tone="secondary"
             type="button"
           >
-            Deshacer cambios
+            {adminContent.tables.actions.discardChanges}
           </IconButton>
           <IconButton
             className="flex-1"
             icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label="Salir sin guardar"
+            label={adminContent.tables.dialogs.exitWithoutSaving}
             onClick={onConfirm}
             showText="always"
             tone="danger"
             type="button"
           >
-            Salir sin guardar
+            {adminContent.tables.dialogs.exitWithoutSaving}
           </IconButton>
         </div>
       </div>
@@ -1291,7 +1169,7 @@ function TablesOverview({ loading, stats }) {
   return (
     <section className="premium-card mt-4 mb-5">
       <h2 className="mb-5 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-        Mesas y asientos
+        {adminContent.tables.overview.title}
       </h2>
 
       {loading ? (
@@ -1309,119 +1187,44 @@ function TablesOverview({ loading, stats }) {
   );
 }
 
-function TablesPageActions({
-  hasPendingChanges,
-  loading,
-  onDiscardChanges,
-  onRefresh,
-}) {
-  return (
-    <section className="premium-card mt-5">
-      <p className="section-eyebrow mb-4">Acciones</p>
-      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <IconButton
-            className="w-full"
-            disabled={!hasPendingChanges || loading}
-            icon={<Undo2 size={16} strokeWidth={1.8} />}
-            label="Deshacer cambios"
-            onClick={onDiscardChanges}
-            showText="always"
-            tone="secondary"
-            type="button"
-          >
-            Deshacer cambios
-          </IconButton>
-          <IconButton
-            className="w-full"
-            disabled={loading}
-            icon={
-              <RefreshCw
-                className={loading ? "animate-spin" : ""}
-                size={16}
-                strokeWidth={1.8}
-              />
-            }
-            label="Actualizar"
-            onClick={onRefresh}
-            showText="always"
-            type="button"
-          >
-            Actualizar
-          </IconButton>
-
-          <IconButton
-            className="flex-1"
-            icon={<Home size={16} strokeWidth={1.8} />}
-            showText="always"
-            to="/admin"
-            tone="terciary"
-          >
-            Administracion
-          </IconButton>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function getTableSummaryItems(stats) {
   return [
     {
-      label: "Numero de mesas",
+      label: adminContent.tables.overview.metrics.tableCount,
       value: stats.totalTables,
-      detail: "Mesas",
+      detail: adminContent.tables.overview.metrics.tables,
       emoji: <Grid2X2 size={22} strokeWidth={1.8} />,
     },
     {
-      label: "Total asientos",
+      label: adminContent.tables.overview.metrics.seatCount,
       value: stats.totalSeats,
-      detail: "Asientos",
+      detail: adminContent.tables.overview.metrics.seats,
       emoji: <Armchair size={22} strokeWidth={1.8} />,
     },
     {
-      label: "Asientos asignados",
+      label: adminContent.tables.overview.metrics.assignedSeats,
       value: stats.assignedSeats,
-      detail: "Asignados",
+      detail: adminContent.tables.overview.metrics.assigned,
       emoji: <CircleCheckBig size={22} strokeWidth={1.8} />,
     },
     {
-      label: "Asientos pendientes",
+      label: adminContent.tables.overview.metrics.pendingSeats,
       value: stats.pendingSeats,
-      detail: "Pendientes",
+      detail: adminContent.tables.overview.metrics.pending,
       emoji: <CircleDashed size={22} strokeWidth={1.8} />,
     },
   ];
 }
 
-function TablesGrid({ onDelete, onEdit, onSeatClick, onUnassignSeat, tables }) {
-  if (!tables.length) {
-    return (
-      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
-        <p className="font-serif text-3xl text-[var(--color-accent-dark)]">
-          Sin mesas asignadas
-        </p>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-          Asigna mesa y asiento desde la edicion de invitados para ver aqui la
-          distribucion.
-        </p>
-      </div>
-    );
-  }
-
+function TablesEmptyState() {
   return (
-    <div className="hidden gap-4 md:grid lg:grid-cols-2">
-      {tables.map((table, index) => (
-        <TableCardWithActions
-          index={index}
-          key={getTableRenderKey(table)}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          onSeatClick={onSeatClick}
-          onUnassignSeat={onUnassignSeat}
-          table={table}
-        />
-      ))}
+    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
+      <p className="font-serif text-3xl text-[var(--color-accent-dark)]">
+        {adminContent.tables.empty.title}
+      </p>
+      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+        {adminContent.tables.empty.text}
+      </p>
     </div>
   );
 }
@@ -1437,7 +1240,15 @@ function TableCardWithActions({
 }) {
   return (
     <div className="grid gap-3">
-      <TableCardActions onDelete={onDelete} onEdit={onEdit} table={table} />
+      <CardActions
+        className="grid grid-cols-2 gap-3"
+        deleteLabel={adminContent.tables.actions.deleteTable}
+        editLabel={adminContent.tables.actions.editTable}
+        item={table}
+        onDelete={onDelete}
+        onEdit={onEdit}
+        showText={false}
+      />
       <TableAnimatedInfoCard
         index={index}
         onSeatClick={onSeatClick}
@@ -1447,185 +1258,6 @@ function TableCardWithActions({
       />
     </div>
   );
-}
-
-function TableCardActions({ onDelete, onEdit, table }) {
-  if (!onEdit && !onDelete) return null;
-
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {onDelete && (
-        <IconButton
-          className="w-full"
-          icon={<Trash2 size={16} strokeWidth={1.8} />}
-          label="Eliminar mesa"
-          onClick={() => onDelete(table)}
-          tone="danger"
-          type="button"
-        >
-          Eliminar mesa
-        </IconButton>
-      )}
-      {onEdit && (
-        <IconButton
-          className="w-full"
-          icon={<Pencil size={16} strokeWidth={1.8} />}
-          label="Editar mesa"
-          onClick={() => onEdit(table)}
-          tone="primary"
-          type="button"
-        >
-          Editar mesa
-        </IconButton>
-      )}
-    </div>
-  );
-}
-
-function MobileTablesList({
-  direction,
-  onDelete,
-  onEdit,
-  onSeatClick,
-  onUnassignSeat,
-  page,
-  tables,
-  allTables,
-}) {
-  const reduceMotion = useReducedMotion();
-  const cardRef = useRef(null);
-  const measureRefs = useRef([]);
-  const [cardMinHeight, setCardMinHeight] = useState(null);
-
-  useLayoutEffect(() => {
-    if (!allTables?.length) return undefined;
-
-    const updateCardHeight = () => {
-      const maxHeight = allTables.reduce((max, _, index) => {
-        const node = measureRefs.current[index];
-        if (!node) return max;
-
-        return Math.max(max, Math.ceil(node.getBoundingClientRect().height));
-      }, 0);
-
-      setCardMinHeight((currentHeight) => {
-        if (!maxHeight) return currentHeight;
-        return Math.abs((currentHeight || 0) - maxHeight) < 1
-          ? currentHeight
-          : maxHeight;
-      });
-    };
-
-    updateCardHeight();
-    window.addEventListener("resize", updateCardHeight);
-
-    return () => window.removeEventListener("resize", updateCardHeight);
-  }, [allTables]);
-
-  const variants = reduceMotion
-    ? {
-        enter: { opacity: 0 },
-        center: { opacity: 1 },
-        exit: { opacity: 0 },
-      }
-    : {
-        enter: (pageDirection) => ({
-          opacity: 0,
-          x: pageDirection > 0 ? 72 : -72,
-          filter: "blur(6px)",
-        }),
-        center: {
-          opacity: 1,
-          x: 0,
-          filter: "blur(0px)",
-        },
-        exit: (pageDirection) => ({
-          opacity: 0,
-          x: pageDirection > 0 ? -72 : 72,
-          filter: "blur(6px)",
-        }),
-      };
-
-  return (
-    <div
-      className="relative overflow-hidden md:hidden bg-transparent"
-      style={
-        cardMinHeight
-          ? {
-              minHeight: `${cardMinHeight}px`,
-              height: `${cardMinHeight}px`,
-            }
-          : {
-              undefined,
-            }
-      }
-    >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-0 top-0 z-[-1] h-auto w-full opacity-0 bg-transparent"
-        style={{ width: "100%" }}
-      >
-        {allTables?.map((table, index) => (
-          <div
-            key={`measure-${getTableRenderKey(table)}`}
-            ref={(node) => {
-              measureRefs.current[index] = node;
-            }}
-          >
-            <TableCardWithActions
-              onDelete={() => {}}
-              onEdit={() => {}}
-              onSeatClick={() => {}}
-              onUnassignSeat={() => {}}
-              reveal={false}
-              table={table}
-            />
-          </div>
-        ))}
-      </div>
-
-      <AnimatePresence custom={direction} initial={false}>
-        <motion.div
-          animate="center"
-          className="absolute inset-x-0 top-0 grid gap-4"
-          custom={direction}
-          exit="exit"
-          initial="enter"
-          key={`tables-page-${page}-${tables.map(getTableRenderKey).join("|")}`}
-          ref={cardRef}
-          transition={{
-            duration: reduceMotion ? 0.18 : 0.48,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          variants={variants}
-        >
-          {tables.map((table) => (
-            <TableCardWithActions
-              key={getTableRenderKey(table)}
-              onDelete={onDelete}
-              onEdit={onEdit}
-              onSeatClick={onSeatClick}
-              onUnassignSeat={onUnassignSeat}
-              reveal={false}
-              table={table}
-            />
-          ))}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function getTableRenderKey(table) {
-  const seatSignature = table.seats
-    .map((seat) => {
-      const guestName = seat.guest ? Guest.getFullName(seat.guest) : "";
-
-      return `${seat.seat}:${guestName}`;
-    })
-    .join(",");
-
-  return `${table.name}-${seatSignature}`;
 }
 
 function buildPendingTableChanges({
@@ -1657,18 +1289,18 @@ function buildManualTableChanges(savedTables, currentTables) {
     const savedTable = savedByKey.get(tableKey);
 
     if (!savedTable) {
-      changes.push(`Mesa creada: ${table.name}`);
+      changes.push(adminContent.tables.changes.created(table.name));
       return;
     }
 
     if (getStableJson(savedTable) !== getStableJson(table)) {
-      changes.push(`Mesa modificada: ${table.name}`);
+      changes.push(adminContent.tables.changes.modified(table.name));
     }
   });
 
   savedByKey.forEach((table, tableKey) => {
     if (tableKey && !currentByKey.has(tableKey)) {
-      changes.push(`Mesa eliminada: ${table.name}`);
+      changes.push(adminContent.tables.changes.deleted(table.name));
     }
   });
 
@@ -1692,7 +1324,10 @@ function buildSeatAssignmentChanges(savedGroups, currentGroups) {
       if (previousAssignment === currentAssignment) return;
 
       changes.push(
-        `${Guest.getFullName(guest, `Invitado ${index + 1}`)}: ${previousAssignment} -> ${currentAssignment}`,
+        `${Guest.getFullName(
+          guest,
+          rsvpContent.guest.fallbackName(index + 1),
+        )}: ${previousAssignment} -> ${currentAssignment}`,
       );
     });
   });
@@ -1714,9 +1349,9 @@ function getGuestAssignmentLabel(guest = {}) {
   const table = String(guest.table || "").trim();
   const seat = String(guest.seat || "").trim();
 
-  if (!table && !seat) return "Sin asiento";
+  if (!table && !seat) return adminContent.tables.changes.noSeat;
 
-  return `Mesa ${table || "-"}, asiento ${seat || "-"}`;
+  return adminContent.tables.changes.assignmentLabel({ seat, table });
 }
 
 function getGuestsUnassignedBySeatReduction(table, seatCount) {
@@ -1764,60 +1399,4 @@ function getStableJson(value) {
 
 function createGuestOptionValue({ groupName, guestIndex = "", name }) {
   return `${groupName || ""}|||${guestIndex}|||${name || ""}`;
-}
-
-function Pagination({ isMobileList, onNext, onPrev, page, totalPages }) {
-  return (
-    <div className="mt-5 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-center">
-        {isMobileList ? "Mesas" : "Pagina"} {page} de {totalPages}
-      </p>
-
-      <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
-        <IconButton
-          className="w-full sm:w-auto"
-          disabled={page === 1}
-          icon={<ChevronLeft size={16} strokeWidth={1.8} />}
-          label="Anterior"
-          onClick={onPrev}
-          showText
-          tone="secondary"
-          type="button"
-        >
-          Anterior
-        </IconButton>
-        <IconButton
-          className="w-full sm:w-auto"
-          disabled={page === totalPages}
-          icon={<ChevronRight size={16} strokeWidth={1.8} />}
-          label="Siguiente"
-          onClick={onNext}
-          showText
-          tone="secondary"
-          type="button"
-        >
-          Siguiente
-        </IconButton>
-      </div>
-    </div>
-  );
-}
-
-function TablesSkeleton() {
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div
-          className="min-h-40 animate-pulse rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-5"
-          key={index}
-        >
-          <div className="h-5 w-32 rounded-full bg-[var(--color-border)]" />
-          <div className="mt-5 space-y-3">
-            <div className="h-10 rounded-2xl bg-[var(--color-border)]" />
-            <div className="h-10 rounded-2xl bg-[var(--color-border)]" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 }

@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 
 import { Guest } from "../../models";
+import { rsvpContent } from "../../constants/rsvpContent";
+import Chip from "../ui/Chip";
 
 export default function TableGuestCard({
   children,
@@ -20,19 +22,22 @@ export default function TableGuestCard({
   titleRef,
   titleStyle,
 }) {
+  const normalizedGuest = Guest.normalize(guest);
   const guestName = title || Guest.getFullName(guest, "Invitado");
   const guestEmail = String(guest.email || "").trim();
   const guestPhone = String(guest.phone || "").trim();
   const guestMenu = String(guest.menu || "").trim();
-  const allergyText = formatGuestAllergies(guest);
-  const comments = String(guest.comments || "").trim();
-  const hasChips =
+  const allergies = normalizedGuest.allergies;
+  const otherAllergies = String(normalizedGuest.otherAllergies || "").trim();
+  const comments = String(normalizedGuest.comments || "").trim();
+  const hasSummaryChips = chips.length > 0;
+  const hasDetailChips =
     guestEmail ||
     guestPhone ||
     guestMenu ||
-    allergyText ||
-    comments ||
-    chips.length > 0;
+    allergies.length > 0 ||
+    otherAllergies ||
+    comments;
 
   return (
     <article
@@ -62,22 +67,40 @@ export default function TableGuestCard({
           </h3>
 
           <div className="mt-4 text-sm text-[var(--color-muted)]">
-            {hasChips && (
+            {hasSummaryChips && (
               <div className="flex flex-wrap gap-2 text-xs">
+                {chips.map((chip) => (
+                  <Chip
+                    icon={chip.icon}
+                    key={`${chip.label || ""}-${chip.value}`}
+                    strong={chip.strong}
+                    value={
+                      chip.label ? `${chip.label}: ${chip.value}` : chip.value
+                    }
+                  />
+                ))}
+              </div>
+            )}
+
+            {hasDetailChips && (
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 {guestEmail && (
-                  <TableGuestChip
+                  <Chip
+                    className="col-span-2 w-full"
                     icon={<Mail size={13} strokeWidth={1.8} />}
                     value={guestEmail}
                   />
                 )}
                 {guestPhone && (
-                  <TableGuestChip
+                  <Chip
+                    className="w-full"
                     icon={<Phone size={13} strokeWidth={1.8} />}
                     value={guestPhone}
                   />
                 )}
                 {guestMenu && (
-                  <TableGuestChip
+                  <Chip
+                    className="w-full"
                     icon={
                       <TableGuestMenuIcon
                         menu={guestMenu}
@@ -89,28 +112,30 @@ export default function TableGuestCard({
                     value={guestMenu}
                   />
                 )}
-                {allergyText && (
-                  <TableGuestChip
+                {allergies.map((allergy) => (
+                  <Chip
+                    className="w-full"
                     icon={<AlertTriangle size={13} strokeWidth={1.8} />}
-                    value={`Alergias: ${allergyText}`}
+                    key={allergy}
+                    value={allergy}
+                  />
+                ))}
+                {otherAllergies && (
+                  <Chip
+                    className="col-span-2 w-full items-start"
+                    icon={<AlertTriangle size={13} strokeWidth={1.8} />}
+                    value={`${rsvpContent.guest.chipLabels.otherAllergies}: ${otherAllergies}`}
+                    valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
                   />
                 )}
                 {comments && (
-                  <TableGuestChip
+                  <Chip
+                    className="col-span-2 w-full items-start"
                     icon={<MessageCircle size={13} strokeWidth={1.8} />}
-                    value={`Notas: ${comments}`}
+                    value={`${rsvpContent.guest.chipLabels.notes}: ${comments}`}
+                    valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
                   />
                 )}
-                {chips.map((chip) => (
-                  <TableGuestChip
-                    icon={chip.icon}
-                    key={`${chip.label || ""}-${chip.value}`}
-                    strong={chip.strong}
-                    value={
-                      chip.label ? `${chip.label}: ${chip.value}` : chip.value
-                    }
-                  />
-                ))}
               </div>
             )}
           </div>
@@ -120,35 +145,6 @@ export default function TableGuestCard({
       </div>
     </article>
   );
-}
-
-function TableGuestChip({ icon, strong = false, value }) {
-  return (
-    <span
-      className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 ${
-        strong
-          ? "border-[var(--color-border-strong)] bg-white/60 font-medium text-[var(--color-accent-dark)]"
-          : "border-[var(--color-border)] bg-white/45 text-[var(--color-muted)]"
-      }`}
-    >
-      <span className="shrink-0 text-[var(--color-accent-dark)]">{icon}</span>
-      <span className="truncate">{value}</span>
-    </span>
-  );
-}
-
-function formatGuestAllergies(guest) {
-  const normalizedGuest = Guest.normalize(guest);
-  const allergyText = normalizedGuest.allergies.length
-    ? normalizedGuest.allergies.join(", ")
-    : "";
-  const otherAllergies = String(normalizedGuest.otherAllergies || "").trim();
-
-  if (allergyText && otherAllergies) {
-    return `${allergyText}. ${otherAllergies}`;
-  }
-
-  return allergyText || otherAllergies;
 }
 
 function TableGuestMenuIcon({ menu, ...props }) {

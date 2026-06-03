@@ -3,7 +3,7 @@ import { useRef } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../cinematic/CinematicStaggeredRevealItem";
 import IconButton from "../ui/IconButton";
-import { siteContent } from "../../config/siteContent";
+import { siteContent } from "../../constants/siteContent";
 import { CalendarCheck, Home } from "lucide-react";
 
 export default function CtaSection() {

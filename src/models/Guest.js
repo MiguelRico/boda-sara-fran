@@ -1,9 +1,12 @@
 import { GUEST_MENU_OPTIONS } from "../constants/rsvp";
+import { rsvpContent } from "../constants/rsvpContent";
 
 const GUEST_DEFAULTS = {
+  email: "",
   groupName: "",
   name: "",
   lastname: "",
+  phone: "",
   allergies: [],
   otherAllergies: "",
   comments: "",
@@ -32,9 +35,11 @@ export const Guest = {
   create(overrides = {}) {
     return {
       ...GUEST_DEFAULTS,
+      email: normalizeString(overrides.email),
       groupName: normalizeString(overrides.groupName),
       name: normalizeString(overrides.name),
       lastname: normalizeString(overrides.lastname),
+      phone: normalizeString(overrides.phone),
       allergies: Array.isArray(overrides.allergies)
         ? [...overrides.allergies]
         : [],
@@ -90,7 +95,7 @@ export const Guest = {
   },
 
   getDisplayName(guest, index) {
-    return Guest.getFullName(guest, `Invitado ${index + 1}`);
+    return Guest.getFullName(guest, rsvpContent.guest.fallbackName(index + 1));
   },
 
   getAllergyText(guest) {
@@ -107,9 +112,12 @@ export const Guest = {
   getAssignmentText(guest) {
     const normalizedGuest = Guest.normalize(guest);
     const values = [
-      normalizedGuest.menu && `Menú ${normalizedGuest.menu}`,
-      normalizedGuest.table && `Mesa ${normalizedGuest.table}`,
-      normalizedGuest.seat && `Asiento ${normalizedGuest.seat}`,
+      normalizedGuest.menu &&
+        rsvpContent.guest.assignment.menu(normalizedGuest.menu),
+      normalizedGuest.table &&
+        rsvpContent.guest.assignment.table(normalizedGuest.table),
+      normalizedGuest.seat &&
+        rsvpContent.guest.assignment.seat(normalizedGuest.seat),
     ].filter(Boolean);
 
     return values.length ? values.join(" | ") : "";
@@ -187,19 +195,21 @@ export const Guest = {
     const errors = {};
 
     if (!normalizedGuest.name.trim()) {
-      errors[`guest_name_${index}`] = "El nombre es obligatorio";
+      errors[`guest_name_${index}`] = rsvpContent.validation.requiredName;
     }
 
     if (!normalizedGuest.lastname.trim()) {
-      errors[`guest_lastname_${index}`] = "Los apellidos son obligatorios";
+      errors[`guest_lastname_${index}`] =
+        rsvpContent.validation.requiredLastname;
     }
 
     if (!normalizedGuest.menu) {
-      errors[`guest_menu_${index}`] = "Selecciona Carne o Pescado";
+      errors[`guest_menu_${index}`] = rsvpContent.validation.requiredMenu;
     }
 
     if (normalizedGuest.comments.length > 300) {
-      errors[`guest_comments_${index}`] = "Máximo 300 caracteres";
+      errors[`guest_comments_${index}`] =
+        rsvpContent.validation.commentsMaxLength;
     }
 
     return errors;

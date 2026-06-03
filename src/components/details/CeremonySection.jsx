@@ -2,7 +2,7 @@ import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../ui/HeaderSection";
 import ImageCarousel from "../ui/ImageCarousel";
 import IconButton from "../ui/IconButton";
-import { siteContent } from "../../config/siteContent";
+import { siteContent } from "../../constants/siteContent";
 import { MapPin } from "lucide-react";
 
 export default function CeremonySection() {

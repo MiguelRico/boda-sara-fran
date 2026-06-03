@@ -3,7 +3,7 @@ import { CircleHelp, Mail, Phone } from "lucide-react";
 
 import IconButton from "../ui/IconButton";
 import StatusDialog from "../ui/StatusDialog";
-import { siteContent } from "../../config/siteContent";
+import { siteContent } from "../../constants/siteContent";
 
 function formatPhoneHref(phone) {
   const normalizedPhone = phone.replace(/[^\d+]/g, "");

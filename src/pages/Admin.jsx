@@ -26,7 +26,8 @@ import {
   inputClassName,
   Label,
 } from "../components/rsvp/FormPrimitives";
-import { siteContent } from "../config/siteContent";
+import { siteContent } from "../constants/siteContent";
+import { adminContent } from "../constants/adminContent";
 
 const adminCardIcons = {
   Invitados: ClipboardCheck,
@@ -86,7 +87,7 @@ export default function Admin() {
       return;
     }
 
-    setError("La contraseña no es correcta.");
+    setError(adminContent.auth.error);
   };
 
   return (
@@ -100,8 +101,8 @@ export default function Admin() {
           <CinematicStaggeredRevealItem index={0} isVisible={adminInView}>
             <HeaderSection
               className="mb-8"
-              eyebrow="Panel privado"
-              text="Acceso reservado para revisar y organizar las confirmaciones."
+              eyebrow={adminContent.auth.eyebrow}
+              text={adminContent.auth.headerText}
               title={siteContent.coupleName}
             />
           </CinematicStaggeredRevealItem>
@@ -146,12 +147,12 @@ function AdminLogin({
             </h2>
 
             <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-              Introduce la contraseña para entrar al panel de gestión.
+              {adminContent.auth.loginText}
             </p>
           </div>
         </div>
 
-        <Label>Contraseña</Label>
+        <Label>{adminContent.auth.passwordLabel}</Label>
 
         <input
           autoComplete="current-password"
@@ -160,7 +161,7 @@ function AdminLogin({
           onChange={(event) => {
             onPasswordChange(event.target.value);
           }}
-          placeholder="Contraseña privada"
+          placeholder={adminContent.auth.passwordPlaceholder}
           type="password"
           value={password}
         />

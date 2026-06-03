@@ -17,16 +17,17 @@ import { FieldError, FormCard } from "../components/rsvp/FormPrimitives";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import IconButton from "../components/ui/IconButton";
 import { MAX_GUESTS } from "../constants/rsvp";
+import { rsvpContent } from "../constants/rsvpContent";
 import { Guest } from "../models";
 
 const defaultRenderItem = (_index, children) => children;
 
 export default function RsvpForm({
-  addText = "Añadir",
-  cancelText = "Volver",
+  addText = rsvpContent.form.defaultAddText,
+  cancelText = rsvpContent.form.defaultCancelText,
   cancelTo,
   contact,
-  deleteContextText = "formulario",
+  deleteContextText = rsvpContent.form.defaultDeleteContext,
   disableContactFields = false,
   errors = {},
   formError = "",
@@ -39,7 +40,7 @@ export default function RsvpForm({
   onRemoveGuest,
   onSubmit,
   renderItem = defaultRenderItem,
-  submitText = "Confirmar",
+  submitText = rsvpContent.form.defaultSubmitText,
   variant = "public",
 }) {
   const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
@@ -144,7 +145,7 @@ export default function RsvpForm({
         {renderItem(
           2 + guests.length,
           <FormCard>
-            <p className="section-eyebrow mb-4">Acciones</p>
+            <p className="section-eyebrow mb-4">{rsvpContent.form.actionsEyebrow}</p>
             <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
               <IconButton
                 className="order-3 sm:order-none"
@@ -193,18 +194,13 @@ export default function RsvpForm({
 
       {guestDeleteTarget && (
         <DeleteDialog
-          message={
-            <>
-              Se eliminará{" "}
-              {guestDeleteName
-                ? `a ${guestDeleteName}`
-                : `el invitado ${guestDeleteTarget.index + 1}`}
-              . Esta acción no se puede deshacer desde el {deleteContextText}.
-            </>
-          }
-          onCancel={() => setGuestDeleteTarget(null)}
+          message={rsvpContent.form.deleteGuestMessage({
+            context: deleteContextText,
+            guestName: guestDeleteName,
+            guestNumber: guestDeleteTarget.index + 1,
+          })}          onCancel={() => setGuestDeleteTarget(null)}
           onConfirm={handleConfirmGuestDelete}
-          title="Eliminar invitado"
+          title={rsvpContent.form.deleteGuestTitle}
         />
       )}
     </>
@@ -253,13 +249,13 @@ function GuestPager({
     <FormCard>
       <div className="flex items-center justify-between gap-4">
         <p className={`section-eyebrow ${canRemove ? "mb-0" : ""}`}>
-          Invitado {currentGuestIndex + 1}
+          {rsvpContent.form.guestLabel(currentGuestIndex + 1)}
         </p>
 
         {canRemove && (
           <IconButton
             icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label={`Eliminar invitado ${currentGuestIndex + 1}`}
+            label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
             onClick={() => onRemoveGuest(currentGuest, currentGuestIndex)}
             tone="danger"
             type="button"
@@ -298,7 +294,7 @@ function GuestPager({
 
       <div className="mt-4 flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
         <p className="text-center">
-          Invitado {currentGuestPage} de {totalGuestPages}
+          {rsvpContent.form.guestPageLabel({ page: currentGuestPage, total: totalGuestPages })}
         </p>
 
         <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
@@ -306,7 +302,7 @@ function GuestPager({
             className="w-full sm:w-auto"
             disabled={currentGuestPage === 1}
             icon={<ChevronLeft size={16} strokeWidth={1.8} />}
-            label="Anterior"
+            label={rsvpContent.form.previous}
             onClick={() => onGuestPageChange(currentGuestPage - 1)}
             tone="secondary"
             type="button"
@@ -317,7 +313,7 @@ function GuestPager({
             className="w-full sm:w-auto"
             disabled={currentGuestPage === totalGuestPages}
             icon={<ChevronRight size={16} strokeWidth={1.8} />}
-            label="Siguiente"
+            label={rsvpContent.form.next}
             onClick={() => onGuestPageChange(currentGuestPage + 1)}
             tone="secondary"
             type="button"
