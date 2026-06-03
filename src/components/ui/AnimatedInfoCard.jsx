@@ -18,7 +18,7 @@ function InfoCard({
   const Component = to ? Link : "div";
   const componentProps = to ? { to } : {};
   const cardSizeClass = summaryView
-    ? "inline-flex w-full max-w-full items-center justify-center"
+    ? "inline-flex w-fit max-w-full items-center justify-center"
     : "block h-full";
 
   return (

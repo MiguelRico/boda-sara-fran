@@ -2,13 +2,13 @@ import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
-  AlertTriangle,
   BusFront,
   ClipboardCheck,
   MessageCircle,
   RefreshCw,
   Salad,
   UsersRound,
+  MailCheck,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -22,6 +22,7 @@ import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStagg
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
+import Chip from "../components/ui/Chip";
 import { COMMON_ALLERGIES } from "../constants/rsvp";
 import { Confirmation } from "../models";
 import { findAllGroups } from "../services/rsvpService";
@@ -59,7 +60,7 @@ const emptyState = {
   error: "",
 };
 const CONFIRMATIONS_METRIC_GRID_CLASS =
-  "grid grid-cols-4 gap-2 sm:flex sm:flex-wrap sm:items-start sm:justify-center sm:gap-4";
+  "flex flex-wrap justify-between gap-2 sm:items-start sm:justify-center sm:gap-4";
 const CONFIRMATIONS_METRIC_CARD_CLASS =
   "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-2 sm:p-5";
 
@@ -152,10 +153,13 @@ export default function AdminStats() {
             <CinematicStaggeredRevealItem index={3} isVisible={statsInView}>
               <div className="grid gap-5 lg:grid-cols-2">
                 <DonutStatsCard
+                  chartSize="sm"
+                  compact
                   emptyText="Sin alergias registradas"
                   backgroundIcon={<Salad size={74} strokeWidth={1.5} />}
                   icon={<Salad size={22} strokeWidth={1.8} />}
                   items={stats.allergiesByType}
+                  legendVariant="chips"
                   title="Alergias"
                 />
 
@@ -225,45 +229,36 @@ function StatsOverview({ loading, onRefresh, stats }) {
 function getSummaryItems(stats) {
   return [
     {
-      label: "Total confirmaciones",
+      label: "Recibidas",
       value: stats.totalGroups,
       detail: "Recibidas",
-      emoji: <ClipboardCheck size={22} strokeWidth={1.8} />,
+      emoji: <MailCheck size={22} strokeWidth={1.8} />,
     },
     {
-      label: "Total de personas",
+      label: "Personas",
       value: stats.totalGuests,
       detail: "Personas",
       emoji: <UsersRound size={22} strokeWidth={1.8} />,
     },
     {
-      label: "Personas con alergias",
-      value: stats.guestsWithAllergies,
-      detail: "Alergias",
-      emoji: <Salad size={22} strokeWidth={1.8} />,
-    },
-    {
-      label: "Con otras alergias",
-      value: stats.guestsWithOtherAllergies,
-      detail: "Otras...",
-      emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
-    },
-    {
-      label: "Con notas",
+      label: "Notas",
       value: `${stats.guestsWithComments}`,
       detail: "Notas",
       emoji: <MessageCircle size={22} strokeWidth={1.8} />,
     },
-    {
-      label: "Usan transporte",
-      value: `${stats.guestsUsingBus}`,
-      detail: "Autobús",
-      emoji: <BusFront size={22} strokeWidth={1.8} />,
-    },
   ];
 }
 
-function DonutStatsCard({ backgroundIcon, emptyText, icon, items, title }) {
+function DonutStatsCard({
+  backgroundIcon,
+  chartSize = "md",
+  compact = false,
+  emptyText,
+  icon,
+  items,
+  legendVariant = "list",
+  title,
+}) {
   const [hoveredLabel, setHoveredLabel] = useState("");
   const [selectedLabel, setSelectedLabel] = useState("");
   const activeLabel = hoveredLabel || selectedLabel;
@@ -273,21 +268,39 @@ function DonutStatsCard({ backgroundIcon, emptyText, icon, items, title }) {
   }, []);
 
   return (
-    <article className="premium-card relative overflow-hidden">
-      <CardHeader backgroundIcon={backgroundIcon} icon={icon} title={title} />
+    <article
+      className={`premium-card relative overflow-hidden ${
+        compact ? "p-4 sm:p-5" : ""
+      }`}
+    >
+      <CardHeader
+        backgroundIcon={backgroundIcon}
+        compact={compact}
+        icon={icon}
+        title={title}
+      />
 
       {items.length ? (
-        <div className="grid items-center gap-6 sm:grid-cols-[minmax(168px,0.8fr)_1fr]">
+        <div
+          className={`grid items-center ${
+            compact
+              ? "gap-4 sm:grid-cols-[minmax(132px,0.7fr)_1fr]"
+              : "gap-6 sm:grid-cols-[minmax(168px,0.8fr)_1fr]"
+          }`}
+        >
           <DonutChart
             activeLabel={activeLabel}
             items={items}
             onHoverLabel={setHoveredLabel}
             onSelectLabel={handleSelectLabel}
             selectedLabel={selectedLabel}
+            size={chartSize}
           />
           <ChartLegend
             activeLabel={activeLabel}
+            compact={compact}
             items={items}
+            variant={legendVariant}
             onHoverLabel={setHoveredLabel}
             onSelectLabel={handleSelectLabel}
             selectedLabel={selectedLabel}
@@ -358,18 +371,30 @@ function TransportGroup({ items, title }) {
   );
 }
 
-function CardHeader({ backgroundIcon, icon, title }) {
+function CardHeader({ backgroundIcon, compact = false, icon, title }) {
   return (
-    <div className="relative mb-6 flex items-center gap-3">
+    <div
+      className={`relative flex items-center gap-3 ${
+        compact ? "mb-4" : "mb-6"
+      }`}
+    >
       <div className="pointer-events-none absolute -right-2 -top-5 text-[var(--color-accent-dark)] opacity-[0.08]">
         {backgroundIcon || icon}
       </div>
 
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/70 text-[var(--color-accent-dark)]">
+      <span
+        className={`flex shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/70 text-[var(--color-accent-dark)] ${
+          compact ? "h-9 w-9" : "h-11 w-11"
+        }`}
+      >
         {icon}
       </span>
 
-      <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+      <h2
+        className={`font-serif leading-none text-[var(--color-accent-dark)] ${
+          compact ? "text-3xl" : "text-4xl"
+        }`}
+      >
         {title}
       </h2>
     </div>
@@ -514,6 +539,7 @@ function ChartLegend({
   onHoverLabel,
   onSelectLabel,
   selectedLabel,
+  variant = "list",
 }) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
   const handleHoverLabel = (label) => {
@@ -521,6 +547,51 @@ function ChartLegend({
       onHoverLabel(label);
     }
   };
+
+  if (variant === "chips") {
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        {items.map((item, index) => {
+          const color = colors[index % colors.length];
+          const isActive = activeLabel === item.label;
+          const isSelected = selectedLabel === item.label;
+          const percentage = total ? Math.round((item.value / total) * 100) : 0;
+
+          return (
+            <button
+              className="min-w-0 cursor-pointer select-none rounded-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-dark)]/35"
+              key={item.label}
+              onClick={() => onSelectLabel(item.label)}
+              onMouseEnter={() => handleHoverLabel(item.label)}
+              onMouseLeave={() => handleHoverLabel("")}
+              onMouseDown={(event) => event.preventDefault()}
+              type="button"
+            >
+              <Chip
+                className={`w-full transition-all duration-200 ${
+                  isSelected
+                    ? "bg-white/85 shadow-md ring-1 ring-[var(--color-border-strong)]"
+                    : isActive
+                      ? "bg-white/65 shadow-sm"
+                      : ""
+                }`}
+                strong={isSelected}
+                value={`${item.label}: ${item.value}${
+                  total > 0 ? ` (${percentage}%)` : ""
+                }`}
+                valueClassName="min-w-0 truncate text-[0.7rem] leading-tight sm:text-xs"
+              />
+              <span
+                aria-hidden="true"
+                className="mx-auto mt-1 block h-1 w-10 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className={`select-none ${compact ? "space-y-2" : "space-y-3"}`}>

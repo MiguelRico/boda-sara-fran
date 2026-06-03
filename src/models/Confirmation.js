@@ -1,4 +1,5 @@
 import { Guest } from "./Guest";
+import { rsvpContent } from "../constants/rsvpContent";
 
 const CONFIRMATION_DEFAULTS = {
   groupName: "",
@@ -365,7 +366,9 @@ export const Confirmation = {
 
     return {
       allergyRate: getRate(guestsWithAllergies, totalGuests),
-      allergiesByType: Confirmation.buildAllergyStats(guests, allergies),
+      allergiesByType: Confirmation.buildAllergyStats(guests, allergies, {
+        otherAllergiesLabel: rsvpContent.guest.chipLabels.otherAllergies,
+      }),
       busRate: getRate(guestsUsingBus, totalGuests),
       commentsRate: getRate(guestsWithComments, totalGuests),
       guestsWithAllergies,
@@ -388,14 +391,25 @@ export const Confirmation = {
     };
   },
 
-  buildAllergyStats(guests, allergies) {
-    return allergies
+  buildAllergyStats(guests, allergies, { otherAllergiesLabel = "" } = {}) {
+    const allergyItems = allergies
       .map((allergy) => ({
         label: allergy,
         value: guests.filter((guest) => Guest.hasAllergy(guest, allergy))
           .length,
       }))
       .filter((item) => item.value > 0);
+    const otherAllergiesCount = guests.filter(Guest.hasOtherAllergies).length;
+
+    if (!otherAllergiesLabel || !otherAllergiesCount) return allergyItems;
+
+    return [
+      ...allergyItems,
+      {
+        label: otherAllergiesLabel,
+        value: otherAllergiesCount,
+      },
+    ];
   },
 
   buildBusStats(guests, options, field) {

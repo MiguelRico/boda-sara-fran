@@ -90,7 +90,7 @@ const emptyState = {
   error: "",
 };
 const TABLE_METRIC_GRID_CLASS =
-  "grid grid-cols-4 gap-2 sm:flex sm:items-start sm:justify-between sm:gap-3";
+  "flex flex-wrap justify-between gap-2 sm:items-start sm:gap-3";
 export default function AdminTables() {
   const spinner = useSpinner();
   const tablesRef = useRef(null);
@@ -1049,7 +1049,7 @@ function SeatAssignmentDialog({
               label={adminContent.tables.dialogs.remove}
               onClick={onRemove}
               showText="always"
-              tone="secondary"
+              tone="danger"
               type="button"
             >
               {adminContent.tables.dialogs.remove}

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import AnimatedInfoCard from "../ui/AnimatedInfoCard";
 
 const DEFAULT_GRID_CLASS =
-  "grid grid-cols-4 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6";
+  "flex flex-wrap justify-between gap-2 sm:grid sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6";
 const DEFAULT_CARD_CLASS =
   "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-2 sm:p-5";
 
@@ -64,7 +64,7 @@ export function AdminMetricGrid({
     <div className={className}>
       {items.map((item, index) => (
         <div
-          className="flex min-w-0 justify-center"
+          className="flex min-w-0 basis-[calc(25%-0.375rem)] justify-center sm:basis-auto"
           key={item.label}
           ref={(node) => {
             itemRefs.current[index] = node;
