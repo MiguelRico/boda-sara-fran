@@ -117,8 +117,6 @@ export const adminContent = {
       addTable: "Agregar mesa",
       saveChanges: "Guardar cambios",
       discardChanges: "Deshacer cambios",
-      refresh: "Actualizar",
-      admin: "Administracion",
       editTable: "Editar mesa",
       deleteTable: "Eliminar mesa",
     },
@@ -169,13 +167,10 @@ export const adminContent = {
       },
     },
     spinner: {
-      refresh: "Actualizando mesas...",
       save: "Guardando cambios...",
     },
     errors: {
       load: "No se pudieron cargar las mesas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
-      refreshWithPending:
-        "Guarda o descarta los cambios pendientes antes de actualizar las mesas.",
       save: "No se pudieron guardar los cambios. Intenta de nuevo.",
       assign: "No se pudo asignar el asiento. Intenta de nuevo.",
       assignTable: "No se pudo asignar la mesa. Intenta de nuevo.",

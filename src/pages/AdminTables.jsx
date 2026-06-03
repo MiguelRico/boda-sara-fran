@@ -15,12 +15,10 @@ import {
   Grid2X2,
   Armchair,
   Plus,
-  RefreshCw,
   Save,
   Trash2,
   Undo2,
   X,
-  Home,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -167,8 +165,7 @@ export default function AdminTables() {
         setState({
           groups: [],
           loading: false,
-          error:
-            adminContent.tables.errors.load,
+          error: adminContent.tables.errors.load,
         });
       }
     },
@@ -213,17 +210,13 @@ export default function AdminTables() {
     mobilePageSize,
     page,
   });
-  const {
-    handlePageChange,
-    pageDirection,
-    pageLoading,
-    pageLoadingMinHeight,
-  } = usePageTransition({
-    currentPage,
-    isMobileList,
-    onPageChange: setPage,
-    totalPages,
-  });
+  const { handlePageChange, pageDirection, pageLoading, pageLoadingMinHeight } =
+    usePageTransition({
+      currentPage,
+      isMobileList,
+      onPageChange: setPage,
+      totalPages,
+    });
   const pagedTableCount = pagedTables.length;
   const pagedSeatCount = pagedTables.reduce(
     (total, table) => total + table.seats.length,
@@ -389,24 +382,6 @@ export default function AdminTables() {
     setSeatAssignmentTarget(null);
   };
 
-  const handleRefreshTables = useCallback(async () => {
-    if (hasPendingChanges) {
-      setState((prev) => ({
-        ...prev,
-        error:
-          adminContent.tables.errors.refreshWithPending,
-      }));
-      return;
-    }
-
-    try {
-      spinner.show(adminContent.tables.spinner.refresh);
-      await loadTables({ showLoading: false });
-    } finally {
-      spinner.hide();
-    }
-  }, [hasPendingChanges, loadTables, spinner]);
-
   const handleSavePendingChanges = async () => {
     if (!hasPendingChanges) return;
 
@@ -436,9 +411,7 @@ export default function AdminTables() {
       console.error("Error al guardar cambios de mesas:", error);
       setState((prev) => ({
         ...prev,
-        error:
-          error.message ||
-          adminContent.tables.errors.save,
+        error: error.message || adminContent.tables.errors.save,
       }));
     } finally {
       spinner.hide();
@@ -494,8 +467,7 @@ export default function AdminTables() {
         console.error("Error al asignar mesa:", error);
         setState((prev) => ({
           ...prev,
-          error:
-            error.message || adminContent.tables.errors.assignTable,
+          error: error.message || adminContent.tables.errors.assignTable,
         }));
         throw error;
       }
@@ -533,8 +505,7 @@ export default function AdminTables() {
       console.error("Error al asignar asiento:", error);
       setState((prev) => ({
         ...prev,
-        error:
-          error.message || adminContent.tables.errors.assign,
+        error: error.message || adminContent.tables.errors.assign,
       }));
     } finally {
       setAssigningSeat(false);
@@ -566,8 +537,7 @@ export default function AdminTables() {
       console.error("Error al liberar asiento:", error);
       setState((prev) => ({
         ...prev,
-        error:
-          error.message || adminContent.tables.errors.unassign,
+        error: error.message || adminContent.tables.errors.unassign,
       }));
     } finally {
       setAssigningSeat(false);
@@ -668,7 +638,9 @@ export default function AdminTables() {
             <section className="premium-card" ref={tablesCardRef}>
               <div className="mb-5">
                 <div>
-                  <p className="section-eyebrow mb-2">{adminContent.tables.header.eyebrow}</p>
+                  <p className="section-eyebrow mb-2">
+                    {adminContent.tables.header.eyebrow}
+                  </p>
                   <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
                     Asientos asignados
                   </h2>
@@ -693,7 +665,7 @@ export default function AdminTables() {
                     </p>
 
                     <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-                      <div className="grid w-full grid-cols-3 gap-3">
+                      <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
                         <IconButton
                           className="w-full"
                           disabled={!tables.length}
@@ -702,7 +674,7 @@ export default function AdminTables() {
                           onClick={() => downloadTablesCsv(tables)}
                           tone="terciary"
                         >
-                          Exportar tabla
+                          {adminContent.tables.header.exportTable}
                         </IconButton>
 
                         <IconButton
@@ -712,7 +684,19 @@ export default function AdminTables() {
                           onClick={handleCreateTable}
                           tone="secondary"
                         >
-                          Agregar mesa
+                          {adminContent.tables.actions.addTable}
+                        </IconButton>
+
+                        <IconButton
+                          className="w-full"
+                          disabled={!hasPendingChanges || state.loading}
+                          icon={<Undo2 size={16} strokeWidth={1.8} />}
+                          label={adminContent.tables.actions.discardChanges}
+                          onClick={handleDiscardPendingChanges}
+                          tone="terciary"
+                          type="button"
+                        >
+                          {adminContent.tables.actions.discardChanges}
                         </IconButton>
 
                         <IconButton
@@ -723,7 +707,7 @@ export default function AdminTables() {
                           onClick={handleSavePendingChanges}
                           tone="primary"
                         >
-                          Guardar cambios
+                          {adminContent.tables.actions.saveChanges}
                         </IconButton>
                       </div>
                     </div>
@@ -835,7 +819,9 @@ export default function AdminTables() {
                           page={currentPage}
                           totalPages={totalPages}
                           currentLabel={adminContent.tables.header.pageLabel}
-                          mobileLabel={adminContent.tables.header.mobilePageLabel}
+                          mobileLabel={
+                            adminContent.tables.header.mobilePageLabel
+                          }
                           onNext={() =>
                             handlePageChange(
                               currentPage + 1,
@@ -874,15 +860,6 @@ export default function AdminTables() {
               </AnimatePresence>
             </section>
           </CinematicStaggeredRevealItem>
-
-          <CinematicStaggeredRevealItem index={4} isVisible={tablesInView}>
-            <TablesPageActions
-              hasPendingChanges={hasPendingChanges}
-              loading={state.loading}
-              onDiscardChanges={handleDiscardPendingChanges}
-              onRefresh={handleRefreshTables}
-            />
-          </CinematicStaggeredRevealItem>
         </div>
       </CinematicSection>
 
@@ -901,7 +878,11 @@ export default function AdminTables() {
           errors={tableFormErrors}
           form={tableForm}
           seatReductionWarning={tableSeatReductionWarning}
-          title={editingTable ? adminContent.tables.dialogs.editTitle : adminContent.tables.dialogs.createTitle}
+          title={
+            editingTable
+              ? adminContent.tables.dialogs.editTitle
+              : adminContent.tables.dialogs.createTitle
+          }
           onCancel={handleCloseTableForm}
           onChange={handleTableFormChange}
           onDelete={
@@ -916,7 +897,9 @@ export default function AdminTables() {
       {tableToDelete && (
         <DeleteDialog
           title={adminContent.tables.dialogs.deleteTitle}
-          message={adminContent.tables.dialogs.deleteMessage(tableToDelete.name)}
+          message={adminContent.tables.dialogs.deleteMessage(
+            tableToDelete.name,
+          )}
           onCancel={handleCancelDeleteTable}
           onConfirm={handleConfirmDeleteTable}
         />
@@ -1017,92 +1000,92 @@ function SeatAssignmentDialog({
       onClose={onCancel}
       title={adminContent.tables.dialogs.assignmentTitle}
     >
-        {currentGuestName && (
-          <p className="mb-6 text-sm text-[var(--color-muted)]">
-            {adminContent.tables.dialogs.currentGuest(currentGuestName)}
-          </p>
-        )}
+      {currentGuestName && (
+        <p className="mb-6 text-sm text-[var(--color-muted)]">
+          {adminContent.tables.dialogs.currentGuest(currentGuestName)}
+        </p>
+      )}
 
-        <form noValidate onSubmit={handleSubmit}>
-          <Label>{adminContent.tables.dialogs.guestLabel}</Label>
-          <select
-            className={selectClassName}
-            disabled={assigning}
-            onChange={(event) => setSelectedGuest(event.target.value)}
-            value={selectedGuest}
-          >
-            <option value="">
-              {adminContent.tables.dialogs.guestPlaceholder}
-            </option>
-            {guests.map((guest, index) => {
-              const guestName = Guest.getFullName(guest, "Invitado");
-              const assignmentText = Guest.getAssignmentText(guest);
+      <form noValidate onSubmit={handleSubmit}>
+        <Label>{adminContent.tables.dialogs.guestLabel}</Label>
+        <select
+          className={selectClassName}
+          disabled={assigning}
+          onChange={(event) => setSelectedGuest(event.target.value)}
+          value={selectedGuest}
+        >
+          <option value="">
+            {adminContent.tables.dialogs.guestPlaceholder}
+          </option>
+          {guests.map((guest, index) => {
+            const guestName = Guest.getFullName(guest, "Invitado");
+            const assignmentText = Guest.getAssignmentText(guest);
 
-              return (
-                <option
-                  key={`${guest.groupName}-${guestName}-${index}`}
-                  value={createGuestOptionValue({
-                    groupName: guest.groupName,
-                    guestIndex: guest.guestIndex,
-                    name: guestName,
-                  })}
-                >
-                  {guestName} - {guest.groupName}
-                  {assignmentText ? ` (${assignmentText})` : ""}
-                </option>
-              );
-            })}
-          </select>
-
-          <div
-            className={`mt-6 flex flex-col gap-4 sm:grid ${
-              canRemoveGuest ? "sm:grid-cols-3" : "sm:grid-cols-2"
-            }`}
-          >
-            {canRemoveGuest && (
-              <IconButton
-                disabled={assigning}
-                icon={<Trash2 size={16} strokeWidth={1.8} />}
-                label={adminContent.tables.dialogs.remove}
-                onClick={onRemove}
-                showText="always"
-                tone="secondary"
-                type="button"
+            return (
+              <option
+                key={`${guest.groupName}-${guestName}-${index}`}
+                value={createGuestOptionValue({
+                  groupName: guest.groupName,
+                  guestIndex: guest.guestIndex,
+                  name: guestName,
+                })}
               >
-                {adminContent.tables.dialogs.remove}
-              </IconButton>
-            )}
+                {guestName} - {guest.groupName}
+                {assignmentText ? ` (${assignmentText})` : ""}
+              </option>
+            );
+          })}
+        </select>
 
-            <IconButton
-              disabled={!selectedGuest || assigning}
-              icon={<Check size={16} strokeWidth={1.8} />}
-              label={
-                assigning
-                  ? adminContent.tables.dialogs.assigning
-                  : adminContent.tables.dialogs.assign
-              }
-              showText="always"
-              tone="primary"
-              type="submit"
-            >
-              {assigning
-                ? adminContent.tables.dialogs.assigning
-                : adminContent.tables.dialogs.assign}
-            </IconButton>
-
+        <div
+          className={`mt-6 flex flex-col gap-4 sm:grid ${
+            canRemoveGuest ? "sm:grid-cols-3" : "sm:grid-cols-2"
+          }`}
+        >
+          {canRemoveGuest && (
             <IconButton
               disabled={assigning}
-              icon={<X size={16} strokeWidth={1.8} />}
-              label={adminContent.tables.dialogs.cancel}
-              onClick={onCancel}
+              icon={<Trash2 size={16} strokeWidth={1.8} />}
+              label={adminContent.tables.dialogs.remove}
+              onClick={onRemove}
               showText="always"
-              tone="terciary"
+              tone="secondary"
               type="button"
             >
-              {adminContent.tables.dialogs.cancel}
+              {adminContent.tables.dialogs.remove}
             </IconButton>
-          </div>
-        </form>
+          )}
+
+          <IconButton
+            disabled={!selectedGuest || assigning}
+            icon={<Check size={16} strokeWidth={1.8} />}
+            label={
+              assigning
+                ? adminContent.tables.dialogs.assigning
+                : adminContent.tables.dialogs.assign
+            }
+            showText="always"
+            tone="primary"
+            type="submit"
+          >
+            {assigning
+              ? adminContent.tables.dialogs.assigning
+              : adminContent.tables.dialogs.assign}
+          </IconButton>
+
+          <IconButton
+            disabled={assigning}
+            icon={<X size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.dialogs.cancel}
+            onClick={onCancel}
+            showText="always"
+            tone="terciary"
+            type="button"
+          >
+            {adminContent.tables.dialogs.cancel}
+          </IconButton>
+        </div>
+      </form>
     </SeatAssignmentModal>
   );
 }
@@ -1204,64 +1187,6 @@ function TablesOverview({ loading, stats }) {
   );
 }
 
-function TablesPageActions({
-  hasPendingChanges,
-  loading,
-  onDiscardChanges,
-  onRefresh,
-}) {
-  return (
-    <section className="premium-card mt-5">
-      <p className="section-eyebrow mb-4">
-        {adminContent.tables.actions.sectionEyebrow}
-      </p>
-      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <IconButton
-            className="w-full"
-            disabled={!hasPendingChanges || loading}
-            icon={<Undo2 size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.actions.discardChanges}
-            onClick={onDiscardChanges}
-            showText="always"
-            tone="secondary"
-            type="button"
-          >
-            {adminContent.tables.actions.discardChanges}
-          </IconButton>
-          <IconButton
-            className="w-full"
-            disabled={loading}
-            icon={
-              <RefreshCw
-                className={loading ? "animate-spin" : ""}
-                size={16}
-                strokeWidth={1.8}
-              />
-            }
-            label={adminContent.tables.actions.refresh}
-            onClick={onRefresh}
-            showText="always"
-            type="button"
-          >
-            {adminContent.tables.actions.refresh}
-          </IconButton>
-
-          <IconButton
-            className="flex-1"
-            icon={<Home size={16} strokeWidth={1.8} />}
-            showText="always"
-            to="/admin"
-            tone="terciary"
-          >
-            {adminContent.tables.actions.admin}
-          </IconButton>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function getTableSummaryItems(stats) {
   return [
     {
@@ -1322,6 +1247,7 @@ function TableCardWithActions({
         item={table}
         onDelete={onDelete}
         onEdit={onEdit}
+        showText={false}
       />
       <TableAnimatedInfoCard
         index={index}
@@ -1474,4 +1400,3 @@ function getStableJson(value) {
 function createGuestOptionValue({ groupName, guestIndex = "", name }) {
   return `${groupName || ""}|||${guestIndex}|||${name || ""}`;
 }
-
