@@ -9,7 +9,9 @@ import {
   ChevronDown,
   Download,
   Fish,
+  Mail,
   MessageCircle,
+  Phone,
   Plus,
   Search,
   UsersRound,
@@ -555,7 +557,6 @@ function AdminGuestConfirmationCard({
     >
       <Card
         decorativeText={row.groupSize}
-        detail={`${row.email || "-"} · ${row.phone || "-"}`}
         eyebrow={`${row.groupSize} ${
           row.groupSize === 1 ? "persona" : "personas"
         }`}
@@ -564,7 +565,16 @@ function AdminGuestConfirmationCard({
         titleStyle={titleStyle}
       >
         <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <div className="flex flex-wrap gap-2 text-xs">
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <Chip
+              className="col-span-2"
+              icon={<Mail size={13} strokeWidth={1.8} />}
+              value={row.email || "-"}
+            />
+            <Chip
+              icon={<Phone size={13} strokeWidth={1.8} />}
+              value={row.phone || "-"}
+            />
             <Chip
               icon={<Fish size={13} strokeWidth={1.8} />}
               value={`Pescado: ${row.fishText}`}
@@ -574,7 +584,7 @@ function AdminGuestConfirmationCard({
               value={`Carne: ${row.meatText}`}
             />
             <Chip
-              className="max-w-full"
+              className="col-span-2 items-start"
               icon={<AlertTriangle size={13} strokeWidth={1.8} />}
               value={`Alergias: ${row.allergyText}`}
               valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
@@ -584,7 +594,7 @@ function AdminGuestConfirmationCard({
               value={`Transporte: ${row.transportText}`}
             />
             <Chip
-              className="max-w-full"
+              className="col-span-2 items-start"
               icon={<MessageCircle size={13} strokeWidth={1.8} />}
               value={`Notas: ${row.commentsCountText}`}
               valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
