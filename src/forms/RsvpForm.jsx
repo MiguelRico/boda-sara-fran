@@ -254,6 +254,11 @@ function GuestPager({
       variant={variant}
     />
   );
+  const renderAdminGuestPage = (items, pageNumber) => (
+    <div className="rounded-[2rem] ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]">
+      {renderGuestPage(items, pageNumber)}
+    </div>
+  );
 
   if (isAdmin) {
     return (
@@ -293,10 +298,6 @@ function GuestPager({
             </IconButton>
           </div>
         }
-        count={adminContent.guests.editor.guestCountLabel({
-          page: currentGuestPage,
-          total: totalGuestPages,
-        })}
         eyebrow={adminContent.guests.editor.guestListEyebrow}
         getKey={(guest, { index }) => `${index}-${Guest.getFullName(guest)}`}
         items={guests}
@@ -307,7 +308,7 @@ function GuestPager({
         pageDirection={direction}
         paginationLabel={pageLabel}
         pageSize={1}
-        renderPage={renderGuestPage}
+        renderPage={renderAdminGuestPage}
         title={adminContent.guests.editor.guestListTitle}
         totalPages={totalGuestPages}
       />

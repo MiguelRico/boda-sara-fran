@@ -11,7 +11,6 @@ import {
   Fish,
   MessageCircle,
   Plus,
-  RefreshCw,
   Search,
   UsersRound,
 } from "lucide-react";
@@ -32,7 +31,7 @@ import EditorDialog from "../components/admin/EditorDialog";
 import AdminTableSection from "../components/admin/AdminTableSection";
 import CardListSkeleton from "../components/ui/CardListSkeleton";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
-import InfoLine from "../components/ui/InfoLine";
+import Chip from "../components/ui/Chip";
 import RsvpForm from "../forms/RsvpForm";
 import { MAX_GUESTS } from "../constants/rsvp";
 import { Confirmation } from "../models";
@@ -171,11 +170,6 @@ export default function AdminGuests() {
       onPageChange: setPage,
       totalPages,
     });
-  const pagedGroupCount = pagedRows.length;
-  const pagedGuestCount = pagedRows.reduce(
-    (total, row) => total + row.groupSize,
-    0,
-  );
   const effectiveSelectedRowId = pagedRows.some(
     (row) => row.rowId === selectedRowId,
   )
@@ -313,6 +307,7 @@ export default function AdminGuests() {
                   >
                     <Plus size={18} strokeWidth={2.4} />
                   </IconButton>
+
                   <CardActions
                     className="contents"
                     item={selectedRow?.group}
@@ -332,10 +327,6 @@ export default function AdminGuests() {
                 </div>
               }
               contentRef={tableStartRef}
-              count={adminContent.guests.list.countLabel({
-                groups: pagedGroupCount,
-                guests: pagedGuestCount,
-              })}
               eyebrow={adminContent.guests.list.eyebrow}
               filters={
                 <FiltersCard
@@ -566,31 +557,30 @@ function AdminGuestConfirmationCard({
         titleStyle={titleStyle}
       >
         <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <div className="grid gap-3 text-sm text-[var(--color-muted)]">
-            <InfoLine
-              icon={<Fish size={15} strokeWidth={1.8} />}
-              label="Pescado"
-              value={row.fishText}
+          <div className="flex flex-wrap gap-2 text-xs">
+            <Chip
+              icon={<Fish size={13} strokeWidth={1.8} />}
+              value={`Pescado: ${row.fishText}`}
             />
-            <InfoLine
-              icon={<Beef size={15} strokeWidth={1.8} />}
-              label="Carne"
-              value={row.meatText}
+            <Chip
+              icon={<Beef size={13} strokeWidth={1.8} />}
+              value={`Carne: ${row.meatText}`}
             />
-            <InfoLine
-              icon={<AlertTriangle size={15} strokeWidth={1.8} />}
-              label="Alergias"
-              value={row.allergyText}
+            <Chip
+              className="max-w-full"
+              icon={<AlertTriangle size={13} strokeWidth={1.8} />}
+              value={`Alergias: ${row.allergyText}`}
+              valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
             />
-            <InfoLine
-              icon={<BusFront size={15} strokeWidth={1.8} />}
-              label="Transporte"
-              value={row.transportText}
+            <Chip
+              icon={<BusFront size={13} strokeWidth={1.8} />}
+              value={`Transporte: ${row.transportText}`}
             />
-            <InfoLine
-              icon={<MessageCircle size={15} strokeWidth={1.8} />}
-              label="Notas"
-              value={row.commentsCountText}
+            <Chip
+              className="max-w-full"
+              icon={<MessageCircle size={13} strokeWidth={1.8} />}
+              value={`Notas: ${row.commentsCountText}`}
+              valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
             />
           </div>
         </div>

@@ -73,23 +73,23 @@ export default function AdminTableSection({
       )}
 
       <div ref={contentRef}>
-        {loading
-          ? skeleton
-          : renderPage
-            ? (
-              <PaginatedContent
-                allItems={items}
-                direction={pageDirection}
-                getKey={getKey}
-                lockHeight={lockPageHeight}
-                page={page}
-                pageSize={pageSize}
-                renderMeasurePage={renderMeasurePage}
-                renderPage={renderPage}
-                totalPages={totalPages}
-              />
-            )
-            : children}
+        {loading ? (
+          skeleton
+        ) : renderPage ? (
+          <PaginatedContent
+            allItems={items}
+            direction={pageDirection}
+            getKey={getKey}
+            lockHeight={lockPageHeight}
+            page={page}
+            pageSize={pageSize}
+            renderMeasurePage={renderMeasurePage}
+            renderPage={renderPage}
+            totalPages={totalPages}
+          />
+        ) : (
+          children
+        )}
       </div>
     </section>
   );

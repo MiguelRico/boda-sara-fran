@@ -216,7 +216,9 @@ export default function GuestCard({
                   onChange={(event) =>
                     onGuestChange(index, "otherAllergies", event.target.value)
                   }
-                  placeholder={rsvpContent.guest.fields.otherAllergies.placeholder}
+                  placeholder={
+                    rsvpContent.guest.fields.otherAllergies.placeholder
+                  }
                   rows={3}
                   value={guest.otherAllergies}
                 />

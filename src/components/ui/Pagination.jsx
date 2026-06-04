@@ -4,10 +4,6 @@ import IconButton from "./IconButton";
 
 export default function Pagination({
   className = "mt-5",
-  currentLabel = "Pagina",
-  isMobileList = false,
-  label,
-  mobileLabel,
   onNext,
   onPrev,
   page,
@@ -15,9 +11,7 @@ export default function Pagination({
   nextLabel = "Siguiente",
   totalPages,
 }) {
-  const pageLabel =
-    label ||
-    `${isMobileList && mobileLabel ? mobileLabel : currentLabel} ${page} de ${totalPages}`;
+  const pageLabel = `${page} / ${totalPages}`;
 
   return (
     <div

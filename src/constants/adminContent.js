@@ -43,8 +43,7 @@ export const adminContent = {
     editor: {
       guestListEyebrow: "Grupo",
       guestListTitle: "Invitados",
-      guestCountLabel: ({ page, total }) =>
-        `Invitado ${page} de ${total}`,
+      guestCountLabel: ({ page, total }) => `${page} / ${total}`,
     },
     actions: {
       export: "Exportar",
@@ -201,7 +200,7 @@ export const adminContent = {
     emptyTitle: "Sin invitados pendientes",
     emptyText: "Todos los invitados confirmados tienen mesa asignada.",
     noFilterResults: "No hay invitados que coincidan con los filtros.",
-    pageLabel: ({ page, total }) => `Página ${page} de ${total}`,
+    pageLabel: ({ page, total }) => `${page} / ${total}`,
     showingLabel: ({ filtered, total }) =>
       `Mostrando ${filtered} de ${total} invitados pendientes`,
     pendingEyebrow: "Invitado pendiente",

@@ -44,7 +44,9 @@ import DeleteDialog from "../components/ui/DeleteDialog";
 import CardListSkeleton from "../components/ui/CardListSkeleton";
 import PaginatedContent from "../components/ui/PaginatedContent";
 import SeatAssignmentModal from "../components/ui/SeatAssignmentModal";
-import PendingGuestsList from "../components/admin/PendingGuestsList";
+import PendingGuestsList, {
+  PendingGuestsFilters,
+} from "../components/admin/PendingGuestsList";
 import { GuestDetailChips } from "../components/admin/TableGuestCard";
 import { Label, selectClassName } from "../components/rsvp/FormPrimitives";
 import { Guest } from "../models";
@@ -80,6 +82,7 @@ import { rsvpContent } from "../constants/rsvpContent";
 const ADMIN_ACTIVE_TAB_KEY = "admin-tables-active-tab";
 const SECTION_TABS = adminContent.tables.tabs;
 const desktopPageSize = 4;
+const pendingGuestsDesktopPageSize = 8;
 const mobilePageSize = 1;
 const emptySavedSnapshot = {
   groups: [],
@@ -116,6 +119,16 @@ export default function AdminTables() {
   const [seatAssignmentTarget, setSeatAssignmentTarget] = useState(null);
   const [assigningSeat, setAssigningSeat] = useState(false);
   const [page, setPage] = useState(1);
+  const [pendingGuestsPage, setPendingGuestsPage] = useState(1);
+  const [pendingGuestsFilters, setPendingGuestsFilters] = useState({
+    group: "",
+    menu: "",
+  });
+  const [pendingGuestsAssigningGuest, setPendingGuestsAssigningGuest] =
+    useState("");
+  const [pendingGuestsError, setPendingGuestsError] = useState("");
+  const [selectedPendingGuestKey, setSelectedPendingGuestKey] = useState("");
+  const [selectedTableKey, setSelectedTableKey] = useState("");
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
     useState(false);
   const [activeTab, setActiveTab] = useState(() => {
@@ -217,10 +230,17 @@ export default function AdminTables() {
     onPageChange: setPage,
     totalPages,
   });
-  const pagedTableCount = pagedTables.length;
-  const pagedSeatCount = pagedTables.reduce(
-    (total, table) => total + table.seats.length,
-    0,
+  const effectiveSelectedTableKey = pagedTables.some(
+    (table) => getTableKey(table) === selectedTableKey,
+  )
+    ? selectedTableKey
+    : getTableKey(pagedTables[0]) || "";
+  const selectedTable = useMemo(
+    () =>
+      pagedTables.find(
+        (table) => getTableKey(table) === effectiveSelectedTableKey,
+      ) || null,
+    [effectiveSelectedTableKey, pagedTables],
   );
   const pendingChanges = useMemo(
     () =>
@@ -266,6 +286,65 @@ export default function AdminTables() {
     () => getPendingGuests(state.groups),
     [state.groups],
   );
+  const pendingGuestGroups = useMemo(() => {
+    const groupSet = new Set(
+      guestsPending.map((guest) => guest.groupName).filter(Boolean),
+    );
+
+    return Array.from(groupSet);
+  }, [guestsPending]);
+  const pendingGuestMenus = useMemo(() => {
+    const menuSet = new Set(
+      guestsPending.map((guest) => guest.menu).filter(Boolean),
+    );
+
+    return Array.from(menuSet);
+  }, [guestsPending]);
+  const filteredPendingGuests = useMemo(() => {
+    return guestsPending.filter((guest) => {
+      if (
+        pendingGuestsFilters.group &&
+        guest.groupName !== pendingGuestsFilters.group
+      ) {
+        return false;
+      }
+
+      if (
+        pendingGuestsFilters.menu &&
+        guest.menu !== pendingGuestsFilters.menu
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [guestsPending, pendingGuestsFilters]);
+  const {
+    currentPage: currentPendingGuestsPage,
+    pageSize: pendingGuestsPageSize,
+    pagedItems: pagedPendingGuests,
+    totalPages: pendingGuestsTotalPages,
+  } = usePagedData({
+    desktopPageSize: pendingGuestsDesktopPageSize,
+    items: filteredPendingGuests,
+    mobilePageSize,
+    page: pendingGuestsPage,
+  });
+  const {
+    handlePageChange: handlePendingGuestsPageChange,
+    pageDirection: pendingGuestsPageDirection,
+  } = usePageTransition({
+    currentPage: currentPendingGuestsPage,
+    onPageChange: setPendingGuestsPage,
+    totalPages: pendingGuestsTotalPages,
+  });
+  const effectiveSelectedPendingGuestKey = pagedPendingGuests.some(
+    (guest) => getPendingGuestRowKey(guest) === selectedPendingGuestKey,
+  )
+    ? selectedPendingGuestKey
+    : pagedPendingGuests[0]
+      ? getPendingGuestRowKey(pagedPendingGuests[0])
+      : "";
   const assignableGuests = useMemo(
     () => getAssignableGuests(state.groups),
     [state.groups],
@@ -475,6 +554,42 @@ export default function AdminTables() {
     [state.groups, tables],
   );
 
+  const handlePendingGuestsFilterChange = (filterKey, value) => {
+    setPendingGuestsFilters((current) => ({
+      ...current,
+      [filterKey]: value,
+    }));
+    setPendingGuestsPage(1);
+  };
+
+  const handleAssignPendingGuest = useCallback(
+    async (guest, tableName, seatNumber) => {
+      if (!tableName || !seatNumber) return;
+
+      const rowKey = getPendingGuestRowKey(guest);
+
+      setPendingGuestsError("");
+      setPendingGuestsAssigningGuest(rowKey);
+
+      try {
+        await handleAssignGuestToTable({
+          guestId: Guest.getFullName(guest),
+          guestGroupName: guest.groupName,
+          guestIndex: guest.guestIndex,
+          tableName,
+          seatNumber,
+        });
+      } catch (error) {
+        setPendingGuestsError(
+          error.message || adminContent.tables.errors.assignTable,
+        );
+      } finally {
+        setPendingGuestsAssigningGuest("");
+      }
+    },
+    [handleAssignGuestToTable],
+  );
+
   const handleAssignGuestToSeat = async ({
     guestGroupName,
     guestIndex,
@@ -637,103 +752,153 @@ export default function AdminTables() {
           <CinematicStaggeredRevealItem index={3} isVisible={tablesInView}>
             <AdminTableSection
               actions={
-                <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
-                  <IconButton
-                    className="w-full"
-                    disabled={!tables.length}
-                    icon={<Download size={16} strokeWidth={1.8} />}
-                    label={adminContent.tables.header.exportTable}
-                    onClick={() => downloadTablesCsv(tables)}
-                    tone="terciary"
-                  >
-                    {adminContent.tables.header.exportTable}
-                  </IconButton>
-
-                  <IconButton
-                    className="w-full"
-                    icon={<Plus size={18} strokeWidth={2.4} />}
-                    label={adminContent.tables.actions.addTable}
-                    onClick={handleCreateTable}
-                    tone="secondary"
-                  >
-                    {adminContent.tables.actions.addTable}
-                  </IconButton>
-
-                  <IconButton
-                    className="w-full"
-                    disabled={!hasPendingChanges || state.loading}
-                    icon={<Undo2 size={16} strokeWidth={1.8} />}
-                    label={adminContent.tables.actions.discardChanges}
-                    onClick={handleDiscardPendingChanges}
-                    tone="terciary"
-                    type="button"
-                  >
-                    {adminContent.tables.actions.discardChanges}
-                  </IconButton>
-
-                  <IconButton
-                    className="w-full"
-                    disabled={!hasPendingChanges || spinner.loading}
-                    icon={<Save size={16} strokeWidth={1.8} />}
-                    label={adminContent.tables.actions.saveChanges}
-                    onClick={handleSavePendingChanges}
-                    tone="primary"
-                  >
-                    {adminContent.tables.actions.saveChanges}
-                  </IconButton>
-                </div>
-              }
-              count={
                 activeTab === "tables" ? (
-                  <>
-                    {pagedTableCount}{" "}
-                    {pagedTableCount === 1 ? "mesa" : "mesas"} en esta pagina
-                    - {pagedSeatCount}{" "}
-                    {pagedSeatCount === 1 ? "asiento" : "asientos"}
-                  </>
-                ) : (
-                  <>
-                    {guestsPending.length}{" "}
-                    {guestsPending.length === 1
-                      ? "invitado pendiente"
-                      : "invitados pendientes"}
-                  </>
-                )
+                  <div className="grid w-full grid-cols-3 gap-3 sm:grid-cols-3">
+                    <IconButton
+                      className="w-full"
+                      disabled={!tables.length}
+                      icon={<Download size={16} strokeWidth={1.8} />}
+                      label={adminContent.tables.header.exportTable}
+                      onClick={() => downloadTablesCsv(tables)}
+                      tone="terciary"
+                    >
+                      {adminContent.tables.header.exportTable}
+                    </IconButton>
+
+                    <IconButton
+                      className="w-full"
+                      disabled={!hasPendingChanges || state.loading}
+                      icon={<Undo2 size={16} strokeWidth={1.8} />}
+                      label={adminContent.tables.actions.discardChanges}
+                      onClick={handleDiscardPendingChanges}
+                      tone="secondary"
+                    >
+                      {adminContent.tables.actions.discardChanges}
+                    </IconButton>
+
+                    <IconButton
+                      className="w-full"
+                      icon={<Plus size={18} strokeWidth={2.4} />}
+                      label={adminContent.tables.actions.addTable}
+                      onClick={handleCreateTable}
+                      tone="primary"
+                    >
+                      {adminContent.tables.actions.addTable}
+                    </IconButton>
+
+                    <IconButton
+                      className="w-full"
+                      disabled={!selectedTable}
+                      icon={<Trash2 size={16} strokeWidth={1.8} />}
+                      label={adminContent.tables.actions.deleteTable}
+                      onClick={() => handleRequestDeleteTable(selectedTable)}
+                      tone="danger"
+                    >
+                      {adminContent.tables.actions.deleteTable}
+                    </IconButton>
+
+                    <IconButton
+                      className="w-full"
+                      disabled={!selectedTable}
+                      icon={<Pencil size={16} strokeWidth={1.8} />}
+                      label={adminContent.tables.actions.editTable}
+                      onClick={() => handleEditTable(selectedTable)}
+                      tone="secondary"
+                    >
+                      {adminContent.tables.actions.editTable}
+                    </IconButton>
+
+                    <IconButton
+                      className="w-full"
+                      disabled={!hasPendingChanges || spinner.loading}
+                      icon={<Save size={16} strokeWidth={1.8} />}
+                      label={adminContent.tables.actions.saveChanges}
+                      onClick={handleSavePendingChanges}
+                      tone="primary"
+                    >
+                      {adminContent.tables.actions.saveChanges}
+                    </IconButton>
+                  </div>
+                ) : null
               }
               eyebrow={adminContent.tables.header.eyebrow}
               filters={
-                <TabNavigation
-                  tabs={SECTION_TABS}
-                  activeTab={activeTab}
-                  onChange={setActiveTab}
-                />
+                <div className="space-y-5">
+                  <TabNavigation
+                    tabs={SECTION_TABS}
+                    activeTab={activeTab}
+                    onChange={setActiveTab}
+                  />
+
+                  {activeTab === "pending" && guestsPending.length > 0 && (
+                    <PendingGuestsFilters
+                      availableGroups={pendingGuestGroups}
+                      availableMenus={pendingGuestMenus}
+                      filters={pendingGuestsFilters}
+                      onFilterChange={handlePendingGuestsFilterChange}
+                    />
+                  )}
+                </div>
               }
               isMobileList={isMobileList}
-              mobilePageLabel={adminContent.tables.header.mobilePageLabel}
+              mobilePageLabel={
+                activeTab === "tables"
+                  ? adminContent.tables.header.mobilePageLabel
+                  : adminContent.pendingGuests.pendingEyebrow
+              }
               onNextPage={() =>
-                handlePageChange(currentPage + 1, tablesStartRef.current)
+                activeTab === "tables"
+                  ? handlePageChange(currentPage + 1, tablesStartRef.current)
+                  : handlePendingGuestsPageChange(
+                      currentPendingGuestsPage + 1,
+                      tablesStartRef.current,
+                    )
               }
               onPrevPage={() =>
-                handlePageChange(currentPage - 1, tablesStartRef.current)
+                activeTab === "tables"
+                  ? handlePageChange(currentPage - 1, tablesStartRef.current)
+                  : handlePendingGuestsPageChange(
+                      currentPendingGuestsPage - 1,
+                      tablesStartRef.current,
+                    )
               }
               page={
-                activeTab === "tables" && !state.loading
-                  ? currentPage
+                state.loading
+                  ? undefined
+                  : activeTab === "tables"
+                    ? currentPage
+                    : currentPendingGuestsPage
+              }
+              pageLabel={
+                activeTab === "tables"
+                  ? adminContent.tables.header.pageLabel
+                  : adminContent.pendingGuests.pendingEyebrow
+              }
+              paginationLabel={
+                activeTab === "pending" && !state.loading
+                  ? adminContent.pendingGuests.pageLabel({
+                      page: currentPendingGuestsPage,
+                      total: pendingGuestsTotalPages,
+                    })
                   : undefined
               }
-              pageLabel={adminContent.tables.header.pageLabel}
               pageSize={
-                activeTab === "tables" && !state.loading ? pageSize : undefined
+                state.loading
+                  ? undefined
+                  : activeTab === "tables"
+                    ? pageSize
+                    : pendingGuestsPageSize
               }
               sectionRef={tablesCardRef}
               title="Asientos asignados"
               totalPages={
-                activeTab === "tables" && !state.loading
-                  ? totalPages
-                  : undefined
+                state.loading
+                  ? undefined
+                  : activeTab === "tables"
+                    ? totalPages
+                    : pendingGuestsTotalPages
               }
             >
-
               <AnimatePresence mode="wait" initial={false}>
                 {activeTab === "tables" ? (
                   <motion.div
@@ -757,10 +922,12 @@ export default function AdminTables() {
                     ) : (
                       <AdminTableCards
                         direction={pageDirection}
+                        selectedTableKey={effectiveSelectedTableKey}
                         items={tables}
-                        onDelete={handleRequestDeleteTable}
-                        onEdit={handleEditTable}
                         onSeatClick={handleSeatClick}
+                        onSelect={(table) =>
+                          setSelectedTableKey(getTableKey(table))
+                        }
                         onUnassignSeat={handleRemoveGuestFromSeat}
                         page={currentPage}
                         pageSize={pageSize}
@@ -780,10 +947,26 @@ export default function AdminTables() {
                     }}
                     variants={tabContentVariants}
                   >
-                    <PendingGuestsList
-                      guests={guestsPending}
+                    <PendingGuestsCards
+                      assigningGuest={pendingGuestsAssigningGuest}
+                      direction={pendingGuestsPageDirection}
+                      emptyText={
+                        guestsPending.length
+                          ? adminContent.pendingGuests.noFilterResults
+                          : adminContent.pendingGuests.emptyText
+                      }
+                      emptyTitle={adminContent.pendingGuests.emptyTitle}
+                      error={pendingGuestsError}
+                      guests={filteredPendingGuests}
+                      onAssignTable={handleAssignPendingGuest}
+                      onSelect={(guest) =>
+                        setSelectedPendingGuestKey(getPendingGuestRowKey(guest))
+                      }
+                      page={currentPendingGuestsPage}
+                      pageSize={pendingGuestsPageSize}
+                      selectedGuestKey={effectiveSelectedPendingGuestKey}
                       tables={tables}
-                      onAssignTable={handleAssignGuestToTable}
+                      totalPages={pendingGuestsTotalPages}
                     />
                   </motion.div>
                 )}
@@ -1213,40 +1396,30 @@ function TablesEmptyState() {
 
 function TableCardWithActions({
   index = 0,
-  onDelete,
-  onEdit,
   onSeatClick,
+  onSelect,
   onUnassignSeat,
   reveal = true,
+  selected = false,
   table,
 }) {
   return (
-    <div className="grid gap-3">
-      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-        <div className="grid w-full grid-cols-2 gap-3">
-          <IconButton
-            className="w-full"
-            icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.actions.deleteTable}
-            onClick={() => onDelete(table)}
-            tone="danger"
-            type="button"
-          >
-            {adminContent.tables.actions.deleteTable}
-          </IconButton>
-
-          <IconButton
-            className="w-full"
-            icon={<Pencil size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.actions.editTable}
-            onClick={() => onEdit(table)}
-            tone="primary"
-            type="button"
-          >
-            {adminContent.tables.actions.editTable}
-          </IconButton>
-        </div>
-      </div>
+    <div
+      className={`grid gap-3 rounded-[2rem] transition ${
+        selected
+          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
+          : "ring-0"
+      }`}
+      onClick={() => onSelect(table)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(table);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <TableAnimatedInfoCard
         index={index}
         onSeatClick={onSeatClick}
@@ -1261,12 +1434,12 @@ function TableCardWithActions({
 function AdminTableCards({
   direction,
   items,
-  onDelete,
-  onEdit,
   onSeatClick,
+  onSelect,
   onUnassignSeat,
   page,
   pageSize,
+  selectedTableKey,
   totalPages,
 }) {
   return (
@@ -1281,19 +1454,72 @@ function AdminTableCards({
       renderMeasurePage={(pageItems) => (
         <TableCardsPage
           items={pageItems}
-          onDelete={() => {}}
-          onEdit={() => {}}
           onSeatClick={() => {}}
+          onSelect={() => {}}
           onUnassignSeat={() => {}}
+          selectedTableKey={selectedTableKey}
         />
       )}
       renderPage={(pageItems) => (
         <TableCardsPage
           items={pageItems}
-          onDelete={onDelete}
-          onEdit={onEdit}
           onSeatClick={onSeatClick}
+          onSelect={onSelect}
           onUnassignSeat={onUnassignSeat}
+          selectedTableKey={selectedTableKey}
+        />
+      )}
+    />
+  );
+}
+
+function PendingGuestsCards({
+  assigningGuest,
+  direction,
+  emptyText,
+  emptyTitle,
+  error,
+  guests,
+  onAssignTable,
+  onSelect,
+  page,
+  pageSize,
+  selectedGuestKey,
+  tables,
+  totalPages,
+}) {
+  return (
+    <PaginatedContent
+      allItems={guests}
+      direction={direction}
+      getKey={getPendingGuestRowKey}
+      lockHeight={false}
+      page={page}
+      pageSize={pageSize}
+      totalPages={totalPages}
+      renderMeasurePage={(pageGuests) => (
+        <PendingGuestsList
+          assigningGuest=""
+          emptyText={emptyText}
+          emptyTitle={emptyTitle}
+          guests={pageGuests}
+          onAssignTable={() => {}}
+          onSelect={() => {}}
+          selectedGuestKey={selectedGuestKey}
+          tables={tables}
+        />
+      )}
+      renderPage={(pageGuests) => (
+        <PendingGuestsList
+          assigningGuest={assigningGuest}
+          emptyText={emptyText}
+          emptyTitle={emptyTitle}
+          error={error}
+          guests={pageGuests}
+          onAssignTable={onAssignTable}
+          onSelect={onSelect}
+          selectedGuestKey={selectedGuestKey}
+          tables={tables}
         />
       )}
     />
@@ -1302,10 +1528,10 @@ function AdminTableCards({
 
 function TableCardsPage({
   items,
-  onDelete,
-  onEdit,
   onSeatClick,
+  onSelect,
   onUnassignSeat,
+  selectedTableKey,
 }) {
   return (
     <>
@@ -1316,10 +1542,10 @@ function TableCardsPage({
         renderCard={(table, index) => (
           <TableCardWithActions
             index={index}
-            onDelete={onDelete}
-            onEdit={onEdit}
             onSeatClick={onSeatClick}
+            onSelect={onSelect}
             onUnassignSeat={onUnassignSeat}
+            selected={getTableKey(table) === selectedTableKey}
             table={table}
           />
         )}
@@ -1328,11 +1554,11 @@ function TableCardsPage({
         {items.map((table, index) => (
           <TableCardWithActions
             key={getTableRenderKey(table, { index })}
-            onDelete={onDelete}
-            onEdit={onEdit}
             onSeatClick={onSeatClick}
+            onSelect={onSelect}
             onUnassignSeat={onUnassignSeat}
             reveal={false}
+            selected={getTableKey(table) === selectedTableKey}
             table={table}
           />
         ))}
@@ -1519,4 +1745,8 @@ function getGuestOptionIndex(guests, value) {
 
     return Guest.getFullName(guest, "Invitado") === guestName;
   });
+}
+
+function getPendingGuestRowKey(guest) {
+  return `${guest.groupName || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`;
 }

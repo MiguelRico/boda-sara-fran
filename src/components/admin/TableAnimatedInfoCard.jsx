@@ -89,17 +89,19 @@ function TableInfoCard({
         eyebrow={groupLabel || tableContent.card.defaultEyebrow}
         title={tableLabel}
       >
+        {table.notes && (
+          <div className="flex min-w-0 flex-1 basis-[calc(50%-0.375rem)] items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-white/35 px-2.5 py-1.5 sm:basis-[calc(25%-0.375rem)]">
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-[var(--color-accent)]">
+              {table.notes}
+            </span>
+          </div>
+        )}
+
         <TableDiagram
           onSeatClick={onSeatClick}
           onCenterClick={() => setShowAssignments(true)}
           table={table}
         />
-
-        {table.notes && (
-          <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
-            {table.notes}
-          </p>
-        )}
       </Card>
 
       {showAssignments && (
@@ -137,9 +139,7 @@ function AssignmentModal({
   return (
     <SeatAssignmentModal
       eyebrow={`Mesa ${table.name} ${assignedSeats.length} ${
-        assignedSeats.length === 1
-          ? "invitado asignado"
-          : "invitados asignados"
+        assignedSeats.length === 1 ? "invitado asignado" : "invitados asignados"
       }`}
       onClose={onClose}
       title={
@@ -149,30 +149,29 @@ function AssignmentModal({
         </span>
       }
     >
-
-        {assignedSeats.length ? (
-          <div className="space-y-4">
-            {assignedSeats.map((seat) => (
-              <AssignedSeatCard
-                isRemoving={removingSeat === seat.seat}
-                key={seat.seat}
-                onUnassign={
-                  onUnassignSeat ? () => handleUnassignSeat(seat) : undefined
-                }
-                seat={seat}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-[2rem] border border-[var(--color-border)] bg-white/45 p-6 text-center">
-            <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-              {tableContent.card.emptyAssignmentsTitle}
-            </p>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-              {tableContent.card.emptyAssignmentsText}
-            </p>
-          </div>
-        )}
+      {assignedSeats.length ? (
+        <div className="space-y-4">
+          {assignedSeats.map((seat) => (
+            <AssignedSeatCard
+              isRemoving={removingSeat === seat.seat}
+              key={seat.seat}
+              onUnassign={
+                onUnassignSeat ? () => handleUnassignSeat(seat) : undefined
+              }
+              seat={seat}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[2rem] border border-[var(--color-border)] bg-white/45 p-6 text-center">
+          <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
+            {tableContent.card.emptyAssignmentsTitle}
+          </p>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+            {tableContent.card.emptyAssignmentsText}
+          </p>
+        </div>
+      )}
     </SeatAssignmentModal>
   );
 }
