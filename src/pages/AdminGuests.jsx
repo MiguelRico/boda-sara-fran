@@ -103,6 +103,7 @@ export default function AdminGuests() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [selectedRowId, setSelectedRowId] = useState("");
   const [editingGroup, setEditingGroup] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [popup, setPopup] = useState(createInitialPopup);
@@ -174,6 +175,15 @@ export default function AdminGuests() {
   const pagedGuestCount = pagedRows.reduce(
     (total, row) => total + row.groupSize,
     0,
+  );
+  const effectiveSelectedRowId = pagedRows.some(
+    (row) => row.rowId === selectedRowId,
+  )
+    ? selectedRowId
+    : pagedRows[0]?.rowId || "";
+  const selectedRow = useMemo(
+    () => pagedRows.find((row) => row.rowId === effectiveSelectedRowId) || null,
+    [effectiveSelectedRowId, pagedRows],
   );
 
   const closePopup = () => {
@@ -284,7 +294,7 @@ export default function AdminGuests() {
           <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
             <AdminTableSection
               actions={
-                <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
+                <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:grid-cols-5">
                   <IconButton
                     className="w-full"
                     disabled={!rows.length}
@@ -297,26 +307,28 @@ export default function AdminGuests() {
 
                   <IconButton
                     className="w-full"
-                    disabled={state.loading}
-                    label={adminContent.guests.actions.refresh}
-                    tone="secondary"
-                    onClick={loadGuests}
-                  >
-                    <RefreshCw
-                      className={state.loading ? "animate-spin" : ""}
-                      size={16}
-                      strokeWidth={1.8}
-                    />
-                  </IconButton>
-
-                  <IconButton
-                    className="w-full"
                     label={adminContent.guests.actions.create}
                     tone="primary"
                     onClick={() => setEditingGroup(createDraftGroup())}
                   >
                     <Plus size={18} strokeWidth={2.4} />
                   </IconButton>
+                  <CardActions
+                    className="contents"
+                    item={selectedRow?.group}
+                    onDelete={
+                      selectedRow
+                        ? () => setDeleteTarget(selectedRow.group)
+                        : null
+                    }
+                    onEdit={
+                      selectedRow
+                        ? () =>
+                            setEditingGroup(createDraftGroup(selectedRow.group))
+                        : null
+                    }
+                    showText={!isMobileList}
+                  />
                 </div>
               }
               contentRef={tableStartRef}
@@ -359,15 +371,15 @@ export default function AdminGuests() {
               renderMeasurePage={(items) => (
                 <AdminGuestPage
                   items={items}
-                  onDelete={() => {}}
-                  onEdit={() => {}}
+                  onSelect={() => {}}
+                  selectedRowId={effectiveSelectedRowId}
                 />
               )}
               renderPage={(items) => (
                 <AdminGuestPage
                   items={items}
-                  onDelete={setDeleteTarget}
-                  onEdit={(group) => setEditingGroup(createDraftGroup(group))}
+                  onSelect={(row) => setSelectedRowId(row.rowId)}
+                  selectedRowId={effectiveSelectedRowId}
                 />
               )}
               sectionRef={tableCardRef}
@@ -473,7 +485,7 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
   );
 }
 
-function AdminGuestPage({ items, onDelete, onEdit }) {
+function AdminGuestPage({ items, onSelect, selectedRowId }) {
   return (
     <>
       <CardGrid
@@ -482,9 +494,9 @@ function AdminGuestPage({ items, onDelete, onEdit }) {
         items={items}
         renderCard={(row) => (
           <AdminGuestConfirmationCard
-            onDelete={onDelete}
-            onEdit={onEdit}
+            onSelect={onSelect}
             row={row}
+            selected={row.rowId === selectedRowId}
           />
         )}
       />
@@ -493,9 +505,9 @@ function AdminGuestPage({ items, onDelete, onEdit }) {
         {items.map((row) => (
           <AdminGuestConfirmationCard
             key={row.rowId}
-            onDelete={onDelete}
-            onEdit={onEdit}
+            onSelect={onSelect}
             row={row}
+            selected={row.rowId === selectedRowId}
           />
         ))}
       </div>
@@ -520,64 +532,70 @@ function AdminGuestPage({ items, onDelete, onEdit }) {
 }
 
 function AdminGuestConfirmationCard({
-  onDelete,
-  onEdit,
+  onSelect,
   row,
+  selected,
   titleRef,
   titleStyle,
 }) {
   return (
-    <Card
-      actions={
-        <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <CardActions
-            className="grid w-full shrink-0 grid-cols-2 gap-3 sm:w-auto sm:flex sm:items-center sm:justify-end sm:gap-2"
-            item={row.group}
-            onDelete={onDelete}
-            onEdit={onEdit}
-            showText={false}
-          />
-        </div>
-      }
-      decorativeText={row.groupSize}
-      detail={`${row.email || "-"} · ${row.phone || "-"}`}
-      eyebrow={`${row.groupSize} ${
-        row.groupSize === 1 ? "persona" : "personas"
+    <div
+      className={`h-full rounded-[2rem] transition ${
+        selected
+          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
+          : "ring-0"
       }`}
-      title={row.groupName || "Grupo sin nombre"}
-      titleRef={titleRef}
-      titleStyle={titleStyle}
+      onClick={() => onSelect(row)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(row);
+        }
+      }}
+      role="button"
+      tabIndex={0}
     >
-      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-        <div className="grid gap-3 text-sm text-[var(--color-muted)]">
-          <InfoLine
-            icon={<Fish size={15} strokeWidth={1.8} />}
-            label="Pescado"
-            value={row.fishText}
-          />
-          <InfoLine
-            icon={<Beef size={15} strokeWidth={1.8} />}
-            label="Carne"
-            value={row.meatText}
-          />
-          <InfoLine
-            icon={<AlertTriangle size={15} strokeWidth={1.8} />}
-            label="Alergias"
-            value={row.allergyText}
-          />
-          <InfoLine
-            icon={<BusFront size={15} strokeWidth={1.8} />}
-            label="Transporte"
-            value={row.transportText}
-          />
-          <InfoLine
-            icon={<MessageCircle size={15} strokeWidth={1.8} />}
-            label="Notas"
-            value={row.commentsCountText}
-          />
+      <Card
+        decorativeText={row.groupSize}
+        detail={`${row.email || "-"} · ${row.phone || "-"}`}
+        eyebrow={`${row.groupSize} ${
+          row.groupSize === 1 ? "persona" : "personas"
+        }`}
+        title={row.groupName || "Grupo sin nombre"}
+        titleRef={titleRef}
+        titleStyle={titleStyle}
+      >
+        <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+          <div className="grid gap-3 text-sm text-[var(--color-muted)]">
+            <InfoLine
+              icon={<Fish size={15} strokeWidth={1.8} />}
+              label="Pescado"
+              value={row.fishText}
+            />
+            <InfoLine
+              icon={<Beef size={15} strokeWidth={1.8} />}
+              label="Carne"
+              value={row.meatText}
+            />
+            <InfoLine
+              icon={<AlertTriangle size={15} strokeWidth={1.8} />}
+              label="Alergias"
+              value={row.allergyText}
+            />
+            <InfoLine
+              icon={<BusFront size={15} strokeWidth={1.8} />}
+              label="Transporte"
+              value={row.transportText}
+            />
+            <InfoLine
+              icon={<MessageCircle size={15} strokeWidth={1.8} />}
+              label="Notas"
+              value={row.commentsCountText}
+            />
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 }
 
