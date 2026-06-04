@@ -59,16 +59,18 @@ import {
   downloadTablesCsv,
   getAssignableGuests,
   getPendingGuests,
-  loadAdminTableGroups,
-  loadAdminTables,
   persistAdminTables,
-  readStoredTables,
   unassignGuestFromSeatLocal,
   upsertManualTable,
   validateTableForm,
   getTableKey,
 } from "../services/tablesService";
 import { saveAdminGroup } from "../services/rsvpService";
+import {
+  loadAdminDataOnce,
+  setAdminGroups,
+  setAdminTables,
+} from "../services/adminDataStore";
 import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
 import usePagedData from "../hooks/usePagedData";
@@ -109,7 +111,7 @@ export default function AdminTables() {
   const isAuthenticated =
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   const [state, setState] = useState(emptyState);
-  const [manualTables, setManualTables] = useState(readStoredTables);
+  const [manualTables, setManualTables] = useState([]);
   const [savedSnapshot, setSavedSnapshot] = useState(emptySavedSnapshot);
   const [tableForm, setTableForm] = useState(createEmptyTableForm);
   const [tableFormErrors, setTableFormErrors] = useState({});
@@ -146,19 +148,11 @@ export default function AdminTables() {
       }
 
       try {
-        const groupsPromise = loadAdminTableGroups({
-          password: ADMIN_PASSWORD,
-        });
-        const storedTablesPromise = includeStoredTables
-          ? loadAdminTables({ password: ADMIN_PASSWORD }).catch((error) => {
-              console.error("Error al cargar mesas guardadas:", error);
-              return readStoredTables();
-            })
-          : Promise.resolve(null);
-        const [groups, storedTables] = await Promise.all([
-          groupsPromise,
-          storedTablesPromise,
-        ]);
+        const snapshot = await loadAdminDataOnce({ password: ADMIN_PASSWORD });
+        const groups = snapshot.groups;
+        const storedTables = includeStoredTables
+          ? snapshot.tables
+          : manualTablesRef.current;
 
         if (storedTables) {
           setManualTables(storedTables);
@@ -427,12 +421,14 @@ export default function AdminTables() {
     });
 
     setManualTables(nextManualTables);
+    setAdminTables(nextManualTables);
     setState((prev) => ({
       ...prev,
       groups: updatedGroups,
       loading: false,
       error: "",
     }));
+    setAdminGroups(updatedGroups);
 
     if (editingTable && getTableKey(editingTable) === tableKey) {
       handleCloseTableForm();
@@ -482,6 +478,8 @@ export default function AdminTables() {
 
       await Promise.all(persistencePromises);
 
+      setAdminTables(manualTables);
+      setAdminGroups(state.groups);
       setSavedSnapshot({
         groups: state.groups,
         manualTables,
@@ -502,6 +500,8 @@ export default function AdminTables() {
     const restoredGroups = savedSnapshot.groups;
 
     setManualTables(restoredManualTables);
+    setAdminTables(restoredManualTables);
+    setAdminGroups(restoredGroups);
     setState((prev) => ({
       ...prev,
       groups: restoredGroups,
@@ -542,6 +542,7 @@ export default function AdminTables() {
           loading: false,
           error: "",
         }));
+        setAdminGroups(updatedGroups);
       } catch (error) {
         console.error("Error al asignar mesa:", error);
         setState((prev) => ({
@@ -616,6 +617,7 @@ export default function AdminTables() {
         loading: false,
         error: "",
       }));
+      setAdminGroups(updatedGroups);
     } catch (error) {
       console.error("Error al asignar asiento:", error);
       setState((prev) => ({
@@ -648,6 +650,7 @@ export default function AdminTables() {
         loading: false,
         error: "",
       }));
+      setAdminGroups(updatedGroups);
     } catch (error) {
       console.error("Error al liberar asiento:", error);
       setState((prev) => ({
@@ -683,12 +686,14 @@ export default function AdminTables() {
       : state.groups;
 
     setManualTables(nextManualTables);
+    setAdminTables(nextManualTables);
     setState((prev) => ({
       ...prev,
       groups: updatedGroups,
       loading: false,
       error: "",
     }));
+    setAdminGroups(updatedGroups);
 
     if (!editingTable) {
       setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
@@ -1411,14 +1416,6 @@ function TableCardWithActions({
           : "ring-0"
       }`}
       onClick={() => onSelect(table)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onSelect(table);
-        }
-      }}
-      role="button"
-      tabIndex={0}
     >
       <TableAnimatedInfoCard
         index={index}

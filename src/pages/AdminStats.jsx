@@ -11,7 +11,7 @@ import {
   MailCheck,
 } from "lucide-react";
 
-import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import { ADMIN_SESSION_KEY } from "../constants/admin";
 import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
@@ -25,8 +25,7 @@ import StatusDialog from "../components/ui/StatusDialog";
 import Chip from "../components/ui/Chip";
 import { COMMON_ALLERGIES } from "../constants/rsvp";
 import { Confirmation } from "../models";
-import { findAllGroups } from "../services/rsvpService";
-import { normalizeAdminGroups } from "../utils/rsvpGroups";
+import { loadAdminDataOnce } from "../services/adminDataStore";
 
 const ADMIN_OUTBOUND_BUS_OPTIONS = [
   { value: "No", label: "No" },
@@ -80,11 +79,10 @@ export default function AdminStats() {
     }
 
     try {
-      const response = await findAllGroups({ password: ADMIN_PASSWORD });
-      const groups = normalizeAdminGroups(response);
+      const response = await loadAdminDataOnce();
 
       setState({
-        groups,
+        groups: response.groups,
         loading: false,
         error: "",
       });

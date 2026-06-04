@@ -28,6 +28,7 @@ import {
 } from "../components/rsvp/FormPrimitives";
 import { siteContent } from "../constants/siteContent";
 import { adminContent } from "../constants/adminContent";
+import { loadAdminDataOnce } from "../services/adminDataStore";
 
 const adminCardIcons = {
   Invitados: ClipboardCheck,
@@ -75,15 +76,21 @@ export default function Admin() {
     };
   }, []);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (password === ADMIN_PASSWORD) {
-      window.sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
-      window.dispatchEvent(new Event(ADMIN_AUTH_EVENT));
-      setIsAuthenticated(true);
-      setError("");
-      setPassword("");
+      try {
+        await loadAdminDataOnce({ password: ADMIN_PASSWORD });
+        window.sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+        window.dispatchEvent(new Event(ADMIN_AUTH_EVENT));
+        setIsAuthenticated(true);
+        setError("");
+        setPassword("");
+      } catch (error) {
+        console.error(error);
+        setError(adminContent.auth.error);
+      }
       return;
     }
 

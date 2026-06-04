@@ -241,10 +241,10 @@ function GuestPager({
       tone="danger"
     />
   ) : null;
-  const renderGuestPage = (items, pageNumber) => (
+  const renderGuestPage = (items, pageNumber, { card = false } = {}) => (
     <GuestCard
       canRemove={false}
-      card={false}
+      card={card}
       errors={errors}
       guest={items[0]}
       index={pageNumber - 1}
@@ -255,8 +255,8 @@ function GuestPager({
     />
   );
   const renderAdminGuestPage = (items, pageNumber) => (
-    <div className="rounded-[2rem] ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]">
-      {renderGuestPage(items, pageNumber)}
+    <div className="h-full rounded-[2rem] ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]">
+      {renderGuestPage(items, pageNumber, { card: true })}
     </div>
   );
 
@@ -299,7 +299,7 @@ function GuestPager({
           </div>
         }
         eyebrow={adminContent.guests.editor.guestListEyebrow}
-        getKey={(guest, { index }) => `${index}-${Guest.getFullName(guest)}`}
+        getKey={(_guest, { index }) => index}
         items={guests}
         lockPageHeight={false}
         onNextPage={() => onGuestPageChange(currentGuestPage + 1)}
@@ -329,7 +329,7 @@ function GuestPager({
         <PaginatedContent
           allItems={guests}
           direction={direction}
-          getKey={(guest, { index }) => `${index}-${Guest.getFullName(guest)}`}
+          getKey={(_guest, { index }) => index}
           page={currentGuestPage}
           pageSize={1}
           totalPages={totalGuestPages}

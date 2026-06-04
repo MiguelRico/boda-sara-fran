@@ -168,14 +168,6 @@ function GuestAssignmentRow({
           : "ring-0"
       }`}
       onClick={() => onSelect?.(guest)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onSelect?.(guest);
-        }
-      }}
-      role="button"
-      tabIndex={0}
     >
       <TableGuestCard
         decorativeText="?"

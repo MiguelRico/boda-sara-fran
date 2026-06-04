@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 import IconButton from "../ui/IconButton";
 import { ADMIN_AUTH_EVENT, ADMIN_SESSION_KEY } from "../../constants/admin";
+import { clearAdminDataStore } from "../../services/adminDataStore";
 
 function getAdminAuthState() {
   return window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
@@ -68,6 +69,7 @@ export default function AdminAccessButton() {
   };
 
   const handleLogout = () => {
+    clearAdminDataStore();
     window.sessionStorage.removeItem(ADMIN_SESSION_KEY);
     window.dispatchEvent(new Event(ADMIN_AUTH_EVENT));
     setIsOpen(false);

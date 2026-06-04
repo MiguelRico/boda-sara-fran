@@ -37,9 +37,13 @@ import { MAX_GUESTS } from "../constants/rsvp";
 import { Confirmation } from "../models";
 import {
   deleteAdminGroup,
-  findAllGroups,
   saveAdminGroup,
 } from "../services/rsvpService";
+import {
+  loadAdminDataOnce,
+  removeAdminGroup,
+  upsertAdminGroup,
+} from "../services/adminDataStore";
 import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
 import useSpinner from "../hooks/useSpinner";
 import usePagedData from "../hooks/usePagedData";
@@ -113,10 +117,10 @@ export default function AdminGuests() {
     }
 
     try {
-      const response = await findAllGroups({ password: ADMIN_PASSWORD });
+      const response = await loadAdminDataOnce({ password: ADMIN_PASSWORD });
 
       setState({
-        groups: normalizeAdminGroups(response),
+        groups: normalizeAdminGroups(response.groups),
         loading: false,
         error: "",
       });
@@ -189,6 +193,7 @@ export default function AdminGuests() {
 
   const handleSaveGroup = async (group) => {
     const isCreation = !editingGroup?.groupName;
+    const groupToSave = normalizeAdminGroupBeforeSave(group, { isCreation });
 
     try {
       spinner.show(
@@ -198,13 +203,18 @@ export default function AdminGuests() {
       );
 
       await saveAdminGroup({
-        group: normalizeAdminGroupBeforeSave(group, { isCreation }),
+        group: groupToSave,
         method: isCreation ? "POST" : "PUT",
         password: ADMIN_PASSWORD,
       });
+      const nextGroups = upsertAdminGroup(groupToSave);
 
       setEditingGroup(null);
-      await loadGuests({ showLoading: false });
+      setState({
+        groups: nextGroups,
+        loading: false,
+        error: "",
+      });
       setPopup(
         createAdminPopup({
           message: isCreation
@@ -239,9 +249,14 @@ export default function AdminGuests() {
         groupName: deleteTarget.groupName,
         password: ADMIN_PASSWORD,
       });
+      const nextGroups = removeAdminGroup(deleteTarget.groupName);
 
       setDeleteTarget(null);
-      await loadGuests({ showLoading: false });
+      setState({
+        groups: nextGroups,
+        loading: false,
+        error: "",
+      });
       setPopup(
         createAdminPopup({
           message: adminContent.guests.dialogs.deletedMessage,
@@ -537,14 +552,6 @@ function AdminGuestConfirmationCard({
           : "ring-0"
       }`}
       onClick={() => onSelect(row)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onSelect(row);
-        }
-      }}
-      role="button"
-      tabIndex={0}
     >
       <Card
         decorativeText={row.groupSize}

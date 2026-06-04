@@ -48,8 +48,6 @@ export const saveStoredTables = (tables) => {
 };
 
 export const persistAdminTables = async ({ password, tables }) => {
-  saveStoredTables(tables);
-
   await saveAdminTables({
     password,
     tables: Table.normalizeList(tables).map((table) => ({
@@ -137,7 +135,7 @@ export const createTableFormFromTable = (table) => {
   };
 };
 
-export const getTableKey = (table) => (table.name || "").trim();
+export const getTableKey = (table = {}) => (table.name || "").trim();
 
 export const validateTableForm = (form, tables, editingTable = null) => {
   const errors = {};
@@ -183,11 +181,17 @@ export const upsertManualTable = ({ editingTable, form, manualTables }) => {
   }
 
   const editingTableKey = getTableKey(editingTable);
+  const existingIndex = manualTables.findIndex(
+    (table) => getTableKey(table) === editingTableKey,
+  );
 
-  return [
-    ...manualTables.filter((table) => getTableKey(table) !== editingTableKey),
-    nextTable,
-  ];
+  if (existingIndex === -1) {
+    return [...manualTables, nextTable];
+  }
+
+  return manualTables.map((table, index) =>
+    index === existingIndex ? nextTable : table,
+  );
 };
 
 export const assignPendingGuestToSeatLocal = ({

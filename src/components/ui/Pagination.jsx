@@ -25,6 +25,7 @@ export default function Pagination({
             icon={<ChevronLeft size={16} strokeWidth={1.8} />}
             label={previousLabel}
             onClick={onPrev}
+            tabIndex={-1}
             tone="secondary"
             type="button"
           >
@@ -39,6 +40,7 @@ export default function Pagination({
             icon={<ChevronRight size={16} strokeWidth={1.8} />}
             label={nextLabel}
             onClick={onNext}
+            tabIndex={-1}
             tone="secondary"
             type="button"
           >

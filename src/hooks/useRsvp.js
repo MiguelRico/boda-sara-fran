@@ -186,13 +186,18 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
 
       show("Enviando confirmación...");
 
-      const response = await saveGroup(payload, {
+      await saveGroup(payload, {
         method: isEdition ? "PUT" : "POST",
       });
 
-      if (response.groupName) {
-        setCurrentGroupName(response.groupName);
-      }
+      setCurrentGroupName(null);
+      setContact({
+        email: "",
+        groupName: "",
+        phone: "",
+      });
+      setGuests(Guest.normalizeList());
+      setErrors({});
 
       setPopup({
         closeText: "Volver al inicio",
