@@ -24,9 +24,7 @@ export default function Pagination({
       className={`${className} rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4`}
     >
       <div className="flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-center">{pageLabel}</p>
-
-        <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:flex">
+        <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex items-center">
           <IconButton
             className="w-full sm:w-auto"
             disabled={page === 1}
@@ -38,6 +36,9 @@ export default function Pagination({
           >
             {previousLabel}
           </IconButton>
+
+          <p className="text-center">{pageLabel}</p>
+
           <IconButton
             className="w-full sm:w-auto"
             disabled={page === totalPages}

@@ -3,12 +3,14 @@ import { ArrowLeft, Check, Save, Trash2, UserPlus, X } from "lucide-react";
 
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
+import AdminTableSection from "../components/admin/AdminTableSection";
 import { FieldError, FormCard } from "../components/rsvp/FormPrimitives";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import IconButton from "../components/ui/IconButton";
 import PaginatedContent from "../components/ui/PaginatedContent";
 import Pagination from "../components/ui/Pagination";
 import { MAX_GUESTS } from "../constants/rsvp";
+import { adminContent } from "../constants/adminContent";
 import { rsvpContent } from "../constants/rsvpContent";
 import { Guest } from "../models";
 
@@ -118,6 +120,7 @@ export default function RsvpForm({
           renderItem(
             2,
             <GuestPager
+              addText={addText}
               canRemove={guests.length > 1}
               currentGuest={currentGuest}
               currentGuestIndex={currentGuestIndex}
@@ -125,9 +128,14 @@ export default function RsvpForm({
               direction={guestPageDirection}
               errors={errors}
               guests={guests}
+              hasInvalidGuest={hasInvalidGuest}
+              loading={loading}
+              onAddGuest={handleAddGuest}
               onGuestChange={onGuestChange}
               onGuestPageChange={handleGuestPageChange}
               onRemoveGuest={handleRemoveGuest}
+              submitIcon={submitIcon}
+              submitText={submitText}
               totalGuestPages={totalGuestPages}
               variant={variant}
             />,
@@ -135,56 +143,52 @@ export default function RsvpForm({
 
         {formError && <FieldError>{formError}</FieldError>}
 
-        {renderItem(
-          2 + guests.length,
-          <FormCard>
-            <p className="section-eyebrow mb-4">
-              {rsvpContent.form.actionsEyebrow}
-            </p>
-            <div className="flex flex-col gap-4 sm:grid sm:grid-cols-3">
-              <IconButton
-                className="order-3 sm:order-none"
-                disabled={loading}
-                icon={cancelIcon}
-                label={cancelText}
-                onClick={onCancel}
-                showText="always"
-                to={cancelTo}
-                tone="terciary"
-                type="button"
-              >
-                {cancelText}
-              </IconButton>
-
-              {guests.length < MAX_GUESTS && (
+        {variant !== "admin" &&
+          renderItem(
+            2 + guests.length,
+            <FormCard>
+              <p className="section-eyebrow mb-4">
+                {rsvpContent.form.actionsEyebrow}
+              </p>
+              <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
                 <IconButton
-                  className="order-1 sm:order-none"
-                  disabled={loading || hasInvalidGuest}
-                  icon={addIcon}
-                  label={addText}
-                  onClick={handleAddGuest}
-                  showText="always"
-                  tone="secondary"
-                  type="button"
+                  className="w-full"
+                  disabled={loading}
+                  icon={cancelIcon}
+                  label={cancelText}
+                  onClick={onCancel}
+                  to={cancelTo}
+                  tone="terciary"
                 >
-                  {addText}
+                  {cancelText}
                 </IconButton>
-              )}
 
-              <IconButton
-                className="order-2 sm:order-none"
-                disabled={loading}
-                icon={submitIcon}
-                label={submitText}
-                showText="always"
-                tone="primary"
-                type="submit"
-              >
-                {submitText}
-              </IconButton>
-            </div>
-          </FormCard>,
-        )}
+                {guests.length < MAX_GUESTS && (
+                  <IconButton
+                    className="w-full"
+                    disabled={loading || hasInvalidGuest}
+                    icon={addIcon}
+                    label={addText}
+                    onClick={handleAddGuest}
+                    tone="secondary"
+                  >
+                    {addText}
+                  </IconButton>
+                )}
+
+                <IconButton
+                  className="w-full"
+                  disabled={loading}
+                  icon={submitIcon}
+                  label={submitText}
+                  tone="primary"
+                  type="submit"
+                >
+                  {submitText}
+                </IconButton>
+              </div>
+            </FormCard>,
+          )}
       </form>
 
       {guestDeleteTarget && (
@@ -204,6 +208,7 @@ export default function RsvpForm({
 }
 
 function GuestPager({
+  addText,
   canRemove,
   currentGuest,
   currentGuestIndex,
@@ -211,12 +216,104 @@ function GuestPager({
   direction,
   errors,
   guests,
+  hasInvalidGuest,
+  loading,
+  onAddGuest,
   onGuestChange,
   onGuestPageChange,
   onRemoveGuest,
+  submitIcon,
+  submitText,
   totalGuestPages,
   variant,
 }) {
+  const isAdmin = variant === "admin";
+  const pageLabel = rsvpContent.form.guestPageLabel({
+    page: currentGuestPage,
+    total: totalGuestPages,
+  });
+  const removeButton = canRemove ? (
+    <IconButton
+      className="w-full"
+      icon={<Trash2 size={16} strokeWidth={1.8} />}
+      label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
+      onClick={() => onRemoveGuest(currentGuest, currentGuestIndex)}
+      tone="danger"
+    />
+  ) : null;
+  const renderGuestPage = (items, pageNumber) => (
+    <GuestCard
+      canRemove={false}
+      card={false}
+      errors={errors}
+      guest={items[0]}
+      index={pageNumber - 1}
+      onGuestChange={onGuestChange}
+      onRemoveGuest={() => {}}
+      showHeader={false}
+      variant={variant}
+    />
+  );
+
+  if (isAdmin) {
+    return (
+      <AdminTableSection
+        actions={
+          <div
+            className={
+              canRemove
+                ? "grid w-full grid-cols-3 gap-3 sm:grid-cols-3"
+                : "grid w-full grid-cols-2 gap-2 sm:grid-cols-2"
+            }
+          >
+            {removeButton}
+
+            {guests.length < MAX_GUESTS && (
+              <IconButton
+                className="w-full"
+                disabled={loading || hasInvalidGuest}
+                icon={<UserPlus size={16} strokeWidth={1.8} />}
+                label={addText}
+                onClick={onAddGuest}
+                tone="secondary"
+              >
+                {addText}
+              </IconButton>
+            )}
+
+            <IconButton
+              className="w-full"
+              disabled={loading}
+              icon={submitIcon}
+              label={submitText}
+              tone="primary"
+              type="submit"
+            >
+              {submitText}
+            </IconButton>
+          </div>
+        }
+        count={adminContent.guests.editor.guestCountLabel({
+          page: currentGuestPage,
+          total: totalGuestPages,
+        })}
+        eyebrow={adminContent.guests.editor.guestListEyebrow}
+        getKey={(guest, { index }) => `${index}-${Guest.getFullName(guest)}`}
+        items={guests}
+        lockPageHeight={false}
+        onNextPage={() => onGuestPageChange(currentGuestPage + 1)}
+        onPrevPage={() => onGuestPageChange(currentGuestPage - 1)}
+        page={currentGuestPage}
+        pageDirection={direction}
+        paginationLabel={pageLabel}
+        pageSize={1}
+        renderPage={renderGuestPage}
+        title={adminContent.guests.editor.guestListTitle}
+        totalPages={totalGuestPages}
+      />
+    );
+  }
+
   return (
     <>
       <FormCard>
@@ -225,15 +322,7 @@ function GuestPager({
             {rsvpContent.form.guestLabel(currentGuestIndex + 1)}
           </p>
 
-          {canRemove && (
-            <IconButton
-              icon={<Trash2 size={16} strokeWidth={1.8} />}
-              label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
-              onClick={() => onRemoveGuest(currentGuest, currentGuestIndex)}
-              tone="danger"
-              type="button"
-            />
-          )}
+          {canRemove && removeButton}
         </div>
 
         <PaginatedContent
@@ -243,28 +332,13 @@ function GuestPager({
           page={currentGuestPage}
           pageSize={1}
           totalPages={totalGuestPages}
-          renderPage={(items, pageNumber) => (
-            <GuestCard
-              canRemove={false}
-              card={false}
-              errors={errors}
-              guest={items[0]}
-              index={pageNumber - 1}
-              onGuestChange={onGuestChange}
-              onRemoveGuest={() => {}}
-              showHeader={false}
-              variant={variant}
-            />
-          )}
+          renderPage={renderGuestPage}
         />
       </FormCard>
 
       <Pagination
         className="mt-5"
-        label={rsvpContent.form.guestPageLabel({
-          page: currentGuestPage,
-          total: totalGuestPages,
-        })}
+        label={pageLabel}
         nextLabel={rsvpContent.form.next}
         onNext={() => onGuestPageChange(currentGuestPage + 1)}
         onPrev={() => onGuestPageChange(currentGuestPage - 1)}

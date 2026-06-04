@@ -63,7 +63,7 @@ export default function DeleteDialog({
               label={cancelText}
               onClick={onCancel}
               showText="always"
-              tone="secondary"
+              tone="terciary"
               type="button"
             >
               {cancelText}

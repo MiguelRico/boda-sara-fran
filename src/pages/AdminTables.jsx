@@ -27,6 +27,7 @@ import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
+import AdminTableSection from "../components/admin/AdminTableSection";
 import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
@@ -42,7 +43,6 @@ import TabNavigation from "../components/ui/TabNavigation";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import CardListSkeleton from "../components/ui/CardListSkeleton";
 import PaginatedContent from "../components/ui/PaginatedContent";
-import Pagination from "../components/ui/Pagination";
 import SeatAssignmentModal from "../components/ui/SeatAssignmentModal";
 import PendingGuestsList from "../components/admin/PendingGuestsList";
 import { GuestDetailChips } from "../components/admin/TableGuestCard";
@@ -635,92 +635,104 @@ export default function AdminTables() {
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={tablesInView}>
-            <section className="premium-card" ref={tablesCardRef}>
-              <div className="mb-5">
-                <div>
-                  <p className="section-eyebrow mb-2">
-                    {adminContent.tables.header.eyebrow}
-                  </p>
-                  <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-                    Asientos asignados
-                  </h2>
+            <AdminTableSection
+              actions={
+                <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
+                  <IconButton
+                    className="w-full"
+                    disabled={!tables.length}
+                    icon={<Download size={16} strokeWidth={1.8} />}
+                    label={adminContent.tables.header.exportTable}
+                    onClick={() => downloadTablesCsv(tables)}
+                    tone="terciary"
+                  >
+                    {adminContent.tables.header.exportTable}
+                  </IconButton>
 
-                  <div className="mt-3">
-                    <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-                      {activeTab === "tables" ? (
-                        <>
-                          {pagedTableCount}{" "}
-                          {pagedTableCount === 1 ? "mesa" : "mesas"} en esta
-                          pagina - {pagedSeatCount}{" "}
-                          {pagedSeatCount === 1 ? "asiento" : "asientos"}
-                        </>
-                      ) : (
-                        <>
-                          {guestsPending.length}{" "}
-                          {guestsPending.length === 1
-                            ? "invitado pendiente"
-                            : "invitados pendientes"}
-                        </>
-                      )}
-                    </p>
+                  <IconButton
+                    className="w-full"
+                    icon={<Plus size={18} strokeWidth={2.4} />}
+                    label={adminContent.tables.actions.addTable}
+                    onClick={handleCreateTable}
+                    tone="secondary"
+                  >
+                    {adminContent.tables.actions.addTable}
+                  </IconButton>
 
-                    <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-                      <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
-                        <IconButton
-                          className="w-full"
-                          disabled={!tables.length}
-                          icon={<Download size={16} strokeWidth={1.8} />}
-                          label={adminContent.tables.header.exportTable}
-                          onClick={() => downloadTablesCsv(tables)}
-                          tone="terciary"
-                        >
-                          {adminContent.tables.header.exportTable}
-                        </IconButton>
+                  <IconButton
+                    className="w-full"
+                    disabled={!hasPendingChanges || state.loading}
+                    icon={<Undo2 size={16} strokeWidth={1.8} />}
+                    label={adminContent.tables.actions.discardChanges}
+                    onClick={handleDiscardPendingChanges}
+                    tone="terciary"
+                    type="button"
+                  >
+                    {adminContent.tables.actions.discardChanges}
+                  </IconButton>
 
-                        <IconButton
-                          className="w-full"
-                          icon={<Plus size={18} strokeWidth={2.4} />}
-                          label={adminContent.tables.actions.addTable}
-                          onClick={handleCreateTable}
-                          tone="secondary"
-                        >
-                          {adminContent.tables.actions.addTable}
-                        </IconButton>
-
-                        <IconButton
-                          className="w-full"
-                          disabled={!hasPendingChanges || state.loading}
-                          icon={<Undo2 size={16} strokeWidth={1.8} />}
-                          label={adminContent.tables.actions.discardChanges}
-                          onClick={handleDiscardPendingChanges}
-                          tone="terciary"
-                          type="button"
-                        >
-                          {adminContent.tables.actions.discardChanges}
-                        </IconButton>
-
-                        <IconButton
-                          className="w-full"
-                          disabled={!hasPendingChanges || spinner.loading}
-                          icon={<Save size={16} strokeWidth={1.8} />}
-                          label={adminContent.tables.actions.saveChanges}
-                          onClick={handleSavePendingChanges}
-                          tone="primary"
-                        >
-                          {adminContent.tables.actions.saveChanges}
-                        </IconButton>
-                      </div>
-                    </div>
-                  </div>
+                  <IconButton
+                    className="w-full"
+                    disabled={!hasPendingChanges || spinner.loading}
+                    icon={<Save size={16} strokeWidth={1.8} />}
+                    label={adminContent.tables.actions.saveChanges}
+                    onClick={handleSavePendingChanges}
+                    tone="primary"
+                  >
+                    {adminContent.tables.actions.saveChanges}
+                  </IconButton>
                 </div>
-              </div>
-
-              <TabNavigation
-                tabs={SECTION_TABS}
-                activeTab={activeTab}
-                onChange={setActiveTab}
-                className="mb-6"
-              />
+              }
+              count={
+                activeTab === "tables" ? (
+                  <>
+                    {pagedTableCount}{" "}
+                    {pagedTableCount === 1 ? "mesa" : "mesas"} en esta pagina
+                    - {pagedSeatCount}{" "}
+                    {pagedSeatCount === 1 ? "asiento" : "asientos"}
+                  </>
+                ) : (
+                  <>
+                    {guestsPending.length}{" "}
+                    {guestsPending.length === 1
+                      ? "invitado pendiente"
+                      : "invitados pendientes"}
+                  </>
+                )
+              }
+              eyebrow={adminContent.tables.header.eyebrow}
+              filters={
+                <TabNavigation
+                  tabs={SECTION_TABS}
+                  activeTab={activeTab}
+                  onChange={setActiveTab}
+                />
+              }
+              isMobileList={isMobileList}
+              mobilePageLabel={adminContent.tables.header.mobilePageLabel}
+              onNextPage={() =>
+                handlePageChange(currentPage + 1, tablesStartRef.current)
+              }
+              onPrevPage={() =>
+                handlePageChange(currentPage - 1, tablesStartRef.current)
+              }
+              page={
+                activeTab === "tables" && !state.loading
+                  ? currentPage
+                  : undefined
+              }
+              pageLabel={adminContent.tables.header.pageLabel}
+              pageSize={
+                activeTab === "tables" && !state.loading ? pageSize : undefined
+              }
+              sectionRef={tablesCardRef}
+              title="Asientos asignados"
+              totalPages={
+                activeTab === "tables" && !state.loading
+                  ? totalPages
+                  : undefined
+              }
+            >
 
               <AnimatePresence mode="wait" initial={false}>
                 {activeTab === "tables" ? (
@@ -743,112 +755,17 @@ export default function AdminTables() {
                         lines={2}
                       />
                     ) : (
-                      <>
-                        <PaginatedContent
-                          allItems={tables}
-                          direction={pageDirection}
-                          getKey={getTableRenderKey}
-                          page={currentPage}
-                          pageSize={pageSize}
-                          totalPages={totalPages}
-                          renderMeasurePage={(items) => (
-                            <>
-                              <CardGrid
-                                emptyState={<TablesEmptyState />}
-                                getKey={getTableRenderKey}
-                                items={items}
-                                renderCard={(table, index) => (
-                                  <TableCardWithActions
-                                    index={index}
-                                    onDelete={() => {}}
-                                    onEdit={() => {}}
-                                    onSeatClick={() => {}}
-                                    onUnassignSeat={() => {}}
-                                    table={table}
-                                  />
-                                )}
-                              />
-                              <div className="grid gap-4 md:hidden">
-                                {items.map((table, index) => (
-                                  <TableCardWithActions
-                                    key={getTableRenderKey(table, { index })}
-                                    onDelete={() => {}}
-                                    onEdit={() => {}}
-                                    onSeatClick={() => {}}
-                                    onUnassignSeat={() => {}}
-                                    reveal={false}
-                                    table={table}
-                                  />
-                                ))}
-                              </div>
-                              {!items.length && (
-                                <div className="md:hidden">
-                                  <TablesEmptyState />
-                                </div>
-                              )}
-                            </>
-                          )}
-                          renderPage={(items) => (
-                            <>
-                              <CardGrid
-                                emptyState={<TablesEmptyState />}
-                                getKey={getTableRenderKey}
-                                items={items}
-                                renderCard={(table, index) => (
-                                  <TableCardWithActions
-                                    index={index}
-                                    onDelete={handleRequestDeleteTable}
-                                    onEdit={handleEditTable}
-                                    onSeatClick={handleSeatClick}
-                                    onUnassignSeat={handleRemoveGuestFromSeat}
-                                    table={table}
-                                  />
-                                )}
-                              />
-                              <div className="grid gap-4 md:hidden">
-                                {items.map((table, index) => (
-                                  <TableCardWithActions
-                                    key={getTableRenderKey(table, { index })}
-                                    onDelete={handleRequestDeleteTable}
-                                    onEdit={handleEditTable}
-                                    onSeatClick={handleSeatClick}
-                                    onUnassignSeat={handleRemoveGuestFromSeat}
-                                    reveal={false}
-                                    table={table}
-                                  />
-                                ))}
-                              </div>
-                              {!items.length && (
-                                <div className="md:hidden">
-                                  <TablesEmptyState />
-                                </div>
-                              )}
-                            </>
-                          )}
-                        />
-
-                        <Pagination
-                          isMobileList={isMobileList}
-                          page={currentPage}
-                          totalPages={totalPages}
-                          currentLabel={adminContent.tables.header.pageLabel}
-                          mobileLabel={
-                            adminContent.tables.header.mobilePageLabel
-                          }
-                          onNext={() =>
-                            handlePageChange(
-                              currentPage + 1,
-                              tablesStartRef.current,
-                            )
-                          }
-                          onPrev={() =>
-                            handlePageChange(
-                              currentPage - 1,
-                              tablesStartRef.current,
-                            )
-                          }
-                        />
-                      </>
+                      <AdminTableCards
+                        direction={pageDirection}
+                        items={tables}
+                        onDelete={handleRequestDeleteTable}
+                        onEdit={handleEditTable}
+                        onSeatClick={handleSeatClick}
+                        onUnassignSeat={handleRemoveGuestFromSeat}
+                        page={currentPage}
+                        pageSize={pageSize}
+                        totalPages={totalPages}
+                      />
                     )}
                   </motion.div>
                 ) : (
@@ -871,7 +788,7 @@ export default function AdminTables() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </section>
+            </AdminTableSection>
           </CinematicStaggeredRevealItem>
         </div>
       </CinematicSection>
@@ -1338,6 +1255,94 @@ function TableCardWithActions({
         table={table}
       />
     </div>
+  );
+}
+
+function AdminTableCards({
+  direction,
+  items,
+  onDelete,
+  onEdit,
+  onSeatClick,
+  onUnassignSeat,
+  page,
+  pageSize,
+  totalPages,
+}) {
+  return (
+    <PaginatedContent
+      allItems={items}
+      direction={direction}
+      getKey={getTableRenderKey}
+      lockHeight={false}
+      page={page}
+      pageSize={pageSize}
+      totalPages={totalPages}
+      renderMeasurePage={(pageItems) => (
+        <TableCardsPage
+          items={pageItems}
+          onDelete={() => {}}
+          onEdit={() => {}}
+          onSeatClick={() => {}}
+          onUnassignSeat={() => {}}
+        />
+      )}
+      renderPage={(pageItems) => (
+        <TableCardsPage
+          items={pageItems}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          onSeatClick={onSeatClick}
+          onUnassignSeat={onUnassignSeat}
+        />
+      )}
+    />
+  );
+}
+
+function TableCardsPage({
+  items,
+  onDelete,
+  onEdit,
+  onSeatClick,
+  onUnassignSeat,
+}) {
+  return (
+    <>
+      <CardGrid
+        emptyState={<TablesEmptyState />}
+        getKey={getTableRenderKey}
+        items={items}
+        renderCard={(table, index) => (
+          <TableCardWithActions
+            index={index}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            onSeatClick={onSeatClick}
+            onUnassignSeat={onUnassignSeat}
+            table={table}
+          />
+        )}
+      />
+      <div className="grid gap-4 md:hidden">
+        {items.map((table, index) => (
+          <TableCardWithActions
+            key={getTableRenderKey(table, { index })}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            onSeatClick={onSeatClick}
+            onUnassignSeat={onUnassignSeat}
+            reveal={false}
+            table={table}
+          />
+        ))}
+      </div>
+      {!items.length && (
+        <div className="md:hidden">
+          <TablesEmptyState />
+        </div>
+      )}
+    </>
   );
 }
 

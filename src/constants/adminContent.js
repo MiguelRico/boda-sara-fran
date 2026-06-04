@@ -40,6 +40,12 @@ export const adminContent = {
           guests === 1 ? "persona" : "personas"
         }`,
     },
+    editor: {
+      guestListEyebrow: "Grupo",
+      guestListTitle: "Invitados",
+      guestCountLabel: ({ page, total }) =>
+        `Invitado ${page} de ${total}`,
+    },
     actions: {
       export: "Exportar",
       refresh: "Actualizar",

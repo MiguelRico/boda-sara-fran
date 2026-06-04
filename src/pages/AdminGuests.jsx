@@ -29,11 +29,10 @@ import Card from "../components/admin/Card";
 import CardActions from "../components/admin/CardActions";
 import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
+import AdminTableSection from "../components/admin/AdminTableSection";
 import CardListSkeleton from "../components/ui/CardListSkeleton";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import InfoLine from "../components/ui/InfoLine";
-import PaginatedContent from "../components/ui/PaginatedContent";
-import Pagination from "../components/ui/Pagination";
 import RsvpForm from "../forms/RsvpForm";
 import { MAX_GUESTS } from "../constants/rsvp";
 import { Confirmation } from "../models";
@@ -283,129 +282,99 @@ export default function AdminGuests() {
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
-            <section className="premium-card" ref={tableCardRef}>
-              <div className="mb-5">
-                <div>
-                  <p className="section-eyebrow mb-2">
-                    {adminContent.guests.list.eyebrow}
-                  </p>
-                  <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
-                    {adminContent.guests.list.title}
-                  </h2>
+            <AdminTableSection
+              actions={
+                <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
+                  <IconButton
+                    className="w-full"
+                    disabled={!rows.length}
+                    label={adminContent.guests.actions.export}
+                    tone="terciary"
+                    onClick={() => downloadGuestsCsv(rows)}
+                  >
+                    <Download size={16} strokeWidth={1.8} />
+                  </IconButton>
 
-                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-                      {adminContent.guests.list.countLabel({
-                        groups: pagedGroupCount,
-                        guests: pagedGuestCount,
-                      })}
-                    </p>
-
-                    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-                      <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex sm:justify-end">
-                        <IconButton
-                          className="w-full"
-                          disabled={!rows.length}
-                          label={adminContent.guests.actions.export}
-                          tone="terciary"
-                          onClick={() => downloadGuestsCsv(rows)}
-                        >
-                          <Download size={16} strokeWidth={1.8} />
-                        </IconButton>
-
-                        <IconButton
-                          className="w-full"
-                          disabled={state.loading}
-                          label={adminContent.guests.actions.refresh}
-                          tone="secondary"
-                          onClick={loadGuests}
-                        >
-                          <RefreshCw
-                            className={state.loading ? "animate-spin" : ""}
-                            size={16}
-                            strokeWidth={1.8}
-                          />
-                        </IconButton>
-
-                        <IconButton
-                          className="w-full"
-                          label={adminContent.guests.actions.create}
-                          tone="primary"
-                          onClick={() => setEditingGroup(createDraftGroup())}
-                        >
-                          <Plus size={18} strokeWidth={2.4} />
-                        </IconButton>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <FiltersCard
-                filter={filter}
-                onFilterChange={(value) => {
-                  cancelPageLoading();
-                  setFilter(value);
-                  setPage(1);
-                }}
-                onQueryChange={(value) => {
-                  cancelPageLoading();
-                  setQuery(value);
-                  setPage(1);
-                }}
-                query={query}
-              />
-
-              <div ref={tableStartRef}>
-                {state.loading ? (
-                  <CardListSkeleton />
-                ) : (
-                  <>
-                    <PaginatedContent
-                      allItems={visibleRows}
-                      direction={pageDirection}
-                      getKey={(row) => row.rowId}
-                      page={currentPage}
-                      pageSize={isMobileList ? mobilePageSize : desktopPageSize}
-                      totalPages={totalPages}
-                      renderMeasurePage={(items) => (
-                        <AdminGuestPage
-                          items={items}
-                          onDelete={() => {}}
-                          onEdit={() => {}}
-                        />
-                      )}
-                      renderPage={(items) => (
-                        <AdminGuestPage
-                          items={items}
-                          onDelete={setDeleteTarget}
-                          onEdit={(group) =>
-                            setEditingGroup(createDraftGroup(group))
-                          }
-                        />
-                      )}
+                  <IconButton
+                    className="w-full"
+                    disabled={state.loading}
+                    label={adminContent.guests.actions.refresh}
+                    tone="secondary"
+                    onClick={loadGuests}
+                  >
+                    <RefreshCw
+                      className={state.loading ? "animate-spin" : ""}
+                      size={16}
+                      strokeWidth={1.8}
                     />
-                  </>
-                )}
-              </div>
-            </section>
+                  </IconButton>
 
-            {!state.loading && (
-              <Pagination
-                className="mt-5"
-                isMobileList={isMobileList}
-                page={currentPage}
-                totalPages={totalPages}
-                currentLabel={adminContent.guests.list.pageLabel}
-                mobileLabel={adminContent.guests.list.mobilePageLabel}
-                onNext={() =>
-                  handlePageChange(currentPage + 1, tableStartRef.current)
-                }
-                onPrev={() =>
-                  handlePageChange(currentPage - 1, tableStartRef.current)
-                }
-              />
-            )}
+                  <IconButton
+                    className="w-full"
+                    label={adminContent.guests.actions.create}
+                    tone="primary"
+                    onClick={() => setEditingGroup(createDraftGroup())}
+                  >
+                    <Plus size={18} strokeWidth={2.4} />
+                  </IconButton>
+                </div>
+              }
+              contentRef={tableStartRef}
+              count={adminContent.guests.list.countLabel({
+                groups: pagedGroupCount,
+                guests: pagedGuestCount,
+              })}
+              eyebrow={adminContent.guests.list.eyebrow}
+              filters={
+                <FiltersCard
+                  filter={filter}
+                  onFilterChange={(value) => {
+                    cancelPageLoading();
+                    setFilter(value);
+                    setPage(1);
+                  }}
+                  onQueryChange={(value) => {
+                    cancelPageLoading();
+                    setQuery(value);
+                    setPage(1);
+                  }}
+                  query={query}
+                />
+              }
+              getKey={(row) => row.rowId}
+              isMobileList={isMobileList}
+              items={visibleRows}
+              loading={state.loading}
+              mobilePageLabel={adminContent.guests.list.mobilePageLabel}
+              onNextPage={() =>
+                handlePageChange(currentPage + 1, tableStartRef.current)
+              }
+              onPrevPage={() =>
+                handlePageChange(currentPage - 1, tableStartRef.current)
+              }
+              page={currentPage}
+              pageDirection={pageDirection}
+              pageLabel={adminContent.guests.list.pageLabel}
+              pageSize={isMobileList ? mobilePageSize : desktopPageSize}
+              renderMeasurePage={(items) => (
+                <AdminGuestPage
+                  items={items}
+                  onDelete={() => {}}
+                  onEdit={() => {}}
+                />
+              )}
+              renderPage={(items) => (
+                <AdminGuestPage
+                  items={items}
+                  onDelete={setDeleteTarget}
+                  onEdit={(group) => setEditingGroup(createDraftGroup(group))}
+                />
+              )}
+              sectionRef={tableCardRef}
+              skeleton={<CardListSkeleton />}
+              title={adminContent.guests.list.title}
+              totalPages={totalPages}
+            />
           </CinematicStaggeredRevealItem>
         </div>
       </CinematicSection>

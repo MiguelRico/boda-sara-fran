@@ -6,6 +6,7 @@ export default function PaginatedContent({
   className = "",
   direction = 1,
   getKey = (_item, { index }) => index,
+  lockHeight = true,
   page,
   pageSize,
   renderMeasurePage,
@@ -88,32 +89,42 @@ export default function PaginatedContent({
 
   return (
     <div
-      className={`relative overflow-hidden ${className}`}
+      className={`relative overflow-hidden ${lockHeight ? "" : "grid"} ${className}`}
       style={
-        height ? { minHeight: `${height}px`, height: `${height}px` } : undefined
+        height
+          ? lockHeight
+            ? { minHeight: `${height}px`, height: `${height}px` }
+            : { minHeight: `${height}px` }
+          : undefined
       }
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-0 top-0 z-[-1] h-auto w-full opacity-0"
-        inert=""
-      >
-        {pageGroups.map((items, index) => (
-          <div
-            key={`measure-page-${index}`}
-            ref={(node) => {
-              measureRefs.current[index] = node;
-            }}
-          >
-            {(renderMeasurePage || renderPage)(items, index + 1)}
-          </div>
-        ))}
-      </div>
+      {lockHeight && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-0 top-0 z-[-1] h-auto w-full opacity-0"
+          inert=""
+        >
+          {pageGroups.map((items, index) => (
+            <div
+              key={`measure-page-${index}`}
+              ref={(node) => {
+                measureRefs.current[index] = node;
+              }}
+            >
+              {(renderMeasurePage || renderPage)(items, index + 1)}
+            </div>
+          ))}
+        </div>
+      )}
 
       <AnimatePresence custom={direction} initial={false}>
         <motion.div
           animate="center"
-          className="absolute inset-x-0 top-0"
+          className={
+            lockHeight
+              ? "absolute inset-x-0 top-0"
+              : "col-start-1 row-start-1"
+          }
           custom={direction}
           exit="exit"
           initial="enter"

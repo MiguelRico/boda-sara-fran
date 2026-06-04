@@ -11,7 +11,7 @@ export const rsvpContent = {
         guestName ? `a ${guestName}` : `el invitado ${guestNumber}`
       }. Esta acción no se puede deshacer desde el ${context}.`,
     guestLabel: (number) => `Invitado ${number}`,
-    guestPageLabel: ({ page, total }) => `Invitado ${page} de ${total}`,
+    guestPageLabel: ({ page, total }) => `${page} / ${total}`,
     previous: "Anterior",
     next: "Siguiente",
     removeGuestLabel: (number) => `Eliminar invitado ${number}`,
