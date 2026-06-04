@@ -741,9 +741,16 @@ export default function AdminTables() {
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={tablesInView}>
-            <AdminTableSection
-              actions={
-                activeTab === "tables" ? (
+            <div className="space-y-5">
+              <TabNavigation
+                tabs={SECTION_TABS}
+                activeTab={activeTab}
+                onChange={setActiveTab}
+              />
+
+              {activeTab === "tables" ? (
+                <AdminTableSection
+                  actions={
                   <TableTabActions
                     hasPendingChanges={hasPendingChanges}
                     loading={state.loading}
@@ -757,175 +764,160 @@ export default function AdminTables() {
                     selectedTable={selectedTable}
                     tables={tables}
                   />
-                ) : null
-              }
-              contentRef={tablesStartRef}
-              count={
-                activeTab === "tables"
-                  ? adminContent.tables.header.tableCountLabel({
+                  }
+                  contentRef={tablesStartRef}
+                  count={adminContent.tables.header.tableCountLabel({
                       seats: pagedTables.reduce(
                         (total, table) => total + table.seats.length,
                         0,
                       ),
                       tables: pagedTables.length,
-                    })
-                  : adminContent.tables.header.pendingGuestCountLabel(
-                      filteredPendingGuests.length,
-                    )
-              }
-              eyebrow={adminContent.tables.header.eyebrow}
-              filters={
-                <div className="space-y-5">
-                  <TabNavigation
-                    tabs={SECTION_TABS}
-                    activeTab={activeTab}
-                    onChange={setActiveTab}
-                  />
-
-                  {activeTab === "pending" && guestsPending.length > 0 && (
+                    })}
+                  eyebrow={adminContent.tables.header.eyebrow}
+                  getKey={getTableRenderKey}
+                  isMobileList={isMobileList}
+                  items={tables}
+                  loading={state.loading}
+                  lockPageHeight={false}
+                  mobilePageLabel={adminContent.tables.header.mobilePageLabel}
+                  onNextPage={() =>
+                    handlePageChange(currentPage + 1, tablesStartRef.current)
+                  }
+                  onPrevPage={() =>
+                    handlePageChange(currentPage - 1, tablesStartRef.current)
+                  }
+                  page={state.loading ? undefined : currentPage}
+                  pageDirection={pageDirection}
+                  pageLabel={adminContent.tables.header.pageLabel}
+                  pageSize={state.loading ? undefined : pageSize}
+                  sectionRef={tablesCardRef}
+                  skeleton={
+                    <CardListSkeleton
+                      columnsClassName="lg:grid-cols-2"
+                      itemClassName="min-h-40"
+                      lines={2}
+                    />
+                  }
+                  title="Asientos asignados"
+                  totalPages={state.loading ? undefined : totalPages}
+                  renderMeasurePage={(items) => (
+                    <TableCardsPage
+                      items={items}
+                      onSeatClick={() => {}}
+                      onSelect={() => {}}
+                      onUnassignSeat={() => {}}
+                      selectedTableKey={effectiveSelectedTableKey}
+                    />
+                  )}
+                  renderPage={(items) => (
+                    <TableCardsPage
+                      items={items}
+                      onSeatClick={handleSeatClick}
+                      onSelect={(table) =>
+                        setSelectedTableKey(getTableKey(table))
+                      }
+                      onUnassignSeat={handleRemoveGuestFromSeat}
+                      selectedTableKey={effectiveSelectedTableKey}
+                    />
+                  )}
+                />
+              ) : (
+                <AdminTableSection
+                  contentRef={tablesStartRef}
+                  count={adminContent.tables.header.pendingGuestCountLabel(
+                    filteredPendingGuests.length,
+                  )}
+                  eyebrow={adminContent.pendingGuests.pendingEyebrow}
+                  filters={
+                    guestsPending.length > 0 && (
                     <PendingGuestsFilters
                       availableGroups={pendingGuestGroups}
                       availableMenus={pendingGuestMenus}
                       filters={pendingGuestsFilters}
                       onFilterChange={handlePendingGuestsFilterChange}
                     />
-                  )}
-                </div>
-              }
-              getKey={
-                activeTab === "tables" ? getTableRenderKey : getPendingGuestRowKey
-              }
-              isMobileList={isMobileList}
-              items={activeTab === "tables" ? tables : filteredPendingGuests}
-              loading={state.loading}
-              lockPageHeight={false}
-              mobilePageLabel={
-                activeTab === "tables"
-                  ? adminContent.tables.header.mobilePageLabel
-                  : adminContent.pendingGuests.pendingEyebrow
-              }
-              onNextPage={() =>
-                activeTab === "tables"
-                  ? handlePageChange(currentPage + 1, tablesStartRef.current)
-                  : handlePendingGuestsPageChange(
+                    )
+                  }
+                  getKey={getPendingGuestRowKey}
+                  isMobileList={isMobileList}
+                  items={filteredPendingGuests}
+                  loading={state.loading}
+                  lockPageHeight={false}
+                  mobilePageLabel={adminContent.pendingGuests.pendingEyebrow}
+                  onNextPage={() =>
+                    handlePendingGuestsPageChange(
                       currentPendingGuestsPage + 1,
                       tablesStartRef.current,
                     )
-              }
-              onPrevPage={() =>
-                activeTab === "tables"
-                  ? handlePageChange(currentPage - 1, tablesStartRef.current)
-                  : handlePendingGuestsPageChange(
+                  }
+                  onPrevPage={() =>
+                    handlePendingGuestsPageChange(
                       currentPendingGuestsPage - 1,
                       tablesStartRef.current,
                     )
-              }
-              page={
-                state.loading
-                  ? undefined
-                  : activeTab === "tables"
-                    ? currentPage
-                    : currentPendingGuestsPage
-              }
-              pageLabel={
-                activeTab === "tables"
-                  ? adminContent.tables.header.pageLabel
-                  : adminContent.pendingGuests.pendingEyebrow
-              }
-              paginationLabel={
-                activeTab === "pending" && !state.loading
-                  ? adminContent.pendingGuests.pageLabel({
+                  }
+                  page={state.loading ? undefined : currentPendingGuestsPage}
+                  pageDirection={pendingGuestsPageDirection}
+                  pageLabel={adminContent.pendingGuests.pendingEyebrow}
+                  paginationLabel={
+                    state.loading
+                      ? undefined
+                      : adminContent.pendingGuests.pageLabel({
                       page: currentPendingGuestsPage,
                       total: pendingGuestsTotalPages,
                     })
-                  : undefined
-              }
-              pageDirection={
-                activeTab === "tables"
-                  ? pageDirection
-                  : pendingGuestsPageDirection
-              }
-              pageSize={
-                state.loading
-                  ? undefined
-                  : activeTab === "tables"
-                    ? pageSize
-                    : pendingGuestsPageSize
-              }
-              sectionRef={tablesCardRef}
-              skeleton={
-                <CardListSkeleton
-                  columnsClassName="lg:grid-cols-2"
-                  itemClassName="min-h-40"
-                  lines={2}
+                  }
+                  pageSize={state.loading ? undefined : pendingGuestsPageSize}
+                  sectionRef={tablesCardRef}
+                  skeleton={
+                    <CardListSkeleton
+                      columnsClassName="lg:grid-cols-2"
+                      itemClassName="min-h-40"
+                      lines={2}
+                    />
+                  }
+                  title={adminContent.pendingGuests.title}
+                  totalPages={
+                    state.loading ? undefined : pendingGuestsTotalPages
+                  }
+                  renderMeasurePage={(items) => (
+                    <PendingGuestsList
+                      assigningGuest=""
+                      emptyText={
+                        guestsPending.length
+                          ? adminContent.pendingGuests.noFilterResults
+                          : adminContent.pendingGuests.emptyText
+                      }
+                      emptyTitle={adminContent.pendingGuests.emptyTitle}
+                      guests={items}
+                      onAssignTable={() => {}}
+                      onSelect={() => {}}
+                      selectedGuestKey={effectiveSelectedPendingGuestKey}
+                      tables={tables}
+                    />
+                  )}
+                  renderPage={(items) => (
+                    <PendingGuestsList
+                      assigningGuest={pendingGuestsAssigningGuest}
+                      emptyText={
+                        guestsPending.length
+                          ? adminContent.pendingGuests.noFilterResults
+                          : adminContent.pendingGuests.emptyText
+                      }
+                      emptyTitle={adminContent.pendingGuests.emptyTitle}
+                      error={pendingGuestsError}
+                      guests={items}
+                      onAssignTable={handleAssignPendingGuest}
+                      onSelect={(guest) =>
+                        setSelectedPendingGuestKey(getPendingGuestRowKey(guest))
+                      }
+                      selectedGuestKey={effectiveSelectedPendingGuestKey}
+                      tables={tables}
+                    />
+                  )}
                 />
-              }
-              title="Asientos asignados"
-              totalPages={
-                state.loading
-                  ? undefined
-                  : activeTab === "tables"
-                    ? totalPages
-                    : pendingGuestsTotalPages
-              }
-              renderMeasurePage={(items) =>
-                activeTab === "tables" ? (
-                  <TableCardsPage
-                    items={items}
-                    onSeatClick={() => {}}
-                    onSelect={() => {}}
-                    onUnassignSeat={() => {}}
-                    selectedTableKey={effectiveSelectedTableKey}
-                  />
-                ) : (
-                  <PendingGuestsList
-                    assigningGuest=""
-                    emptyText={
-                      guestsPending.length
-                        ? adminContent.pendingGuests.noFilterResults
-                        : adminContent.pendingGuests.emptyText
-                    }
-                    emptyTitle={adminContent.pendingGuests.emptyTitle}
-                    guests={items}
-                    onAssignTable={() => {}}
-                    onSelect={() => {}}
-                    selectedGuestKey={effectiveSelectedPendingGuestKey}
-                    tables={tables}
-                  />
-                )
-              }
-              renderPage={(items) =>
-                activeTab === "tables" ? (
-                  <TableCardsPage
-                    items={items}
-                    onSeatClick={handleSeatClick}
-                    onSelect={(table) =>
-                      setSelectedTableKey(getTableKey(table))
-                    }
-                    onUnassignSeat={handleRemoveGuestFromSeat}
-                    selectedTableKey={effectiveSelectedTableKey}
-                  />
-                ) : (
-                  <PendingGuestsList
-                    assigningGuest={pendingGuestsAssigningGuest}
-                    emptyText={
-                      guestsPending.length
-                        ? adminContent.pendingGuests.noFilterResults
-                        : adminContent.pendingGuests.emptyText
-                    }
-                    emptyTitle={adminContent.pendingGuests.emptyTitle}
-                    error={pendingGuestsError}
-                    guests={items}
-                    onAssignTable={handleAssignPendingGuest}
-                    onSelect={(guest) =>
-                      setSelectedPendingGuestKey(getPendingGuestRowKey(guest))
-                    }
-                    selectedGuestKey={effectiveSelectedPendingGuestKey}
-                    tables={tables}
-                  />
-                )
-              }
-            />
+              )}
+            </div>
           </CinematicStaggeredRevealItem>
         </div>
       </CinematicSection>
