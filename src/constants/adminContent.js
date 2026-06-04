@@ -105,8 +105,8 @@ export const adminContent = {
       adminEyebrow: "Panel privado",
       title: "Mesas",
       text: "Organización de mesas, asientos e invitados asignados.",
-      eyebrow: "Distribución",
-      sectionTitle: "Asientos asignados",
+      eyebrow: "Invitados asignados",
+      sectionTitle: "Invitados asignados",
       exportTable: "Exportar tabla",
       pageLabel: "Pagina",
       mobilePageLabel: "Mesas",
@@ -159,7 +159,8 @@ export const adminContent = {
       warningEyebrow: "Aviso",
     },
     overview: {
-      title: "Mesas y asientos",
+      eyebrow: "Distribución",
+      title: "Distribución",
       metrics: {
         tableCount: "Mesas",
         tables: "Mesas",
@@ -203,7 +204,7 @@ export const adminContent = {
     pageLabel: ({ page, total }) => `${page} / ${total}`,
     showingLabel: ({ filtered, total }) =>
       `Mostrando ${filtered} de ${total} invitados pendientes`,
-    pendingEyebrow: "Invitado pendiente",
+    pendingEyebrow: "Invitados pendientes",
     tableLabel: "Mesa",
     tablePlaceholder: "Seleccionar",
     selectTableFirst: "Selecciona una mesa",

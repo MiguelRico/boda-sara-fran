@@ -751,28 +751,21 @@ export default function AdminTables() {
               {activeTab === "tables" ? (
                 <AdminTableSection
                   actions={
-                  <TableTabActions
-                    hasPendingChanges={hasPendingChanges}
-                    loading={state.loading}
-                    onCreate={handleCreateTable}
-                    onDelete={() => handleRequestDeleteTable(selectedTable)}
-                    onDiscard={handleDiscardPendingChanges}
-                    onEdit={() => handleEditTable(selectedTable)}
-                    onExport={() => downloadTablesCsv(tables)}
-                    onSave={handleSavePendingChanges}
-                    saving={spinner.loading}
-                    selectedTable={selectedTable}
-                    tables={tables}
-                  />
+                    <TableTabActions
+                      hasPendingChanges={hasPendingChanges}
+                      loading={state.loading}
+                      onCreate={handleCreateTable}
+                      onDelete={() => handleRequestDeleteTable(selectedTable)}
+                      onDiscard={handleDiscardPendingChanges}
+                      onEdit={() => handleEditTable(selectedTable)}
+                      onExport={() => downloadTablesCsv(tables)}
+                      onSave={handleSavePendingChanges}
+                      saving={spinner.loading}
+                      selectedTable={selectedTable}
+                      tables={tables}
+                    />
                   }
                   contentRef={tablesStartRef}
-                  count={adminContent.tables.header.tableCountLabel({
-                      seats: pagedTables.reduce(
-                        (total, table) => total + table.seats.length,
-                        0,
-                      ),
-                      tables: pagedTables.length,
-                    })}
                   eyebrow={adminContent.tables.header.eyebrow}
                   getKey={getTableRenderKey}
                   isMobileList={isMobileList}
@@ -830,12 +823,12 @@ export default function AdminTables() {
                   eyebrow={adminContent.pendingGuests.pendingEyebrow}
                   filters={
                     guestsPending.length > 0 && (
-                    <PendingGuestsFilters
-                      availableGroups={pendingGuestGroups}
-                      availableMenus={pendingGuestMenus}
-                      filters={pendingGuestsFilters}
-                      onFilterChange={handlePendingGuestsFilterChange}
-                    />
+                      <PendingGuestsFilters
+                        availableGroups={pendingGuestGroups}
+                        availableMenus={pendingGuestMenus}
+                        filters={pendingGuestsFilters}
+                        onFilterChange={handlePendingGuestsFilterChange}
+                      />
                     )
                   }
                   getKey={getPendingGuestRowKey}
@@ -863,9 +856,9 @@ export default function AdminTables() {
                     state.loading
                       ? undefined
                       : adminContent.pendingGuests.pageLabel({
-                      page: currentPendingGuestsPage,
-                      total: pendingGuestsTotalPages,
-                    })
+                          page: currentPendingGuestsPage,
+                          total: pendingGuestsTotalPages,
+                        })
                   }
                   pageSize={state.loading ? undefined : pendingGuestsPageSize}
                   sectionRef={tablesCardRef}
@@ -1279,10 +1272,12 @@ function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
 function TablesOverview({ loading, stats }) {
   return (
     <section className="premium-card mt-4 mb-5">
+      <p className="section-eyebrow mb-2">
+        {adminContent.tables.overview.eyebrow}
+      </p>
       <h2 className="mb-5 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
         {adminContent.tables.overview.title}
       </h2>
-
       {loading ? (
         <AdminMetricGridSkeleton
           count={4}
