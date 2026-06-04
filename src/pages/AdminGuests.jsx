@@ -14,6 +14,7 @@ import {
   Phone,
   Plus,
   Search,
+  Utensils,
   UsersRound,
 } from "lucide-react";
 
@@ -35,8 +36,12 @@ import CardListSkeleton from "../components/ui/CardListSkeleton";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import Chip from "../components/ui/Chip";
 import RsvpForm from "../forms/RsvpForm";
-import { MAX_GUESTS } from "../constants/rsvp";
-import { Confirmation } from "../models";
+import {
+  COMMON_ALLERGIES,
+  GUEST_MENU_OPTIONS,
+  MAX_GUESTS,
+} from "../constants/rsvp";
+import { Confirmation, Guest } from "../models";
 import {
   deleteAdminGroup,
   saveAdminGroup,
@@ -546,6 +551,8 @@ function AdminGuestConfirmationCard({
   titleRef,
   titleStyle,
 }) {
+  const chips = getGroupSummaryChips(row);
+
   return (
     <div
       className={`h-full rounded-[2rem] transition ${
@@ -564,46 +571,125 @@ function AdminGuestConfirmationCard({
         titleRef={titleRef}
         titleStyle={titleStyle}
       >
-        <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+          {chips.map((chip) => (
             <Chip
-              className="col-span-2"
-              icon={<Mail size={13} strokeWidth={1.8} />}
-              value={row.email || "-"}
+              className={chip.className}
+              icon={chip.icon}
+              key={chip.key}
+              strong={chip.strong}
+              value={chip.value}
+              valueClassName={chip.valueClassName}
             />
-            <Chip
-              icon={<Phone size={13} strokeWidth={1.8} />}
-              value={row.phone || "-"}
-            />
-            <Chip
-              icon={<Fish size={13} strokeWidth={1.8} />}
-              value={`Pescado: ${row.fishText}`}
-            />
-            <Chip
-              icon={<Beef size={13} strokeWidth={1.8} />}
-              value={`Carne: ${row.meatText}`}
-            />
-            <Chip
-              className="col-span-2 items-start"
-              icon={<AlertTriangle size={13} strokeWidth={1.8} />}
-              value={`Alergias: ${row.allergyText}`}
-              valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
-            />
-            <Chip
-              icon={<BusFront size={13} strokeWidth={1.8} />}
-              value={`Transporte: ${row.transportText}`}
-            />
-            <Chip
-              className="col-span-2 items-start"
-              icon={<MessageCircle size={13} strokeWidth={1.8} />}
-              value={`Notas: ${row.commentsCountText}`}
-              valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
-            />
-          </div>
+          ))}
         </div>
       </Card>
     </div>
   );
+}
+
+function getGroupSummaryChips(row) {
+  const guests = Guest.normalizeList(row.guests, { ensureOne: false });
+  const allergyChips = COMMON_ALLERGIES.map((allergy) => {
+    const count = getGuestCountBy(guests, (guest) =>
+      Guest.hasAllergy(guest, allergy),
+    );
+
+    if (!count) return null;
+
+    return {
+      key: `allergy-${allergy}`,
+      icon: <AlertTriangle size={13} strokeWidth={1.8} />,
+      value: `${allergy}: ${count}`,
+    };
+  }).filter(Boolean);
+  const otherAllergiesCount = getGuestCountBy(guests, Guest.hasOtherAllergies);
+  const commentsCount = getGuestCountBy(guests, Guest.hasComments);
+
+  return [
+    {
+      className: "col-span-2",
+      icon: <Mail size={13} strokeWidth={1.8} />,
+      key: "email",
+      value: row.email || "-",
+    },
+    {
+      icon: <Phone size={13} strokeWidth={1.8} />,
+      key: "phone",
+      value: row.phone || "-",
+    },
+    ...GUEST_MENU_OPTIONS.map((menu) => {
+      const count = getGuestCountBy(guests, (guest) => guest.menu === menu);
+
+      if (!count) return null;
+
+      return {
+        icon: <GroupMenuIcon menu={menu} size={13} strokeWidth={1.8} />,
+        key: `menu-${menu}`,
+        strong: true,
+        value: `${menu}: ${count}`,
+      };
+    }).filter(Boolean),
+    ...allergyChips,
+    otherAllergiesCount
+      ? {
+          icon: <AlertTriangle size={13} strokeWidth={1.8} />,
+          key: "other-allergies",
+          value: `Otras alergias: ${otherAllergiesCount}`,
+        }
+      : null,
+    getGuestCountBy(
+      guests,
+      (guest) => guest.outboundBus && guest.outboundBus !== "No",
+    )
+      ? {
+      icon: <BusFront size={13} strokeWidth={1.8} />,
+      key: "outbound-bus",
+      value: `Ida: ${getGuestCountBy(
+        guests,
+        (guest) => guest.outboundBus && guest.outboundBus !== "No",
+      )}`,
+        }
+      : null,
+    getGuestCountBy(
+      guests,
+      (guest) => guest.returnBus && guest.returnBus !== "No",
+    )
+      ? {
+      icon: <BusFront size={13} strokeWidth={1.8} />,
+      key: "return-bus",
+      value: `Vuelta: ${getGuestCountBy(
+        guests,
+        (guest) => guest.returnBus && guest.returnBus !== "No",
+      )}`,
+        }
+      : null,
+    commentsCount
+      ? {
+          icon: <MessageCircle size={13} strokeWidth={1.8} />,
+          key: "comments",
+          value: `Notas: ${commentsCount}`,
+        }
+      : null,
+  ].filter(Boolean);
+}
+
+function getGuestCountBy(guests, predicate) {
+  return guests.filter(predicate).length;
+}
+
+function GroupMenuIcon({ menu, ...props }) {
+  const normalizedMenu = String(menu || "")
+    .trim()
+    .toLowerCase();
+  const Icon =
+    normalizedMenu === "pescado"
+      ? Fish
+      : normalizedMenu === "carne"
+        ? Beef
+        : Utensils;
+
+  return <Icon {...props} />;
 }
 
 function GroupEditor({ group, isCreation, onClose, onSave }) {
