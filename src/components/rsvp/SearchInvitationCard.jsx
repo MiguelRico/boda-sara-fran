@@ -13,6 +13,9 @@ export default function SearchInvitationCard({
   emailError,
   loading,
   onEmailChange,
+  onPhoneChange,
+  phone = "",
+  phoneError,
   onSearchInvitation,
   hideTextOnMobile = false,
   isMobileView = false,
@@ -32,7 +35,8 @@ export default function SearchInvitationCard({
         </p>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 grid gap-4 sm:grid-cols-2">
+        <div>
         <Label>{rsvpContent.searchInvitation.emailLabel}</Label>
 
         <input
@@ -44,6 +48,21 @@ export default function SearchInvitationCard({
         />
 
         <FieldError>{emailError}</FieldError>
+        </div>
+
+        <div>
+          <Label>{rsvpContent.searchInvitation.phoneLabel}</Label>
+
+          <input
+            className={inputClassName}
+            onChange={(event) => onPhoneChange(event.target.value)}
+            placeholder={rsvpContent.searchInvitation.phonePlaceholder}
+            type="tel"
+            value={phone}
+          />
+
+          <FieldError>{phoneError}</FieldError>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row-reverse">

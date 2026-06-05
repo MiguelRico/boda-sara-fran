@@ -17,6 +17,28 @@ export const validateRsvpEmail = (email) => {
   return null;
 };
 
+export const validateRsvpSearch = ({ email = "", phone = "" }) => {
+  const normalizedEmail = email.trim();
+  const normalizedPhone = phone.trim();
+  const errors = {};
+
+  if (!normalizedEmail && !normalizedPhone) {
+    errors.email = "Introduce un email o un telefono";
+    errors.phone = "Introduce un email o un telefono";
+    return errors;
+  }
+
+  if (normalizedEmail && !isValidEmail(normalizedEmail)) {
+    errors.email = "Introduce un email valido";
+  }
+
+  if (normalizedPhone && !isValidPhone(normalizedPhone)) {
+    errors.phone = "Introduce un telefono valido";
+  }
+
+  return errors;
+};
+
 export const validateRsvpContact = (contact) => {
   return Confirmation.validateContact(contact, {
     validateEmail: validateRsvpEmail,

@@ -9,6 +9,8 @@ const createId = () =>
   `provider-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 export const createEmptyPayment = (overrides = {}) => ({
+  id: overrides.id || overrides.paymentId || createId(),
+  paymentId: overrides.paymentId || overrides.id || "",
   amount: normalizeString(overrides.amount),
   date: normalizeString(overrides.date),
   paid: Boolean(overrides.paid),
@@ -16,6 +18,7 @@ export const createEmptyPayment = (overrides = {}) => ({
 
 export const createEmptyService = (overrides = {}) => ({
   id: overrides.id || createId(),
+  serviceId: overrides.serviceId || overrides.id || "",
   name: normalizeString(overrides.name),
   paymentCount: Math.min(
     Math.max(Number(overrides.paymentCount) || 1, 1),
@@ -29,6 +32,7 @@ export const createEmptyService = (overrides = {}) => ({
 
 export const createEmptyProvider = (overrides = {}) => ({
   id: overrides.id || createId(),
+  providerId: overrides.providerId || overrides.id || "",
   accountNumber: normalizeString(overrides.accountNumber),
   address: normalizeString(overrides.address),
   category: overrides.category || PROVIDER_CATEGORIES[0].value,

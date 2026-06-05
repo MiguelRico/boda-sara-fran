@@ -29,16 +29,29 @@ function getSheet() {
   return sheet;
 }
 
-const CONFIRMATIONS_HEADERS = ["groupName", "email", "phone", "guests"];
+const CONFIRMATIONS_HEADERS = [
+  "confirmationId",
+  "groupName",
+  "email",
+  "phone",
+  "guestCount",
+  "createdAt",
+  "updatedAt",
+];
 
 const CONFIRMATIONS_COLUMNS = {
-  groupName: 0,
-  email: 1,
-  phone: 2,
-  guests: 3,
+  confirmationId: 0,
+  groupName: 1,
+  email: 2,
+  phone: 3,
+  guestCount: 4,
+  createdAt: 5,
+  updatedAt: 6,
 };
 
 const GUESTS_HEADERS = [
+  "guestId",
+  "confirmationId",
   "groupName",
   "name",
   "lastname",
@@ -48,25 +61,85 @@ const GUESTS_HEADERS = [
   "outboundBus",
   "returnBus",
   "menu",
-  "table",
-  "seat",
+  "createdAt",
+  "updatedAt",
 ];
 
 const GUESTS_COLUMNS = {
-  groupName: 0,
-  name: 1,
-  lastname: 2,
-  allergies: 3,
-  otherAllergies: 4,
-  comments: 5,
-  outboundBus: 6,
-  returnBus: 7,
-  menu: 8,
-  table: 9,
-  seat: 10,
+  guestId: 0,
+  confirmationId: 1,
+  groupName: 2,
+  name: 3,
+  lastname: 4,
+  allergies: 5,
+  otherAllergies: 6,
+  comments: 7,
+  outboundBus: 8,
+  returnBus: 9,
+  menu: 10,
+  createdAt: 11,
+  updatedAt: 12,
 };
 
-const TABLES_HEADERS = ["name", "tag", "shape", "seats", "notes"];
+const TABLES_HEADERS = [
+  "tableId",
+  "name",
+  "group",
+  "tag",
+  "shape",
+  "seatCount",
+  "notes",
+  "createdAt",
+  "updatedAt",
+];
+
+const TABLES_COLUMNS = {
+  tableId: 0,
+  name: 1,
+  group: 2,
+  tag: 3,
+  shape: 4,
+  seatCount: 5,
+  notes: 6,
+  createdAt: 7,
+  updatedAt: 8,
+};
+
+const SEATS_HEADERS = [
+  "seatId",
+  "tableId",
+  "seatNumber",
+  "createdAt",
+  "updatedAt",
+];
+
+const SEATS_COLUMNS = {
+  seatId: 0,
+  tableId: 1,
+  seatNumber: 2,
+  createdAt: 3,
+  updatedAt: 4,
+};
+
+const TABLE_ASSIGNMENTS_HEADERS = [
+  "assignmentId",
+  "seatId",
+  "tableId",
+  "guestId",
+  "confirmationId",
+  "createdAt",
+  "updatedAt",
+];
+
+const TABLE_ASSIGNMENTS_COLUMNS = {
+  assignmentId: 0,
+  seatId: 1,
+  tableId: 2,
+  guestId: 3,
+  confirmationId: 4,
+  createdAt: 5,
+  updatedAt: 6,
+};
 
 const PROVIDERS_HEADERS = [
   "providerId",
@@ -168,6 +241,32 @@ function getTablesSheet() {
   return sheet;
 }
 
+function getSeatsSheet() {
+  const spreadsheet = getSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(SEATS_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(SEATS_SHEET_NAME);
+  }
+
+  ensureHeader(sheet, SEATS_HEADERS);
+
+  return sheet;
+}
+
+function getTableAssignmentsSheet() {
+  const spreadsheet = getSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(TABLE_ASSIGNMENTS_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(TABLE_ASSIGNMENTS_SHEET_NAME);
+  }
+
+  ensureHeader(sheet, TABLE_ASSIGNMENTS_HEADERS);
+
+  return sheet;
+}
+
 function getProvidersSheet() {
   const spreadsheet = getSpreadsheet();
   let sheet = spreadsheet.getSheetByName(PROVIDERS_SHEET_NAME);
@@ -229,6 +328,18 @@ function readParam(value) {
   return decodeURIComponent(value || "").trim();
 }
 
+function createEntityId(prefix) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function createSeatId(tableId, seatNumber) {
+  return `${String(tableId || "").trim()}-seat-${String(seatNumber || "").trim()}`;
+}
+
+function getCurrentTimestamp() {
+  return new Date().toISOString();
+}
+
 function decodeGroupName(value) {
   const text = String(value || "").trim();
 
@@ -253,11 +364,16 @@ function encodeConfirmationForApi(confirmation) {
   const encodedGroupName = encodeGroupName(confirmation.groupName);
 
   return {
+    confirmationId: confirmation.confirmationId || "",
+    id: confirmation.confirmationId || "",
     groupName: encodedGroupName,
     email: confirmation.email || "",
     phone: confirmation.phone || "",
     guests: (confirmation.guests || []).map((guest) => ({
       ...guest,
+      confirmationId: confirmation.confirmationId || guest.confirmationId || "",
+      guestId: guest.guestId || guest.id || "",
+      id: guest.guestId || guest.id || "",
       groupName: encodedGroupName,
     })),
   };
@@ -303,41 +419,52 @@ function normalizeMenu(value) {
 
 function getNormalizedConfirmationData(data) {
   const groupName = decodeGroupName(data.groupName);
+  const confirmationId = String(data.confirmationId || data.id || "").trim();
 
   return {
+    confirmationId,
     groupName,
     email: String(data.email || "").trim(),
     phone: String(data.phone || "").trim(),
     guests: Array.isArray(data.guests)
       ? data.guests.map((guest) => ({
           ...guest,
+          confirmationId,
           groupName,
         }))
       : [],
   };
 }
 
-function deleteGroupRows(sheet, groupName) {
+function deleteGuestRows(sheet, confirmation) {
   const data = sheet.getDataRange().getValues();
+  const confirmationId = String(confirmation.confirmationId || "").trim().toLowerCase();
+
+  if (!confirmationId) return;
 
   for (let i = data.length - 1; i > 0; i--) {
-    if (
-      String(data[i][GUESTS_COLUMNS.groupName]).trim().toLowerCase() ===
-      String(groupName).trim().toLowerCase()
-    ) {
+    const rowConfirmationId = String(data[i][GUESTS_COLUMNS.confirmationId] || "")
+      .trim()
+      .toLowerCase();
+
+    if (rowConfirmationId === confirmationId) {
       sheet.deleteRow(i + 1);
     }
   }
 }
 
-function deleteConfirmationRow(sheet, groupName) {
+function deleteConfirmationRow(sheet, confirmation) {
   const data = sheet.getDataRange().getValues();
+  const confirmationId = String(confirmation.confirmationId || "").trim().toLowerCase();
+
+  if (!confirmationId) return;
 
   for (let i = data.length - 1; i > 0; i--) {
-    if (
-      String(data[i][CONFIRMATIONS_COLUMNS.groupName]).trim().toLowerCase() ===
-      String(groupName).trim().toLowerCase()
-    ) {
+    const rowConfirmationId = String(data[i][CONFIRMATIONS_COLUMNS.confirmationId] || "")
+      .trim()
+      .toLowerCase();
+
+    if (rowConfirmationId === confirmationId) {
       sheet.deleteRow(i + 1);
     }
   }
@@ -345,6 +472,7 @@ function deleteConfirmationRow(sheet, groupName) {
 
 function buildConfirmationFromRow(row, guests) {
   return {
+    confirmationId: row[CONFIRMATIONS_COLUMNS.confirmationId] || "",
     groupName: row[CONFIRMATIONS_COLUMNS.groupName] || "",
     email: row[CONFIRMATIONS_COLUMNS.email] || "",
     phone: row[CONFIRMATIONS_COLUMNS.phone] || "",
@@ -353,13 +481,36 @@ function buildConfirmationFromRow(row, guests) {
 }
 
 function buildConfirmationRow(data) {
-  return [data.groupName, data.email, data.phone, data.guests.length];
+  const now = getCurrentTimestamp();
+
+  return [
+    data.confirmationId,
+    data.groupName,
+    data.email,
+    data.phone,
+    data.guests.length,
+    data.createdAt || now,
+    now,
+  ];
 }
 
-function buildGuestFromRow(row, confirmation) {
+function buildGuestFromRow(row, confirmation, assignmentContext) {
   const groupName = row[GUESTS_COLUMNS.groupName] || confirmation.groupName || "";
+  const confirmationId =
+    row[GUESTS_COLUMNS.confirmationId] || confirmation.confirmationId || "";
+  const guestId = row[GUESTS_COLUMNS.guestId] || "";
+  const assignment = assignmentContext?.assignmentsByGuestId?.[guestId] || null;
+  const table = assignment
+    ? assignmentContext?.tablesById?.[assignment.tableId] || null
+    : null;
+  const seat = assignment
+    ? assignmentContext?.seatsById?.[assignment.seatId] || null
+    : null;
 
   return {
+    confirmationId,
+    guestId,
+    id: guestId,
     groupName,
     email: confirmation.email || "",
     phone: confirmation.phone || "",
@@ -371,13 +522,19 @@ function buildGuestFromRow(row, confirmation) {
     outboundBus: row[GUESTS_COLUMNS.outboundBus] || "No",
     returnBus: row[GUESTS_COLUMNS.returnBus] || "No",
     menu: normalizeMenu(row[GUESTS_COLUMNS.menu]),
-    table: row[GUESTS_COLUMNS.table] || "",
-    seat: row[GUESTS_COLUMNS.seat] || "",
+    tableId: assignment?.tableId || "",
+    table: table?.name || "",
+    seat: seat?.seatNumber || "",
   };
 }
 
 function buildGuestRow(data, guest) {
+  const now = getCurrentTimestamp();
+  const guestId = String(guest.guestId || guest.id || "").trim() || createEntityId("guest");
+
   return [
+    guestId,
+    data.confirmationId,
     data.groupName,
     guest.name,
     guest.lastname,
@@ -387,8 +544,8 @@ function buildGuestRow(data, guest) {
     guest.outboundBus || "No",
     guest.returnBus || "No",
     normalizeMenu(guest.menu),
-    guest.table || "",
-    guest.seat || "",
+    guest.createdAt || now,
+    now,
   ];
 }
 
@@ -399,16 +556,147 @@ function normalizeTableShape(value) {
 }
 
 function buildTableFromRow(row) {
-  const name = row[0] || "";
+  const name = row[TABLES_COLUMNS.name] || "";
 
   return {
+    id: row[TABLES_COLUMNS.tableId] || "",
+    tableId: row[TABLES_COLUMNS.tableId] || "",
     name,
-    group: row[1] || "",
-    tag: row[1] || "",
-    shape: normalizeTableShape(row[2]),
-    seatCount: Math.max(Number(row[3]) || 0, 0),
-    notes: row[4] || "",
+    group: row[TABLES_COLUMNS.group] || row[TABLES_COLUMNS.tag] || "",
+    tag: row[TABLES_COLUMNS.tag] || row[TABLES_COLUMNS.group] || "",
+    shape: normalizeTableShape(row[TABLES_COLUMNS.shape]),
+    seatCount: Math.max(Number(row[TABLES_COLUMNS.seatCount]) || 0, 0),
+    notes: row[TABLES_COLUMNS.notes] || "",
   };
+}
+
+function buildSeatFromRow(row) {
+  return {
+    seatId: row[SEATS_COLUMNS.seatId] || "",
+    tableId: row[SEATS_COLUMNS.tableId] || "",
+    seatNumber: row[SEATS_COLUMNS.seatNumber] || "",
+  };
+}
+
+function buildAssignmentFromRow(row) {
+  return {
+    assignmentId: row[TABLE_ASSIGNMENTS_COLUMNS.assignmentId] || "",
+    seatId: row[TABLE_ASSIGNMENTS_COLUMNS.seatId] || "",
+    tableId: row[TABLE_ASSIGNMENTS_COLUMNS.tableId] || "",
+    guestId: row[TABLE_ASSIGNMENTS_COLUMNS.guestId] || "",
+    confirmationId: row[TABLE_ASSIGNMENTS_COLUMNS.confirmationId] || "",
+  };
+}
+
+function buildAssignmentContext() {
+  const tablesRows = getTablesSheet().getDataRange().getDisplayValues();
+  const seatsRows = getSeatsSheet().getDataRange().getDisplayValues();
+  const assignmentRows = getTableAssignmentsSheet().getDataRange().getDisplayValues();
+  const tablesById = {};
+  const tablesByName = {};
+  const seatsById = {};
+  const seatsByTableAndNumber = {};
+  const assignmentsByGuestId = {};
+
+  for (let i = 1; i < tablesRows.length; i++) {
+    const table = buildTableFromRow(tablesRows[i]);
+
+    if (!table.tableId) continue;
+
+    tablesById[table.tableId] = table;
+    if (table.name) tablesByName[String(table.name).trim().toLowerCase()] = table;
+  }
+
+  for (let i = 1; i < seatsRows.length; i++) {
+    const seat = buildSeatFromRow(seatsRows[i]);
+
+    if (!seat.seatId) continue;
+
+    seatsById[seat.seatId] = seat;
+    seatsByTableAndNumber[`${seat.tableId}|${seat.seatNumber}`] = seat;
+  }
+
+  for (let i = 1; i < assignmentRows.length; i++) {
+    const assignment = buildAssignmentFromRow(assignmentRows[i]);
+
+    if (!assignment.guestId || !assignment.tableId || !assignment.seatId) continue;
+
+    assignmentsByGuestId[assignment.guestId] = assignment;
+  }
+
+  return {
+    assignmentsByGuestId,
+    seatsById,
+    seatsByTableAndNumber,
+    tablesById,
+    tablesByName,
+  };
+}
+
+function deleteAssignmentsByConfirmationId(sheet, confirmationId) {
+  const data = sheet.getDataRange().getValues();
+  const normalizedConfirmationId = String(confirmationId || "").trim().toLowerCase();
+
+  if (!normalizedConfirmationId) return;
+
+  for (let i = data.length - 1; i > 0; i--) {
+    const rowConfirmationId = String(data[i][TABLE_ASSIGNMENTS_COLUMNS.confirmationId] || "")
+      .trim()
+      .toLowerCase();
+
+    if (rowConfirmationId === normalizedConfirmationId) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+}
+
+function appendAssignmentRowsForGuests(sheet, confirmation, guests) {
+  const context = buildAssignmentContext();
+  const rows = [];
+  const now = getCurrentTimestamp();
+
+  guests.forEach((guest) => {
+    const guestId = String(guest.guestId || guest.id || "").trim();
+    const rawTableId = String(guest.tableId || "").trim();
+    const tableName = String(guest.table || "").trim().toLowerCase();
+    const table = rawTableId
+      ? context.tablesById[rawTableId]
+      : context.tablesByName[tableName];
+    const tableId = table?.tableId || rawTableId;
+    const seatNumber = String(guest.seat || "").trim();
+    const seat = context.seatsByTableAndNumber[`${tableId}|${seatNumber}`];
+
+    if (!guestId || !tableId || !seatNumber || !seat) return;
+
+    rows.push([
+      `${tableId}-${seat.seatId}-${guestId}`,
+      seat.seatId,
+      tableId,
+      guestId,
+      confirmation.confirmationId,
+      guest.assignmentCreatedAt || now,
+      now,
+    ]);
+  });
+
+  if (rows.length) {
+    sheet
+      .getRange(sheet.getLastRow() + 1, 1, rows.length, TABLE_ASSIGNMENTS_HEADERS.length)
+      .setValues(rows);
+  }
+}
+
+function cleanAssignmentsOutsideValidSeats(sheet, validTableIds, validSeatIds) {
+  const data = sheet.getDataRange().getValues();
+
+  for (let i = data.length - 1; i > 0; i--) {
+    const tableId = String(data[i][TABLE_ASSIGNMENTS_COLUMNS.tableId] || "").trim();
+    const seatId = String(data[i][TABLE_ASSIGNMENTS_COLUMNS.seatId] || "").trim();
+
+    if (!validTableIds.has(tableId) || !validSeatIds.has(seatId)) {
+      sheet.deleteRow(i + 1);
+    }
+  }
 }
 
 function deleteAllTableRows(sheet) {
@@ -426,7 +714,7 @@ function deleteDataRows(sheet) {
 function isTruthySheetValue(value) {
   const text = String(value || "").trim().toLowerCase();
 
-  return value === true || text === "true" || text === "si" || text === "sÃ­" || text === "1";
+  return value === true || text === "true" || text === "si" || text === "s" || text === "1";
 }
 
 function isActiveSheetValue(value) {

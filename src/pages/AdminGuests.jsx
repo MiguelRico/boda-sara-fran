@@ -316,7 +316,7 @@ export default function AdminGuests() {
   const handleDeleteGroup = () => {
     if (!deleteTarget) return;
 
-    applyGroups(removeGroupFromList(state.groups, deleteTarget.groupName));
+    applyGroups(removeGroupFromList(state.groups, deleteTarget));
     setDeleteTarget(null);
     setPopup(
       createAdminPopup({
@@ -1591,9 +1591,12 @@ function getStableJson(value) {
 
 function upsertGroupInList(groups, group) {
   const normalizedGroup = normalizeAdminGroups([group])[0];
-  const existingIndex = groups.findIndex(
-    (item) => item.groupName === normalizedGroup.groupName,
-  );
+  const normalizedKey = getConfirmationKey(normalizedGroup);
+  const existingIndex = groups.findIndex((item) => {
+    const itemKey = getConfirmationKey(item);
+
+    return normalizedKey ? itemKey === normalizedKey : false;
+  });
 
   if (existingIndex === -1) {
     return normalizeAdminGroups([...groups, normalizedGroup]);
@@ -1606,18 +1609,30 @@ function upsertGroupInList(groups, group) {
   );
 }
 
-function removeGroupFromList(groups, groupName) {
+function getConfirmationKey(group) {
+  const normalizedGroup = group || {};
+
+  return (
+    normalizedGroup.confirmationId ||
+    normalizedGroup.id ||
+    `draft:${normalizedGroup.email || ""}:${normalizedGroup.phone || ""}`
+  );
+}
+
+function removeGroupFromList(groups, target) {
+  const targetKey = getConfirmationKey(target);
+
   return normalizeAdminGroups(
-    groups.filter((group) => group.groupName !== groupName),
+    groups.filter((group) => group !== target && getConfirmationKey(group) !== targetKey),
   );
 }
 
 async function persistGuestChanges({ currentGroups, savedGroups }) {
   const savedByGroupName = new Map(
-    savedGroups.map((group) => [group.groupName, group]),
+    savedGroups.map((group) => [getConfirmationKey(group), group]),
   );
   const currentByGroupName = new Map(
-    currentGroups.map((group) => [group.groupName, group]),
+    currentGroups.map((group) => [getConfirmationKey(group), group]),
   );
   const persistencePromises = [];
 
@@ -1625,7 +1640,7 @@ async function persistGuestChanges({ currentGroups, savedGroups }) {
     if (!currentByGroupName.has(groupName)) {
       persistencePromises.push(
         deleteAdminGroup({
-          groupName,
+          confirmationId: group.confirmationId || group.id || "",
           password: ADMIN_PASSWORD,
         }),
       );
@@ -1654,10 +1669,10 @@ async function persistGuestChanges({ currentGroups, savedGroups }) {
 
 function buildPendingGuestChanges(savedGroups, currentGroups) {
   const savedByGroupName = new Map(
-    savedGroups.map((group) => [group.groupName, group]),
+    savedGroups.map((group) => [getConfirmationKey(group), group]),
   );
   const currentByGroupName = new Map(
-    currentGroups.map((group) => [group.groupName, group]),
+    currentGroups.map((group) => [getConfirmationKey(group), group]),
   );
   const changes = [];
 
@@ -1665,7 +1680,9 @@ function buildPendingGuestChanges(savedGroups, currentGroups) {
     const savedGroup = savedByGroupName.get(groupName);
 
     if (!savedGroup) {
-      changes.push(`Grupo creado: ${groupName || group.email || "sin nombre"}`);
+      changes.push(
+        `Grupo creado: ${group.groupName || groupName || group.email || "sin nombre"}`,
+      );
       return;
     }
 
@@ -1681,7 +1698,7 @@ function buildPendingGuestChanges(savedGroups, currentGroups) {
   savedByGroupName.forEach((group, groupName) => {
     if (!currentByGroupName.has(groupName)) {
       changes.push(
-        `Grupo eliminado: ${groupName || group.email || "sin nombre"}`,
+        `Grupo eliminado: ${group.groupName || groupName || group.email || "sin nombre"}`,
       );
     }
   });

@@ -23,7 +23,7 @@ function routeGet(e) {
   const entity = readParam(e.parameter.entity);
 
   if (entity === "confirmations") {
-    if (e.parameter.email || e.parameter.groupName) {
+    if (e.parameter.confirmationId || e.parameter.id || e.parameter.email || e.parameter.phone) {
       return getConfirmation(e);
     }
 
@@ -79,15 +79,16 @@ function executeRedirection() {
 }
 
 function getConfirmation(e) {
-  const groupName = decodeGroupName(readParam(e.parameter.groupName));
+  const confirmationId = readParam(e.parameter.confirmationId || e.parameter.id);
   const email = readParam(e.parameter.email).toLowerCase();
+  const phone = normalizePhoneSearch(readParam(e.parameter.phone));
 
-  if (!groupName && !email) {
+  if (!confirmationId && !email && !phone) {
     return jsonResponse(
       {
         success: false,
         found: false,
-        error: "Missing groupName or email",
+        error: "Missing confirmationId, email or phone",
       },
       e,
     );
@@ -97,20 +98,24 @@ function getConfirmation(e) {
   const guestsSheet = getSheet();
   const confirmationRows = confirmationsSheet.getDataRange().getDisplayValues();
   const guestRows = guestsSheet.getDataRange().getDisplayValues();
+  const assignmentContext = buildAssignmentContext();
   let confirmation = null;
 
   for (let i = 1; i < confirmationRows.length; i++) {
     const row = confirmationRows[i];
-    const rowGroupName = String(row[CONFIRMATIONS_COLUMNS.groupName])
+    const rowConfirmationId = String(row[CONFIRMATIONS_COLUMNS.confirmationId])
       .trim()
       .toLowerCase();
     const rowEmail = String(row[CONFIRMATIONS_COLUMNS.email])
       .trim()
       .toLowerCase();
-    const groupNameMatches = groupName && rowGroupName === groupName.toLowerCase();
+    const rowPhone = normalizePhoneSearch(row[CONFIRMATIONS_COLUMNS.phone]);
+    const idMatches =
+      confirmationId && rowConfirmationId === confirmationId.toLowerCase();
     const emailMatches = email && rowEmail === email;
+    const phoneMatches = phone && rowPhone === phone;
 
-    if (groupNameMatches || emailMatches) {
+    if (idMatches || emailMatches || phoneMatches) {
       confirmation = buildConfirmationFromRow(row, []);
       break;
     }
@@ -121,8 +126,9 @@ function getConfirmation(e) {
       {
         success: true,
         found: false,
-        groupName: encodeGroupName(groupName),
+        confirmationId,
         email: email,
+        phone: phone,
         guests: [],
       },
       e,
@@ -131,12 +137,15 @@ function getConfirmation(e) {
 
   for (let i = 1; i < guestRows.length; i++) {
     const row = guestRows[i];
+    const rowConfirmationId = String(row[GUESTS_COLUMNS.confirmationId] || "")
+      .trim()
+      .toLowerCase();
+    const matchesById =
+      confirmation.confirmationId &&
+      rowConfirmationId === confirmation.confirmationId.toLowerCase();
 
-    if (
-      String(row[GUESTS_COLUMNS.groupName]).trim().toLowerCase() ===
-      confirmation.groupName.toLowerCase()
-    ) {
-      confirmation.guests.push(buildGuestFromRow(row, confirmation));
+    if (matchesById) {
+      confirmation.guests.push(buildGuestFromRow(row, confirmation, assignmentContext));
     }
   }
 
@@ -155,34 +164,40 @@ function listConfirmations(e) {
   const guestsSheet = getSheet();
   const confirmationRows = confirmationsSheet.getDataRange().getDisplayValues();
   const guestRows = guestsSheet.getDataRange().getDisplayValues();
-  const groupsByName = {};
+  const assignmentContext = buildAssignmentContext();
+  const confirmationsByKey = {};
 
   for (let i = 1; i < confirmationRows.length; i++) {
     const row = confirmationRows[i];
-    const groupName = row[CONFIRMATIONS_COLUMNS.groupName];
+    const confirmation = buildConfirmationFromRow(row, []);
+    const key = confirmation.confirmationId;
 
-    if (!groupName) continue;
+    if (!key) continue;
 
-    groupsByName[groupName] = buildConfirmationFromRow(row, []);
+    confirmationsByKey[key] = confirmation;
   }
 
   for (let i = 1; i < guestRows.length; i++) {
     const row = guestRows[i];
-    const groupName = row[GUESTS_COLUMNS.groupName];
-    const confirmation = groupsByName[groupName];
+    const confirmationId = row[GUESTS_COLUMNS.confirmationId];
+    const confirmation = confirmationsByKey[confirmationId];
 
     if (!confirmation) continue;
 
-    confirmation.guests.push(buildGuestFromRow(row, confirmation));
+    confirmation.guests.push(buildGuestFromRow(row, confirmation, assignmentContext));
   }
 
   return jsonResponse(
     {
       success: true,
-      groups: Object.values(groupsByName).map(encodeConfirmationForApi),
+      groups: Object.values(confirmationsByKey).map(encodeConfirmationForApi),
     },
     e,
   );
+}
+
+function normalizePhoneSearch(value) {
+  return String(value || "").replace(/\D/g, "");
 }
 
 function listTables(e) {
@@ -226,6 +241,7 @@ function listProviders(e) {
 
     const provider = {
       id: providerId,
+      providerId,
       accountNumber: row[PROVIDERS_COLUMNS.numeroCuenta] || "",
       address: row[PROVIDERS_COLUMNS.direccion] || "",
       category: row[PROVIDERS_COLUMNS.categoria] || "",
@@ -256,6 +272,8 @@ function listProviders(e) {
 
     const service = {
       id: serviceId,
+      serviceId,
+      providerId,
       name: row[PROVIDER_SERVICES_COLUMNS.nombre] || "",
       paymentCount: Math.min(
         Math.max(Number(row[PROVIDER_SERVICES_COLUMNS.numeroPlazos]) || 1, 1),
@@ -277,6 +295,8 @@ function listProviders(e) {
     if (!service) continue;
 
     service.payments.push({
+      id: row[PROVIDER_PAYMENTS_COLUMNS.paymentId] || "",
+      paymentId: row[PROVIDER_PAYMENTS_COLUMNS.paymentId] || "",
       amount: row[PROVIDER_PAYMENTS_COLUMNS.importe] || "",
       date: row[PROVIDER_PAYMENTS_COLUMNS.fechaPrevista] || "",
       paid: isTruthySheetValue(row[PROVIDER_PAYMENTS_COLUMNS.pagado]),

@@ -20,5 +20,5 @@ export const decodeGroupName = (encodedGroupName) => {
   }
 };
 
-export const getGroupNameUrl = (groupName) =>
-  `/rsvp/edit?groupName=${encodeURIComponent(encodeGroupName(groupName))}`;
+export const getConfirmationIdUrl = (confirmationId) =>
+  `/rsvp/edit?confirmationId=${encodeURIComponent(normalizeString(confirmationId).trim())}`;

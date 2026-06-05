@@ -57,9 +57,11 @@ function emailShell(content, options) {
   `;
 }
 
-function sendConfirmationEmail(email, groupName, guests) {
+function sendConfirmationEmail(email, groupName, guests, confirmationId) {
   const copy = EMAIL_COPY.confirmation;
-  const appUrl = `${RSVP_URL}?groupName=${encodeURIComponent(encodeGroupName(groupName))}`;
+  const appUrl = `${RSVP_URL}/edit?confirmationId=${encodeURIComponent(
+    String(confirmationId || "").trim(),
+  )}`;
   const guestsHtml = guests
     .map((guest) => {
       const guestName = [guest.name, guest.lastname].filter(Boolean).join(" ");

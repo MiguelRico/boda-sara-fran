@@ -2,6 +2,8 @@ import { Guest } from "./Guest";
 import { rsvpContent } from "../constants/rsvpContent";
 
 const CONFIRMATION_DEFAULTS = {
+  confirmationId: "",
+  id: "",
   groupName: "",
   email: "",
   phone: "",
@@ -30,12 +32,17 @@ export const Confirmation = {
 
     return {
       ...CONFIRMATION_DEFAULTS,
+      confirmationId: normalizeString(overrides.confirmationId || overrides.id),
+      id: normalizeString(overrides.confirmationId || overrides.id),
       groupName,
       email: normalizeString(overrides.email),
       phone: normalizeString(overrides.phone),
       guests: Guest.normalizeList(overrides.guests, { ensureOne: false }).map(
         (guest) => ({
           ...guest,
+          confirmationId:
+            guest.confirmationId ||
+            normalizeString(overrides.confirmationId || overrides.id),
           groupName: guest.groupName || groupName,
         }),
       ),
@@ -303,7 +310,9 @@ export const Confirmation = {
       hasComments: Confirmation.hasComments(normalizedConfirmation),
       needsReview: Confirmation.needsReview(normalizedConfirmation),
       phone: normalizedConfirmation.phone,
-      rowId: `${normalizedConfirmation.groupName || "group"}-${index}`,
+      rowId: normalizedConfirmation.confirmationId || `confirmation-${index}`,
+      confirmationId: normalizedConfirmation.confirmationId,
+      id: normalizedConfirmation.id,
       meatText: Confirmation.getMenuText(normalizedConfirmation, "Carne"),
       transportText: Confirmation.getTransportText(normalizedConfirmation),
       usesBus: Confirmation.usesBus(normalizedConfirmation),
@@ -340,6 +349,8 @@ export const Confirmation = {
     return Confirmation.normalizeList(confirmations).flatMap((confirmation) =>
       confirmation.guests.map((guest) => ({
         ...guest,
+        confirmationId: confirmation.confirmationId,
+        guestId: guest.guestId || guest.id,
         email: confirmation.email,
         groupName: confirmation.groupName,
         phone: confirmation.phone,

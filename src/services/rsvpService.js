@@ -77,6 +77,8 @@ const decodeConfirmationPayload = (payload) => {
 
   return {
     ...payload,
+    confirmationId: payload.confirmationId || payload.id || "",
+    id: payload.confirmationId || payload.id || "",
     groupName,
     guests: Array.isArray(payload.guests)
       ? payload.guests.map((guest) => ({
@@ -108,6 +110,7 @@ const encodeConfirmationPayload = (group) => {
 
   return {
     ...confirmation,
+    confirmationId: confirmation.confirmationId || confirmation.id || "",
     groupName: encodedGroupName,
     guests: confirmation.guests.map((guest) => ({
       ...guest,
@@ -116,11 +119,11 @@ const encodeConfirmationPayload = (group) => {
   };
 };
 
-export const findGroupByName = async (groupName) => {
+export const findConfirmationById = async (confirmationId) => {
   return decodeApiResponse(
     await requestJsonp({
+      confirmationId,
       entity: "confirmations",
-      groupName: encodeGroupName(groupName),
       method: "GET",
     }),
   );
@@ -132,6 +135,16 @@ export const findGroupByEmail = async (email) => {
       email: String(email || "").trim(),
       entity: "confirmations",
       method: "GET",
+    }),
+  );
+};
+
+export const findGroupByPhone = async (phone) => {
+  return decodeApiResponse(
+    await requestJsonp({
+      entity: "confirmations",
+      method: "GET",
+      phone: String(phone || "").trim(),
     }),
   );
 };
@@ -173,6 +186,7 @@ export const saveGroup = async (payload, { method = "POST" } = {}) => {
 
   return {
     success: true,
+    confirmationId: responsePlaceholderConfirmationId(payload),
     groupName: Confirmation.normalize(payload).groupName,
   };
 };
@@ -190,6 +204,7 @@ export const saveAdminGroup = async ({ group, method = "PUT", password }) => {
 
   return {
     success: true,
+    confirmationId: responsePlaceholderConfirmationId(group),
     groupName: Confirmation.normalize(group).groupName,
   };
 };
@@ -208,19 +223,22 @@ export const saveAdminTables = async ({ password, tables }) => {
   };
 };
 
-export const deleteAdminGroup = async ({ groupName, password }) => {
+export const deleteAdminGroup = async ({ confirmationId, password }) => {
   await sendToRsvpApi({
     entity: "confirmations",
-    groupName: encodeGroupName(groupName),
+    confirmationId,
     method: "DELETE",
     password,
   });
 
   return {
     success: true,
-    groupName,
+    confirmationId,
   };
 };
+
+const responsePlaceholderConfirmationId = (group) =>
+  Confirmation.normalize(group).confirmationId;
 
 export const saveAdminProviders = async ({ password, providers }) => {
   await sendToRsvpApi({

@@ -5,6 +5,8 @@ import {
 } from "../constants/tables";
 
 const TABLE_DEFAULTS = {
+  id: "",
+  tableId: "",
   name: "",
   group: "",
   tag: "",
@@ -45,6 +47,8 @@ export const Table = {
 
     return {
       ...TABLE_DEFAULTS,
+      id: normalizeString(overrides.tableId || overrides.id).trim(),
+      tableId: normalizeString(overrides.tableId || overrides.id).trim(),
       name,
       group: normalizeString(
         overrides.group || overrides.tag || overrides.groupName,

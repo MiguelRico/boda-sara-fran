@@ -16,17 +16,19 @@ function deleteConfirmation(data) {
 
   const confirmationsSheet = getConfirmationsSheet();
   const guestsSheet = getSheet();
-  const groupName = decodeGroupName(data.groupName);
+  const assignmentsSheet = getTableAssignmentsSheet();
+  const confirmationId = String(data.confirmationId || data.id || "").trim();
 
-  if (!groupName) {
-    throw new Error("Missing groupName");
+  if (!confirmationId) {
+    throw new Error("Missing confirmationId");
   }
 
-  deleteConfirmationRow(confirmationsSheet, groupName);
-  deleteGroupRows(guestsSheet, groupName);
+  deleteConfirmationRow(confirmationsSheet, { confirmationId });
+  deleteGuestRows(guestsSheet, { confirmationId });
+  deleteAssignmentsByConfirmationId(assignmentsSheet, confirmationId);
 
   return jsonResponse({
     success: true,
-    groupName: encodeGroupName(groupName),
+    confirmationId,
   });
 }

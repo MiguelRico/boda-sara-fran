@@ -4,15 +4,16 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { MAX_GUESTS } from "../constants/rsvp";
 import { Confirmation, Guest } from "../models";
 import {
+  findConfirmationById,
   findGroupByEmail,
-  findGroupByName,
+  findGroupByPhone,
   saveGroup,
 } from "../services/rsvpService";
-import { decodeGroupName, getGroupNameUrl } from "../utils/groupNameCodec";
+import { getConfirmationIdUrl } from "../utils/groupNameCodec";
 import {
   validateRsvpContact,
-  validateRsvpEmail,
   validateRsvpForm,
+  validateRsvpSearch,
 } from "../utils/rsvpValidation";
 
 const createInitialPopup = () => ({
@@ -31,10 +32,11 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const groupNameFromUrl = decodeGroupName(searchParams.get("groupName"));
+  const confirmationIdFromUrl = searchParams.get("confirmationId") || "";
   const isEdition = mode === "edit";
   const navigationGroup =
-    isEdition && location.state?.group?.groupName === groupNameFromUrl
+    isEdition &&
+    location.state?.group?.confirmationId === confirmationIdFromUrl
       ? Confirmation.normalize(location.state.group)
       : null;
 
@@ -111,8 +113,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   };
 
   const handleSearchInvitation = async () => {
-    const emailError = validateRsvpEmail(contact.email);
-    const validationErrors = emailError ? { email: emailError } : {};
+    const validationErrors = validateRsvpSearch(contact);
     let keepSpinnerUntilNavigation = false;
 
     setErrors(validationErrors);
@@ -122,7 +123,9 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     try {
       show("Buscando confirmación...");
 
-      const response = await findGroupByEmail(contact.email);
+      const response = contact.email.trim()
+        ? await findGroupByEmail(contact.email)
+        : await findGroupByPhone(contact.phone);
 
       if (!response.found) {
         setPopup({
@@ -132,12 +135,16 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
           type: "error",
           title: "No encontrada",
           message:
-            "No hemos encontrado una confirmación asociada a este email.",
+            "No hemos encontrado una confirmación asociada a ese email o telefono.",
         });
         return;
       }
 
-      navigate(getGroupNameUrl(response.groupName), {
+      if (!response.confirmationId) {
+        throw new Error("La confirmacion encontrada no tiene confirmationId.");
+      }
+
+      navigate(getConfirmationIdUrl(response.confirmationId), {
         state: { group: response },
       });
       keepSpinnerUntilNavigation = true;
@@ -253,13 +260,13 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
 
   useEffect(() => {
     const loadGroup = async () => {
-      if (!isEdition || !groupNameFromUrl) return;
+      if (!isEdition || !confirmationIdFromUrl) return;
       if (navigationGroup) return;
 
       try {
         show("Cargando confirmación...");
 
-        const response = await findGroupByName(groupNameFromUrl);
+        const response = await findConfirmationById(confirmationIdFromUrl);
 
         if (!response.found) {
           setPopup({
@@ -294,7 +301,14 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     };
 
     loadGroup();
-  }, [groupNameFromUrl, hide, isEdition, loadFoundGroup, navigationGroup, show]);
+  }, [
+    confirmationIdFromUrl,
+    hide,
+    isEdition,
+    loadFoundGroup,
+    navigationGroup,
+    show,
+  ]);
 
   return {
     closePopup,

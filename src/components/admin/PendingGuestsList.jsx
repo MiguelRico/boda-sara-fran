@@ -156,5 +156,9 @@ function GuestAssignmentRow({
 }
 
 function getPendingGuestRowKey(guest) {
-  return `${guest.groupName || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`;
+  return (
+    guest.guestId ||
+    guest.id ||
+    `${guest.confirmationId || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`
+  );
 }

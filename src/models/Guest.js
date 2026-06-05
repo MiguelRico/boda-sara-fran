@@ -2,8 +2,11 @@ import { GUEST_MENU_OPTIONS } from "../constants/rsvp";
 import { rsvpContent } from "../constants/rsvpContent";
 
 const GUEST_DEFAULTS = {
+  confirmationId: "",
   email: "",
+  guestId: "",
   groupName: "",
+  id: "",
   name: "",
   lastname: "",
   phone: "",
@@ -13,6 +16,7 @@ const GUEST_DEFAULTS = {
   outboundBus: "No",
   returnBus: "No",
   menu: "",
+  tableId: "",
   table: "",
   seat: "",
 };
@@ -35,8 +39,11 @@ export const Guest = {
   create(overrides = {}) {
     return {
       ...GUEST_DEFAULTS,
+      confirmationId: normalizeString(overrides.confirmationId),
       email: normalizeString(overrides.email),
+      guestId: normalizeString(overrides.guestId || overrides.id),
       groupName: normalizeString(overrides.groupName),
+      id: normalizeString(overrides.guestId || overrides.id),
       name: normalizeString(overrides.name),
       lastname: normalizeString(overrides.lastname),
       phone: normalizeString(overrides.phone),
@@ -50,6 +57,7 @@ export const Guest = {
       returnBus:
         normalizeString(overrides.returnBus) || GUEST_DEFAULTS.returnBus,
       menu: normalizeMenu(overrides.menu),
+      tableId: normalizeString(overrides.tableId),
       table: normalizeString(overrides.table),
       seat: normalizeString(overrides.seat),
     };

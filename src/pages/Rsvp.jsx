@@ -1,6 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { useInView } from "framer-motion";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
@@ -16,23 +15,11 @@ import useSpinner from "../hooks/useSpinner.js";
 export default function Rsvp() {
   const spinner = useSpinner();
   const rsvp = useRsvp(spinner, { mode: "search" });
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const rsvpRef = useRef(null);
   const rsvpInView = useInView(rsvpRef, {
     once: true,
     amount: 0.35,
   });
-
-  useEffect(() => {
-    const groupName = searchParams.get("groupName");
-
-    if (groupName) {
-      navigate(`/rsvp/edit?groupName=${encodeURIComponent(groupName)}`, {
-        replace: true,
-      });
-    }
-  }, [navigate, searchParams]);
 
   return (
     <RsvpPageShell spinner={spinner} wrapperRef={rsvpRef}>
@@ -59,7 +46,10 @@ export default function Rsvp() {
             emailError={rsvp.errors.email}
             loading={spinner.loading}
             onEmailChange={(value) => rsvp.handleContactChange("email", value)}
+            onPhoneChange={(value) => rsvp.handleContactChange("phone", value)}
             onSearchInvitation={rsvp.handleSearchInvitation}
+            phone={rsvp.contact.phone}
+            phoneError={rsvp.errors.phone}
           />
         </div>
       </CinematicStaggeredRevealItem>

@@ -436,6 +436,7 @@ export default function AdminTables() {
         return {
           ...guest,
           table: "",
+          tableId: "",
           seat: "",
         };
       });
@@ -550,10 +551,18 @@ export default function AdminTables() {
   }, [pageSize, savedSnapshot.groups, savedSnapshot.manualTables]);
 
   const handleAssignGuestToTable = useCallback(
-    async ({ guestId, guestGroupName, guestIndex, tableName, seatNumber }) => {
+    async ({
+      confirmationId,
+      guestId,
+      guestGroupName,
+      guestIndex,
+      tableName,
+      seatNumber,
+    }) => {
       try {
         const updatedGroups = assignPendingGuestToSeatLocal({
           groups: state.groups,
+          confirmationId,
           guestGroupName,
           guestId,
           guestIndex,
@@ -599,7 +608,8 @@ export default function AdminTables() {
 
       try {
         await handleAssignGuestToTable({
-          guestId: Guest.getFullName(guest),
+          confirmationId: guest.confirmationId,
+          guestId: guest.guestId || guest.id,
           guestGroupName: guest.groupName,
           guestIndex: guest.guestIndex,
           tableName,
@@ -619,18 +629,22 @@ export default function AdminTables() {
   );
 
   const handleAssignGuestToSeat = async ({
+    confirmationId,
+    guestId,
     guestGroupName,
     guestIndex,
     guestName,
   }) => {
-    if (!seatAssignmentTarget || !guestGroupName) return;
+    if (!seatAssignmentTarget || (!confirmationId && !guestGroupName)) return;
 
     setAssigningSeat(true);
     setState((prev) => ({ ...prev, error: "" }));
 
     try {
       const updatedGroups = assignGuestToSeatLocal({
+        confirmationId,
         groups: state.groups,
+        guestId,
         guestGroupName,
         guestIndex,
         guestName,
@@ -1162,6 +1176,8 @@ function SeatAssignmentDialog({
     if (!selectedGuest) return;
 
     onAssign({
+      confirmationId: selectedGuest.confirmationId,
+      guestId: selectedGuest.guestId || selectedGuest.id,
       guestGroupName: selectedGuest.groupName,
       guestIndex: selectedGuest.guestIndex,
       guestName: Guest.getFullName(selectedGuest, "Invitado"),
@@ -1793,13 +1809,13 @@ function buildManualTableChanges(savedTables, currentTables) {
 }
 
 function buildSeatAssignmentChanges(savedGroups, currentGroups) {
-  const savedByGroupName = new Map(
-    savedGroups.map((group) => [group.groupName, group]),
+  const savedByConfirmationId = new Map(
+    savedGroups.map((group) => [getConfirmationKey(group), group]),
   );
   const changes = [];
 
   currentGroups.forEach((group) => {
-    const savedGroup = savedByGroupName.get(group.groupName);
+    const savedGroup = savedByConfirmationId.get(getConfirmationKey(group));
 
     group.guests.forEach((guest, index) => {
       const savedGuest = savedGroup?.guests?.[index] || {};
@@ -1821,12 +1837,12 @@ function buildSeatAssignmentChanges(savedGroups, currentGroups) {
 }
 
 function getChangedGroups(savedGroups, currentGroups) {
-  const savedByGroupName = new Map(
-    savedGroups.map((group) => [group.groupName, getStableJson(group)]),
+  const savedByConfirmationId = new Map(
+    savedGroups.map((group) => [getConfirmationKey(group), getStableJson(group)]),
   );
 
   return currentGroups.filter(
-    (group) => savedByGroupName.get(group.groupName) !== getStableJson(group),
+    (group) => savedByConfirmationId.get(getConfirmationKey(group)) !== getStableJson(group),
   );
 }
 
@@ -1884,5 +1900,13 @@ function getStableJson(value) {
 }
 
 function getPendingGuestRowKey(guest) {
-  return `${guest.groupName || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`;
+  return (
+    guest.guestId ||
+    guest.id ||
+    `${guest.confirmationId || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`
+  );
+}
+
+function getConfirmationKey(group) {
+  return group.confirmationId || group.id;
 }

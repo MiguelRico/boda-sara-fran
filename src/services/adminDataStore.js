@@ -14,6 +14,9 @@ const emptySnapshot = {
 
 const store = { ...emptySnapshot };
 
+const getConfirmationKey = (group = {}) =>
+  group.confirmationId || group.id || `draft:${group.email || ""}:${group.phone || ""}`;
+
 export const clearAdminDataStore = () => {
   store.groups = [];
   store.loaded = false;
@@ -66,8 +69,9 @@ export const setAdminGroups = (groups) => {
 
 export const upsertAdminGroup = (group) => {
   const normalizedGroup = normalizeAdminGroups([group])[0];
+  const normalizedKey = getConfirmationKey(normalizedGroup);
   const existingIndex = store.groups.findIndex(
-    (item) => item.groupName === normalizedGroup.groupName,
+    (item) => getConfirmationKey(item) === normalizedKey,
   );
 
   if (existingIndex === -1) {
@@ -81,8 +85,10 @@ export const upsertAdminGroup = (group) => {
   return store.groups;
 };
 
-export const removeAdminGroup = (groupName) => {
-  store.groups = store.groups.filter((group) => group.groupName !== groupName);
+export const removeAdminGroup = (confirmationId) => {
+  store.groups = store.groups.filter(
+    (group) => getConfirmationKey(group) !== confirmationId,
+  );
 
   return store.groups;
 };

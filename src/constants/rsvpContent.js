@@ -84,9 +84,11 @@ export const rsvpContent = {
   searchInvitation: {
     eyebrow: "Buscar invitación",
     title: "Modificar tu confirmación",
-    text: "Busca por email asociado a tu confirmación.",
+    text: "Busca por email o telefono asociado a tu confirmación.",
     emailLabel: "Email",
     emailPlaceholder: "Ej: ejemplo@email.com",
+    phoneLabel: "Telefono",
+    phonePlaceholder: "Ej: 600123456",
     searchAction: "Buscar mi confirmación",
     backHome: "Volver al inicio",
   },

@@ -601,6 +601,9 @@ function getGuestInitials(guest) {
 
 function getAssignedSeatKey(seat = {}) {
   const guest = seat.guest || {};
+  const guestKey = guest.guestId || guest.id || guest.confirmationId;
 
-  return `${seat.seat || ""}-${guest.groupName || ""}-${Guest.getFullName(guest, "Invitado")}`;
+  return guestKey
+    ? `${seat.seat || ""}-${guestKey}`
+    : `${seat.seat || ""}-${Guest.getFullName(guest, "Invitado")}`;
 }

@@ -51,6 +51,8 @@ export const persistAdminTables = async ({ password, tables }) => {
   await saveAdminTables({
     password,
     tables: Table.normalizeList(tables).map((table) => ({
+      id: table.id || table.tableId,
+      tableId: table.tableId || table.id,
       name: table.name,
       group: table.group,
       tag: table.tag || table.group,
@@ -74,6 +76,8 @@ const getGuestsWithGroupIndex = (groups) =>
   Confirmation.normalizeList(groups).flatMap((confirmation) =>
     confirmation.guests.map((guest, guestIndex) => ({
       ...guest,
+      confirmationId: guest.confirmationId || confirmation.confirmationId,
+      guestId: guest.guestId || guest.id,
       email: confirmation.email,
       groupName: confirmation.groupName,
       phone: confirmation.phone,
@@ -96,13 +100,24 @@ const getNormalizedGuestIndex = (guestIndex) => {
 const doesGuestMatch = ({
   group,
   guest,
+  confirmationId,
   guestGroupName,
   guestId,
   guestIndex,
   guestName,
   index,
 }) => {
-  if (group.groupName !== guestGroupName) return false;
+  const groupConfirmationId = group.confirmationId || group.id;
+
+  if (confirmationId && groupConfirmationId !== confirmationId) return false;
+  if (!confirmationId && group.groupName !== guestGroupName) return false;
+
+  const normalizedGuestId = String(guestId || "").trim();
+  const currentGuestId = String(guest.guestId || guest.id || "").trim();
+
+  if (normalizedGuestId && currentGuestId) {
+    return normalizedGuestId === currentGuestId;
+  }
 
   const normalizedGuestIndex = getNormalizedGuestIndex(guestIndex);
 
@@ -195,6 +210,7 @@ export const upsertManualTable = ({ editingTable, form, manualTables }) => {
 };
 
 export const assignPendingGuestToSeatLocal = ({
+  confirmationId,
   groups,
   guestGroupName,
   guestId,
@@ -203,7 +219,13 @@ export const assignPendingGuestToSeatLocal = ({
   tableName,
   tables,
 }) => {
-  const confirmation = groups.find((group) => group.groupName === guestGroupName);
+  const confirmation = groups.find((group) => {
+    const groupConfirmationId = group.confirmationId || group.id;
+
+    return confirmationId
+      ? groupConfirmationId === confirmationId
+      : group.groupName === guestGroupName;
+  });
 
   if (!confirmation) {
     throw new Error("Grupo de invitacion no encontrado");
@@ -212,6 +234,7 @@ export const assignPendingGuestToSeatLocal = ({
   const nextGuestIndex = confirmation.guests.findIndex((guest, index) =>
     doesGuestMatch({
       group: confirmation,
+      confirmationId,
       guest,
       guestGroupName,
       guestId,
@@ -252,6 +275,7 @@ export const assignPendingGuestToSeatLocal = ({
       index === nextGuestIndex
         ? {
             ...guest,
+            tableId: table.tableId || table.id || "",
             table: tableName,
             seat: seatNumber,
           }
@@ -260,13 +284,15 @@ export const assignPendingGuestToSeatLocal = ({
   };
 
   return groups.map((group) =>
-    group.groupName === updatedConfirmation.groupName
+    (group.confirmationId || group.id) ===
+    (updatedConfirmation.confirmationId || updatedConfirmation.id)
       ? updatedConfirmation
       : group,
   );
 };
 
 export const assignPendingGuestToSeat = async ({
+  confirmationId,
   groups,
   guestGroupName,
   guestId,
@@ -278,6 +304,7 @@ export const assignPendingGuestToSeat = async ({
 }) => {
   const updatedGroups = assignPendingGuestToSeatLocal({
     groups,
+    confirmationId,
     guestGroupName,
     guestId,
     guestIndex,
@@ -286,7 +313,10 @@ export const assignPendingGuestToSeat = async ({
     tables,
   });
   const updatedConfirmation = updatedGroups.find(
-    (group) => group.groupName === guestGroupName,
+    (group) =>
+      confirmationId
+        ? (group.confirmationId || group.id) === confirmationId
+        : group.groupName === guestGroupName,
   );
 
   await saveAdminGroup({
@@ -298,8 +328,10 @@ export const assignPendingGuestToSeat = async ({
 };
 
 export const assignGuestToSeatLocal = ({
+  confirmationId,
   groups,
   guestGroupName,
+  guestId,
   guestIndex,
   guestName,
   seat,
@@ -313,8 +345,10 @@ export const assignGuestToSeatLocal = ({
     const guests = group.guests.map((guest, index) => {
       const isSelectedGuest = doesGuestMatch({
         group,
+        confirmationId,
         guest,
         guestGroupName,
+        guestId,
         guestIndex,
         guestName,
         index,
@@ -331,15 +365,17 @@ export const assignGuestToSeatLocal = ({
         selectedGuestFound = true;
 
         return {
-          ...guest,
-          table: tableName,
-          seat: seatNumber,
-        };
+            ...guest,
+            tableId: table.tableId || table.id || "",
+            table: tableName,
+            seat: seatNumber,
+          };
       }
 
       return {
         ...guest,
         table: "",
+        tableId: "",
         seat: "",
       };
     });
@@ -354,8 +390,10 @@ export const assignGuestToSeatLocal = ({
 };
 
 export const assignGuestToSeat = async ({
+  confirmationId,
   groups,
   guestGroupName,
+  guestId,
   guestIndex,
   guestName,
   password,
@@ -364,7 +402,9 @@ export const assignGuestToSeat = async ({
 }) => {
   const updatedGroups = assignGuestToSeatLocal({
     groups,
+    confirmationId,
     guestGroupName,
+    guestId,
     guestIndex,
     guestName,
     seat,
@@ -403,6 +443,7 @@ export const unassignGuestFromSeatLocal = ({ groups, seat, table }) => {
       return {
         ...guest,
         table: "",
+        tableId: "",
         seat: "",
       };
     });
