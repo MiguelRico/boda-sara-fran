@@ -10,6 +10,7 @@ import {
 
 import { Guest } from "../../models";
 import { rsvpContent } from "../../constants/rsvpContent";
+import { getEmailHref, getPhoneHref } from "../../utils/contactLinks";
 import Chip from "../ui/Chip";
 
 export default function TableGuestCard({
@@ -57,9 +58,11 @@ export default function TableGuestCard({
               <div className="flex flex-wrap gap-2 text-xs">
                 {chips.map((chip) => (
                   <Chip
+                    href={chip.href}
                     icon={chip.icon}
                     key={`${chip.label || ""}-${chip.value}`}
                     strong={chip.strong}
+                    tone={chip.tone}
                     value={
                       chip.label ? `${chip.label}: ${chip.value}` : chip.value
                     }
@@ -101,14 +104,18 @@ export function GuestDetailChips({ className = "", guest = {} }) {
       {guestEmail && (
         <Chip
           className="col-span-2 w-full"
+          href={getEmailHref(guestEmail)}
           icon={<Mail size={13} strokeWidth={1.8} />}
+          tone="secondary"
           value={guestEmail}
         />
       )}
       {guestPhone && (
         <Chip
           className="w-full"
+          href={getPhoneHref(guestPhone)}
           icon={<Phone size={13} strokeWidth={1.8} />}
+          tone="secondary"
           value={guestPhone}
         />
       )}

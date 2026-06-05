@@ -326,7 +326,7 @@ function TransportCard({ stats }) {
         title="Autobús"
       />
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2">
         <TransportGroup items={stats.outboundBusStats} title="Ida" />
         <TransportGroup items={stats.returnBusStats} title="Vuelta" />
       </div>
@@ -344,12 +344,12 @@ function TransportGroup({ items, title }) {
   }, []);
 
   return (
-    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+    <div className="min-w-0 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
       <p className="mb-4 text-sm font-medium uppercase tracking-[0.16em] text-[var(--color-accent-dark)]">
         {title}
       </p>
 
-      <div className="grid items-center gap-4">
+      <div className="grid gap-4">
         <DonutChart
           activeLabel={activeLabel}
           colors={TRANSPORT_DONUT_COLORS}
@@ -361,6 +361,7 @@ function TransportGroup({ items, title }) {
         />
         <ChartLegend
           activeLabel={activeLabel}
+          className="grid grid-cols-2 gap-2"
           compact
           colors={TRANSPORT_DONUT_COLORS}
           items={items}
@@ -535,6 +536,7 @@ function DonutChart({
 
 function ChartLegend({
   activeLabel,
+  className = "",
   colors = DONUT_COLORS,
   compact = false,
   items,
@@ -596,7 +598,11 @@ function ChartLegend({
   }
 
   return (
-    <div className={`select-none ${compact ? "space-y-2" : "space-y-3"}`}>
+    <div
+      className={`select-none ${
+        className || (compact ? "space-y-2" : "space-y-3")
+      }`}
+    >
       {items.map((item, index) => {
         const color = colors[index % colors.length];
         const isActive = activeLabel === item.label;

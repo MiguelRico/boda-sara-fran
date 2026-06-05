@@ -42,10 +42,7 @@ import {
   MAX_GUESTS,
 } from "../constants/rsvp";
 import { Confirmation, Guest } from "../models";
-import {
-  deleteAdminGroup,
-  saveAdminGroup,
-} from "../services/rsvpService";
+import { deleteAdminGroup, saveAdminGroup } from "../services/rsvpService";
 import {
   loadAdminDataOnce,
   removeAdminGroup,
@@ -60,6 +57,7 @@ import {
   createDraftGroup,
   normalizeAdminGroupBeforeSave,
 } from "../utils/drafts";
+import { getEmailHref, getPhoneHref } from "../utils/contactLinks";
 import { adminContent } from "../constants/adminContent";
 import { normalizeAdminGroups } from "../utils/rsvpGroups";
 import { validateRsvpForm } from "../utils/rsvpValidation";
@@ -310,7 +308,7 @@ export default function AdminGuests() {
           <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
             <AdminTableSection
               actions={
-                <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:grid-cols-5">
+                <div className="grid w-full grid-cols-4 gap-3 sm:w-auto sm:grid-cols-5">
                   <IconButton
                     className="w-full"
                     disabled={!rows.length}
@@ -319,15 +317,6 @@ export default function AdminGuests() {
                     onClick={() => downloadGuestsCsv(rows)}
                   >
                     <Download size={16} strokeWidth={1.8} />
-                  </IconButton>
-
-                  <IconButton
-                    className="w-full"
-                    label={adminContent.guests.actions.create}
-                    tone="primary"
-                    onClick={() => setEditingGroup(createDraftGroup())}
-                  >
-                    <Plus size={18} strokeWidth={2.4} />
                   </IconButton>
 
                   <CardActions
@@ -346,6 +335,15 @@ export default function AdminGuests() {
                     }
                     showText={!isMobileList}
                   />
+
+                  <IconButton
+                    className="w-full"
+                    label={adminContent.guests.actions.create}
+                    tone="primary"
+                    onClick={() => setEditingGroup(createDraftGroup())}
+                  >
+                    <Plus size={18} strokeWidth={2.4} />
+                  </IconButton>
                 </div>
               }
               contentRef={tableStartRef}
@@ -594,9 +592,11 @@ function AdminGuestConfirmationCard({
           {chips.map((chip) => (
             <Chip
               className={chip.className}
+              href={chip.href}
               icon={chip.icon}
               key={chip.key}
               strong={chip.strong}
+              tone={chip.tone}
               value={chip.value}
               valueClassName={chip.valueClassName}
             />
@@ -628,13 +628,17 @@ function getGroupSummaryChips(row) {
   return [
     {
       className: "col-span-2",
+      href: getEmailHref(row.email),
       icon: <Mail size={13} strokeWidth={1.8} />,
       key: "email",
+      tone: "secondary",
       value: row.email || "-",
     },
     {
+      href: getPhoneHref(row.phone),
       icon: <Phone size={13} strokeWidth={1.8} />,
       key: "phone",
+      tone: "secondary",
       value: row.phone || "-",
     },
     ...GUEST_MENU_OPTIONS.map((menu) => {
@@ -662,12 +666,12 @@ function getGroupSummaryChips(row) {
       (guest) => guest.outboundBus && guest.outboundBus !== "No",
     )
       ? {
-      icon: <BusFront size={13} strokeWidth={1.8} />,
-      key: "outbound-bus",
-      value: `Ida: ${getGuestCountBy(
-        guests,
-        (guest) => guest.outboundBus && guest.outboundBus !== "No",
-      )}`,
+          icon: <BusFront size={13} strokeWidth={1.8} />,
+          key: "outbound-bus",
+          value: `Ida: ${getGuestCountBy(
+            guests,
+            (guest) => guest.outboundBus && guest.outboundBus !== "No",
+          )}`,
         }
       : null,
     getGuestCountBy(
@@ -675,12 +679,12 @@ function getGroupSummaryChips(row) {
       (guest) => guest.returnBus && guest.returnBus !== "No",
     )
       ? {
-      icon: <BusFront size={13} strokeWidth={1.8} />,
-      key: "return-bus",
-      value: `Vuelta: ${getGuestCountBy(
-        guests,
-        (guest) => guest.returnBus && guest.returnBus !== "No",
-      )}`,
+          icon: <BusFront size={13} strokeWidth={1.8} />,
+          key: "return-bus",
+          value: `Vuelta: ${getGuestCountBy(
+            guests,
+            (guest) => guest.returnBus && guest.returnBus !== "No",
+          )}`,
         }
       : null,
     commentsCount

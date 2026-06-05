@@ -4,12 +4,7 @@ import { CircleHelp, Mail, Phone } from "lucide-react";
 import IconButton from "../ui/IconButton";
 import StatusDialog from "../ui/StatusDialog";
 import { siteContent } from "../../constants/siteContent";
-
-function formatPhoneHref(phone) {
-  const normalizedPhone = phone.replace(/[^\d+]/g, "");
-
-  return normalizedPhone ? `tel:${normalizedPhone}` : "";
-}
+import { getEmailHref, getPhoneHref } from "../../utils/contactLinks";
 
 export default function HelpAccessButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,9 +48,7 @@ export default function HelpAccessButton() {
                 <IconButton
                   className="w-full justify-start"
                   disabled={!contact.phone}
-                  href={
-                    contact.phone ? formatPhoneHref(contact.phone) : undefined
-                  }
+                  href={contact.phone ? getPhoneHref(contact.phone) : undefined}
                   icon={<Phone size={16} strokeWidth={1.8} />}
                   showText="always"
                   tone="terciary"
@@ -66,7 +59,7 @@ export default function HelpAccessButton() {
                 <IconButton
                   className="w-full justify-start"
                   disabled={!contact.email}
-                  href={contact.email ? `mailto:${contact.email}` : undefined}
+                  href={contact.email ? getEmailHref(contact.email) : undefined}
                   icon={<Mail size={16} strokeWidth={1.8} />}
                   showText="always"
                   tone="terciary"
