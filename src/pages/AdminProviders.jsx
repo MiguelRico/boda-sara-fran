@@ -1,4 +1,4 @@
-import { useInView } from "framer-motion";
+import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
@@ -172,6 +172,9 @@ export default function AdminProviders() {
   const selectedService =
     pagedServices.find((service) => service.id === effectiveSelectedServiceId) ||
     null;
+  const selectedServiceProvider =
+    providers.find((provider) => provider.id === selectedService?.providerId) ||
+    selectedProvider;
   const hasPendingChanges =
     JSON.stringify(savedProviders) !== JSON.stringify(providers);
   const stats = useMemo(() => buildProviderStats(providers), [providers]);
@@ -249,6 +252,17 @@ export default function AdminProviders() {
   const handleCreateProvider = () => {
     setErrors({});
     setEditingProvider(createEmptyProvider());
+  };
+  const handleCreateService = () => {
+    if (!selectedProvider) return;
+
+    setErrors({});
+    setEditingProvider(
+      createEmptyProvider({
+        ...selectedProvider,
+        services: [...selectedProvider.services, createEmptyService()],
+      }),
+    );
   };
   const handleDeleteProvider = () => {
     if (!deleteTarget) return;
@@ -456,27 +470,26 @@ export default function AdminProviders() {
               ) : (
                 <AdminTableSection
                   actions={
-                    <ProviderTableActions
-                      hasPendingChanges={hasPendingChanges}
-                      onCreate={handleCreateProvider}
-                      onDelete={() =>
-                        selectedService &&
-                        setDeleteTarget(
-                          providers.find(
-                            (provider) =>
-                              provider.id === selectedService.providerId,
-                          ),
-                        )
-                      }
-                      onDiscard={handleDiscardPendingChanges}
-                      onEdit={() => handleEditService(selectedService)}
-                      onExport={() => downloadServicesCsv(services)}
-                      onSave={handleSavePendingChanges}
-                      providers={services}
-                      saving={spinner.loading}
-                      selectedProvider={selectedService}
-                      showText={!isMobileView}
-                    />
+                    hasPendingChanges ||
+                    filteredServices.length ||
+                    selectedProvider ? (
+                      <ProviderTableActions
+                        hasPendingChanges={hasPendingChanges}
+                        onCreate={selectedProvider ? handleCreateService : null}
+                        onDelete={() =>
+                          selectedService &&
+                          setDeleteTarget(selectedServiceProvider)
+                        }
+                        onDiscard={handleDiscardPendingChanges}
+                        onEdit={() => handleEditService(selectedService)}
+                        onExport={() => downloadServicesCsv(services)}
+                        onSave={handleSavePendingChanges}
+                        providers={filteredServices}
+                        saving={spinner.loading}
+                        selectedProvider={selectedService}
+                        showText={!isMobileView}
+                      />
+                    ) : null
                   }
                   contentRef={tableStartRef}
                   eyebrow={adminContent.providers.services.eyebrow}
@@ -791,66 +804,100 @@ function ProviderTableActions({
   selectedProvider,
   showText,
 }) {
-  return (
-    <div className="grid w-full gap-3">
-      <div className="grid w-full grid-cols-2 gap-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-3">
-        <IconButton
-          className="w-full"
-          disabled={!hasPendingChanges}
-          icon={<Undo2 size={16} strokeWidth={1.8} />}
-          label={adminContent.providers.actions.discardChanges}
-          onClick={onDiscard}
-          showText={showText ? "always" : undefined}
-          tone="secondary"
-          type="button"
-        >
-          {showText ? adminContent.providers.actions.discardChanges : undefined}
-        </IconButton>
-        <IconButton
-          className="w-full"
-          disabled={!hasPendingChanges || saving}
-          icon={<Save size={16} strokeWidth={1.8} />}
-          label={adminContent.providers.actions.saveChanges}
-          onClick={onSave}
-          showText={showText ? "always" : undefined}
-          tone="primary"
-          type="button"
-        >
-          {showText ? adminContent.providers.actions.saveChanges : undefined}
-        </IconButton>
-      </div>
+  const hasItems = providers.length > 0;
 
-      <div className="grid w-full grid-cols-4 gap-3 sm:w-auto sm:grid-cols-4">
-        <IconButton
-          className="w-full"
-          disabled={!providers.length}
-          icon={<Download size={16} strokeWidth={1.8} />}
-          label={adminContent.providers.actions.export}
-          onClick={onExport}
-          tone="terciary"
-          type="button"
-        >
-          {showText ? adminContent.providers.actions.export : undefined}
-        </IconButton>
-        <CardActions
-          className="contents"
-          deleteLabel={adminContent.providers.actions.delete}
-          editLabel={adminContent.providers.actions.edit}
-          item={selectedProvider}
-          onDelete={selectedProvider ? onDelete : null}
-          onEdit={selectedProvider ? onEdit : null}
-          showText={showText}
-        />
+  if (!hasItems && !hasPendingChanges) {
+    if (!onCreate) return null;
+
+    return (
+      <div className="grid w-full gap-3">
         <IconButton
           className="w-full"
           icon={<Plus size={18} strokeWidth={2.4} />}
           label={adminContent.providers.actions.add}
           onClick={onCreate}
+          showText={showText ? "always" : undefined}
           tone="primary"
           type="button"
         >
           {showText ? adminContent.providers.actions.add : undefined}
         </IconButton>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid w-full gap-3">
+      {hasPendingChanges && (
+        <div className="grid w-full grid-cols-2 gap-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-3">
+          <IconButton
+            className="w-full"
+            icon={<Undo2 size={16} strokeWidth={1.8} />}
+            label={adminContent.providers.actions.discardChanges}
+            onClick={onDiscard}
+            showText={showText ? "always" : undefined}
+            tone="secondary"
+            type="button"
+          >
+            {showText
+              ? adminContent.providers.actions.discardChanges
+              : undefined}
+          </IconButton>
+          <IconButton
+            className="w-full"
+            disabled={saving}
+            icon={<Save size={16} strokeWidth={1.8} />}
+            label={adminContent.providers.actions.saveChanges}
+            onClick={onSave}
+            showText={showText ? "always" : undefined}
+            tone="primary"
+            type="button"
+          >
+            {showText ? adminContent.providers.actions.saveChanges : undefined}
+          </IconButton>
+        </div>
+      )}
+
+      <div
+        className={`grid w-full gap-3 sm:w-auto ${
+          hasItems ? "grid-cols-4 sm:grid-cols-4" : "grid-cols-1"
+        }`}
+      >
+        {hasItems && (
+          <IconButton
+            className="w-full"
+            icon={<Download size={16} strokeWidth={1.8} />}
+            label={adminContent.providers.actions.export}
+            onClick={onExport}
+            tone="terciary"
+            type="button"
+          >
+            {showText ? adminContent.providers.actions.export : undefined}
+          </IconButton>
+        )}
+        {hasItems && (
+          <CardActions
+            className="contents"
+            deleteLabel={adminContent.providers.actions.delete}
+            editLabel={adminContent.providers.actions.edit}
+            item={selectedProvider}
+            onDelete={selectedProvider ? onDelete : null}
+            onEdit={selectedProvider ? onEdit : null}
+            showText={showText}
+          />
+        )}
+        {onCreate && (
+          <IconButton
+            className="w-full"
+            icon={<Plus size={18} strokeWidth={2.4} />}
+            label={adminContent.providers.actions.add}
+            onClick={onCreate}
+            tone="primary"
+            type="button"
+          >
+            {showText ? adminContent.providers.actions.add : undefined}
+          </IconButton>
+        )}
       </div>
     </div>
   );
@@ -1070,6 +1117,18 @@ function ProviderForm({
   onServiceChange,
   onSubmit,
 }) {
+  const reduceMotion = useReducedMotion();
+  const paymentTransition = { duration: reduceMotion ? 0.12 : 0.32 };
+  const paymentVariants = reduceMotion
+    ? {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1 },
+      }
+    : {
+        hidden: { opacity: 0, y: -8, filter: "blur(4px)" },
+        visible: { opacity: 1, y: 0, filter: "blur(0px)" },
+      };
+
   return (
     <form className="mt-4 space-y-5" noValidate onSubmit={onSubmit}>
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
@@ -1228,61 +1287,72 @@ function ProviderForm({
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-3">
-                {service.payments
-                  .slice(0, service.paymentCount)
-                  .map((payment, paymentIndex) => (
-                  <div
-                    className="rounded-2xl border border-[var(--color-border)] bg-white/50 p-3"
-                    key={paymentIndex}
-                  >
-                    <p className="section-eyebrow mb-3">
-                      {adminContent.providers.form.payment(paymentIndex + 1)}
-                    </p>
-                    <input
-                      className={inputClassName}
-                      onChange={(event) =>
-                        onPaymentChange(
-                          serviceIndex,
-                          paymentIndex,
-                          "amount",
-                          event.target.value,
-                        )
-                      }
-                      placeholder="Importe"
-                      type="number"
-                      value={payment.amount}
-                    />
-                    <input
-                      className={`${inputClassName} mt-3`}
-                      onChange={(event) =>
-                        onPaymentChange(
-                          serviceIndex,
-                          paymentIndex,
-                          "date",
-                          event.target.value,
-                        )
-                      }
-                      type="date"
-                      value={payment.date}
-                    />
-                    <label className="mt-3 flex items-center gap-2 text-sm text-[var(--color-accent-dark)]">
-                      <input
-                        checked={payment.paid}
-                        onChange={(event) =>
-                          onPaymentChange(
-                            serviceIndex,
-                            paymentIndex,
-                            "paid",
-                            event.target.checked,
-                          )
-                        }
-                        type="checkbox"
-                      />
-                      Pagado
-                    </label>
-                  </div>
-                ))}
+                <AnimatePresence initial={false}>
+                  {service.payments
+                    .slice(0, service.paymentCount)
+                    .map((payment, paymentIndex) => (
+                      <motion.div
+                        animate="visible"
+                        className="rounded-2xl border border-[var(--color-border)] bg-white/50 p-3"
+                        exit="hidden"
+                        initial="hidden"
+                        key={paymentIndex}
+                        layout
+                        transition={paymentTransition}
+                        variants={paymentVariants}
+                      >
+                        <p className="section-eyebrow mb-3">
+                          {adminContent.providers.form.payment(paymentIndex + 1)}
+                        </p>
+                        <input
+                          className={inputClassName}
+                          onChange={(event) =>
+                            onPaymentChange(
+                              serviceIndex,
+                              paymentIndex,
+                              "amount",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Importe"
+                          type="number"
+                          value={payment.amount}
+                        />
+                        <input
+                          className={`${inputClassName} mt-3`}
+                          onChange={(event) =>
+                            onPaymentChange(
+                              serviceIndex,
+                              paymentIndex,
+                              "date",
+                              event.target.value,
+                            )
+                          }
+                          type="date"
+                          value={payment.date}
+                        />
+                        <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 px-4 py-3 text-sm text-[var(--color-accent-dark)] transition hover:bg-white">
+                          <span>Pagado</span>
+                          <input
+                            checked={payment.paid}
+                            className="peer sr-only"
+                            onChange={(event) =>
+                              onPaymentChange(
+                                serviceIndex,
+                                paymentIndex,
+                                "paid",
+                                event.target.checked,
+                              )
+                            }
+                            type="checkbox"
+                          />
+                          <span className="relative h-6 w-11 rounded-full bg-[var(--color-border-strong)] transition after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--color-accent-dark)] peer-checked:after:translate-x-full" />
+                        </label>
+                      </motion.div>
+                    ))}
+                </AnimatePresence>
               </div>
+              <FieldError>{errors[`service_${serviceIndex}_payments`]}</FieldError>
             </div>
           ))}
         </div>

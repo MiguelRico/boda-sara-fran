@@ -870,30 +870,32 @@ export default function AdminTables() {
               ) : (
                 <AdminTableSection
                   actions={
-                    <PendingGuestAssignmentActions
-                      assigning={
-                        pendingGuestsAssigningGuest ===
-                        effectiveSelectedPendingGuestKey
-                      }
-                      availableSeats={pendingGuestsAvailableSeats}
-                      disabled={!selectedPendingGuest}
-                      onAssign={() =>
-                        selectedPendingGuest &&
-                        handleAssignPendingGuest(
-                          selectedPendingGuest,
-                          pendingGuestsSelectedTable,
-                          pendingGuestsSelectedSeat,
-                        )
-                      }
-                      onSeatChange={setPendingGuestsSelectedSeat}
-                      onTableChange={(value) => {
-                        setPendingGuestsSelectedTable(value);
-                        setPendingGuestsSelectedSeat("");
-                      }}
-                      selectedSeat={pendingGuestsSelectedSeat}
-                      selectedTable={pendingGuestsSelectedTable}
-                      tables={pendingGuestTablesWithSeats}
-                    />
+                    filteredPendingGuests.length > 0 ? (
+                      <PendingGuestAssignmentActions
+                        assigning={
+                          pendingGuestsAssigningGuest ===
+                          effectiveSelectedPendingGuestKey
+                        }
+                        availableSeats={pendingGuestsAvailableSeats}
+                        disabled={!selectedPendingGuest}
+                        onAssign={() =>
+                          selectedPendingGuest &&
+                          handleAssignPendingGuest(
+                            selectedPendingGuest,
+                            pendingGuestsSelectedTable,
+                            pendingGuestsSelectedSeat,
+                          )
+                        }
+                        onSeatChange={setPendingGuestsSelectedSeat}
+                        onTableChange={(value) => {
+                          setPendingGuestsSelectedTable(value);
+                          setPendingGuestsSelectedSeat("");
+                        }}
+                        selectedSeat={pendingGuestsSelectedSeat}
+                        selectedTable={pendingGuestsSelectedTable}
+                        tables={pendingGuestTablesWithSeats}
+                      />
+                    ) : null
                   }
                   contentRef={tablesStartRef}
                   eyebrow={adminContent.pendingGuests.pendingEyebrow}
@@ -1455,55 +1457,84 @@ function TableTabActions({
   showText = true,
   tables,
 }) {
-  return (
-    <div className="grid w-full gap-3">
-      <div className="grid w-full grid-cols-2 gap-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-3">
-        <IconButton
-          className="w-full"
-          disabled={!hasPendingChanges || loading}
-          icon={<Undo2 size={16} strokeWidth={1.8} />}
-          label={adminContent.tables.actions.discardChanges}
-          onClick={onDiscard}
-          showText={showText ? "always" : undefined}
-          tone="secondary"
-        >
-          {showText ? adminContent.tables.actions.discardChanges : undefined}
-        </IconButton>
+  const hasItems = tables.length > 0;
 
+  if (!hasItems && !hasPendingChanges) {
+    return (
+      <div className="grid w-full gap-3">
         <IconButton
           className="w-full"
-          disabled={!hasPendingChanges || saving}
-          icon={<Save size={16} strokeWidth={1.8} />}
-          label={adminContent.tables.actions.saveChanges}
-          onClick={onSave}
+          icon={<Plus size={18} strokeWidth={2.4} />}
+          label={adminContent.tables.actions.addTable}
+          onClick={onCreate}
           showText={showText ? "always" : undefined}
           tone="primary"
+          type="button"
         >
-          {showText ? adminContent.tables.actions.saveChanges : undefined}
+          {showText ? adminContent.tables.actions.addTable : undefined}
         </IconButton>
       </div>
+    );
+  }
 
-      <div className="grid w-full grid-cols-4 gap-3 sm:w-auto sm:grid-cols-4">
-        <IconButton
-          className="w-full"
-          disabled={!tables.length}
-          icon={<Download size={16} strokeWidth={1.8} />}
-          label={adminContent.tables.header.exportTable}
-          onClick={onExport}
-          tone="terciary"
-        >
-          {showText ? adminContent.tables.header.exportTable : undefined}
-        </IconButton>
+  return (
+    <div className="grid w-full gap-3">
+      {hasPendingChanges && (
+        <div className="grid w-full grid-cols-2 gap-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-3">
+          <IconButton
+            className="w-full"
+            disabled={loading}
+            icon={<Undo2 size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.actions.discardChanges}
+            onClick={onDiscard}
+            showText={showText ? "always" : undefined}
+            tone="secondary"
+          >
+            {showText ? adminContent.tables.actions.discardChanges : undefined}
+          </IconButton>
 
-        <CardActions
-          className="contents"
-          deleteLabel={adminContent.tables.actions.deleteTable}
-          editLabel={adminContent.tables.actions.editTable}
-          item={selectedTable}
-          onDelete={selectedTable ? onDelete : null}
-          onEdit={selectedTable ? onEdit : null}
-          showText={showText}
-        />
+          <IconButton
+            className="w-full"
+            disabled={saving}
+            icon={<Save size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.actions.saveChanges}
+            onClick={onSave}
+            showText={showText ? "always" : undefined}
+            tone="primary"
+          >
+            {showText ? adminContent.tables.actions.saveChanges : undefined}
+          </IconButton>
+        </div>
+      )}
+
+      <div
+        className={`grid w-full gap-3 sm:w-auto ${
+          hasItems ? "grid-cols-4 sm:grid-cols-4" : "grid-cols-1"
+        }`}
+      >
+        {hasItems && (
+          <IconButton
+            className="w-full"
+            icon={<Download size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.header.exportTable}
+            onClick={onExport}
+            tone="terciary"
+          >
+            {showText ? adminContent.tables.header.exportTable : undefined}
+          </IconButton>
+        )}
+
+        {hasItems && (
+          <CardActions
+            className="contents"
+            deleteLabel={adminContent.tables.actions.deleteTable}
+            editLabel={adminContent.tables.actions.editTable}
+            item={selectedTable}
+            onDelete={selectedTable ? onDelete : null}
+            onEdit={selectedTable ? onEdit : null}
+            showText={showText}
+          />
+        )}
 
         <IconButton
           className="w-full"
@@ -1642,10 +1673,11 @@ function TableCardsPage({
   onUnassignSeat,
   selectedTableKey,
 }) {
+  if (!items.length) return <TablesEmptyState />;
+
   return (
     <>
       <CardGrid
-        emptyState={<TablesEmptyState />}
         getKey={getTableRenderKey}
         items={items}
         renderCard={(table, index) => (
@@ -1672,11 +1704,6 @@ function TableCardsPage({
           />
         ))}
       </div>
-      {!items.length && (
-        <div className="md:hidden">
-          <TablesEmptyState />
-        </div>
-      )}
     </>
   );
 }

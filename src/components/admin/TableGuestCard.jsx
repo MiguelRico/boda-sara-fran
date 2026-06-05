@@ -40,7 +40,13 @@ export default function TableGuestCard({
         {decorativeText}
       </div>
 
-      <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(23rem,1fr)] lg:items-start">
+      <div
+        className={`relative grid gap-5 ${
+          children
+            ? "lg:grid-cols-[minmax(0,1fr)_minmax(23rem,1fr)] lg:items-start"
+            : ""
+        }`}
+      >
         <div className="min-w-0">
           <p className="section-eyebrow mb-2">
             {eyebrow || guest.groupName || "Invitado"}

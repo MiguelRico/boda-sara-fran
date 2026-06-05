@@ -111,6 +111,18 @@ export const validateProvider = (provider) => {
     if (!String(service.price).trim()) {
       errors[`service_${index}_price`] = "El precio es obligatorio";
     }
+
+    const price = Number(service.price) || 0;
+    const paymentTotal = service.payments
+      .slice(0, service.paymentCount)
+      .reduce((total, payment) => total + (Number(payment.amount) || 0), 0);
+
+    if (price > 0 && paymentTotal !== price) {
+      errors[`service_${index}_payments`] =
+        paymentTotal > price
+          ? "La suma de los plazos supera el precio total"
+          : "La suma de los plazos no alcanza el precio total";
+    }
   });
 
   return errors;

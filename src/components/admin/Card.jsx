@@ -8,6 +8,9 @@ export default function Card({
   titleRef,
   titleStyle,
 }) {
+  const hasActions = Boolean(actions);
+  const hasChildren = Boolean(children);
+
   return (
     <article
       className="
@@ -27,7 +30,11 @@ export default function Card({
       <div className="relative flex h-full flex-col">
         <div>
           <p className="section-eyebrow mb-2">{eyebrow}</p>
-          <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            className={`flex flex-col gap-3 ${
+              hasChildren ? "mb-4" : ""
+            } ${hasActions ? "sm:flex-row sm:items-center sm:justify-between" : ""}`}
+          >
             <div className="min-w-0 flex-1">
               <h3
                 className="break-words font-serif text-3xl leading-none text-[var(--color-text)] sm:text-4xl"
@@ -43,11 +50,11 @@ export default function Card({
               )}
             </div>
 
-            {actions}
+            {hasActions && actions}
           </div>
         </div>
 
-        {children}
+        {hasChildren && children}
       </div>
     </article>
   );

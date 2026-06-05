@@ -12,6 +12,10 @@ export const adminContent = {
     error: "La contraseña no es correcta.",
   },
   guests: {
+    tabs: [
+      { id: "groups", label: "Grupos" },
+      { id: "guests", label: "Invitados" },
+    ],
     header: {
       eyebrow: "Panel privado",
       title: "Lista de invitados",
@@ -45,6 +49,11 @@ export const adminContent = {
       guestListEyebrow: "Invitados",
       guestListTitle: "Invitados",
       guestCountLabel: ({ page, total }) => `${page} / ${total}`,
+    },
+    guestList: {
+      eyebrow: "Invitados",
+      title: "Invitados",
+      mobilePageLabel: "Invitado",
     },
     actions: {
       discardChanges: "Deshacer cambios",
