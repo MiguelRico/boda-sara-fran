@@ -18,6 +18,10 @@ export const createEmptyPayment = (overrides = {}) => ({
 export const createEmptyService = (overrides = {}) => ({
   id: overrides.id || createId(),
   name: normalizeString(overrides.name),
+  paymentCount: Math.min(
+    Math.max(Number(overrides.paymentCount) || 1, 1),
+    PROVIDER_PAYMENT_COUNT,
+  ),
   payments: Array.from({ length: PROVIDER_PAYMENT_COUNT }, (_, index) =>
     createEmptyPayment(overrides.payments?.[index]),
   ),

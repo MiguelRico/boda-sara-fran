@@ -1,6 +1,7 @@
 import { useInView } from "framer-motion";
-import { useMemo, useRef, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
 import {
   BadgeEuro,
   BriefcaseBusiness,
@@ -14,6 +15,7 @@ import {
   Search,
   Trash2,
   Undo2,
+  X,
 } from "lucide-react";
 
 import { ADMIN_SESSION_KEY } from "../constants/admin";
@@ -57,15 +59,18 @@ import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
+import TabNavigation from "../components/ui/TabNavigation";
 import useIsMobileView from "../hooks/useIsMobileView";
 import usePagedData from "../hooks/usePagedData";
 import usePageTransition from "../hooks/usePageTransition";
 import useSpinner from "../hooks/useSpinner";
+import useViewportScrollLock from "../hooks/useViewportScrollLock";
 import { downloadCsv } from "../utils/csvExport";
 import { getEmailHref, getPhoneHref } from "../utils/contactLinks";
 
 const desktopPageSize = 6;
 const mobilePageSize = 1;
+const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = "adminProvidersActiveTab";
 
 export default function AdminProviders() {
   const providersRef = useRef(null);
@@ -83,10 +88,22 @@ export default function AdminProviders() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
+  const [servicesPage, setServicesPage] = useState(1);
   const [selectedProviderId, setSelectedProviderId] = useState("");
+  const [selectedServiceId, setSelectedServiceId] = useState("");
   const [editingProvider, setEditingProvider] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [errors, setErrors] = useState({});
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      return (
+        window.localStorage.getItem(ADMIN_PROVIDERS_ACTIVE_TAB_KEY) ||
+        "providers"
+      );
+    } catch {
+      return "providers";
+    }
+  });
   const [popup, setPopup] = useState({
     message: "",
     open: false,
@@ -123,9 +140,67 @@ export default function AdminProviders() {
     pagedProviders.find(
       (provider) => provider.id === effectiveSelectedProviderId,
     ) || null;
+  const services = useMemo(() => getProviderServices(providers), [providers]);
+  const filteredServices = useMemo(
+    () => filterServices(services, { category, query }),
+    [category, query, services],
+  );
+  const {
+    currentPage: currentServicesPage,
+    pageSize: servicesPageSize,
+    pagedItems: pagedServices,
+    totalPages: servicesTotalPages,
+  } = usePagedData({
+    desktopPageSize,
+    items: filteredServices,
+    mobilePageSize,
+    page: servicesPage,
+  });
+  const {
+    handlePageChange: handleServicesPageChange,
+    pageDirection: servicesPageDirection,
+  } = usePageTransition({
+    currentPage: currentServicesPage,
+    onPageChange: setServicesPage,
+    totalPages: servicesTotalPages,
+  });
+  const effectiveSelectedServiceId = pagedServices.some(
+    (service) => service.id === selectedServiceId,
+  )
+    ? selectedServiceId
+    : pagedServices[0]?.id || "";
+  const selectedService =
+    pagedServices.find((service) => service.id === effectiveSelectedServiceId) ||
+    null;
   const hasPendingChanges =
     JSON.stringify(savedProviders) !== JSON.stringify(providers);
   const stats = useMemo(() => buildProviderStats(providers), [providers]);
+
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    return (
+      hasPendingChanges && currentLocation.pathname !== nextLocation.pathname
+    );
+  });
+
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (!hasPendingChanges) return;
+
+        event.preventDefault();
+        event.returnValue = "";
+      },
+      [hasPendingChanges],
+    ),
+  );
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(ADMIN_PROVIDERS_ACTIVE_TAB_KEY, activeTab);
+    } catch {
+      // Storage can be unavailable in private or locked browser contexts.
+    }
+  }, [activeTab]);
 
   const applyProviders = (nextProviders) => {
     setProviders(normalizeProviders(nextProviders));
@@ -137,6 +212,7 @@ export default function AdminProviders() {
 
       setSavedProviders(normalizedProviders);
       setProviders(normalizedProviders);
+      return true;
     } catch (error) {
       console.error(error);
       setPopup({
@@ -145,6 +221,7 @@ export default function AdminProviders() {
         title: adminContent.providers.dialogs.problemTitle,
         type: "error",
       });
+      return false;
     } finally {
       spinner.hide();
     }
@@ -155,8 +232,19 @@ export default function AdminProviders() {
     setDeleteTarget(null);
   };
   const handleEditProvider = (provider) => {
+    if (!provider) return;
+
     setErrors({});
     setEditingProvider(createEmptyProvider(provider));
+  };
+  const handleEditService = (service) => {
+    if (!service) return;
+
+    const provider = providers.find((item) => item.id === service.providerId);
+
+    if (provider) {
+      handleEditProvider(provider);
+    }
   };
   const handleCreateProvider = () => {
     setErrors({});
@@ -167,6 +255,22 @@ export default function AdminProviders() {
 
     applyProviders(providers.filter((provider) => provider.id !== deleteTarget.id));
     setDeleteTarget(null);
+  };
+  const handleCancelBlockedNavigation = () => {
+    blocker.reset?.();
+  };
+  const handleConfirmBlockedNavigation = () => {
+    blocker.proceed?.();
+  };
+  const handleSaveAndExitBlockedNavigation = async () => {
+    const saved = await handleSavePendingChanges();
+
+    if (saved) {
+      blocker.proceed?.();
+      return;
+    }
+
+    blocker.reset?.();
   };
   const handleSubmitProvider = (event) => {
     event.preventDefault();
@@ -235,6 +339,15 @@ export default function AdminProviders() {
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
 
+      {blocker.state === "blocked" && (
+        <UnsavedProviderChangesDialog
+          changes={buildPendingProviderChanges(savedProviders, providers)}
+          onCancel={handleCancelBlockedNavigation}
+          onConfirm={handleConfirmBlockedNavigation}
+          onSaveAndExit={handleSaveAndExitBlockedNavigation}
+        />
+      )}
+
       <CinematicSection
         className="surface-soft"
         innerClassName="max-w-6xl py-6"
@@ -256,78 +369,183 @@ export default function AdminProviders() {
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={providersInView}>
-            <AdminTableSection
-              actions={
-                <ProviderTableActions
-                  hasPendingChanges={hasPendingChanges}
-                  onCreate={handleCreateProvider}
-                  onDelete={() => setDeleteTarget(selectedProvider)}
-                  onDiscard={handleDiscardPendingChanges}
-                  onEdit={() => handleEditProvider(selectedProvider)}
-                  onExport={() => downloadProvidersCsv(providers)}
-                  onSave={handleSavePendingChanges}
-                  providers={providers}
-                  saving={spinner.loading}
-                  selectedProvider={selectedProvider}
-                  showText={!isMobileView}
-                />
-              }
-              contentRef={tableStartRef}
-              eyebrow={adminContent.providers.list.eyebrow}
-              filters={
-                <ProviderFilters
-                  category={category}
-                  onCategoryChange={(value) => {
-                    setCategory(value);
-                    setPage(1);
+            <div className="space-y-5 mt-4">
+              <TabNavigation
+                activeTab={activeTab}
+                onChange={setActiveTab}
+                tabs={adminContent.providers.tabs}
+              />
+
+              {activeTab === "providers" ? (
+                <AdminTableSection
+                  actions={
+                    <ProviderTableActions
+                      hasPendingChanges={hasPendingChanges}
+                      onCreate={handleCreateProvider}
+                      onDelete={() => setDeleteTarget(selectedProvider)}
+                      onDiscard={handleDiscardPendingChanges}
+                      onEdit={() => handleEditProvider(selectedProvider)}
+                      onExport={() => downloadProvidersCsv(providers)}
+                      onSave={handleSavePendingChanges}
+                      providers={providers}
+                      saving={spinner.loading}
+                      selectedProvider={selectedProvider}
+                      showText={!isMobileView}
+                    />
+                  }
+                  contentRef={tableStartRef}
+                  eyebrow={adminContent.providers.list.eyebrow}
+                  filters={
+                    <ProviderFilters
+                      category={category}
+                      onCategoryChange={(value) => {
+                        setCategory(value);
+                        setPage(1);
+                        setServicesPage(1);
+                      }}
+                      onQueryChange={(value) => {
+                        setQuery(value);
+                        setPage(1);
+                        setServicesPage(1);
+                      }}
+                      query={query}
+                    />
+                  }
+                  getKey={(provider) => provider.id}
+                  isMobileView={isMobileView}
+                  items={filteredProviders}
+                  lockPageHeight={false}
+                  mobilePageLabel={adminContent.providers.list.mobilePageLabel}
+                  onNextPage={() =>
+                    handlePageChange(currentPage + 1, tableStartRef.current)
+                  }
+                  onPrevPage={() =>
+                    handlePageChange(currentPage - 1, tableStartRef.current)
+                  }
+                  page={currentPage}
+                  pageDirection={pageDirection}
+                  pageLabel={adminContent.providers.list.pageLabel}
+                  pageSize={pageSize}
+                  renderMeasurePage={(items) => (
+                    <ProviderCardsPage
+                      items={items}
+                      onSelect={() => {}}
+                      selectedProviderId={effectiveSelectedProviderId}
+                    />
+                  )}
+                  renderPage={(items) => (
+                    <ProviderCardsPage
+                      items={items}
+                      onSelect={(provider) =>
+                        setSelectedProviderId(provider.id)
+                      }
+                      selectedProviderId={effectiveSelectedProviderId}
+                    />
+                  )}
+                  skeletonConfig={{
+                    content: {
+                      columnsClassName: "lg:grid-cols-2",
+                      itemClassName: "min-h-40",
+                      lines: 3,
+                    },
+                    filters: true,
                   }}
-                  onQueryChange={(value) => {
-                    setQuery(value);
-                    setPage(1);
-                  }}
-                  query={query}
+                  title={adminContent.providers.list.title}
+                  totalPages={totalPages}
                 />
-              }
-              getKey={(provider) => provider.id}
-              isMobileView={isMobileView}
-              items={filteredProviders}
-              lockPageHeight={false}
-              mobilePageLabel={adminContent.providers.list.mobilePageLabel}
-              onNextPage={() =>
-                handlePageChange(currentPage + 1, tableStartRef.current)
-              }
-              onPrevPage={() =>
-                handlePageChange(currentPage - 1, tableStartRef.current)
-              }
-              page={currentPage}
-              pageDirection={pageDirection}
-              pageLabel={adminContent.providers.list.pageLabel}
-              pageSize={pageSize}
-              renderMeasurePage={(items) => (
-                <ProviderCardsPage
-                  items={items}
-                  onSelect={() => {}}
-                  selectedProviderId={effectiveSelectedProviderId}
+              ) : (
+                <AdminTableSection
+                  actions={
+                    <ProviderTableActions
+                      hasPendingChanges={hasPendingChanges}
+                      onCreate={handleCreateProvider}
+                      onDelete={() =>
+                        selectedService &&
+                        setDeleteTarget(
+                          providers.find(
+                            (provider) =>
+                              provider.id === selectedService.providerId,
+                          ),
+                        )
+                      }
+                      onDiscard={handleDiscardPendingChanges}
+                      onEdit={() => handleEditService(selectedService)}
+                      onExport={() => downloadServicesCsv(services)}
+                      onSave={handleSavePendingChanges}
+                      providers={services}
+                      saving={spinner.loading}
+                      selectedProvider={selectedService}
+                      showText={!isMobileView}
+                    />
+                  }
+                  contentRef={tableStartRef}
+                  eyebrow={adminContent.providers.services.eyebrow}
+                  filters={
+                    <ProviderFilters
+                      category={category}
+                      onCategoryChange={(value) => {
+                        setCategory(value);
+                        setPage(1);
+                        setServicesPage(1);
+                      }}
+                      onQueryChange={(value) => {
+                        setQuery(value);
+                        setPage(1);
+                        setServicesPage(1);
+                      }}
+                      query={query}
+                    />
+                  }
+                  getKey={(service) => service.id}
+                  isMobileView={isMobileView}
+                  items={filteredServices}
+                  lockPageHeight={false}
+                  mobilePageLabel={
+                    adminContent.providers.services.mobilePageLabel
+                  }
+                  onNextPage={() =>
+                    handleServicesPageChange(
+                      currentServicesPage + 1,
+                      tableStartRef.current,
+                    )
+                  }
+                  onPrevPage={() =>
+                    handleServicesPageChange(
+                      currentServicesPage - 1,
+                      tableStartRef.current,
+                    )
+                  }
+                  page={currentServicesPage}
+                  pageDirection={servicesPageDirection}
+                  pageLabel={adminContent.providers.list.pageLabel}
+                  pageSize={servicesPageSize}
+                  renderMeasurePage={(items) => (
+                    <ServiceCardsPage
+                      items={items}
+                      onSelect={() => {}}
+                      selectedServiceId={effectiveSelectedServiceId}
+                    />
+                  )}
+                  renderPage={(items) => (
+                    <ServiceCardsPage
+                      items={items}
+                      onSelect={(service) => setSelectedServiceId(service.id)}
+                      selectedServiceId={effectiveSelectedServiceId}
+                    />
+                  )}
+                  skeletonConfig={{
+                    content: {
+                      columnsClassName: "lg:grid-cols-2",
+                      itemClassName: "min-h-40",
+                      lines: 3,
+                    },
+                    filters: true,
+                  }}
+                  title={adminContent.providers.services.title}
+                  totalPages={servicesTotalPages}
                 />
               )}
-              renderPage={(items) => (
-                <ProviderCardsPage
-                  items={items}
-                  onSelect={(provider) => setSelectedProviderId(provider.id)}
-                  selectedProviderId={effectiveSelectedProviderId}
-                />
-              )}
-              skeletonConfig={{
-                content: {
-                  columnsClassName: "lg:grid-cols-2",
-                  itemClassName: "min-h-40",
-                  lines: 3,
-                },
-                filters: true,
-              }}
-              title={adminContent.providers.list.title}
-              totalPages={totalPages}
-            />
+            </div>
           </CinematicStaggeredRevealItem>
         </div>
       </CinematicSection>
@@ -377,6 +595,86 @@ export default function AdminProviders() {
       />
     </CinematicPage>
   );
+}
+
+function UnsavedProviderChangesDialog({
+  changes,
+  onCancel,
+  onConfirm,
+  onSaveAndExit,
+}) {
+  useViewportScrollLock(true);
+
+  const dialog = (
+    <div className="rsvp-dialog-overlay">
+      <div
+        aria-labelledby="unsaved-provider-changes-title"
+        aria-modal="true"
+        className="premium-card rsvp-dialog-card"
+        role="alertdialog"
+      >
+        <p className="section-eyebrow mb-3">
+          {adminContent.providers.dialogs.warningEyebrow}
+        </p>
+        <h2
+          className="font-serif text-3xl text-[var(--color-accent-dark)]"
+          id="unsaved-provider-changes-title"
+        >
+          {adminContent.tables.dialogs.unsavedTitle}
+        </h2>
+        <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
+          {adminContent.providers.dialogs.unsavedText}
+        </p>
+        <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
+          {changes.map((change, index) => (
+            <li
+              className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
+              key={`${change}-${index}`}
+            >
+              {change}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <IconButton
+            className="flex-1"
+            icon={<Trash2 size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.dialogs.exitWithoutSaving}
+            onClick={onConfirm}
+            showText="always"
+            tone="danger"
+            type="button"
+          >
+            {adminContent.tables.dialogs.exitWithoutSaving}
+          </IconButton>
+          <IconButton
+            className="flex-1"
+            icon={<Save size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.dialogs.saveAndExit}
+            onClick={onSaveAndExit}
+            showText="always"
+            tone="primary"
+            type="button"
+          >
+            {adminContent.tables.dialogs.saveAndExit}
+          </IconButton>
+          <IconButton
+            className="flex-1"
+            icon={<X size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.dialogs.keepEditing}
+            onClick={onCancel}
+            showText="always"
+            tone="terciary"
+            type="button"
+          >
+            {adminContent.tables.dialogs.keepEditing}
+          </IconButton>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(dialog, document.body);
 }
 
 function ProvidersOverview({ stats }) {
@@ -662,6 +960,105 @@ function ProvidersEmptyState() {
   );
 }
 
+function ServiceCardsPage({ items, onSelect, selectedServiceId }) {
+  if (!items.length) return <ServicesEmptyState />;
+
+  return (
+    <>
+      <CardGrid
+        className="hidden gap-4 md:grid lg:grid-cols-2"
+        getKey={(service) => service.id}
+        items={items}
+        renderCard={(service) => (
+          <ServiceCard
+            onSelect={onSelect}
+            selected={service.id === selectedServiceId}
+            service={service}
+          />
+        )}
+      />
+      <div className="grid gap-4 md:hidden">
+        {items.map((service) => (
+          <ServiceCard
+            key={service.id}
+            onSelect={onSelect}
+            selected={service.id === selectedServiceId}
+            service={service}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function ServiceCard({ onSelect, selected, service }) {
+  const paid = service.payments.reduce(
+    (total, payment) =>
+      total + (payment.paid ? Number(payment.amount) || 0 : 0),
+    0,
+  );
+
+  return (
+    <div
+      className={`h-full rounded-[2rem] transition ${
+        selected
+          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
+          : "ring-0"
+      }`}
+      onClick={() => onSelect(service)}
+    >
+      <Card
+        decorativeText={service.paymentCount}
+        eyebrow={service.providerName}
+        title={service.name || "Servicio sin nombre"}
+      >
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <Chip
+            className="col-span-2"
+            icon={<BriefcaseBusiness size={13} strokeWidth={1.8} />}
+            strong
+            value={PROVIDER_CATEGORY_LABELS[service.category]}
+          />
+          <Chip
+            icon={<Euro size={13} strokeWidth={1.8} />}
+            strong
+            value={formatCurrency(service.price)}
+          />
+          <Chip
+            icon={<CalendarDays size={13} strokeWidth={1.8} />}
+            value={`${service.paymentCount} ${
+              service.paymentCount === 1 ? "plazo" : "plazos"
+            }`}
+          />
+          <Chip
+            className="col-span-2"
+            icon={<BadgeEuro size={13} strokeWidth={1.8} />}
+            value={`Pagado: ${formatCurrency(paid)}`}
+          />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function ServicesEmptyState() {
+  return (
+    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
+      <BadgeEuro
+        className="mx-auto text-[var(--color-accent-dark)]"
+        size={28}
+        strokeWidth={1.7}
+      />
+      <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
+        {adminContent.providers.services.emptyTitle}
+      </p>
+      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+        {adminContent.providers.services.emptyText}
+      </p>
+    </div>
+  );
+}
+
 function ProviderForm({
   errors,
   form,
@@ -728,6 +1125,11 @@ function ProviderForm({
             type="email"
             value={form.email}
           />
+        </div>
+      </FormCard>
+
+      <CollapsiblePanel title="Datos opcionales">
+        <div className="grid gap-5 md:grid-cols-2">
           <ProviderField
             label={adminContent.providers.form.fields.address}
             onChange={(value) => onChange("address", value)}
@@ -747,7 +1149,7 @@ function ProviderForm({
             />
           </div>
         </div>
-      </FormCard>
+      </CollapsiblePanel>
 
       <FormCard>
         <div className="flex items-center justify-between gap-4">
@@ -774,7 +1176,7 @@ function ProviderForm({
               className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4"
               key={service.id}
             >
-              <div className="grid gap-4 md:grid-cols-[1fr_10rem_auto] md:items-end">
+              <div className="grid gap-4 md:grid-cols-[1fr_10rem_8rem_auto] md:items-end">
                 <ProviderField
                   error={errors[`service_${serviceIndex}_name`]}
                   label={adminContent.providers.form.fields.serviceName}
@@ -792,6 +1194,28 @@ function ProviderForm({
                   type="number"
                   value={service.price}
                 />
+                <div>
+                  <Label>
+                    {adminContent.providers.form.fields.paymentCount}
+                  </Label>
+                  <select
+                    className={selectClassName}
+                    onChange={(event) =>
+                      onServiceChange(
+                        serviceIndex,
+                        "paymentCount",
+                        Number(event.target.value),
+                      )
+                    }
+                    value={service.paymentCount}
+                  >
+                    {[1, 2, 3].map((count) => (
+                      <option key={count} value={count}>
+                        {count}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 {form.services.length > 1 && (
                   <IconButton
                     icon={<Trash2 size={16} strokeWidth={1.8} />}
@@ -804,7 +1228,9 @@ function ProviderForm({
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-3">
-                {service.payments.map((payment, paymentIndex) => (
+                {service.payments
+                  .slice(0, service.paymentCount)
+                  .map((payment, paymentIndex) => (
                   <div
                     className="rounded-2xl border border-[var(--color-border)] bg-white/50 p-3"
                     key={paymentIndex}
@@ -912,8 +1338,69 @@ function filterProviders(providers, { category, query }) {
       .join(" ")
       .toLowerCase();
 
-    return matchesCategory && (!normalizedQuery || searchableText.includes(normalizedQuery));
+    return (
+      matchesCategory && (!normalizedQuery || searchableText.includes(normalizedQuery))
+    );
   });
+}
+
+function getProviderServices(providers) {
+  return providers.flatMap((provider) =>
+    provider.services.map((service) => ({
+      ...service,
+      category: provider.category,
+      providerId: provider.id,
+      providerName: provider.name || "Proveedor sin nombre",
+    })),
+  );
+}
+
+function filterServices(services, { category, query }) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  return services.filter((service) => {
+    const matchesCategory = !category || service.category === category;
+    const searchableText = [
+      service.name,
+      service.providerName,
+      PROVIDER_CATEGORY_LABELS[service.category],
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return (
+      matchesCategory && (!normalizedQuery || searchableText.includes(normalizedQuery))
+    );
+  });
+}
+
+function buildPendingProviderChanges(savedProviders, currentProviders) {
+  const savedById = new Map(savedProviders.map((provider) => [provider.id, provider]));
+  const currentById = new Map(
+    currentProviders.map((provider) => [provider.id, provider]),
+  );
+  const changes = [];
+
+  currentById.forEach((provider, providerId) => {
+    const savedProvider = savedById.get(providerId);
+
+    if (!savedProvider) {
+      changes.push(`Proveedor creado: ${provider.name || "sin nombre"}`);
+      return;
+    }
+
+    if (JSON.stringify(savedProvider) !== JSON.stringify(provider)) {
+      changes.push(`Proveedor modificado: ${provider.name || "sin nombre"}`);
+    }
+  });
+
+  savedById.forEach((provider, providerId) => {
+    if (!currentById.has(providerId)) {
+      changes.push(`Proveedor eliminado: ${provider.name || "sin nombre"}`);
+    }
+  });
+
+  return changes.length ? changes : ["Cambios pendientes en proveedores"];
 }
 
 function upsertProvider(providers, provider) {
@@ -952,6 +1439,32 @@ function downloadProvidersCsv(providers) {
       provider.services.map((service) => service.name).join(" | "),
       getProviderTotal(provider),
       getProviderPaidTotal(provider),
+    ]),
+  });
+}
+
+function downloadServicesCsv(services) {
+  downloadCsv({
+    filename: "servicios-proveedores.csv",
+    headers: [
+      "proveedor",
+      "categoria",
+      "servicio",
+      "precio",
+      "plazos",
+      "pagado",
+    ],
+    rows: services.map((service) => [
+      service.providerName,
+      PROVIDER_CATEGORY_LABELS[service.category],
+      service.name,
+      service.price,
+      service.paymentCount,
+      service.payments.reduce(
+        (total, payment) =>
+          total + (payment.paid ? Number(payment.amount) || 0 : 0),
+        0,
+      ),
     ]),
   });
 }

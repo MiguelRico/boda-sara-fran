@@ -214,6 +214,10 @@ export const adminContent = {
     },
   },
   providers: {
+    tabs: [
+      { id: "providers", label: "Proveedores" },
+      { id: "services", label: "Servicios" },
+    ],
     header: {
       eyebrow: "Panel privado",
       title: "Proveedores",
@@ -236,6 +240,13 @@ export const adminContent = {
       mobilePageLabel: "Proveedor",
       emptyTitle: "Sin proveedores",
       emptyText: "Agrega proveedores para comenzar a organizar el presupuesto.",
+    },
+    services: {
+      eyebrow: "Servicios",
+      title: "Servicios",
+      mobilePageLabel: "Servicio",
+      emptyTitle: "Sin servicios",
+      emptyText: "Agrega servicios dentro de un proveedor para verlos aquí.",
     },
     filters: {
       eyebrow: "Filtros",
@@ -260,6 +271,8 @@ export const adminContent = {
         `Se marcará para eliminar el proveedor ${name}. Podrás deshacerlo antes de guardar los cambios.`,
       problemTitle: "Ha ocurrido un problema",
       saveError: "No se pudieron guardar los proveedores.",
+      unsavedText:
+        "Tienes cambios pendientes en proveedores. Si sales ahora, no se guardarán.",
       warningEyebrow: "Aviso",
     },
     form: {
@@ -276,6 +289,7 @@ export const adminContent = {
         name: "Nombre",
         phone: "Teléfono",
         serviceName: "Servicio",
+        paymentCount: "Plazos",
         servicePrice: "Precio",
         web: "Web",
       },
