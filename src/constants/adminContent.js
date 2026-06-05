@@ -21,6 +21,16 @@ export const adminContent = {
       title: "Lista de invitados",
       text: "Gestión de confirmaciones, datos de contacto, alergias y transporte",
     },
+    overview: {
+      eyebrow: "Resumen",
+      title: "Invitados",
+      metrics: {
+        groups: "Grupos",
+        guests: "Invitados",
+        allergies: "Alergias",
+        bus: "Bus",
+      },
+    },
     filters: {
       eyebrow: "Filtros",
       searchLabel: "Busqueda",
@@ -40,6 +50,9 @@ export const adminContent = {
       mobilePageLabel: "Confirmación",
       emptyTitle: "Sin resultados",
       emptyText: "Prueba con otra búsqueda o cambia el filtro seleccionado.",
+      noGroupsTitle: "Sin grupos",
+      noGroupsText:
+        "Crea el primer grupo para empezar a registrar invitados.",
       countLabel: ({ groups, guests }) =>
         `${groups} ${groups === 1 ? "grupo" : "grupos"} en esta página · ${guests} ${
           guests === 1 ? "persona" : "personas"
@@ -54,6 +67,14 @@ export const adminContent = {
       eyebrow: "Invitados",
       title: "Invitados",
       mobilePageLabel: "Invitado",
+      noGroupsTitle: "Sin grupos",
+      noGroupsText:
+        "Crea un grupo antes de agregar o consultar invitados.",
+      noGuestsTitle: "Sin invitados",
+      noGuestsText:
+        "El grupo seleccionado todavia no tiene invitados registrados.",
+      noFilterText:
+        "No hay invitados que coincidan con la busqueda o el filtro seleccionado.",
     },
     actions: {
       discardChanges: "Deshacer cambios",
@@ -153,8 +174,8 @@ export const adminContent = {
       deleteTable: "Eliminar mesa",
     },
     empty: {
-      title: "Sin mesas asignadas",
-      text: "Asigna mesa y asiento desde la edicion de invitados para ver aqui la distribucion.",
+      title: "Sin mesas",
+      text: "Crea una mesa para empezar a distribuir invitados y asientos.",
     },
     dialogs: {
       createTitle: "Crear mesa",
@@ -249,6 +270,8 @@ export const adminContent = {
       mobilePageLabel: "Proveedor",
       emptyTitle: "Sin proveedores",
       emptyText: "Agrega proveedores para comenzar a organizar el presupuesto.",
+      noFilterText:
+        "No hay proveedores que coincidan con la busqueda o la categoria seleccionada.",
     },
     services: {
       eyebrow: "Servicios",
@@ -256,6 +279,11 @@ export const adminContent = {
       mobilePageLabel: "Servicio",
       emptyTitle: "Sin servicios",
       emptyText: "Agrega servicios dentro de un proveedor para verlos aquí.",
+      noProvidersTitle: "Sin proveedores",
+      noProvidersText:
+        "Crea un proveedor antes de agregar o consultar servicios.",
+      noFilterText:
+        "No hay servicios que coincidan con la busqueda o la categoria seleccionada.",
     },
     filters: {
       eyebrow: "Filtros",
@@ -279,6 +307,7 @@ export const adminContent = {
       deleteMessage: (name) =>
         `Se marcará para eliminar el proveedor ${name}. Podrás deshacerlo antes de guardar los cambios.`,
       problemTitle: "Ha ocurrido un problema",
+      loadError: "No se pudieron cargar los proveedores.",
       saveError: "No se pudieron guardar los proveedores.",
       unsavedText:
         "Tienes cambios pendientes en proveedores. Si sales ahora, no se guardarán.",
@@ -305,6 +334,7 @@ export const adminContent = {
       payment: (index) => `Plazo ${index}`,
     },
     spinner: {
+      load: "Cargando proveedores...",
       save: "Guardando proveedores...",
     },
   },
@@ -317,6 +347,9 @@ export const adminContent = {
     allMenus: "Todos los menús",
     emptyTitle: "Sin invitados pendientes",
     emptyText: "Todos los invitados confirmados tienen mesa asignada.",
+    noTablesTitle: "Sin mesas",
+    noTablesText:
+      "Crea al menos una mesa antes de asignar invitados pendientes.",
     noFilterResults: "No hay invitados que coincidan con los filtros.",
     pageLabel: ({ page, total }) => `${page} / ${total}`,
     showingLabel: ({ filtered, total }) =>

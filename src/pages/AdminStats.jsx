@@ -125,7 +125,7 @@ export default function AdminStats() {
   return (
     <CinematicPage>
       <CinematicSection
-        className="surface-soft"
+        className="surface-soft admin-section"
         innerClassName="max-w-6xl py-6"
         reveal={false}
       >

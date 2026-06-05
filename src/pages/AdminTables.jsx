@@ -374,6 +374,10 @@ export default function AdminTables() {
       (seat) => seat.seat,
     );
   }, [pendingGuestsSelectedTableObj]);
+  const pendingGuestsEmptyState = getPendingGuestsEmptyState({
+    pendingCount: guestsPending.length,
+    tableCount: tables.length,
+  });
   const tableSeatReductionWarning = useMemo(
     () =>
       editingTable
@@ -773,7 +777,7 @@ export default function AdminTables() {
       )}
 
       <CinematicSection
-        className="surface-soft"
+        className="surface-soft admin-section"
         innerClassName="max-w-6xl py-6"
         reveal={false}
       >
@@ -870,7 +874,7 @@ export default function AdminTables() {
               ) : (
                 <AdminTableSection
                   actions={
-                    filteredPendingGuests.length > 0 ? (
+                    tables.length > 0 && filteredPendingGuests.length > 0 ? (
                       <PendingGuestAssignmentActions
                         assigning={
                           pendingGuestsAssigningGuest ===
@@ -900,7 +904,7 @@ export default function AdminTables() {
                   contentRef={tablesStartRef}
                   eyebrow={adminContent.pendingGuests.pendingEyebrow}
                   filters={
-                    guestsPending.length > 0 && (
+                    tables.length > 0 && guestsPending.length > 0 && (
                       <PendingGuestsFilters
                         availableGroups={pendingGuestGroups}
                         availableMenus={pendingGuestMenus}
@@ -948,7 +952,7 @@ export default function AdminTables() {
                     },
                     filters: true,
                   }}
-                  sourceItemsCount={guestsPending.length}
+                  sourceItemsCount={tables.length > 0 ? guestsPending.length : 0}
                   title={adminContent.pendingGuests.title}
                   totalPages={
                     state.loading ? undefined : pendingGuestsTotalPages
@@ -956,11 +960,9 @@ export default function AdminTables() {
                   renderMeasurePage={(items) => (
                     <PendingGuestsList
                       emptyText={
-                        guestsPending.length
-                          ? adminContent.pendingGuests.noFilterResults
-                          : adminContent.pendingGuests.emptyText
+                        pendingGuestsEmptyState.text
                       }
-                      emptyTitle={adminContent.pendingGuests.emptyTitle}
+                      emptyTitle={pendingGuestsEmptyState.title}
                       guests={items}
                       onSelect={() => {}}
                       selectedGuestKey={effectiveSelectedPendingGuestKey}
@@ -969,11 +971,9 @@ export default function AdminTables() {
                   renderPage={(items) => (
                     <PendingGuestsList
                       emptyText={
-                        guestsPending.length
-                          ? adminContent.pendingGuests.noFilterResults
-                          : adminContent.pendingGuests.emptyText
+                        pendingGuestsEmptyState.text
                       }
-                      emptyTitle={adminContent.pendingGuests.emptyTitle}
+                      emptyTitle={pendingGuestsEmptyState.title}
                       error={pendingGuestsError}
                       guests={items}
                       onSelect={(guest) =>
@@ -1263,8 +1263,8 @@ function SeatAssignmentDialog({
           pageSize={pageSize}
           renderMeasurePage={(items) => (
             <PendingGuestsList
-              emptyText={adminContent.pendingGuests.noFilterResults}
-              emptyTitle={adminContent.pendingGuests.emptyTitle}
+              emptyText={getSeatAssignmentEmptyState(guests.length).text}
+              emptyTitle={getSeatAssignmentEmptyState(guests.length).title}
               guests={items}
               onSelect={() => {}}
               selectedGuestKey={effectiveSelectedGuestKey}
@@ -1272,8 +1272,8 @@ function SeatAssignmentDialog({
           )}
           renderPage={(items) => (
             <PendingGuestsList
-              emptyText={adminContent.pendingGuests.noFilterResults}
-              emptyTitle={adminContent.pendingGuests.emptyTitle}
+              emptyText={getSeatAssignmentEmptyState(guests.length).text}
+              emptyTitle={getSeatAssignmentEmptyState(guests.length).title}
               guests={items}
               onSelect={(guest) =>
                 setSelectedGuestKey(getPendingGuestRowKey(guest))
@@ -1381,11 +1381,11 @@ function UnsavedChangesDialog({ changes, onCancel, onConfirm, onSaveAndExit }) {
 
 function TablesOverview({ loading, stats }) {
   return (
-    <section className="premium-card">
+    <section className="premium-card mt-4 mb-5">
       <p className="section-eyebrow mb-2">
         {adminContent.tables.overview.eyebrow}
       </p>
-      <h2 className="mb-4 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+      <h2 className="mb-5 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
         {adminContent.tables.overview.title}
       </h2>
       {loading ? (
@@ -1708,6 +1708,41 @@ function TableCardsPage({
       </div>
     </>
   );
+}
+
+function getPendingGuestsEmptyState({ pendingCount, tableCount }) {
+  if (tableCount === 0) {
+    return {
+      text: adminContent.pendingGuests.noTablesText,
+      title: adminContent.pendingGuests.noTablesTitle,
+    };
+  }
+
+  if (pendingCount > 0) {
+    return {
+      text: adminContent.pendingGuests.noFilterResults,
+      title: adminContent.pendingGuests.emptyTitle,
+    };
+  }
+
+  return {
+    text: adminContent.pendingGuests.emptyText,
+    title: adminContent.pendingGuests.emptyTitle,
+  };
+}
+
+function getSeatAssignmentEmptyState(sourceGuestCount) {
+  if (sourceGuestCount > 0) {
+    return {
+      text: adminContent.pendingGuests.noFilterResults,
+      title: adminContent.pendingGuests.emptyTitle,
+    };
+  }
+
+  return {
+    text: adminContent.pendingGuests.emptyText,
+    title: adminContent.pendingGuests.emptyTitle,
+  };
 }
 
 function buildPendingTableChanges({

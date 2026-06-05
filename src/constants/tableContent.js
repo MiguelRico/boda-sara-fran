@@ -36,6 +36,8 @@ export const tableContent = {
     seatEyebrow: ({ group, seat }) => `Asiento ${seat}${group ? ` - ${group}` : ""}`,
     emptyAssignmentsTitle: "Sin asientos asignados",
     emptyAssignmentsText: "No hay invitados asignados a esta mesa.",
+    emptyAssignmentsFilterText:
+      "No hay asientos asignados que coincidan con los filtros.",
     legend: {
       fish: "Pescado",
       meat: "Carne",

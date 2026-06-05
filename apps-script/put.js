@@ -10,6 +10,10 @@ function routePut(data) {
     return saveTables(data);
   }
 
+  if (entity === "providers") {
+    return saveProviders(data);
+  }
+
   throw new Error("Resource not supported");
 }
 
@@ -83,5 +87,103 @@ function saveTables(data) {
   return jsonResponse({
     success: true,
     tables: tables.length,
+  });
+}
+
+function saveProviders(data) {
+  if (data.password !== ADMIN_PASSWORD) {
+    throw new Error("Unauthorized");
+  }
+
+  const providersSheet = getProvidersSheet();
+  const servicesSheet = getProviderServicesSheet();
+  const paymentsSheet = getProviderPaymentsSheet();
+  const providers = Array.isArray(data.providers) ? data.providers : [];
+  const now = new Date().toISOString();
+  const providerRows = [];
+  const serviceRows = [];
+  const paymentRows = [];
+
+  providers.forEach((provider) => {
+    const providerId = String(provider.id || "").trim();
+
+    if (!providerId) return;
+
+    providerRows.push([
+      providerId,
+      provider.name || "",
+      provider.category || "",
+      provider.phone || "",
+      provider.email || "",
+      provider.address || "",
+      provider.web || "",
+      provider.accountNumber || "",
+      true,
+      getProviderTimestamp(provider.createdAt, now),
+      now,
+    ]);
+
+    (Array.isArray(provider.services) ? provider.services : []).forEach((service) => {
+      const serviceId = String(service.id || "").trim();
+
+      if (!serviceId) return;
+
+      const paymentCount = Math.min(
+        Math.max(Number(service.paymentCount) || 1, 1),
+        3,
+      );
+
+      serviceRows.push([
+        serviceId,
+        providerId,
+        service.name || "",
+        service.price || "",
+        paymentCount,
+        service.notes || "",
+        true,
+        getProviderTimestamp(service.createdAt, now),
+        now,
+      ]);
+
+      (Array.isArray(service.payments) ? service.payments : [])
+        .slice(0, paymentCount)
+        .forEach((payment, index) => {
+          paymentRows.push([
+            payment.id || `${serviceId}-payment-${index + 1}`,
+            serviceId,
+            index + 1,
+            payment.amount || "",
+            payment.date || "",
+            payment.paid ? payment.date || "" : "",
+            Boolean(payment.paid),
+            payment.notes || "",
+            getProviderTimestamp(payment.createdAt, now),
+            now,
+          ]);
+        });
+    });
+  });
+
+  deleteDataRows(providersSheet);
+  deleteDataRows(servicesSheet);
+  deleteDataRows(paymentsSheet);
+
+  if (providerRows.length) {
+    providersSheet.getRange(2, 1, providerRows.length, PROVIDERS_HEADERS.length).setValues(providerRows);
+  }
+
+  if (serviceRows.length) {
+    servicesSheet.getRange(2, 1, serviceRows.length, PROVIDER_SERVICES_HEADERS.length).setValues(serviceRows);
+  }
+
+  if (paymentRows.length) {
+    paymentsSheet.getRange(2, 1, paymentRows.length, PROVIDER_PAYMENTS_HEADERS.length).setValues(paymentRows);
+  }
+
+  return jsonResponse({
+    success: true,
+    providers: providerRows.length,
+    services: serviceRows.length,
+    payments: paymentRows.length,
   });
 }

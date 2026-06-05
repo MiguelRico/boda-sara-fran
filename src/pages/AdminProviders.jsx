@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 
-import { ADMIN_SESSION_KEY } from "../constants/admin";
+import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import { adminContent } from "../constants/adminContent";
 import {
   PROVIDER_CATEGORIES,
@@ -29,11 +29,11 @@ import {
   createEmptyService,
   getProviderPaidTotal,
   getProviderTotal,
-  loadProviders,
   normalizeProviders,
   persistProviders,
   validateProvider,
 } from "../services/providersService";
+import { loadAdminDataOnce, setAdminProviders } from "../services/adminDataStore";
 import AdminTableSection from "../components/admin/AdminTableSection";
 import Card from "../components/admin/Card";
 import CardActions from "../components/admin/CardActions";
@@ -41,6 +41,7 @@ import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
 import {
   AdminMetricGrid,
+  AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
@@ -75,6 +76,7 @@ const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = "adminProvidersActiveTab";
 export default function AdminProviders() {
   const providersRef = useRef(null);
   const tableStartRef = useRef(null);
+  const initialLoadStartedRef = useRef(false);
   const spinner = useSpinner();
   const isMobileView = useIsMobileView();
   const providersInView = useInView(providersRef, {
@@ -83,8 +85,9 @@ export default function AdminProviders() {
   });
   const isAuthenticated =
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
-  const [savedProviders, setSavedProviders] = useState(() => loadProviders());
-  const [providers, setProviders] = useState(savedProviders);
+  const [loadingProviders, setLoadingProviders] = useState(true);
+  const [savedProviders, setSavedProviders] = useState([]);
+  const [providers, setProviders] = useState([]);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
@@ -110,6 +113,30 @@ export default function AdminProviders() {
     title: "",
     type: "success",
   });
+
+  const loadProvidersData = useCallback(async () => {
+    setLoadingProviders(true);
+
+    try {
+      const snapshot = await loadAdminDataOnce({ password: ADMIN_PASSWORD });
+      const normalizedProviders = normalizeProviders(snapshot.providers || []);
+
+      setSavedProviders(normalizedProviders);
+      setProviders(normalizedProviders);
+    } catch (error) {
+      console.error(error);
+      setPopup({
+        message: adminContent.providers.dialogs.loadError,
+        open: true,
+        title: adminContent.providers.dialogs.problemTitle,
+        type: "error",
+      });
+      setSavedProviders([]);
+      setProviders([]);
+    } finally {
+      setLoadingProviders(false);
+    }
+  }, []);
 
   const filteredProviders = useMemo(
     () => filterProviders(providers, { category, query }),
@@ -198,6 +225,14 @@ export default function AdminProviders() {
   );
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+    if (initialLoadStartedRef.current) return;
+
+    initialLoadStartedRef.current = true;
+    loadProvidersData();
+  }, [isAuthenticated, loadProvidersData]);
+
+  useEffect(() => {
     try {
       window.localStorage.setItem(ADMIN_PROVIDERS_ACTIVE_TAB_KEY, activeTab);
     } catch {
@@ -211,8 +246,12 @@ export default function AdminProviders() {
   const handleSavePendingChanges = async () => {
     try {
       spinner.show(adminContent.providers.spinner.save);
-      const normalizedProviders = persistProviders(providers);
+      const normalizedProviders = await persistProviders({
+        password: ADMIN_PASSWORD,
+        providers,
+      });
 
+      setAdminProviders(normalizedProviders);
       setSavedProviders(normalizedProviders);
       setProviders(normalizedProviders);
       return true;
@@ -338,10 +377,7 @@ export default function AdminProviders() {
   const handleRemoveService = (serviceIndex) => {
     setEditingProvider((current) => ({
       ...current,
-      services:
-        current.services.length === 1
-          ? current.services
-          : current.services.filter((_, index) => index !== serviceIndex),
+      services: current.services.filter((_, index) => index !== serviceIndex),
     }));
   };
 
@@ -351,7 +387,15 @@ export default function AdminProviders() {
 
   return (
     <CinematicPage>
-      {spinner.loading && <Spinner text={spinner.text} />}
+      {(spinner.loading || loadingProviders) && (
+        <Spinner
+          text={
+            loadingProviders
+              ? adminContent.providers.spinner.load
+              : spinner.text
+          }
+        />
+      )}
 
       {blocker.state === "blocked" && (
         <UnsavedProviderChangesDialog
@@ -363,7 +407,7 @@ export default function AdminProviders() {
       )}
 
       <CinematicSection
-        className="surface-soft"
+        className="surface-soft admin-section"
         innerClassName="max-w-6xl py-6"
         reveal={false}
       >
@@ -379,7 +423,7 @@ export default function AdminProviders() {
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={2} isVisible={providersInView}>
-            <ProvidersOverview stats={stats} />
+            <ProvidersOverview loading={loadingProviders} stats={stats} />
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={providersInView}>
@@ -428,6 +472,7 @@ export default function AdminProviders() {
                   getKey={(provider) => provider.id}
                   isMobileView={isMobileView}
                   items={filteredProviders}
+                  loading={loadingProviders}
                   lockPageHeight={false}
                   mobilePageLabel={adminContent.providers.list.mobilePageLabel}
                   onNextPage={() =>
@@ -436,12 +481,13 @@ export default function AdminProviders() {
                   onPrevPage={() =>
                     handlePageChange(currentPage - 1, tableStartRef.current)
                   }
-                  page={currentPage}
+                  page={loadingProviders ? undefined : currentPage}
                   pageDirection={pageDirection}
                   pageLabel={adminContent.providers.list.pageLabel}
-                  pageSize={pageSize}
+                  pageSize={loadingProviders ? undefined : pageSize}
                   renderMeasurePage={(items) => (
                     <ProviderCardsPage
+                      emptyState={getProviderEmptyState(providers.length)}
                       items={items}
                       onSelect={() => {}}
                       selectedProviderId={effectiveSelectedProviderId}
@@ -449,6 +495,7 @@ export default function AdminProviders() {
                   )}
                   renderPage={(items) => (
                     <ProviderCardsPage
+                      emptyState={getProviderEmptyState(providers.length)}
                       items={items}
                       onSelect={(provider) =>
                         setSelectedProviderId(provider.id)
@@ -466,7 +513,7 @@ export default function AdminProviders() {
                   }}
                   sourceItemsCount={providers.length}
                   title={adminContent.providers.list.title}
-                  totalPages={totalPages}
+                  totalPages={loadingProviders ? undefined : totalPages}
                 />
               ) : (
                 <AdminTableSection
@@ -513,6 +560,7 @@ export default function AdminProviders() {
                   getKey={(service) => service.id}
                   isMobileView={isMobileView}
                   items={filteredServices}
+                  loading={loadingProviders}
                   lockPageHeight={false}
                   mobilePageLabel={
                     adminContent.providers.services.mobilePageLabel
@@ -529,12 +577,16 @@ export default function AdminProviders() {
                       tableStartRef.current,
                     )
                   }
-                  page={currentServicesPage}
+                  page={loadingProviders ? undefined : currentServicesPage}
                   pageDirection={servicesPageDirection}
                   pageLabel={adminContent.providers.list.pageLabel}
-                  pageSize={servicesPageSize}
+                  pageSize={loadingProviders ? undefined : servicesPageSize}
                   renderMeasurePage={(items) => (
                     <ServiceCardsPage
+                      emptyState={getServiceEmptyState(
+                        providers.length,
+                        services.length,
+                      )}
                       items={items}
                       onSelect={() => {}}
                       selectedServiceId={effectiveSelectedServiceId}
@@ -542,6 +594,10 @@ export default function AdminProviders() {
                   )}
                   renderPage={(items) => (
                     <ServiceCardsPage
+                      emptyState={getServiceEmptyState(
+                        providers.length,
+                        services.length,
+                      )}
                       items={items}
                       onSelect={(service) => setSelectedServiceId(service.id)}
                       selectedServiceId={effectiveSelectedServiceId}
@@ -557,7 +613,7 @@ export default function AdminProviders() {
                   }}
                   sourceItemsCount={services.length}
                   title={adminContent.providers.services.title}
-                  totalPages={servicesTotalPages}
+                  totalPages={loadingProviders ? undefined : servicesTotalPages}
                 />
               )}
             </div>
@@ -692,7 +748,7 @@ function UnsavedProviderChangesDialog({
   return createPortal(dialog, document.body);
 }
 
-function ProvidersOverview({ stats }) {
+function ProvidersOverview({ loading, stats }) {
   return (
     <section className="premium-card mt-4 mb-5">
       <p className="section-eyebrow mb-2">
@@ -701,31 +757,38 @@ function ProvidersOverview({ stats }) {
       <h2 className="mb-5 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
         {adminContent.providers.overview.title}
       </h2>
-      <AdminMetricGrid
-        className="flex flex-wrap justify-between gap-2 sm:items-start sm:gap-3"
-        items={[
-          {
-            emoji: <BriefcaseBusiness size={22} strokeWidth={1.8} />,
-            label: adminContent.providers.overview.metrics.providers,
-            value: stats.providerCount,
-          },
-          {
-            emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
-            label: adminContent.providers.overview.metrics.services,
-            value: stats.serviceCount,
-          },
-          {
-            emoji: <Euro size={22} strokeWidth={1.8} />,
-            label: adminContent.providers.overview.metrics.budget,
-            value: formatCurrency(stats.totalBudget),
-          },
-          {
-            emoji: <CalendarDays size={22} strokeWidth={1.8} />,
-            label: adminContent.providers.overview.metrics.paid,
-            value: formatCurrency(stats.totalPaid),
-          },
-        ]}
-      />
+      {loading ? (
+        <AdminMetricGridSkeleton
+          className="flex flex-wrap justify-between gap-2 sm:items-start sm:gap-3"
+          count={4}
+        />
+      ) : (
+        <AdminMetricGrid
+          className="flex flex-wrap justify-between gap-2 sm:items-start sm:gap-3"
+          items={[
+            {
+              emoji: <BriefcaseBusiness size={22} strokeWidth={1.8} />,
+              label: adminContent.providers.overview.metrics.providers,
+              value: stats.providerCount,
+            },
+            {
+              emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
+              label: adminContent.providers.overview.metrics.services,
+              value: stats.serviceCount,
+            },
+            {
+              emoji: <Euro size={22} strokeWidth={1.8} />,
+              label: adminContent.providers.overview.metrics.budget,
+              value: formatCurrency(stats.totalBudget),
+            },
+            {
+              emoji: <CalendarDays size={22} strokeWidth={1.8} />,
+              label: adminContent.providers.overview.metrics.paid,
+              value: formatCurrency(stats.totalPaid),
+            },
+          ]}
+        />
+      )}
     </section>
   );
 }
@@ -905,8 +968,8 @@ function ProviderTableActions({
   );
 }
 
-function ProviderCardsPage({ items, onSelect, selectedProviderId }) {
-  if (!items.length) return <ProvidersEmptyState />;
+function ProviderCardsPage({ emptyState, items, onSelect, selectedProviderId }) {
+  if (!items.length) return <ProvidersEmptyState {...emptyState} />;
 
   return (
     <>
@@ -991,7 +1054,10 @@ function ProviderCard({ onSelect, provider, selected }) {
   );
 }
 
-function ProvidersEmptyState() {
+function ProvidersEmptyState({
+  text = adminContent.providers.list.emptyText,
+  title = adminContent.providers.list.emptyTitle,
+}) {
   return (
     <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
       <BriefcaseBusiness
@@ -1000,17 +1066,17 @@ function ProvidersEmptyState() {
         strokeWidth={1.7}
       />
       <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
-        {adminContent.providers.list.emptyTitle}
+        {title}
       </p>
       <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-        {adminContent.providers.list.emptyText}
+        {text}
       </p>
     </div>
   );
 }
 
-function ServiceCardsPage({ items, onSelect, selectedServiceId }) {
-  if (!items.length) return <ServicesEmptyState />;
+function ServiceCardsPage({ emptyState, items, onSelect, selectedServiceId }) {
+  if (!items.length) return <ServicesEmptyState {...emptyState} />;
 
   return (
     <>
@@ -1090,7 +1156,10 @@ function ServiceCard({ onSelect, selected, service }) {
   );
 }
 
-function ServicesEmptyState() {
+function ServicesEmptyState({
+  text = adminContent.providers.services.emptyText,
+  title = adminContent.providers.services.emptyTitle,
+}) {
   return (
     <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
       <BadgeEuro
@@ -1099,10 +1168,10 @@ function ServicesEmptyState() {
         strokeWidth={1.7}
       />
       <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
-        {adminContent.providers.services.emptyTitle}
+        {title}
       </p>
       <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-        {adminContent.providers.services.emptyText}
+        {text}
       </p>
     </div>
   );
@@ -1277,15 +1346,13 @@ function ProviderForm({
                     ))}
                   </select>
                 </div>
-                {form.services.length > 1 && (
-                  <IconButton
-                    icon={<Trash2 size={16} strokeWidth={1.8} />}
-                    label={adminContent.providers.form.deleteService}
-                    onClick={() => onRemoveService(serviceIndex)}
-                    tone="danger"
-                    type="button"
-                  />
-                )}
+                <IconButton
+                  icon={<Trash2 size={16} strokeWidth={1.8} />}
+                  label={adminContent.providers.form.deleteService}
+                  onClick={() => onRemoveService(serviceIndex)}
+                  tone="danger"
+                  type="button"
+                />
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -1444,6 +1511,41 @@ function filterServices(services, { category, query }) {
       matchesCategory && (!normalizedQuery || searchableText.includes(normalizedQuery))
     );
   });
+}
+
+function getProviderEmptyState(sourceCount) {
+  if (sourceCount > 0) {
+    return {
+      text: adminContent.providers.list.noFilterText,
+      title: adminContent.providers.list.emptyTitle,
+    };
+  }
+
+  return {
+    text: adminContent.providers.list.emptyText,
+    title: adminContent.providers.list.emptyTitle,
+  };
+}
+
+function getServiceEmptyState(providerCount, serviceCount) {
+  if (providerCount === 0) {
+    return {
+      text: adminContent.providers.services.noProvidersText,
+      title: adminContent.providers.services.noProvidersTitle,
+    };
+  }
+
+  if (serviceCount > 0) {
+    return {
+      text: adminContent.providers.services.noFilterText,
+      title: adminContent.providers.services.emptyTitle,
+    };
+  }
+
+  return {
+    text: adminContent.providers.services.emptyText,
+    title: adminContent.providers.services.emptyTitle,
+  };
 }
 
 function buildPendingProviderChanges(savedProviders, currentProviders) {

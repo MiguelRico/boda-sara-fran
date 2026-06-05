@@ -154,6 +154,14 @@ export const findAllTables = async ({ password } = {}) => {
   });
 };
 
+export const findAllProviders = async ({ password } = {}) => {
+  return await requestJsonp({
+    entity: "providers",
+    method: "GET",
+    password,
+  });
+};
+
 export const saveGroup = async (payload, { method = "POST" } = {}) => {
   const confirmation = encodeConfirmationPayload(payload);
 
@@ -211,5 +219,19 @@ export const deleteAdminGroup = async ({ groupName, password }) => {
   return {
     success: true,
     groupName,
+  };
+};
+
+export const saveAdminProviders = async ({ password, providers }) => {
+  await sendToRsvpApi({
+    entity: "providers",
+    method: "PUT",
+    password,
+    providers,
+  });
+
+  return {
+    success: true,
+    providers,
   };
 };

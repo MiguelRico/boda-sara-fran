@@ -67,6 +67,10 @@ body {
     @apply relative flex min-h-[100svh] items-center justify-center px-5 py-4 sm:px-8 lg:px-12;
   }
 
+  .admin-section {
+    @apply items-start;
+  }
+
   .cinematic-container {
     @apply mx-auto w-full max-w-6xl;
   }

@@ -68,6 +68,84 @@ const GUESTS_COLUMNS = {
 
 const TABLES_HEADERS = ["name", "tag", "shape", "seats", "notes"];
 
+const PROVIDERS_HEADERS = [
+  "providerId",
+  "nombre",
+  "categoria",
+  "telefono",
+  "email",
+  "direccion",
+  "web",
+  "numeroCuenta",
+  "activo",
+  "createdAt",
+  "updatedAt",
+];
+
+const PROVIDERS_COLUMNS = {
+  providerId: 0,
+  nombre: 1,
+  categoria: 2,
+  telefono: 3,
+  email: 4,
+  direccion: 5,
+  web: 6,
+  numeroCuenta: 7,
+  activo: 8,
+  createdAt: 9,
+  updatedAt: 10,
+};
+
+const PROVIDER_SERVICES_HEADERS = [
+  "serviceId",
+  "providerId",
+  "nombre",
+  "precio",
+  "numeroPlazos",
+  "notas",
+  "activo",
+  "createdAt",
+  "updatedAt",
+];
+
+const PROVIDER_SERVICES_COLUMNS = {
+  serviceId: 0,
+  providerId: 1,
+  nombre: 2,
+  precio: 3,
+  numeroPlazos: 4,
+  notas: 5,
+  activo: 6,
+  createdAt: 7,
+  updatedAt: 8,
+};
+
+const PROVIDER_PAYMENTS_HEADERS = [
+  "paymentId",
+  "serviceId",
+  "numeroPlazo",
+  "importe",
+  "fechaPrevista",
+  "fechaPago",
+  "pagado",
+  "notas",
+  "createdAt",
+  "updatedAt",
+];
+
+const PROVIDER_PAYMENTS_COLUMNS = {
+  paymentId: 0,
+  serviceId: 1,
+  numeroPlazo: 2,
+  importe: 3,
+  fechaPrevista: 4,
+  fechaPago: 5,
+  pagado: 6,
+  notas: 7,
+  createdAt: 8,
+  updatedAt: 9,
+};
+
 function ensureHeader(sheet, headers) {
   const currentHeaders = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
   const needsHeader = headers.some((header, index) => currentHeaders[index] !== header);
@@ -86,6 +164,45 @@ function getTablesSheet() {
   }
 
   ensureHeader(sheet, TABLES_HEADERS);
+
+  return sheet;
+}
+
+function getProvidersSheet() {
+  const spreadsheet = getSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(PROVIDERS_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(PROVIDERS_SHEET_NAME);
+  }
+
+  ensureHeader(sheet, PROVIDERS_HEADERS);
+
+  return sheet;
+}
+
+function getProviderServicesSheet() {
+  const spreadsheet = getSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(PROVIDER_SERVICES_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(PROVIDER_SERVICES_SHEET_NAME);
+  }
+
+  ensureHeader(sheet, PROVIDER_SERVICES_HEADERS);
+
+  return sheet;
+}
+
+function getProviderPaymentsSheet() {
+  const spreadsheet = getSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(PROVIDER_PAYMENTS_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(PROVIDER_PAYMENTS_SHEET_NAME);
+  }
+
+  ensureHeader(sheet, PROVIDER_PAYMENTS_HEADERS);
 
   return sheet;
 }
@@ -295,9 +412,29 @@ function buildTableFromRow(row) {
 }
 
 function deleteAllTableRows(sheet) {
+  deleteDataRows(sheet);
+}
+
+function deleteDataRows(sheet) {
   const lastRow = sheet.getLastRow();
 
   if (lastRow > 1) {
     sheet.deleteRows(2, lastRow - 1);
   }
+}
+
+function isTruthySheetValue(value) {
+  const text = String(value || "").trim().toLowerCase();
+
+  return value === true || text === "true" || text === "si" || text === "sÃ­" || text === "1";
+}
+
+function isActiveSheetValue(value) {
+  const text = String(value || "").trim().toLowerCase();
+
+  return !text || isTruthySheetValue(value);
+}
+
+function getProviderTimestamp(value, fallback) {
+  return String(value || fallback || new Date().toISOString());
 }

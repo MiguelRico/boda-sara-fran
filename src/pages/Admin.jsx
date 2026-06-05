@@ -111,7 +111,7 @@ export default function Admin() {
       {loading && <Spinner text={adminContent.auth.loading} />}
 
       <CinematicSection
-        className="surface-soft"
+        className="surface-soft admin-section"
         innerClassName="max-w-5xl"
         reveal={false}
       >

@@ -36,6 +36,7 @@ import CardActions from "../components/admin/CardActions";
 import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
 import AdminTableSection from "../components/admin/AdminTableSection";
+import { AdminMetricGrid } from "../components/admin/AdminMetricGrid";
 import TableGuestCard from "../components/admin/TableGuestCard";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import Chip from "../components/ui/Chip";
@@ -213,6 +214,10 @@ export default function AdminGuests() {
     [effectiveSelectedRowId, pagedRows],
   );
   const guestItems = useMemo(() => getGuestItems(state.groups), [state.groups]);
+  const guestStats = useMemo(
+    () => buildGuestStats(rows, guestItems),
+    [guestItems, rows],
+  );
   const visibleGuestItems = useMemo(
     () => filterGuestItems(guestItems, query, filter),
     [filter, guestItems, query],
@@ -427,7 +432,7 @@ export default function AdminGuests() {
       )}
 
       <CinematicSection
-        className="surface-soft"
+        className="surface-soft admin-section"
         innerClassName="max-w-7xl py-6"
         reveal={false}
       >
@@ -440,6 +445,10 @@ export default function AdminGuests() {
               titleAs="h1"
               text={adminContent.guests.header.text}
             />
+          </CinematicStaggeredRevealItem>
+
+          <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
+            <GuestsOverview stats={guestStats} />
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
@@ -505,6 +514,7 @@ export default function AdminGuests() {
                   pageSize={isMobileView ? mobilePageSize : desktopPageSize}
                   renderMeasurePage={(items) => (
                     <AdminGuestPage
+                      emptyState={getGroupEmptyState(rows.length)}
                       items={items}
                       onEditGuests={() => {}}
                       onSelect={() => {}}
@@ -513,6 +523,7 @@ export default function AdminGuests() {
                   )}
                   renderPage={(items) => (
                     <AdminGuestPage
+                      emptyState={getGroupEmptyState(rows.length)}
                       items={items}
                       onEditGuests={(group) => openGroupEditor(group, "guests")}
                       onSelect={(row) => setSelectedRowId(row.rowId)}
@@ -607,6 +618,10 @@ export default function AdminGuests() {
                   pageSize={guestPageSize}
                   renderMeasurePage={(items) => (
                     <GuestItemsPage
+                      emptyState={getGuestListEmptyState(
+                        rows.length,
+                        guestItems.length,
+                      )}
                       items={items}
                       onSelect={() => {}}
                       selectedGuestId={effectiveSelectedGuestId}
@@ -614,6 +629,10 @@ export default function AdminGuests() {
                   )}
                   renderPage={(items) => (
                     <GuestItemsPage
+                      emptyState={getGuestListEmptyState(
+                        rows.length,
+                        guestItems.length,
+                      )}
                       items={items}
                       onSelect={(guest) => setSelectedGuestId(guest.rowId)}
                       selectedGuestId={effectiveSelectedGuestId}
@@ -680,6 +699,46 @@ export default function AdminGuests() {
         type="error"
       />
     </CinematicPage>
+  );
+}
+
+function GuestsOverview({ stats }) {
+  const metrics = adminContent.guests.overview.metrics;
+
+  return (
+    <section className="premium-card mt-4 mb-5">
+      <p className="section-eyebrow mb-2">
+        {adminContent.guests.overview.eyebrow}
+      </p>
+      <h2 className="mb-5 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+        {adminContent.guests.overview.title}
+      </h2>
+      <AdminMetricGrid
+        className="flex flex-wrap justify-between gap-2 sm:items-start sm:gap-3"
+        items={[
+          {
+            emoji: <UsersRound size={22} strokeWidth={1.8} />,
+            label: metrics.groups,
+            value: stats.groupCount,
+          },
+          {
+            emoji: <UsersRound size={22} strokeWidth={1.8} />,
+            label: metrics.guests,
+            value: stats.guestCount,
+          },
+          {
+            emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
+            label: metrics.allergies,
+            value: stats.allergyCount,
+          },
+          {
+            emoji: <BusFront size={22} strokeWidth={1.8} />,
+            label: metrics.bus,
+            value: stats.busCount,
+          },
+        ]}
+      />
+    </section>
   );
 }
 
@@ -948,7 +1007,7 @@ function UnsavedGuestChangesDialog({
   return createPortal(dialog, document.body);
 }
 
-function GuestItemsPage({ items, onSelect, selectedGuestId }) {
+function GuestItemsPage({ emptyState, items, onSelect, selectedGuestId }) {
   if (!items.length) {
     return (
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
@@ -958,10 +1017,10 @@ function GuestItemsPage({ items, onSelect, selectedGuestId }) {
           strokeWidth={1.7}
         />
         <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
-          {adminContent.guests.list.emptyTitle}
+          {emptyState?.title || adminContent.guests.list.emptyTitle}
         </p>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-          {adminContent.guests.list.emptyText}
+          {emptyState?.text || adminContent.guests.list.emptyText}
         </p>
       </div>
     );
@@ -1014,7 +1073,13 @@ function GuestItemCard({ guestItem, onSelect, selected }) {
   );
 }
 
-function AdminGuestPage({ items, onEditGuests, onSelect, selectedRowId }) {
+function AdminGuestPage({
+  emptyState,
+  items,
+  onEditGuests,
+  onSelect,
+  selectedRowId,
+}) {
   return (
     <>
       <CardGrid
@@ -1051,10 +1116,10 @@ function AdminGuestPage({ items, onEditGuests, onSelect, selectedRowId }) {
             strokeWidth={1.7}
           />
           <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
-            {adminContent.guests.list.emptyTitle}
+            {emptyState?.title || adminContent.guests.list.emptyTitle}
           </p>
           <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-            {adminContent.guests.list.emptyText}
+            {emptyState?.text || adminContent.guests.list.emptyText}
           </p>
         </div>
       )}
@@ -1474,6 +1539,50 @@ function filterGuestItems(guests, query, filter) {
 
     return matchesQuery && matchesFilter;
   });
+}
+
+function buildGuestStats(rows, guests) {
+  return {
+    allergyCount: guests.filter(Guest.hasAllergies).length,
+    busCount: guests.filter(Guest.usesBus).length,
+    groupCount: rows.length,
+    guestCount: guests.length,
+  };
+}
+
+function getGroupEmptyState(groupCount) {
+  if (groupCount > 0) {
+    return {
+      text: adminContent.guests.list.emptyText,
+      title: adminContent.guests.list.emptyTitle,
+    };
+  }
+
+  return {
+    text: adminContent.guests.list.noGroupsText,
+    title: adminContent.guests.list.noGroupsTitle,
+  };
+}
+
+function getGuestListEmptyState(groupCount, guestCount) {
+  if (groupCount === 0) {
+    return {
+      text: adminContent.guests.guestList.noGroupsText,
+      title: adminContent.guests.guestList.noGroupsTitle,
+    };
+  }
+
+  if (guestCount > 0) {
+    return {
+      text: adminContent.guests.guestList.noFilterText,
+      title: adminContent.guests.list.emptyTitle,
+    };
+  }
+
+  return {
+    text: adminContent.guests.guestList.noGuestsText,
+    title: adminContent.guests.guestList.noGuestsTitle,
+  };
 }
 
 function getStableJson(value) {

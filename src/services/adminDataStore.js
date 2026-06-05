@@ -1,12 +1,14 @@
 import { ADMIN_PASSWORD } from "../constants/admin";
 import { Table } from "../models";
-import { findAllGroups, findAllTables } from "./rsvpService";
+import { findAllGroups, findAllProviders, findAllTables } from "./rsvpService";
 import { normalizeAdminGroups } from "../utils/rsvpGroups";
+import { normalizeProviders } from "./providersService";
 
 const emptySnapshot = {
   groups: [],
   loaded: false,
   loadingPromise: null,
+  providers: [],
   tables: [],
 };
 
@@ -16,6 +18,7 @@ export const clearAdminDataStore = () => {
   store.groups = [];
   store.loaded = false;
   store.loadingPromise = null;
+  store.providers = [];
   store.tables = [];
 };
 
@@ -29,10 +32,15 @@ export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
       console.error("Error al cargar mesas guardadas:", error);
       return { tables: [] };
     }),
+    findAllProviders({ password }).catch((error) => {
+      console.error("Error al cargar proveedores:", error);
+      return { providers: [] };
+    }),
   ])
-    .then(([groupsResponse, tablesResponse]) => {
+    .then(([groupsResponse, tablesResponse, providersResponse]) => {
       store.groups = normalizeAdminGroups(groupsResponse);
       store.tables = Table.normalizeList(tablesResponse?.tables || []);
+      store.providers = normalizeProviders(providersResponse?.providers || []);
       store.loaded = true;
 
       return getAdminDataSnapshot();
@@ -46,6 +54,7 @@ export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
 
 export const getAdminDataSnapshot = () => ({
   groups: store.groups,
+  providers: store.providers,
   tables: store.tables,
 });
 
@@ -82,4 +91,10 @@ export const setAdminTables = (tables) => {
   store.tables = Table.normalizeList(tables);
 
   return store.tables;
+};
+
+export const setAdminProviders = (providers) => {
+  store.providers = normalizeProviders(providers);
+
+  return store.providers;
 };

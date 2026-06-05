@@ -40,6 +40,13 @@ function routeGet(e) {
     return listTables(e);
   }
 
+  if (entity === "providers") {
+    const authError = validateAdmin(e);
+    if (authError) return authError;
+
+    return listProviders(e);
+  }
+
   return jsonResponse(
     {
       success: false,
@@ -195,6 +202,91 @@ function listTables(e) {
     {
       success: true,
       tables,
+    },
+    e,
+  );
+}
+
+function listProviders(e) {
+  const providersSheet = getProvidersSheet();
+  const servicesSheet = getProviderServicesSheet();
+  const paymentsSheet = getProviderPaymentsSheet();
+  const providerRows = providersSheet.getDataRange().getDisplayValues();
+  const serviceRows = servicesSheet.getDataRange().getDisplayValues();
+  const paymentRows = paymentsSheet.getDataRange().getDisplayValues();
+  const providers = [];
+  const providersById = {};
+  const servicesById = {};
+
+  for (let i = 1; i < providerRows.length; i++) {
+    const row = providerRows[i];
+    const providerId = String(row[PROVIDERS_COLUMNS.providerId] || "").trim();
+
+    if (!providerId || !isActiveSheetValue(row[PROVIDERS_COLUMNS.activo])) continue;
+
+    const provider = {
+      id: providerId,
+      accountNumber: row[PROVIDERS_COLUMNS.numeroCuenta] || "",
+      address: row[PROVIDERS_COLUMNS.direccion] || "",
+      category: row[PROVIDERS_COLUMNS.categoria] || "",
+      email: row[PROVIDERS_COLUMNS.email] || "",
+      name: row[PROVIDERS_COLUMNS.nombre] || "",
+      phone: row[PROVIDERS_COLUMNS.telefono] || "",
+      services: [],
+      web: row[PROVIDERS_COLUMNS.web] || "",
+    };
+
+    providers.push(provider);
+    providersById[providerId] = provider;
+  }
+
+  for (let i = 1; i < serviceRows.length; i++) {
+    const row = serviceRows[i];
+    const serviceId = String(row[PROVIDER_SERVICES_COLUMNS.serviceId] || "").trim();
+    const providerId = String(row[PROVIDER_SERVICES_COLUMNS.providerId] || "").trim();
+    const provider = providersById[providerId];
+
+    if (
+      !serviceId ||
+      !provider ||
+      !isActiveSheetValue(row[PROVIDER_SERVICES_COLUMNS.activo])
+    ) {
+      continue;
+    }
+
+    const service = {
+      id: serviceId,
+      name: row[PROVIDER_SERVICES_COLUMNS.nombre] || "",
+      paymentCount: Math.min(
+        Math.max(Number(row[PROVIDER_SERVICES_COLUMNS.numeroPlazos]) || 1, 1),
+        3,
+      ),
+      payments: [],
+      price: row[PROVIDER_SERVICES_COLUMNS.precio] || "",
+    };
+
+    provider.services.push(service);
+    servicesById[serviceId] = service;
+  }
+
+  for (let i = 1; i < paymentRows.length; i++) {
+    const row = paymentRows[i];
+    const serviceId = String(row[PROVIDER_PAYMENTS_COLUMNS.serviceId] || "").trim();
+    const service = servicesById[serviceId];
+
+    if (!service) continue;
+
+    service.payments.push({
+      amount: row[PROVIDER_PAYMENTS_COLUMNS.importe] || "",
+      date: row[PROVIDER_PAYMENTS_COLUMNS.fechaPrevista] || "",
+      paid: isTruthySheetValue(row[PROVIDER_PAYMENTS_COLUMNS.pagado]),
+    });
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      providers,
     },
     e,
   );

@@ -2,8 +2,7 @@ import {
   PROVIDER_CATEGORIES,
   PROVIDER_PAYMENT_COUNT,
 } from "../constants/providers";
-
-const STORAGE_KEY = "wedding_admin_providers";
+import { findAllProviders, saveAdminProviders } from "./rsvpService";
 
 const normalizeString = (value) => (value == null ? "" : String(value));
 const createId = () =>
@@ -41,9 +40,7 @@ export const createEmptyProvider = (overrides = {}) => ({
 });
 
 export const normalizeServices = (services) => {
-  if (!Array.isArray(services) || !services.length) {
-    return [createEmptyService()];
-  }
+  if (!Array.isArray(services)) return [];
 
   return services.map((service) => createEmptyService(service));
 };
@@ -54,21 +51,23 @@ export const normalizeProviders = (providers) => {
   return providers.map((provider) => createEmptyProvider(provider));
 };
 
-export const loadProviders = () => {
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+export const loadProviders = async ({ password } = {}) => {
+  const response = await findAllProviders({ password });
 
-    return normalizeProviders(stored ? JSON.parse(stored) : []);
-  } catch (error) {
-    console.error("Error al cargar proveedores:", error);
-    return [];
+  if (response?.success === false) {
+    throw new Error(response.error || "No se pudieron cargar los proveedores.");
   }
+
+  return normalizeProviders(response?.providers || []);
 };
 
-export const persistProviders = (providers) => {
+export const persistProviders = async ({ password, providers }) => {
   const normalizedProviders = normalizeProviders(providers);
 
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedProviders));
+  await saveAdminProviders({
+    password,
+    providers: normalizedProviders,
+  });
 
   return normalizedProviders;
 };

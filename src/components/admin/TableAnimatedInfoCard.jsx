@@ -274,6 +274,7 @@ function AssignmentModal({
           pageSize={pageSize}
           renderMeasurePage={(items) => (
             <AssignedSeatsPage
+              emptyState={getAssignedSeatsEmptyState(assignedSeats.length)}
               items={items}
               onSelect={() => {}}
               selectedSeatKey={effectiveSelectedSeatKey}
@@ -281,6 +282,7 @@ function AssignmentModal({
           )}
           renderPage={(items) => (
             <AssignedSeatsPage
+              emptyState={getAssignedSeatsEmptyState(assignedSeats.length)}
               items={items}
               onSelect={(seat) => setSelectedSeatKey(getAssignedSeatKey(seat))}
               selectedSeatKey={effectiveSelectedSeatKey}
@@ -334,8 +336,8 @@ function AssignedSeatCard({ onSelect, seat, selected }) {
   );
 }
 
-function AssignedSeatsPage({ items, onSelect, selectedSeatKey }) {
-  if (!items.length) return <AssignedSeatsEmptyState />;
+function AssignedSeatsPage({ emptyState, items, onSelect, selectedSeatKey }) {
+  if (!items.length) return <AssignedSeatsEmptyState {...emptyState} />;
 
   return (
     <>
@@ -364,17 +366,34 @@ function AssignedSeatsPage({ items, onSelect, selectedSeatKey }) {
   );
 }
 
-function AssignedSeatsEmptyState() {
+function AssignedSeatsEmptyState({
+  text = tableContent.card.emptyAssignmentsText,
+  title = tableContent.card.emptyAssignmentsTitle,
+}) {
   return (
     <div className="rounded-[2rem] border border-[var(--color-border)] bg-white/45 p-6 text-center">
       <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-        {tableContent.card.emptyAssignmentsTitle}
+        {title}
       </p>
       <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-        {tableContent.card.emptyAssignmentsText}
+        {text}
       </p>
     </div>
   );
+}
+
+function getAssignedSeatsEmptyState(sourceCount) {
+  if (sourceCount > 0) {
+    return {
+      text: tableContent.card.emptyAssignmentsFilterText,
+      title: tableContent.card.emptyAssignmentsTitle,
+    };
+  }
+
+  return {
+    text: tableContent.card.emptyAssignmentsText,
+    title: tableContent.card.emptyAssignmentsTitle,
+  };
 }
 
 function TableDiagram({ onSeatClick, onCenterClick, table }) {
