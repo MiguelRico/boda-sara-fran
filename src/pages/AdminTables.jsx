@@ -791,7 +791,7 @@ export default function AdminTables() {
                       lines={2}
                     />
                   }
-                  title="Asientos asignados"
+                  title={adminContent.tables.header.sectionTitle}
                   totalPages={state.loading ? undefined : totalPages}
                   renderMeasurePage={(items) => (
                     <TableCardsPage
@@ -817,9 +817,6 @@ export default function AdminTables() {
               ) : (
                 <AdminTableSection
                   contentRef={tablesStartRef}
-                  count={adminContent.tables.header.pendingGuestCountLabel(
-                    filteredPendingGuests.length,
-                  )}
                   eyebrow={adminContent.pendingGuests.pendingEyebrow}
                   filters={
                     guestsPending.length > 0 && (
@@ -1091,100 +1088,100 @@ function SeatAssignmentDialog({
         title={adminContent.tables.dialogs.assignmentTitle}
       >
         <form noValidate onSubmit={handleSubmit}>
-        <div className="mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <div
-            className={`grid w-full gap-3 ${
-              canRemoveGuest ? "grid-cols-2" : "grid-cols-1"
-            }`}
-          >
-            {canRemoveGuest && (
+          <div className="mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+            <div
+              className={`grid w-full gap-3 ${
+                canRemoveGuest ? "grid-cols-2" : "grid-cols-1"
+              }`}
+            >
+              {canRemoveGuest && (
+                <IconButton
+                  className="w-full"
+                  disabled={assigning}
+                  icon={<Trash2 size={16} strokeWidth={1.8} />}
+                  label={adminContent.tables.dialogs.remove}
+                  onClick={() => setShowRemoveConfirm(true)}
+                  tone="danger"
+                  type="button"
+                >
+                  {adminContent.tables.dialogs.remove}
+                </IconButton>
+              )}
+
               <IconButton
                 className="w-full"
-                disabled={assigning}
-                icon={<Trash2 size={16} strokeWidth={1.8} />}
-                label={adminContent.tables.dialogs.remove}
-                onClick={() => setShowRemoveConfirm(true)}
-                tone="danger"
-                type="button"
+                disabled={!selectedGuest || assigning}
+                icon={<Check size={16} strokeWidth={1.8} />}
+                label={
+                  assigning
+                    ? adminContent.tables.dialogs.assigning
+                    : adminContent.tables.dialogs.assign
+                }
+                tone="primary"
+                type="submit"
               >
-                {adminContent.tables.dialogs.remove}
-              </IconButton>
-            )}
-
-            <IconButton
-              className="w-full"
-              disabled={!selectedGuest || assigning}
-              icon={<Check size={16} strokeWidth={1.8} />}
-              label={
-                assigning
+                {assigning
                   ? adminContent.tables.dialogs.assigning
-                  : adminContent.tables.dialogs.assign
-              }
-              tone="primary"
-              type="submit"
-            >
-              {assigning
-                ? adminContent.tables.dialogs.assigning
-                : adminContent.tables.dialogs.assign}
-            </IconButton>
-          </div>
-        </div>
-
-        <Label>{adminContent.tables.dialogs.guestLabel}</Label>
-        <select
-          className={selectClassName}
-          disabled={assigning}
-          onChange={(event) => handleSelectedGuestChange(event.target.value)}
-          value={selectedGuest}
-        >
-          <option value="">
-            {adminContent.tables.dialogs.guestPlaceholder}
-          </option>
-          {guests.map((guest, index) => {
-            const guestName = Guest.getFullName(guest, "Invitado");
-            const assignmentText = Guest.getAssignmentText(guest);
-
-            return (
-              <option
-                key={`${guest.groupName}-${guestName}-${index}`}
-                value={createGuestOptionValue({
-                  groupName: guest.groupName,
-                  guestIndex: guest.guestIndex,
-                  name: guestName,
-                })}
-              >
-                {guestName} - {guest.groupName}
-                {assignmentText ? ` (${assignmentText})` : ""}
-              </option>
-            );
-          })}
-        </select>
-
-        {selectedGuestDetails && (
-          <div className="relative mt-4 overflow-hidden">
-            <div aria-hidden="true" className="pointer-events-none invisible">
-              <SelectedGuestDetailsCard guest={selectedGuestDetails} />
+                  : adminContent.tables.dialogs.assign}
+              </IconButton>
             </div>
-
-            <AnimatePresence custom={selectedGuestDirection} initial={false}>
-              <motion.div
-                animate="center"
-                className="absolute inset-x-0 top-0"
-                custom={selectedGuestDirection}
-                exit="exit"
-                initial="enter"
-                key={selectedGuest}
-                transition={{
-                  duration: reduceMotion ? 0.18 : 0.48,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                variants={selectedGuestDetailsVariants}
-              >
-                <SelectedGuestDetailsCard guest={selectedGuestDetails} />
-              </motion.div>
-            </AnimatePresence>
           </div>
-        )}
+
+          <Label>{adminContent.tables.dialogs.guestLabel}</Label>
+          <select
+            className={selectClassName}
+            disabled={assigning}
+            onChange={(event) => handleSelectedGuestChange(event.target.value)}
+            value={selectedGuest}
+          >
+            <option value="">
+              {adminContent.tables.dialogs.guestPlaceholder}
+            </option>
+            {guests.map((guest, index) => {
+              const guestName = Guest.getFullName(guest, "Invitado");
+              const assignmentText = Guest.getAssignmentText(guest);
+
+              return (
+                <option
+                  key={`${guest.groupName}-${guestName}-${index}`}
+                  value={createGuestOptionValue({
+                    groupName: guest.groupName,
+                    guestIndex: guest.guestIndex,
+                    name: guestName,
+                  })}
+                >
+                  {guestName} - {guest.groupName}
+                  {assignmentText ? ` (${assignmentText})` : ""}
+                </option>
+              );
+            })}
+          </select>
+
+          {selectedGuestDetails && (
+            <div className="relative mt-4 overflow-hidden">
+              <div aria-hidden="true" className="pointer-events-none invisible">
+                <SelectedGuestDetailsCard guest={selectedGuestDetails} />
+              </div>
+
+              <AnimatePresence custom={selectedGuestDirection} initial={false}>
+                <motion.div
+                  animate="center"
+                  className="absolute inset-x-0 top-0"
+                  custom={selectedGuestDirection}
+                  exit="exit"
+                  initial="enter"
+                  key={selectedGuest}
+                  transition={{
+                    duration: reduceMotion ? 0.18 : 0.48,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  variants={selectedGuestDetailsVariants}
+                >
+                  <SelectedGuestDetailsCard guest={selectedGuestDetails} />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
         </form>
       </SeatAssignmentModal>
 
