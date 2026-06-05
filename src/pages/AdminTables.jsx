@@ -9,7 +9,6 @@ import {
   Download,
   Grid2X2,
   Armchair,
-  Pencil,
   Plus,
   Save,
   Trash2,
@@ -23,6 +22,7 @@ import {
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
 import AdminTableSection from "../components/admin/AdminTableSection";
+import CardActions from "../components/admin/CardActions";
 import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
@@ -201,7 +201,26 @@ export default function AdminTables() {
   const tables = useMemo(() => {
     return buildTables({ groups: state.groups, manualTables });
   }, [manualTables, state.groups]);
-  const tableStats = useMemo(() => buildTableStats(tables), [tables]);
+  const assignableGuests = useMemo(
+    () => getAssignableGuests(state.groups),
+    [state.groups],
+  );
+  const guestsPending = useMemo(
+    () => getPendingGuests(state.groups),
+    [state.groups],
+  );
+  const guestsAssigned = useMemo(
+    () => assignableGuests.filter((guest) => guest.table && guest.seat),
+    [assignableGuests],
+  );
+  const tableStats = useMemo(
+    () => ({
+      ...buildTableStats(tables),
+      assignedSeats: guestsAssigned.length,
+      pendingSeats: guestsPending.length,
+    }),
+    [guestsAssigned.length, guestsPending.length, tables],
+  );
   const {
     currentPage,
     isMobileList,
@@ -272,10 +291,6 @@ export default function AdminTables() {
     }
   }, [blocker.state]);
 
-  const guestsPending = useMemo(
-    () => getPendingGuests(state.groups),
-    [state.groups],
-  );
   const pendingGuestGroups = useMemo(() => {
     const groupSet = new Set(
       guestsPending.map((guest) => guest.groupName).filter(Boolean),
@@ -361,10 +376,6 @@ export default function AdminTables() {
       (seat) => seat.seat,
     );
   }, [pendingGuestsSelectedTableObj]);
-  const assignableGuests = useMemo(
-    () => getAssignableGuests(state.groups),
-    [state.groups],
-  );
   const tableSeatReductionWarning = useMemo(
     () =>
       editingTable
@@ -416,7 +427,7 @@ export default function AdminTables() {
       let changed = false;
 
       const guests = group.guests.map((guest) => {
-        if (guest.table !== tableKey) return guest;
+        if (getTableKey({ name: guest.table }) !== tableKey) return guest;
 
         changed = true;
 
@@ -468,7 +479,7 @@ export default function AdminTables() {
   };
 
   const handleSavePendingChanges = async () => {
-    if (!hasPendingChanges) return;
+    if (!hasPendingChanges) return true;
 
     try {
       spinner.show(adminContent.tables.spinner.save);
@@ -494,12 +505,14 @@ export default function AdminTables() {
         groups: state.groups,
         manualTables,
       });
+      return true;
     } catch (error) {
       console.error("Error al guardar cambios de mesas:", error);
       setState((prev) => ({
         ...prev,
         error: error.message || adminContent.tables.errors.save,
       }));
+      return false;
     } finally {
       spinner.hide();
     }
@@ -724,6 +737,19 @@ export default function AdminTables() {
     blocker.proceed?.();
   };
 
+  const handleSaveAndExitBlockedNavigation = async () => {
+    const saved = await handleSavePendingChanges();
+
+    setShowUnsavedChangesDialog(false);
+
+    if (saved) {
+      blocker.proceed?.();
+      return;
+    }
+
+    blocker.reset?.();
+  };
+
   const handleDiscardFromBlockedNavigation = () => {
     handleDiscardPendingChanges();
     setShowUnsavedChangesDialog(false);
@@ -744,6 +770,7 @@ export default function AdminTables() {
           onCancel={handleCancelBlockedNavigation}
           onConfirm={handleConfirmBlockedNavigation}
           onDiscard={handleDiscardFromBlockedNavigation}
+          onSaveAndExit={handleSaveAndExitBlockedNavigation}
         />
       )}
 
@@ -788,6 +815,7 @@ export default function AdminTables() {
                       onSave={handleSavePendingChanges}
                       saving={spinner.loading}
                       selectedTable={selectedTable}
+                      showText={!isMobileList}
                       tables={tables}
                     />
                   }
@@ -1078,13 +1106,21 @@ function SeatAssignmentDialog({
     currentGuest ? getPendingGuestRowKey(currentGuest) : "",
   );
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const assignableGuests = guests.filter((guest) => {
+    if (!guest.table || !guest.seat) return true;
+
+    return (
+      currentGuest &&
+      getPendingGuestRowKey(guest) === getPendingGuestRowKey(currentGuest)
+    );
+  });
   const availableGroups = Array.from(
-    new Set(guests.map((guest) => guest.groupName).filter(Boolean)),
+    new Set(assignableGuests.map((guest) => guest.groupName).filter(Boolean)),
   );
   const availableMenus = Array.from(
-    new Set(guests.map((guest) => guest.menu).filter(Boolean)),
+    new Set(assignableGuests.map((guest) => guest.menu).filter(Boolean)),
   );
-  const filteredGuests = guests.filter((guest) => {
+  const filteredGuests = assignableGuests.filter((guest) => {
     if (filters.group && guest.groupName !== filters.group) {
       return false;
     }
@@ -1095,18 +1131,13 @@ function SeatAssignmentDialog({
 
     return true;
   });
-  const {
-    currentPage,
-    isMobileList,
-    pageSize,
-    pagedItems,
-    totalPages,
-  } = usePagedData({
-    desktopPageSize: 4,
-    items: filteredGuests,
-    mobilePageSize: 1,
-    page,
-  });
+  const { currentPage, isMobileList, pageSize, pagedItems, totalPages } =
+    usePagedData({
+      desktopPageSize: 4,
+      items: filteredGuests,
+      mobilePageSize: 1,
+      page,
+    });
   const { handlePageChange, pageDirection } = usePageTransition({
     currentPage,
     isMobileList,
@@ -1242,7 +1273,9 @@ function SeatAssignmentDialog({
               emptyText={adminContent.pendingGuests.noFilterResults}
               emptyTitle={adminContent.pendingGuests.emptyTitle}
               guests={items}
-              onSelect={(guest) => setSelectedGuestKey(getPendingGuestRowKey(guest))}
+              onSelect={(guest) =>
+                setSelectedGuestKey(getPendingGuestRowKey(guest))
+              }
               selectedGuestKey={effectiveSelectedGuestKey}
             />
           )}
@@ -1268,7 +1301,12 @@ function SeatAssignmentDialog({
   );
 }
 
-function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
+function UnsavedChangesDialog({
+  changes,
+  onCancel,
+  onConfirm,
+  onSaveAndExit,
+}) {
   useViewportScrollLock(true);
 
   const dialog = (
@@ -1304,28 +1342,6 @@ function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <IconButton
             className="flex-1"
-            icon={<X size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.dialogs.keepEditing}
-            onClick={onCancel}
-            showText="always"
-            tone="secondary"
-            type="button"
-          >
-            {adminContent.tables.dialogs.keepEditing}
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<Undo2 size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.actions.discardChanges}
-            onClick={onDiscard}
-            showText="always"
-            tone="secondary"
-            type="button"
-          >
-            {adminContent.tables.actions.discardChanges}
-          </IconButton>
-          <IconButton
-            className="flex-1"
             icon={<Trash2 size={16} strokeWidth={1.8} />}
             label={adminContent.tables.dialogs.exitWithoutSaving}
             onClick={onConfirm}
@@ -1334,6 +1350,28 @@ function UnsavedChangesDialog({ changes, onCancel, onConfirm, onDiscard }) {
             type="button"
           >
             {adminContent.tables.dialogs.exitWithoutSaving}
+          </IconButton>
+          <IconButton
+            className="flex-1"
+            icon={<Save size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.dialogs.saveAndExit}
+            onClick={onSaveAndExit}
+            showText="always"
+            tone="primary"
+            type="button"
+          >
+            {adminContent.tables.dialogs.saveAndExit}
+          </IconButton>
+          <IconButton
+            className="flex-1"
+            icon={<X size={16} strokeWidth={1.8} />}
+            label={adminContent.tables.dialogs.keepEditing}
+            onClick={onCancel}
+            showText="always"
+            tone="terciary"
+            type="button"
+          >
+            {adminContent.tables.dialogs.keepEditing}
           </IconButton>
         </div>
       </div>
@@ -1420,74 +1458,69 @@ function TableTabActions({
   onSave,
   saving,
   selectedTable,
+  showText = true,
   tables,
 }) {
   return (
-    <div className="grid w-full grid-cols-3 gap-3 sm:grid-cols-3">
-      <IconButton
-        className="w-full"
-        disabled={!tables.length}
-        icon={<Download size={16} strokeWidth={1.8} />}
-        label={adminContent.tables.header.exportTable}
-        onClick={onExport}
-        tone="terciary"
-      >
-        {adminContent.tables.header.exportTable}
-      </IconButton>
+    <div className="grid w-full gap-3">
+      <div className="grid w-full grid-cols-2 gap-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-3">
+        <IconButton
+          className="w-full"
+          disabled={!hasPendingChanges || loading}
+          icon={<Undo2 size={16} strokeWidth={1.8} />}
+          label={adminContent.tables.actions.discardChanges}
+          onClick={onDiscard}
+          showText={showText ? "always" : undefined}
+          tone="secondary"
+        >
+          {showText ? adminContent.tables.actions.discardChanges : undefined}
+        </IconButton>
 
-      <IconButton
-        className="w-full"
-        disabled={!hasPendingChanges || loading}
-        icon={<Undo2 size={16} strokeWidth={1.8} />}
-        label={adminContent.tables.actions.discardChanges}
-        onClick={onDiscard}
-        tone="secondary"
-      >
-        {adminContent.tables.actions.discardChanges}
-      </IconButton>
+        <IconButton
+          className="w-full"
+          disabled={!hasPendingChanges || saving}
+          icon={<Save size={16} strokeWidth={1.8} />}
+          label={adminContent.tables.actions.saveChanges}
+          onClick={onSave}
+          showText={showText ? "always" : undefined}
+          tone="primary"
+        >
+          {showText ? adminContent.tables.actions.saveChanges : undefined}
+        </IconButton>
+      </div>
 
-      <IconButton
-        className="w-full"
-        icon={<Plus size={18} strokeWidth={2.4} />}
-        label={adminContent.tables.actions.addTable}
-        onClick={onCreate}
-        tone="primary"
-      >
-        {adminContent.tables.actions.addTable}
-      </IconButton>
+      <div className="grid w-full grid-cols-4 gap-3 sm:w-auto sm:grid-cols-4">
+        <IconButton
+          className="w-full"
+          disabled={!tables.length}
+          icon={<Download size={16} strokeWidth={1.8} />}
+          label={adminContent.tables.header.exportTable}
+          onClick={onExport}
+          tone="terciary"
+        >
+          {showText ? adminContent.tables.header.exportTable : undefined}
+        </IconButton>
 
-      <IconButton
-        className="w-full"
-        disabled={!selectedTable}
-        icon={<Trash2 size={16} strokeWidth={1.8} />}
-        label={adminContent.tables.actions.deleteTable}
-        onClick={onDelete}
-        tone="danger"
-      >
-        {adminContent.tables.actions.deleteTable}
-      </IconButton>
+        <CardActions
+          className="contents"
+          deleteLabel={adminContent.tables.actions.deleteTable}
+          editLabel={adminContent.tables.actions.editTable}
+          item={selectedTable}
+          onDelete={selectedTable ? onDelete : null}
+          onEdit={selectedTable ? onEdit : null}
+          showText={showText}
+        />
 
-      <IconButton
-        className="w-full"
-        disabled={!selectedTable}
-        icon={<Pencil size={16} strokeWidth={1.8} />}
-        label={adminContent.tables.actions.editTable}
-        onClick={onEdit}
-        tone="secondary"
-      >
-        {adminContent.tables.actions.editTable}
-      </IconButton>
-
-      <IconButton
-        className="w-full"
-        disabled={!hasPendingChanges || saving}
-        icon={<Save size={16} strokeWidth={1.8} />}
-        label={adminContent.tables.actions.saveChanges}
-        onClick={onSave}
-        tone="primary"
-      >
-        {adminContent.tables.actions.saveChanges}
-      </IconButton>
+        <IconButton
+          className="w-full"
+          icon={<Plus size={18} strokeWidth={2.4} />}
+          label={adminContent.tables.actions.addTable}
+          onClick={onCreate}
+          tone="primary"
+        >
+          {showText ? adminContent.tables.actions.addTable : undefined}
+        </IconButton>
+      </div>
     </div>
   );
 }
@@ -1515,7 +1548,9 @@ function PendingGuestAssignmentActions({
           onChange={(event) => onTableChange(event.target.value)}
           value={selectedTable}
         >
-          <option value="">{adminContent.pendingGuests.tablePlaceholder}</option>
+          <option value="">
+            {adminContent.pendingGuests.tablePlaceholder}
+          </option>
           {tables.map((table) => {
             const emptySeats = Table.getEmptySeats(table);
             const label = `${table.name} (${adminContent.pendingGuests.emptySeatsLabel(emptySeats.length)})`;
@@ -1768,7 +1803,8 @@ function unassignGuestsOutsideTableSize({ groups, seatCount, table }) {
     let changed = false;
     const guests = group.guests.map((guest) => {
       const isRemovedSeat =
-        guest.table === tableKey && Number(guest.seat) > nextSeatCount;
+        getTableKey({ name: guest.table }) === tableKey &&
+        Number(guest.seat) > nextSeatCount;
 
       if (!isRemovedSeat) return guest;
 

@@ -24,9 +24,26 @@ export default function CollapsiblePanel({
     >
       <div>
         <div className="flex items-center justify-between gap-4">
-          <h3 className="font-serif text-2xl text-[var(--color-accent-dark)]">
-            {title}
-          </h3>
+          {activeFilters.length > 0 ? (
+            <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+              {activeFilters.map((filter) => (
+                <button
+                  aria-label={`Quitar filtro ${filter.label}`}
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-accent)] px-3 py-1.5 text-xs font-medium text-white shadow-[var(--shadow-button)] transition hover:bg-[var(--color-accent)]/75"
+                  key={filter.key || filter.label}
+                  onClick={filter.onRemove}
+                  type="button"
+                >
+                  <span className="min-w-0 truncate">{filter.label}</span>
+                  <X className="shrink-0" size={13} strokeWidth={2.2} />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <h3 className="font-serif text-2xl text-[var(--color-accent-dark)]">
+              {title}
+            </h3>
+          )}
 
           <label className="relative inline-flex cursor-pointer items-center">
             <input
@@ -40,22 +57,6 @@ export default function CollapsiblePanel({
           </label>
         </div>
 
-        {activeFilters.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {activeFilters.map((filter) => (
-              <button
-                aria-label={`Quitar filtro ${filter.label}`}
-                className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-accent)] px-3 py-1.5 text-xs font-medium text-white shadow-[var(--shadow-button)] transition hover:bg-[var(--color-accent)]/75"
-                key={filter.key || filter.label}
-                onClick={filter.onRemove}
-                type="button"
-              >
-                <span className="min-w-0 truncate">{filter.label}</span>
-                <X className="shrink-0" size={13} strokeWidth={2.2} />
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <AnimatePresence initial={false}>

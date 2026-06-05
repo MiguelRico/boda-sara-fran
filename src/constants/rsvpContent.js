@@ -17,7 +17,7 @@ export const rsvpContent = {
     removeGuestLabel: (number) => `Eliminar invitado ${number}`,
   },
   contact: {
-    eyebrow: "Contacto",
+    eyebrow: "Datos de contacto",
     title: "Datos de contacto",
     fields: {
       groupName: {

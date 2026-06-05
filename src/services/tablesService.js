@@ -320,7 +320,8 @@ export const assignGuestToSeatLocal = ({
         index,
       });
       const isCurrentSeatGuest =
-        guest.table === tableName && guest.seat === seatNumber;
+        getTableKey({ name: guest.table }) === tableName &&
+        String(guest.seat) === String(seatNumber);
 
       if (!isSelectedGuest && !isCurrentSeatGuest) return guest;
 
@@ -392,7 +393,8 @@ export const unassignGuestFromSeatLocal = ({ groups, seat, table }) => {
     let changed = false;
     const guests = group.guests.map((guest) => {
       const isCurrentSeatGuest =
-        guest.table === tableName && guest.seat === seatNumber;
+        getTableKey({ name: guest.table }) === tableName &&
+        String(guest.seat) === String(seatNumber);
 
       if (!isCurrentSeatGuest) return guest;
 

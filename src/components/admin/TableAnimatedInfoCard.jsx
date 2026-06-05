@@ -6,18 +6,22 @@ import {
   Trash2,
   Armchair,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { Guest, Table } from "../../models";
 import { getTableGroupOption, TABLE_SHAPES } from "../../constants/tables";
 import { adminContent } from "../../constants/adminContent";
 import { tableContent } from "../../constants/tableContent";
+import usePagedData from "../../hooks/usePagedData";
+import usePageTransition from "../../hooks/usePageTransition";
 import IconButton from "../ui/IconButton";
 import RevealOnView from "../ui/RevealOnView";
 import SeatAssignmentModal from "../ui/SeatAssignmentModal";
 import DeleteDialog from "../ui/DeleteDialog";
+import AdminTableSection from "./AdminTableSection";
 import Card from "./Card";
 import CardActions from "./CardActions";
+import { PendingGuestsFilters } from "./PendingGuestsList";
 import TableGuestCard from "./TableGuestCard";
 
 export default function TableAnimatedInfoCard({
@@ -90,19 +94,18 @@ function TableInfoCard({
         eyebrow={groupLabel || tableContent.card.defaultEyebrow}
         title={tableLabel}
       >
-        {table.notes && (
-          <div className="flex min-w-0 flex-1 basis-[calc(50%-0.375rem)] items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-white/35 px-2.5 py-1.5 sm:basis-[calc(25%-0.375rem)]">
-            <span className="inline-flex min-w-0 items-center gap-1.5 text-[var(--color-accent)]">
-              {table.notes}
-            </span>
-          </div>
-        )}
-
         <TableDiagram
           onSeatClick={onSeatClick}
           onCenterClick={() => setShowAssignments(true)}
           table={table}
         />
+        {table.notes && (
+          <div className="mt-2 flex min-w-0 flex-1 basis-[calc(50%-0.375rem)] items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-white/35 px-2.5 py-1.5 sm:basis-[calc(25%-0.375rem)]">
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-[var(--color-accent)]">
+              {table.notes}
+            </span>
+          </div>
+        )}
       </Card>
 
       {showAssignments && (
@@ -122,9 +125,66 @@ function AssignmentModal({
   onClose,
   title = adminContent.tables.dialogs.assignedTitle,
 }) {
+  const contentRef = useRef(null);
   const assignedSeats = table.seats.filter((seat) => seat.guest);
+  const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState({
+    group: "",
+    menu: "",
+  });
+  const [selectedSeatKey, setSelectedSeatKey] = useState("");
   const [removingSeat, setRemovingSeat] = useState("");
   const [seatToUnassign, setSeatToUnassign] = useState(null);
+  const availableGroups = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          assignedSeats.map((seat) => seat.guest?.groupName).filter(Boolean),
+        ),
+      ),
+    [assignedSeats],
+  );
+  const availableMenus = useMemo(
+    () =>
+      Array.from(
+        new Set(assignedSeats.map((seat) => seat.guest?.menu).filter(Boolean)),
+      ),
+    [assignedSeats],
+  );
+  const filteredAssignedSeats = assignedSeats.filter((seat) => {
+    const guest = seat.guest || {};
+
+    if (filters.group && guest.groupName !== filters.group) {
+      return false;
+    }
+
+    if (filters.menu && guest.menu !== filters.menu) {
+      return false;
+    }
+
+    return true;
+  });
+  const { currentPage, isMobileList, pageSize, totalPages } = usePagedData({
+    desktopPageSize: 4,
+    items: filteredAssignedSeats,
+    mobilePageSize: 1,
+    page,
+  });
+  const { handlePageChange, pageDirection } = usePageTransition({
+    currentPage,
+    isMobileList,
+    onPageChange: setPage,
+    totalPages,
+  });
+  const effectiveSelectedSeatKey = filteredAssignedSeats.some(
+    (seat) => getAssignedSeatKey(seat) === selectedSeatKey,
+  )
+    ? selectedSeatKey
+    : getAssignedSeatKey(filteredAssignedSeats[0]);
+  const selectedSeat =
+    filteredAssignedSeats.find(
+      (seat) => getAssignedSeatKey(seat) === effectiveSelectedSeatKey,
+    ) || null;
 
   const handleConfirmUnassignSeat = async () => {
     if (!onUnassignSeat) return;
@@ -142,6 +202,13 @@ function AssignmentModal({
   const seatToUnassignGuestName = seatToUnassign?.guest
     ? Guest.getFullName(seatToUnassign.guest, "Invitado")
     : "";
+  const handleFilterChange = (filterKey, value) => {
+    setFilters((current) => ({
+      ...current,
+      [filterKey]: value,
+    }));
+    setPage(1);
+  };
 
   return (
     <>
@@ -160,29 +227,69 @@ function AssignmentModal({
           </span>
         }
       >
-        {assignedSeats.length ? (
-          <div className="space-y-4">
-            {assignedSeats.map((seat) => (
-              <AssignedSeatCard
-                isRemoving={removingSeat === seat.seat}
-                key={seat.seat}
-                onUnassign={
-                  onUnassignSeat ? () => setSeatToUnassign(seat) : undefined
-                }
-                seat={seat}
+        <AdminTableSection
+          actions={
+            onUnassignSeat && (
+              <IconButton
+                className="w-full"
+                disabled={!selectedSeat || removingSeat === selectedSeat?.seat}
+                icon={<Trash2 size={16} strokeWidth={1.8} />}
+                label={adminContent.tables.dialogs.unassignSeat}
+                onClick={() => selectedSeat && setSeatToUnassign(selectedSeat)}
+                showText="always"
+                tone="danger"
+              >
+                {selectedSeat && removingSeat === selectedSeat.seat
+                  ? adminContent.tables.dialogs.unassigningSeat
+                  : adminContent.tables.dialogs.unassignSeat}
+              </IconButton>
+            )
+          }
+          className="p-4 shadow-none hover:translate-y-0 sm:p-5"
+          contentRef={contentRef}
+          eyebrow={adminContent.tables.dialogs.assignedTitle}
+          filters={
+            assignedSeats.length > 0 && (
+              <PendingGuestsFilters
+                availableGroups={availableGroups}
+                availableMenus={availableMenus}
+                filters={filters}
+                onFilterChange={handleFilterChange}
               />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-[2rem] border border-[var(--color-border)] bg-white/45 p-6 text-center">
-            <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-              {tableContent.card.emptyAssignmentsTitle}
-            </p>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-              {tableContent.card.emptyAssignmentsText}
-            </p>
-          </div>
-        )}
+            )
+          }
+          getKey={getAssignedSeatKey}
+          isMobileList={isMobileList}
+          items={filteredAssignedSeats}
+          lockPageHeight={false}
+          mobilePageLabel={adminContent.tables.dialogs.guestLabel}
+          onNextPage={() =>
+            handlePageChange(currentPage + 1, contentRef.current)
+          }
+          onPrevPage={() =>
+            handlePageChange(currentPage - 1, contentRef.current)
+          }
+          page={currentPage}
+          pageDirection={pageDirection}
+          pageLabel={adminContent.tables.header.pageLabel}
+          pageSize={pageSize}
+          renderMeasurePage={(items) => (
+            <AssignedSeatsPage
+              items={items}
+              onSelect={() => {}}
+              selectedSeatKey={effectiveSelectedSeatKey}
+            />
+          )}
+          renderPage={(items) => (
+            <AssignedSeatsPage
+              items={items}
+              onSelect={(seat) => setSelectedSeatKey(getAssignedSeatKey(seat))}
+              selectedSeatKey={effectiveSelectedSeatKey}
+            />
+          )}
+          title={adminContent.tables.dialogs.assignedTitle}
+          totalPages={totalPages}
+        />
       </SeatAssignmentModal>
 
       {seatToUnassign && (
@@ -202,7 +309,7 @@ function AssignmentModal({
   );
 }
 
-function AssignedSeatCard({ isRemoving, onUnassign, seat }) {
+function AssignedSeatCard({ onSelect, seat, selected }) {
   const guestGroup = String(seat.guest.groupName || "").trim();
   const eyebrow = tableContent.card.seatEyebrow({
     group: guestGroup,
@@ -210,29 +317,63 @@ function AssignedSeatCard({ isRemoving, onUnassign, seat }) {
   });
 
   return (
-    <TableGuestCard
-      decorativeText={seat.seat}
-      eyebrow={eyebrow}
-      guest={seat.guest}
+    <div
+      className={`rounded-[2rem] transition ${
+        selected
+          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
+          : "ring-0"
+      }`}
+      onClick={() => onSelect?.(seat)}
     >
-      {onUnassign && (
-        <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <IconButton
-            className="w-full"
-            disabled={isRemoving}
-            icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.dialogs.unassignSeat}
-            onClick={onUnassign}
-            showText="always"
-            tone="danger"
-          >
-            {isRemoving
-              ? adminContent.tables.dialogs.unassigningSeat
-              : adminContent.tables.dialogs.unassignSeat}
-          </IconButton>
-        </div>
-      )}
-    </TableGuestCard>
+      <TableGuestCard
+        decorativeText={seat.seat}
+        eyebrow={eyebrow}
+        guest={seat.guest}
+      />
+    </div>
+  );
+}
+
+function AssignedSeatsPage({ items, onSelect, selectedSeatKey }) {
+  if (!items.length) return <AssignedSeatsEmptyState />;
+
+  return (
+    <>
+      <div className="hidden gap-4 md:grid lg:grid-cols-2">
+        {items.map((seat) => (
+          <AssignedSeatCard
+            key={getAssignedSeatKey(seat)}
+            onSelect={onSelect}
+            selected={getAssignedSeatKey(seat) === selectedSeatKey}
+            seat={seat}
+          />
+        ))}
+      </div>
+
+      <div className="grid gap-4 md:hidden">
+        {items.map((seat) => (
+          <AssignedSeatCard
+            key={getAssignedSeatKey(seat)}
+            onSelect={onSelect}
+            selected={getAssignedSeatKey(seat) === selectedSeatKey}
+            seat={seat}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function AssignedSeatsEmptyState() {
+  return (
+    <div className="rounded-[2rem] border border-[var(--color-border)] bg-white/45 p-6 text-center">
+      <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
+        {tableContent.card.emptyAssignmentsTitle}
+      </p>
+      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+        {tableContent.card.emptyAssignmentsText}
+      </p>
+    </div>
   );
 }
 
@@ -437,4 +578,10 @@ function getGuestInitials(guest) {
   const lastnameInitial = normalizedGuest.lastname.trim().charAt(0);
 
   return `${nameInitial}${lastnameInitial}`.toUpperCase();
+}
+
+function getAssignedSeatKey(seat = {}) {
+  const guest = seat.guest || {};
+
+  return `${seat.seat || ""}-${guest.groupName || ""}-${Guest.getFullName(guest, "Invitado")}`;
 }

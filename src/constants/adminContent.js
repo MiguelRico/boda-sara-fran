@@ -42,7 +42,7 @@ export const adminContent = {
         }`,
     },
     editor: {
-      guestListEyebrow: "Grupo",
+      guestListEyebrow: "Invitados",
       guestListTitle: "Invitados",
       guestCountLabel: ({ page, total }) => `${page} / ${total}`,
     },
@@ -55,6 +55,10 @@ export const adminContent = {
     },
     dialogs: {
       groupEditorTitle: "Editar grupo",
+      unsavedTitle: "Se perderan los cambios",
+      unsavedMessage:
+        "Tienes cambios sin guardar en esta confirmacion. Si sales ahora, se perderan.",
+      discardChanges: "Salir sin guardar",
       validationTitle: "Revisa la confirmación",
       validationMessage:
         "Hay campos obligatorios o con formato incorrecto. Corrigelos antes de guardar la confirmacion.",
@@ -100,7 +104,7 @@ export const adminContent = {
   tables: {
     tabs: [
       { id: "tables", label: "Mesas" },
-      { id: "pending", label: "Invitados Pendientes" },
+      { id: "pending", label: "Pendientes" },
     ],
     header: {
       adminEyebrow: "Panel privado",
@@ -159,6 +163,7 @@ export const adminContent = {
         "Tienes cambios pendientes en mesas. Si sales ahora, no se enviaran a Apps Script.",
       keepEditing: "Seguir editando",
       exitWithoutSaving: "Salir sin guardar",
+      saveAndExit: "Guardar y salir",
       problemTitle: "Ha ocurrido un problema",
       warningEyebrow: "Aviso",
     },

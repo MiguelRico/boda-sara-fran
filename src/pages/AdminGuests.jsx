@@ -1,7 +1,7 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRef } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useBeforeUnload } from "react-router-dom";
 import {
   AlertTriangle,
   Beef,
@@ -658,7 +658,7 @@ function getGroupSummaryChips(row) {
       ? {
           icon: <AlertTriangle size={13} strokeWidth={1.8} />,
           key: "other-allergies",
-          value: `Otras alergias: ${otherAllergiesCount}`,
+          value: `Otras: ${otherAllergiesCount}`,
         }
       : null,
     getGuestCountBy(
@@ -719,12 +719,56 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
   const [draft, setDraft] = useState(group);
   const [errors, setErrors] = useState({});
   const [validationPopupOpen, setValidationPopupOpen] = useState(false);
+  const [unsavedChangesOpen, setUnsavedChangesOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const savedDraftSnapshot = useMemo(
+    () =>
+      getStableJson(normalizeAdminGroupBeforeSave(group, { isCreation })),
+    [group, isCreation],
+  );
+  const currentDraftSnapshot = useMemo(
+    () =>
+      getStableJson(normalizeAdminGroupBeforeSave(draft, { isCreation })),
+    [draft, isCreation],
+  );
+  const hasUnsavedChanges = savedDraftSnapshot !== currentDraftSnapshot;
+  const pendingChanges = useMemo(
+    () => buildGroupEditorChanges(group, draft, { isCreation }),
+    [draft, group, isCreation],
+  );
   const renderFormItem = (index, children) => (
     <CinematicStaggeredRevealItem index={index} isVisible key={index}>
       {children}
     </CinematicStaggeredRevealItem>
   );
+
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (!hasUnsavedChanges || saving) return;
+
+        event.preventDefault();
+        event.returnValue = "";
+      },
+      [hasUnsavedChanges, saving],
+    ),
+  );
+
+  const handleRequestClose = () => {
+    if (saving) return;
+
+    if (hasUnsavedChanges) {
+      setUnsavedChangesOpen(true);
+      return;
+    }
+
+    onClose();
+  };
+
+  const handleDiscardChanges = () => {
+    setUnsavedChangesOpen(false);
+    onClose();
+  };
 
   const updateContact = (field, value) => {
     setDraft((current) =>
@@ -774,7 +818,7 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
 
   return (
     <EditorDialog
-      onClose={onClose}
+      onClose={handleRequestClose}
       title={adminContent.guests.dialogs.groupEditorTitle}
       titleId="group-editor-title"
     >
@@ -788,7 +832,7 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
         guests={draft.guests}
         loading={saving}
         onAddGuest={addGuest}
-        onCancel={onClose}
+        onCancel={handleRequestClose}
         onContactChange={updateContact}
         onGuestChange={updateGuest}
         onRemoveGuest={removeGuest}
@@ -807,6 +851,27 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
         title={adminContent.guests.dialogs.validationTitle}
         type="error"
       />
+
+      {unsavedChangesOpen && (
+        <DeleteDialog
+          confirmText={adminContent.guests.dialogs.discardChanges}
+          message={adminContent.guests.dialogs.unsavedMessage}
+          onCancel={() => setUnsavedChangesOpen(false)}
+          onConfirm={handleDiscardChanges}
+          title={adminContent.guests.dialogs.unsavedTitle}
+        >
+          <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
+            {pendingChanges.map((change, index) => (
+              <li
+                className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
+                key={`${change}-${index}`}
+              >
+                {change}
+              </li>
+            ))}
+          </ul>
+        </DeleteDialog>
+      )}
     </EditorDialog>
   );
 }
@@ -835,3 +900,123 @@ function downloadGuestsCsv(rows) {
     ]),
   });
 }
+
+function getStableJson(value) {
+  return JSON.stringify(value);
+}
+
+function buildGroupEditorChanges(originalGroup, draftGroup, { isCreation }) {
+  const original = normalizeAdminGroupBeforeSave(originalGroup, { isCreation });
+  const draft = normalizeAdminGroupBeforeSave(draftGroup, { isCreation });
+  const contactChanges = [];
+
+  if (isCreation) {
+    contactChanges.push("Grupo nuevo");
+  }
+
+  [
+    ["groupName", "Nombre de grupo"],
+    ["email", "Email"],
+    ["phone", "Telefono"],
+  ].forEach(([field, label]) => {
+    if (String(original[field] || "") !== String(draft[field] || "")) {
+      contactChanges.push(label);
+    }
+  });
+
+  const guestChanges = buildGuestEditorChanges(original.guests, draft.guests);
+  const groupLabel = getGroupChangeLabel(original, draft);
+  const changeParts = [];
+
+  if (contactChanges.length) {
+    changeParts.push(`contacto: ${contactChanges.join(", ")}`);
+  }
+
+  if (guestChanges.added.length) {
+    changeParts.push(`invitados anadidos: ${guestChanges.added.join(", ")}`);
+  }
+
+  if (guestChanges.removed.length) {
+    changeParts.push(
+      `invitados eliminados: ${guestChanges.removed.join(", ")}`,
+    );
+  }
+
+  if (guestChanges.modified.length) {
+    changeParts.push(
+      `invitados modificados: ${guestChanges.modified.join(", ")}`,
+    );
+  }
+
+  return changeParts.length
+    ? [`Grupo ${groupLabel}: ${changeParts.join("; ")}`]
+    : ["Cambios sin guardar"];
+}
+
+function buildGuestEditorChanges(originalGuests = [], draftGuests = []) {
+  const originalGuestsByKey = getGuestsByEditorKey(originalGuests);
+  const draftGuestsByKey = getGuestsByEditorKey(draftGuests);
+  const changes = {
+    added: [],
+    modified: [],
+    removed: [],
+  };
+
+  originalGuestsByKey.forEach((originalGuest, guestKey) => {
+    const draftGuest = draftGuestsByKey.get(guestKey);
+
+    if (!draftGuest) {
+      changes.removed.push(getGuestChangeLabel(originalGuest, guestKey));
+      return;
+    }
+
+    if (getStableJson(originalGuest) !== getStableJson(draftGuest)) {
+      changes.modified.push(getGuestChangeLabel(draftGuest, guestKey));
+    }
+  });
+
+  draftGuestsByKey.forEach((draftGuest, guestKey) => {
+    if (!originalGuestsByKey.has(guestKey)) {
+      changes.added.push(getGuestChangeLabel(draftGuest, guestKey));
+    }
+  });
+
+  return changes;
+}
+
+function getGuestsByEditorKey(guests = []) {
+  const guestKeyCounts = new Map();
+
+  return new Map(
+    guests.map((guest, index) => {
+      const baseKey = getGuestEditorBaseKey(guest, index);
+      const nextCount = (guestKeyCounts.get(baseKey) || 0) + 1;
+
+      guestKeyCounts.set(baseKey, nextCount);
+
+      return [`${baseKey}#${nextCount}`, guest];
+    }),
+  );
+}
+
+function getGuestEditorBaseKey(guest, index) {
+  const guestName = Guest.getFullName(guest, "")
+    .trim()
+    .toLowerCase();
+
+  return guestName || `invitado-${index + 1}`;
+}
+
+function getGuestChangeLabel(guest, guestKey) {
+  return Guest.getFullName(guest, "") || guestKey.replace(/#\d+$/, "");
+}
+
+function getGroupChangeLabel(original, draft) {
+  const originalLabel = original.groupName || original.email || "sin nombre";
+  const draftLabel = draft.groupName || draft.email || "sin nombre";
+
+  if (originalLabel === draftLabel) return draftLabel;
+
+  return `${originalLabel} -> ${draftLabel}`;
+}
+
