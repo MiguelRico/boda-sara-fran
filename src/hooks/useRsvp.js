@@ -9,7 +9,11 @@ import {
   saveGroup,
 } from "../services/rsvpService";
 import { decodeGroupName, getGroupNameUrl } from "../utils/groupNameCodec";
-import { validateRsvpEmail, validateRsvpForm } from "../utils/rsvpValidation";
+import {
+  validateRsvpContact,
+  validateRsvpEmail,
+  validateRsvpForm,
+} from "../utils/rsvpValidation";
 
 const createInitialPopup = () => ({
   closeText: "Cerrar",
@@ -156,6 +160,27 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     }
   };
 
+  const validateContactStep = () => {
+    const validationErrors = validateRsvpContact(contact);
+
+    setErrors((current) => ({
+      ...current,
+      email: validationErrors.email,
+      groupName: validationErrors.groupName,
+      phone: validationErrors.phone,
+    }));
+
+    return !hasValidationErrors(validationErrors);
+  };
+
+  const validateConfirmationStep = () => {
+    const validationErrors = validateRsvpForm({ contact, guests });
+
+    setErrors(validationErrors);
+
+    return !hasValidationErrors(validationErrors);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -284,6 +309,8 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     handleRemoveGuest,
     handleSearchInvitation,
     handleSubmit,
+    validateConfirmationStep,
+    validateContactStep,
     isEdition,
     popup,
     totalGuests,

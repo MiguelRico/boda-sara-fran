@@ -17,6 +17,13 @@ export const validateRsvpEmail = (email) => {
   return null;
 };
 
+export const validateRsvpContact = (contact) => {
+  return Confirmation.validateContact(contact, {
+    validateEmail: validateRsvpEmail,
+    validatePhone: isValidPhone,
+  });
+};
+
 export const validateRsvpForm = ({ contact, guests }) => {
   return Confirmation.validateForm(
     {

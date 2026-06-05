@@ -46,6 +46,7 @@ export default function RsvpCreate() {
           phone: false,
         }}
         errors={rsvp.errors}
+        flowMode="create"
         guests={rsvp.guests}
         loading={spinner.loading}
         onAddGuest={rsvp.handleAddGuest}
@@ -53,6 +54,8 @@ export default function RsvpCreate() {
         onGuestChange={rsvp.handleGuestChange}
         onRemoveGuest={rsvp.handleRemoveGuest}
         onSubmit={rsvp.handleSubmit}
+        onValidateConfirmation={rsvp.validateConfirmationStep}
+        onValidateContact={rsvp.validateContactStep}
         renderItem={renderFormItem}
         cancelTo="/rsvp"
       />
