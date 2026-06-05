@@ -244,6 +244,14 @@ export const siteContent = {
         to: "/admin/tables",
         emoji: "🪑",
       },
+      {
+        title: "Proveedores",
+        subtitle: "Gestiona servicios",
+        description:
+          "Organizar proveedores, servicios contratados y plazos de pago.",
+        to: "/admin/providers",
+        emoji: "🧾",
+      },
     ],
   },
 };

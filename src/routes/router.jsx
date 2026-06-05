@@ -10,6 +10,7 @@ import Admin from "../pages/Admin";
 import AdminStats from "../pages/AdminStats";
 import AdminGuests from "../pages/AdminGuests";
 import AdminTables from "../pages/AdminTables";
+import AdminProviders from "../pages/AdminProviders";
 
 export const router = createBrowserRouter([
   {
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
       {
         path: "admin/tables",
         element: <AdminTables />,
+      },
+      {
+        path: "admin/providers",
+        element: <AdminProviders />,
       },
     ],
   },

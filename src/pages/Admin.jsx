@@ -4,6 +4,7 @@ import {
   Armchair,
   ChartColumn,
   ClipboardCheck,
+  ReceiptText,
   Home,
   LockKeyhole,
   LogIn,
@@ -36,6 +37,7 @@ const adminCardIcons = {
   Invitados: ClipboardCheck,
   Resumen: ChartColumn,
   Mesas: Armchair,
+  Proveedores: ReceiptText,
 };
 
 const getAdminCard = (card) => {
