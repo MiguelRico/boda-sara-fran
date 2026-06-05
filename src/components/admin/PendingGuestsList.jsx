@@ -66,8 +66,28 @@ export function PendingGuestsFilters({
   filters,
   onFilterChange,
 }) {
+  const activeFilters = [
+    filters.group
+      ? {
+          key: "group",
+          label: filters.group,
+          onRemove: () => onFilterChange("group", ""),
+        }
+      : null,
+    filters.menu
+      ? {
+          key: "menu",
+          label: filters.menu,
+          onRemove: () => onFilterChange("menu", ""),
+        }
+      : null,
+  ].filter(Boolean);
+
   return (
-    <CollapsiblePanel title={adminContent.pendingGuests.filtersEyebrow}>
+    <CollapsiblePanel
+      activeFilters={activeFilters}
+      title={adminContent.pendingGuests.filtersEyebrow}
+    >
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label>{adminContent.pendingGuests.groupLabel}</Label>

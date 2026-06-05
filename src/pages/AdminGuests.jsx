@@ -448,8 +448,27 @@ export default function AdminGuests() {
 }
 
 function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
+  const selectedFilter = filters.find((item) => item.value === filter);
+  const activeFilters = [
+    query.trim()
+      ? {
+          key: "query",
+          label: query.trim(),
+          onRemove: () => onQueryChange(""),
+        }
+      : null,
+    filter !== "all" && selectedFilter
+      ? {
+          key: "filter",
+          label: selectedFilter.label,
+          onRemove: () => onFilterChange("all"),
+        }
+      : null,
+  ].filter(Boolean);
+
   return (
     <CollapsiblePanel
+      activeFilters={activeFilters}
       className="mb-5"
       title={adminContent.guests.filters.eyebrow}
     >
