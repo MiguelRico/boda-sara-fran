@@ -1,9 +1,4 @@
-import {
-  AnimatePresence,
-  motion,
-  useInView,
-  useReducedMotion,
-} from "framer-motion";
+import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
@@ -46,9 +41,8 @@ import SeatAssignmentModal from "../components/ui/SeatAssignmentModal";
 import PendingGuestsList, {
   PendingGuestsFilters,
 } from "../components/admin/PendingGuestsList";
-import { GuestDetailChips } from "../components/admin/TableGuestCard";
 import { Label, selectClassName } from "../components/rsvp/FormPrimitives";
-import { Guest } from "../models";
+import { Guest, Table } from "../models";
 import {
   assignGuestToSeatLocal,
   assignPendingGuestToSeatLocal,
@@ -124,6 +118,10 @@ export default function AdminTables() {
     group: "",
     menu: "",
   });
+  const [pendingGuestsSelectedTable, setPendingGuestsSelectedTable] =
+    useState("");
+  const [pendingGuestsSelectedSeat, setPendingGuestsSelectedSeat] =
+    useState("");
   const [pendingGuestsAssigningGuest, setPendingGuestsAssigningGuest] =
     useState("");
   const [pendingGuestsError, setPendingGuestsError] = useState("");
@@ -337,6 +335,32 @@ export default function AdminTables() {
     : pagedPendingGuests[0]
       ? getPendingGuestRowKey(pagedPendingGuests[0])
       : "";
+  const selectedPendingGuest = useMemo(
+    () =>
+      pagedPendingGuests.find(
+        (guest) =>
+          getPendingGuestRowKey(guest) === effectiveSelectedPendingGuestKey,
+      ) || null,
+    [effectiveSelectedPendingGuestKey, pagedPendingGuests],
+  );
+  const pendingGuestTablesWithSeats = useMemo(
+    () => tables.filter((table) => Table.getEmptySeats(table).length > 0),
+    [tables],
+  );
+  const pendingGuestsSelectedTableObj = useMemo(
+    () =>
+      pendingGuestTablesWithSeats.find(
+        (table) => table.name === pendingGuestsSelectedTable,
+      ) || null,
+    [pendingGuestTablesWithSeats, pendingGuestsSelectedTable],
+  );
+  const pendingGuestsAvailableSeats = useMemo(() => {
+    if (!pendingGuestsSelectedTableObj) return [];
+
+    return Table.getEmptySeats(pendingGuestsSelectedTableObj).map(
+      (seat) => seat.seat,
+    );
+  }, [pendingGuestsSelectedTableObj]);
   const assignableGuests = useMemo(
     () => getAssignableGuests(state.groups),
     [state.groups],
@@ -566,6 +590,8 @@ export default function AdminTables() {
           tableName,
           seatNumber,
         });
+        setPendingGuestsSelectedTable("");
+        setPendingGuestsSelectedSeat("");
       } catch (error) {
         setPendingGuestsError(
           error.message || adminContent.tables.errors.assignTable,
@@ -816,6 +842,32 @@ export default function AdminTables() {
                 />
               ) : (
                 <AdminTableSection
+                  actions={
+                    <PendingGuestAssignmentActions
+                      assigning={
+                        pendingGuestsAssigningGuest ===
+                        effectiveSelectedPendingGuestKey
+                      }
+                      availableSeats={pendingGuestsAvailableSeats}
+                      disabled={!selectedPendingGuest}
+                      onAssign={() =>
+                        selectedPendingGuest &&
+                        handleAssignPendingGuest(
+                          selectedPendingGuest,
+                          pendingGuestsSelectedTable,
+                          pendingGuestsSelectedSeat,
+                        )
+                      }
+                      onSeatChange={setPendingGuestsSelectedSeat}
+                      onTableChange={(value) => {
+                        setPendingGuestsSelectedTable(value);
+                        setPendingGuestsSelectedSeat("");
+                      }}
+                      selectedSeat={pendingGuestsSelectedSeat}
+                      selectedTable={pendingGuestsSelectedTable}
+                      tables={pendingGuestTablesWithSeats}
+                    />
+                  }
                   contentRef={tablesStartRef}
                   eyebrow={adminContent.pendingGuests.pendingEyebrow}
                   filters={
@@ -872,7 +924,6 @@ export default function AdminTables() {
                   }
                   renderMeasurePage={(items) => (
                     <PendingGuestsList
-                      assigningGuest=""
                       emptyText={
                         guestsPending.length
                           ? adminContent.pendingGuests.noFilterResults
@@ -880,15 +931,12 @@ export default function AdminTables() {
                       }
                       emptyTitle={adminContent.pendingGuests.emptyTitle}
                       guests={items}
-                      onAssignTable={() => {}}
                       onSelect={() => {}}
                       selectedGuestKey={effectiveSelectedPendingGuestKey}
-                      tables={tables}
                     />
                   )}
                   renderPage={(items) => (
                     <PendingGuestsList
-                      assigningGuest={pendingGuestsAssigningGuest}
                       emptyText={
                         guestsPending.length
                           ? adminContent.pendingGuests.noFilterResults
@@ -897,12 +945,10 @@ export default function AdminTables() {
                       emptyTitle={adminContent.pendingGuests.emptyTitle}
                       error={pendingGuestsError}
                       guests={items}
-                      onAssignTable={handleAssignPendingGuest}
                       onSelect={(guest) =>
                         setSelectedPendingGuestKey(getPendingGuestRowKey(guest))
                       }
                       selectedGuestKey={effectiveSelectedPendingGuestKey}
-                      tables={tables}
                     />
                   )}
                 />
@@ -1012,6 +1058,12 @@ function SeatAssignmentDialog({
 }) {
   const tableKey = table.name;
   const tableLabel = table.name;
+  const contentRef = useRef(null);
+  const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState({
+    group: "",
+    menu: "",
+  });
   const currentGuest = guests.find(
     (guest) =>
       guest.table === tableKey && String(guest.seat) === String(seat.seat),
@@ -1021,58 +1073,78 @@ function SeatAssignmentDialog({
     : seat.guest
       ? Guest.getFullName(seat.guest, "Invitado")
       : "";
-  const currentGuestValue = currentGuest
-    ? createGuestOptionValue({
-        groupName: currentGuest.groupName,
-        guestIndex: currentGuest.guestIndex,
-        name: currentGuestName,
-      })
-    : "";
   const canRemoveGuest = Boolean(currentGuest);
-  const [selectedGuest, setSelectedGuest] = useState(currentGuestValue);
-  const [selectedGuestDirection, setSelectedGuestDirection] = useState(1);
+  const [selectedGuestKey, setSelectedGuestKey] = useState(
+    currentGuest ? getPendingGuestRowKey(currentGuest) : "",
+  );
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
-  const selectedGuestDetails = getGuestFromOptionValue(guests, selectedGuest);
-  const reduceMotion = useReducedMotion();
-  const selectedGuestDetailsVariants = reduceMotion
-    ? {
-        enter: { opacity: 0 },
-        center: { opacity: 1 },
-        exit: { opacity: 0 },
-      }
-    : {
-        enter: (direction) => ({
-          opacity: 0,
-          x: direction > 0 ? 72 : -72,
-          filter: "blur(6px)",
-        }),
-        center: { opacity: 1, x: 0, filter: "blur(0px)" },
-        exit: (direction) => ({
-          opacity: 0,
-          x: direction > 0 ? -72 : 72,
-          filter: "blur(6px)",
-        }),
-      };
+  const availableGroups = Array.from(
+    new Set(guests.map((guest) => guest.groupName).filter(Boolean)),
+  );
+  const availableMenus = Array.from(
+    new Set(guests.map((guest) => guest.menu).filter(Boolean)),
+  );
+  const filteredGuests = guests.filter((guest) => {
+    if (filters.group && guest.groupName !== filters.group) {
+      return false;
+    }
 
-  const handleSelectedGuestChange = (nextValue) => {
-    const currentIndex = getGuestOptionIndex(guests, selectedGuest);
-    const nextIndex = getGuestOptionIndex(guests, nextValue);
+    if (filters.menu && guest.menu !== filters.menu) {
+      return false;
+    }
 
-    setSelectedGuestDirection(nextIndex >= currentIndex ? 1 : -1);
-    setSelectedGuest(nextValue);
-  };
+    return true;
+  });
+  const {
+    currentPage,
+    isMobileList,
+    pageSize,
+    pagedItems,
+    totalPages,
+  } = usePagedData({
+    desktopPageSize: 4,
+    items: filteredGuests,
+    mobilePageSize: 1,
+    page,
+  });
+  const { handlePageChange, pageDirection } = usePageTransition({
+    currentPage,
+    isMobileList,
+    onPageChange: setPage,
+    totalPages,
+  });
+  const effectiveSelectedGuestKey = filteredGuests.some(
+    (guest) => getPendingGuestRowKey(guest) === selectedGuestKey,
+  )
+    ? selectedGuestKey
+    : pagedItems[0]
+      ? getPendingGuestRowKey(pagedItems[0])
+      : "";
+  const selectedGuest =
+    filteredGuests.find(
+      (guest) => getPendingGuestRowKey(guest) === effectiveSelectedGuestKey,
+    ) || null;
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const handleAssign = () => {
+    if (!selectedGuest) return;
 
-    const [guestGroupName, guestIndex, guestName] = selectedGuest.split("|||");
-
-    onAssign({ guestGroupName, guestIndex, guestName });
+    onAssign({
+      guestGroupName: selectedGuest.groupName,
+      guestIndex: selectedGuest.guestIndex,
+      guestName: Guest.getFullName(selectedGuest, "Invitado"),
+    });
   };
 
   const handleConfirmRemove = () => {
     setShowRemoveConfirm(false);
     onRemove();
+  };
+  const handleFilterChange = (filterKey, value) => {
+    setFilters((current) => ({
+      ...current,
+      [filterKey]: value,
+    }));
+    setPage(1);
   };
 
   return (
@@ -1087,8 +1159,8 @@ function SeatAssignmentDialog({
         onClose={onCancel}
         title={adminContent.tables.dialogs.assignmentTitle}
       >
-        <form noValidate onSubmit={handleSubmit}>
-          <div className="mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+        <AdminTableSection
+          actions={
             <div
               className={`grid w-full gap-3 ${
                 canRemoveGuest ? "grid-cols-2" : "grid-cols-1"
@@ -1117,72 +1189,66 @@ function SeatAssignmentDialog({
                     ? adminContent.tables.dialogs.assigning
                     : adminContent.tables.dialogs.assign
                 }
+                onClick={handleAssign}
                 tone="primary"
-                type="submit"
+                type="button"
               >
                 {assigning
                   ? adminContent.tables.dialogs.assigning
                   : adminContent.tables.dialogs.assign}
               </IconButton>
             </div>
-          </div>
-
-          <Label>{adminContent.tables.dialogs.guestLabel}</Label>
-          <select
-            className={selectClassName}
-            disabled={assigning}
-            onChange={(event) => handleSelectedGuestChange(event.target.value)}
-            value={selectedGuest}
-          >
-            <option value="">
-              {adminContent.tables.dialogs.guestPlaceholder}
-            </option>
-            {guests.map((guest, index) => {
-              const guestName = Guest.getFullName(guest, "Invitado");
-              const assignmentText = Guest.getAssignmentText(guest);
-
-              return (
-                <option
-                  key={`${guest.groupName}-${guestName}-${index}`}
-                  value={createGuestOptionValue({
-                    groupName: guest.groupName,
-                    guestIndex: guest.guestIndex,
-                    name: guestName,
-                  })}
-                >
-                  {guestName} - {guest.groupName}
-                  {assignmentText ? ` (${assignmentText})` : ""}
-                </option>
-              );
-            })}
-          </select>
-
-          {selectedGuestDetails && (
-            <div className="relative mt-4 overflow-hidden">
-              <div aria-hidden="true" className="pointer-events-none invisible">
-                <SelectedGuestDetailsCard guest={selectedGuestDetails} />
-              </div>
-
-              <AnimatePresence custom={selectedGuestDirection} initial={false}>
-                <motion.div
-                  animate="center"
-                  className="absolute inset-x-0 top-0"
-                  custom={selectedGuestDirection}
-                  exit="exit"
-                  initial="enter"
-                  key={selectedGuest}
-                  transition={{
-                    duration: reduceMotion ? 0.18 : 0.48,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  variants={selectedGuestDetailsVariants}
-                >
-                  <SelectedGuestDetailsCard guest={selectedGuestDetails} />
-                </motion.div>
-              </AnimatePresence>
-            </div>
+          }
+          className="p-4 shadow-none hover:translate-y-0 sm:p-5"
+          contentRef={contentRef}
+          count={`${filteredGuests.length} ${
+            filteredGuests.length === 1 ? "invitado" : "invitados"
+          }`}
+          eyebrow={adminContent.tables.dialogs.guestLabel}
+          filters={
+            <PendingGuestsFilters
+              availableGroups={availableGroups}
+              availableMenus={availableMenus}
+              filters={filters}
+              onFilterChange={handleFilterChange}
+            />
+          }
+          getKey={getPendingGuestRowKey}
+          isMobileList={isMobileList}
+          items={filteredGuests}
+          lockPageHeight={false}
+          mobilePageLabel={adminContent.tables.dialogs.guestLabel}
+          onNextPage={() =>
+            handlePageChange(currentPage + 1, contentRef.current)
+          }
+          onPrevPage={() =>
+            handlePageChange(currentPage - 1, contentRef.current)
+          }
+          page={currentPage}
+          pageDirection={pageDirection}
+          pageLabel={adminContent.tables.header.pageLabel}
+          pageSize={pageSize}
+          renderMeasurePage={(items) => (
+            <PendingGuestsList
+              emptyText={adminContent.pendingGuests.noFilterResults}
+              emptyTitle={adminContent.pendingGuests.emptyTitle}
+              guests={items}
+              onSelect={() => {}}
+              selectedGuestKey={effectiveSelectedGuestKey}
+            />
           )}
-        </form>
+          renderPage={(items) => (
+            <PendingGuestsList
+              emptyText={adminContent.pendingGuests.noFilterResults}
+              emptyTitle={adminContent.pendingGuests.emptyTitle}
+              guests={items}
+              onSelect={(guest) => setSelectedGuestKey(getPendingGuestRowKey(guest))}
+              selectedGuestKey={effectiveSelectedGuestKey}
+            />
+          )}
+          title={adminContent.tables.dialogs.guestPlaceholder}
+          totalPages={totalPages}
+        />
       </SeatAssignmentModal>
 
       {showRemoveConfirm && (
@@ -1199,18 +1265,6 @@ function SeatAssignmentDialog({
         />
       )}
     </>
-  );
-}
-
-function SelectedGuestDetailsCard({ guest }) {
-  return (
-    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-      <p className="section-eyebrow mb-2">{guest.groupName || "Invitado"}</p>
-      <h3 className="break-words font-serif text-2xl leading-none text-[var(--color-text)]">
-        {Guest.getFullName(guest, "Invitado")}
-      </h3>
-      <GuestDetailChips className="mt-3" guest={guest} />
-    </div>
   );
 }
 
@@ -1438,6 +1492,91 @@ function TableTabActions({
   );
 }
 
+function PendingGuestAssignmentActions({
+  assigning,
+  availableSeats,
+  disabled,
+  onAssign,
+  onSeatChange,
+  onTableChange,
+  selectedSeat,
+  selectedTable,
+  tables,
+}) {
+  const canAssign = Boolean(!disabled && selectedTable && selectedSeat);
+
+  return (
+    <div className="grid w-full gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+      <div>
+        <Label>{adminContent.pendingGuests.tableLabel}</Label>
+        <select
+          className={`${selectClassName} text-sm`}
+          disabled={disabled || assigning}
+          onChange={(event) => onTableChange(event.target.value)}
+          value={selectedTable}
+        >
+          <option value="">{adminContent.pendingGuests.tablePlaceholder}</option>
+          {tables.map((table) => {
+            const emptySeats = Table.getEmptySeats(table);
+            const label = `${table.name} (${adminContent.pendingGuests.emptySeatsLabel(emptySeats.length)})`;
+
+            return (
+              <option key={table.name} value={table.name}>
+                {label}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+
+      <div>
+        <Label>{adminContent.pendingGuests.seatLabel}</Label>
+        <select
+          className={`${selectClassName} text-sm disabled:opacity-50`}
+          disabled={!selectedTable || disabled || assigning}
+          onChange={(event) => onSeatChange(event.target.value)}
+          value={selectedSeat}
+        >
+          <option value="">
+            {selectedTable
+              ? adminContent.pendingGuests.tablePlaceholder
+              : adminContent.pendingGuests.selectTableFirst}
+          </option>
+          {availableSeats.map((seatNum) => (
+            <option key={seatNum} value={seatNum}>
+              {adminContent.pendingGuests.seatOption(seatNum)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <IconButton
+        className="w-full self-end"
+        disabled={!canAssign || assigning}
+        icon={
+          assigning ? (
+            <span className="inline-block animate-spin">...</span>
+          ) : (
+            <Check size={16} strokeWidth={2} />
+          )
+        }
+        label={
+          assigning
+            ? adminContent.pendingGuests.assigning
+            : adminContent.pendingGuests.assign
+        }
+        onClick={onAssign}
+        showText="always"
+        tone={canAssign ? "primary" : "default"}
+      >
+        {assigning
+          ? adminContent.pendingGuests.assigning
+          : adminContent.pendingGuests.assign}
+      </IconButton>
+    </div>
+  );
+}
+
 function TableCardWithActions({
   index = 0,
   onSeatClick,
@@ -1648,44 +1787,6 @@ function unassignGuestsOutsideTableSize({ groups, seatCount, table }) {
 
 function getStableJson(value) {
   return JSON.stringify(value);
-}
-
-function createGuestOptionValue({ groupName, guestIndex = "", name }) {
-  return `${groupName || ""}|||${guestIndex}|||${name || ""}`;
-}
-
-function getGuestFromOptionValue(guests, value) {
-  if (!value) return null;
-
-  const [guestGroupName, guestIndex, guestName] = value.split("|||");
-
-  return (
-    guests.find((guest) => {
-      if (guest.groupName !== guestGroupName) return false;
-
-      if (guestIndex !== "") {
-        return String(guest.guestIndex) === guestIndex;
-      }
-
-      return Guest.getFullName(guest, "Invitado") === guestName;
-    }) || null
-  );
-}
-
-function getGuestOptionIndex(guests, value) {
-  if (!value) return -1;
-
-  const [guestGroupName, guestIndex, guestName] = value.split("|||");
-
-  return guests.findIndex((guest) => {
-    if (guest.groupName !== guestGroupName) return false;
-
-    if (guestIndex !== "") {
-      return String(guest.guestIndex) === guestIndex;
-    }
-
-    return Guest.getFullName(guest, "Invitado") === guestName;
-  });
 }
 
 function getPendingGuestRowKey(guest) {

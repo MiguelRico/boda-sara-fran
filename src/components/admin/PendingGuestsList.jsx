@@ -1,28 +1,19 @@
-import { useMemo, useState } from "react";
-import { AlertCircle, Check } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 import { adminContent } from "../../constants/adminContent";
-import { Table, Guest } from "../../models";
+import { Guest } from "../../models";
 import CollapsiblePanel from "../ui/CollapsiblePanel";
-import IconButton from "../ui/IconButton";
 import TableGuestCard from "./TableGuestCard";
 import { selectClassName, Label } from "../rsvp/FormPrimitives";
 
 export default function PendingGuestsList({
-  assigningGuest = "",
   emptyText = adminContent.pendingGuests.emptyText,
   emptyTitle = adminContent.pendingGuests.emptyTitle,
   error = "",
   guests = [],
-  tables = [],
-  onAssignTable,
   onSelect,
   selectedGuestKey = "",
 }) {
-  const tablesWithSeats = useMemo(() => {
-    return tables.filter((table) => Table.getEmptySeats(table).length > 0);
-  }, [tables]);
-
   if (!guests.length) {
     return (
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
@@ -49,12 +40,9 @@ export default function PendingGuestsList({
       )}
 
       <PendingGuestsPage
-        assigningGuest={assigningGuest}
         guests={guests}
-        onAssign={onAssignTable}
         onSelect={onSelect}
         selectedGuestKey={selectedGuestKey}
-        tables={tablesWithSeats}
       />
     </div>
   );
@@ -126,24 +114,18 @@ export function PendingGuestsFilters({
 }
 
 function PendingGuestsPage({
-  assigningGuest,
   guests,
-  onAssign,
   onSelect,
   selectedGuestKey,
-  tables,
 }) {
   return (
     <div className="space-y-3">
       {guests.map((guest) => (
         <GuestAssignmentRow
           guest={guest}
-          isAssigning={assigningGuest === getPendingGuestRowKey(guest)}
           key={getPendingGuestRowKey(guest)}
-          onAssign={onAssign}
           onSelect={onSelect}
           selected={getPendingGuestRowKey(guest) === selectedGuestKey}
-          tables={tables}
         />
       ))}
     </div>
@@ -152,34 +134,9 @@ function PendingGuestsPage({
 
 function GuestAssignmentRow({
   guest,
-  tables,
-  onAssign,
   onSelect,
-  isAssigning,
   selected,
 }) {
-  const [selectedTable, setSelectedTable] = useState("");
-  const [selectedSeat, setSelectedSeat] = useState("");
-
-  const selectedTableObj = useMemo(
-    () => tables.find((table) => table.name === selectedTable),
-    [selectedTable, tables],
-  );
-
-  const availableSeats = useMemo(() => {
-    if (!selectedTableObj) return [];
-
-    return Table.getEmptySeats(selectedTableObj).map((seat) => seat.seat);
-  }, [selectedTableObj]);
-
-  const canAssign = Boolean(selectedTable && selectedSeat);
-
-  const handleAssignClick = () => {
-    if (canAssign) {
-      onAssign(guest, selectedTable, selectedSeat);
-    }
-  };
-
   return (
     <div
       className={`rounded-[2rem] transition ${
@@ -193,83 +150,7 @@ function GuestAssignmentRow({
         decorativeText="?"
         eyebrow={guest.groupName || adminContent.pendingGuests.pendingEyebrow}
         guest={guest}
-      >
-        <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:grid-cols-1">
-            <div>
-              <Label>{adminContent.pendingGuests.tableLabel}</Label>
-              <select
-                value={selectedTable}
-                onChange={(event) => {
-                  setSelectedTable(event.target.value);
-                  setSelectedSeat("");
-                }}
-                disabled={isAssigning}
-                className={`${selectClassName} text-sm`}
-              >
-                <option value="">
-                  {adminContent.pendingGuests.tablePlaceholder}
-                </option>
-                {tables.map((table) => {
-                  const emptySeats = Table.getEmptySeats(table);
-                  const label = `${table.name} (${adminContent.pendingGuests.emptySeatsLabel(emptySeats.length)})`;
-
-                  return (
-                    <option key={table.name} value={table.name}>
-                      {label}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            <div>
-              <Label>{adminContent.pendingGuests.seatLabel}</Label>
-              <select
-                value={selectedSeat}
-                onChange={(event) => setSelectedSeat(event.target.value)}
-                disabled={!selectedTable || isAssigning}
-                className={`${selectClassName} text-sm disabled:opacity-50`}
-              >
-                <option value="">
-                  {selectedTable
-                    ? adminContent.pendingGuests.tablePlaceholder
-                    : adminContent.pendingGuests.selectTableFirst}
-                </option>
-                {availableSeats.map((seatNum) => (
-                  <option key={seatNum} value={seatNum}>
-                    {adminContent.pendingGuests.seatOption(seatNum)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <IconButton
-              className="w-full"
-              disabled={!canAssign || isAssigning}
-              icon={
-                isAssigning ? (
-                  <span className="inline-block animate-spin">...</span>
-                ) : (
-                  <Check size={16} strokeWidth={2} />
-                )
-              }
-              label={
-                isAssigning
-                  ? adminContent.pendingGuests.assigning
-                  : adminContent.pendingGuests.assign
-              }
-              onClick={handleAssignClick}
-              showText="always"
-              tone={canAssign ? "primary" : "default"}
-            >
-              {isAssigning
-                ? adminContent.pendingGuests.assigning
-                : adminContent.pendingGuests.assign}
-            </IconButton>
-          </div>
-        </div>
-      </TableGuestCard>
+      />
     </div>
   );
 }
