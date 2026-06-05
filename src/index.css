@@ -87,7 +87,7 @@ body {
   }
 
   .section-text {
-    @apply mx-auto mt-6 max-w-2xl font-sans text-[0.95rem] leading-[1.9] sm:text-base;
+    @apply mx-auto mt-6 mb-4 max-w-2xl font-sans text-[0.95rem] leading-[1.9] sm:text-base;
     color: var(--color-muted);
   }
 
@@ -103,8 +103,7 @@ body {
     transform: translateY(-4px);
   }
 
-  :where(div, form):has(> .form-field-error)
-    > :is(input, select, textarea) {
+  :where(div, form):has(> .form-field-error) > :is(input, select, textarea) {
     border-color: rgb(254 202 202);
     background: rgb(254 242 242 / 0.7);
     color: rgb(127 29 29);

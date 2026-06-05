@@ -186,26 +186,7 @@ export default function AdminStats() {
 
 function StatsOverview({ loading, onRefresh, stats }) {
   return (
-    <div className="mt-4 mb-5">
-      <div className="mb-4 flex justify-end">
-        <IconButton
-          className="w-full sm:w-auto"
-          disabled={loading}
-          icon={
-            <RefreshCw
-              className={loading ? "animate-spin" : ""}
-              size={16}
-              strokeWidth={1.8}
-            />
-          }
-          label="Actualizar"
-          onClick={onRefresh}
-          showText
-        >
-          Actualizar
-        </IconButton>
-      </div>
-
+    <div className="mb-4">
       <section className="premium-card">
         <CardHeader
           backgroundIcon={<ClipboardCheck size={74} strokeWidth={1.5} />}

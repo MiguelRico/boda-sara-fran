@@ -36,7 +36,6 @@ import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import TabNavigation from "../components/ui/TabNavigation";
 import DeleteDialog from "../components/ui/DeleteDialog";
-import CardListSkeleton from "../components/ui/CardListSkeleton";
 import SeatAssignmentModal from "../components/ui/SeatAssignmentModal";
 import PendingGuestsList, {
   PendingGuestsFilters,
@@ -794,7 +793,7 @@ export default function AdminTables() {
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={tablesInView}>
-            <div className="space-y-5">
+            <div className="space-y-5 mt-4">
               <TabNavigation
                 tabs={SECTION_TABS}
                 activeTab={activeTab}
@@ -838,13 +837,13 @@ export default function AdminTables() {
                   pageLabel={adminContent.tables.header.pageLabel}
                   pageSize={state.loading ? undefined : pageSize}
                   sectionRef={tablesCardRef}
-                  skeleton={
-                    <CardListSkeleton
-                      columnsClassName="lg:grid-cols-2"
-                      itemClassName="min-h-40"
-                      lines={2}
-                    />
-                  }
+                  skeletonConfig={{
+                    content: {
+                      columnsClassName: "lg:grid-cols-2",
+                      itemClassName: "min-h-40",
+                      lines: 2,
+                    },
+                  }}
                   title={adminContent.tables.header.sectionTitle}
                   totalPages={state.loading ? undefined : totalPages}
                   renderMeasurePage={(items) => (
@@ -939,13 +938,14 @@ export default function AdminTables() {
                   }
                   pageSize={state.loading ? undefined : pendingGuestsPageSize}
                   sectionRef={tablesCardRef}
-                  skeleton={
-                    <CardListSkeleton
-                      columnsClassName="lg:grid-cols-2"
-                      itemClassName="min-h-40"
-                      lines={2}
-                    />
-                  }
+                  skeletonConfig={{
+                    content: {
+                      columnsClassName: "lg:grid-cols-2",
+                      itemClassName: "min-h-40",
+                      lines: 2,
+                    },
+                    filters: true,
+                  }}
                   title={adminContent.pendingGuests.title}
                   totalPages={
                     state.loading ? undefined : pendingGuestsTotalPages
@@ -1301,12 +1301,7 @@ function SeatAssignmentDialog({
   );
 }
 
-function UnsavedChangesDialog({
-  changes,
-  onCancel,
-  onConfirm,
-  onSaveAndExit,
-}) {
+function UnsavedChangesDialog({ changes, onCancel, onConfirm, onSaveAndExit }) {
   useViewportScrollLock(true);
 
   const dialog = (
@@ -1383,11 +1378,11 @@ function UnsavedChangesDialog({
 
 function TablesOverview({ loading, stats }) {
   return (
-    <section className="premium-card mt-4 mb-5">
+    <section className="premium-card">
       <p className="section-eyebrow mb-2">
         {adminContent.tables.overview.eyebrow}
       </p>
-      <h2 className="mb-5 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+      <h2 className="mb-4 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
         {adminContent.tables.overview.title}
       </h2>
       {loading ? (

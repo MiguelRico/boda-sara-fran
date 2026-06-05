@@ -1,9 +1,4 @@
-import {
-  FieldError,
-  FormCard,
-  inputClassName,
-  Label,
-} from "./FormPrimitives";
+import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 import { rsvpContent } from "../../constants/rsvpContent";
 
 export default function ContactDetailsCard({
@@ -23,13 +18,13 @@ export default function ContactDetailsCard({
 
   return (
     <FormCard>
-      <p className="section-eyebrow mb-4">{rsvpContent.contact.eyebrow}</p>
+      <p className="section-eyebrow">{rsvpContent.contact.eyebrow}</p>
 
       <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
         Datos de contacto
       </h2>
 
-      <div className="mt-4 grid gap-5 md:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-3 mt-4">
         <div>
           <Label>{rsvpContent.contact.fields.groupName.label}</Label>
 

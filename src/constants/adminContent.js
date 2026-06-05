@@ -31,7 +31,7 @@ export const adminContent = {
     },
     list: {
       eyebrow: "Invitados",
-      title: "Confirmaciones",
+      title: "Invitados",
       pageLabel: "Página",
       mobilePageLabel: "Confirmación",
       emptyTitle: "Sin resultados",

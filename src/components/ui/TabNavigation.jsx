@@ -28,7 +28,7 @@ export default function TabNavigation({
 
   return (
     <div
-      className={`flex w-full gap-1 border-b border-[var(--color-border)] ${className}`}
+      className={`flex w-full gap-1 border-b border-[var(--color-border)] mb-0 ${className}`}
       role="tablist"
     >
       {tabs.map((tab) => (

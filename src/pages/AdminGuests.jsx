@@ -36,7 +36,6 @@ import CardActions from "../components/admin/CardActions";
 import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
 import AdminTableSection from "../components/admin/AdminTableSection";
-import CardListSkeleton from "../components/ui/CardListSkeleton";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import Chip from "../components/ui/Chip";
 import RsvpForm from "../forms/RsvpForm";
@@ -47,10 +46,7 @@ import {
 } from "../constants/rsvp";
 import { Confirmation, Guest } from "../models";
 import { deleteAdminGroup, saveAdminGroup } from "../services/rsvpService";
-import {
-  loadAdminDataOnce,
-  setAdminGroups,
-} from "../services/adminDataStore";
+import { loadAdminDataOnce, setAdminGroups } from "../services/adminDataStore";
 import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
 import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
@@ -460,7 +456,14 @@ export default function AdminGuests() {
                 />
               )}
               sectionRef={tableCardRef}
-              skeleton={<CardListSkeleton />}
+              skeletonConfig={{
+                content: {
+                  columnsClassName: "lg:grid-cols-2",
+                  itemClassName: "min-h-40",
+                  lines: 2,
+                },
+                filters: true,
+              }}
               title={adminContent.guests.list.title}
               totalPages={totalPages}
             />
@@ -534,7 +537,7 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
   return (
     <CollapsiblePanel
       activeFilters={activeFilters}
-      className="mb-5"
+      className="mb-4"
       title={adminContent.guests.filters.eyebrow}
     >
       <div className="grid gap-4 lg:grid-cols-[1fr_18rem] lg:items-end">
@@ -833,7 +836,7 @@ function AdminGuestConfirmationCard({
         titleRef={titleRef}
         titleStyle={titleStyle}
       >
-        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+        <div className="grid grid-cols-2 gap-2 text-xs">
           {chips.map((chip) => (
             <Chip
               className={chip.className}
@@ -967,13 +970,11 @@ function GroupEditor({ group, isCreation, mode = "full", onClose, onSave }) {
   const [unsavedChangesOpen, setUnsavedChangesOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const savedDraftSnapshot = useMemo(
-    () =>
-      getStableJson(normalizeAdminGroupBeforeSave(group, { isCreation })),
+    () => getStableJson(normalizeAdminGroupBeforeSave(group, { isCreation })),
     [group, isCreation],
   );
   const currentDraftSnapshot = useMemo(
-    () =>
-      getStableJson(normalizeAdminGroupBeforeSave(draft, { isCreation })),
+    () => getStableJson(normalizeAdminGroupBeforeSave(draft, { isCreation })),
     [draft, isCreation],
   );
   const hasUnsavedChanges = savedDraftSnapshot !== currentDraftSnapshot;
@@ -1238,15 +1239,19 @@ function buildPendingGuestChanges(savedGroups, currentGroups) {
     }
 
     if (getStableJson(savedGroup) !== getStableJson(group)) {
-      changes.push(...buildGroupEditorChanges(savedGroup, group, {
-        isCreation: false,
-      }));
+      changes.push(
+        ...buildGroupEditorChanges(savedGroup, group, {
+          isCreation: false,
+        }),
+      );
     }
   });
 
   savedByGroupName.forEach((group, groupName) => {
     if (!currentByGroupName.has(groupName)) {
-      changes.push(`Grupo eliminado: ${groupName || group.email || "sin nombre"}`);
+      changes.push(
+        `Grupo eliminado: ${groupName || group.email || "sin nombre"}`,
+      );
     }
   });
 
@@ -1348,9 +1353,7 @@ function getGuestsByEditorKey(guests = []) {
 }
 
 function getGuestEditorBaseKey(guest, index) {
-  const guestName = Guest.getFullName(guest, "")
-    .trim()
-    .toLowerCase();
+  const guestName = Guest.getFullName(guest, "").trim().toLowerCase();
 
   return guestName || `invitado-${index + 1}`;
 }
