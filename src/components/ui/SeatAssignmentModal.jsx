@@ -2,9 +2,11 @@ import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
+import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
 import IconButton from "./IconButton";
 
 export default function SeatAssignmentModal({
+  blockRouteChange = true,
   children,
   eyebrow,
   maxWidthClassName = "max-w-3xl",
@@ -12,6 +14,7 @@ export default function SeatAssignmentModal({
   title,
 }) {
   useViewportScrollLock(true);
+  useCloseOnRouteAttempt(blockRouteChange, onClose);
 
   return createPortal(
     <div className="rsvp-dialog-overlay" onClick={onClose}>

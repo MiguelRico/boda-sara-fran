@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
+import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
 import IconButton from "../ui/IconButton";
 
 export default function EditorDialog({
@@ -12,6 +13,7 @@ export default function EditorDialog({
   titleId = "editor-dialog-title",
 }) {
   useViewportScrollLock(true);
+  useCloseOnRouteAttempt(true, onClose);
 
   return createPortal(
     <div className="rsvp-dialog-overlay">

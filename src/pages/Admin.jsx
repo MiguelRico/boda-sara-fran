@@ -17,6 +17,7 @@ import {
 import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
+import Spinner from "../components/ui/Spinner";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
@@ -56,6 +57,7 @@ export default function Admin() {
   });
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   });
@@ -81,6 +83,7 @@ export default function Admin() {
 
     if (password === ADMIN_PASSWORD) {
       try {
+        setLoading(true);
         await loadAdminDataOnce({ password: ADMIN_PASSWORD });
         window.sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
         window.dispatchEvent(new Event(ADMIN_AUTH_EVENT));
@@ -90,6 +93,8 @@ export default function Admin() {
       } catch (error) {
         console.error(error);
         setError(adminContent.auth.error);
+      } finally {
+        setLoading(false);
       }
       return;
     }
@@ -99,6 +104,8 @@ export default function Admin() {
 
   return (
     <CinematicPage>
+      {loading && <Spinner text={adminContent.auth.loading} />}
+
       <CinematicSection
         className="surface-soft"
         innerClassName="max-w-5xl"
@@ -121,6 +128,7 @@ export default function Admin() {
               <AdminLogin
                 canSubmit={canSubmit}
                 error={error}
+                loading={loading}
                 onPasswordChange={setPassword}
                 onSubmit={handleSubmit}
                 password={password}
@@ -136,6 +144,7 @@ export default function Admin() {
 function AdminLogin({
   canSubmit,
   error,
+  loading,
   onPasswordChange,
   onSubmit,
   password,
@@ -165,6 +174,7 @@ function AdminLogin({
           autoComplete="current-password"
           autoFocus
           className={inputClassName}
+          disabled={loading}
           onChange={(event) => {
             onPasswordChange(event.target.value);
           }}
@@ -177,7 +187,7 @@ function AdminLogin({
 
         <div className="mt-6 flex flex-col gap-3">
           <IconButton
-            disabled={!canSubmit}
+            disabled={!canSubmit || loading}
             icon={<LogIn size={16} strokeWidth={1.8} />}
             showText="always"
             tone="primary"
@@ -187,6 +197,7 @@ function AdminLogin({
           </IconButton>
 
           <IconButton
+            disabled={loading}
             icon={<Home size={16} strokeWidth={1.8} />}
             showText="always"
             to="/"

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { AlertTriangle, Trash2, X } from "lucide-react";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
+import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
 import IconButton from "./IconButton";
 
 export default function DeleteDialog({
@@ -17,6 +18,7 @@ export default function DeleteDialog({
   const messageId = useId();
 
   useViewportScrollLock(true);
+  useCloseOnRouteAttempt(true, onCancel);
 
   const dialog = (
     <div className="rsvp-dialog-overlay">

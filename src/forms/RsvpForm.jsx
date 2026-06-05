@@ -88,15 +88,6 @@ export default function RsvpForm({
     setGuestDeleteTarget(null);
   };
   const handleRemoveGuest = (guest, index) => {
-    if (Guest.isEmpty(guest)) {
-      onRemoveGuest(index);
-      setGuestPageDirection(-1);
-      setGuestPage((current) =>
-        Math.min(current, Math.max(guests.length - 1, 1)),
-      );
-      return;
-    }
-
     setGuestDeleteTarget({ guest, index });
   };
   const handleSubmit = (event) => {

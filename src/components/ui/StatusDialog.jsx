@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
+import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
 import IconButton from "./IconButton";
 
 export default function StatusDialog({
@@ -20,6 +21,7 @@ export default function StatusDialog({
   const navigate = useNavigate();
 
   useViewportScrollLock(open);
+  useCloseOnRouteAttempt(open, onClose);
 
   if (!open) return null;
 

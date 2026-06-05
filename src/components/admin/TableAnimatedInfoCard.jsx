@@ -15,6 +15,7 @@ import { tableContent } from "../../constants/tableContent";
 import IconButton from "../ui/IconButton";
 import RevealOnView from "../ui/RevealOnView";
 import SeatAssignmentModal from "../ui/SeatAssignmentModal";
+import DeleteDialog from "../ui/DeleteDialog";
 import Card from "./Card";
 import CardActions from "./CardActions";
 import TableGuestCard from "./TableGuestCard";
@@ -123,56 +124,81 @@ function AssignmentModal({
 }) {
   const assignedSeats = table.seats.filter((seat) => seat.guest);
   const [removingSeat, setRemovingSeat] = useState("");
+  const [seatToUnassign, setSeatToUnassign] = useState(null);
 
-  const handleUnassignSeat = async (seat) => {
+  const handleConfirmUnassignSeat = async () => {
     if (!onUnassignSeat) return;
+    if (!seatToUnassign) return;
 
-    setRemovingSeat(seat.seat);
+    setRemovingSeat(seatToUnassign.seat);
 
     try {
-      await onUnassignSeat({ seat, table });
+      await onUnassignSeat({ seat: seatToUnassign, table });
+      setSeatToUnassign(null);
     } finally {
       setRemovingSeat("");
     }
   };
+  const seatToUnassignGuestName = seatToUnassign?.guest
+    ? Guest.getFullName(seatToUnassign.guest, "Invitado")
+    : "";
 
   return (
-    <SeatAssignmentModal
-      eyebrow={`Mesa ${table.name} ${assignedSeats.length} ${
-        assignedSeats.length === 1 ? "invitado asignado" : "invitados asignados"
-      }`}
-      onClose={onClose}
-      title={
-        <span className="inline-flex items-center gap-2">
-          <Armchair size={22} strokeWidth={1.8} />
-          {title}
-        </span>
-      }
-    >
-      {assignedSeats.length ? (
-        <div className="space-y-4">
-          {assignedSeats.map((seat) => (
-            <AssignedSeatCard
-              isRemoving={removingSeat === seat.seat}
-              key={seat.seat}
-              onUnassign={
-                onUnassignSeat ? () => handleUnassignSeat(seat) : undefined
-              }
-              seat={seat}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-[2rem] border border-[var(--color-border)] bg-white/45 p-6 text-center">
-          <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-            {tableContent.card.emptyAssignmentsTitle}
-          </p>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-            {tableContent.card.emptyAssignmentsText}
-          </p>
-        </div>
+    <>
+      <SeatAssignmentModal
+        blockRouteChange={!seatToUnassign}
+        eyebrow={`Mesa ${table.name} ${assignedSeats.length} ${
+          assignedSeats.length === 1
+            ? "invitado asignado"
+            : "invitados asignados"
+        }`}
+        onClose={onClose}
+        title={
+          <span className="inline-flex items-center gap-2">
+            <Armchair size={22} strokeWidth={1.8} />
+            {title}
+          </span>
+        }
+      >
+        {assignedSeats.length ? (
+          <div className="space-y-4">
+            {assignedSeats.map((seat) => (
+              <AssignedSeatCard
+                isRemoving={removingSeat === seat.seat}
+                key={seat.seat}
+                onUnassign={
+                  onUnassignSeat ? () => setSeatToUnassign(seat) : undefined
+                }
+                seat={seat}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[2rem] border border-[var(--color-border)] bg-white/45 p-6 text-center">
+            <p className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
+              {tableContent.card.emptyAssignmentsTitle}
+            </p>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
+              {tableContent.card.emptyAssignmentsText}
+            </p>
+          </div>
+        )}
+      </SeatAssignmentModal>
+
+      {seatToUnassign && (
+        <DeleteDialog
+          confirmText={adminContent.tables.dialogs.unassignSeat}
+          message={adminContent.tables.dialogs.unassignSeatMessage(
+            seatToUnassignGuestName,
+            table.name,
+            seatToUnassign.seat,
+          )}
+          onCancel={() => setSeatToUnassign(null)}
+          onConfirm={handleConfirmUnassignSeat}
+          title={adminContent.tables.dialogs.unassignSeatTitle}
+        />
       )}
-    </SeatAssignmentModal>
+    </>
   );
 }
 

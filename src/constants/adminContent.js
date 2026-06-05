@@ -8,6 +8,7 @@ export const adminContent = {
     passwordPlaceholder: "Contraseña privada",
     submit: "Entrar",
     backHome: "Volver al inicio",
+    loading: "Cargando datos...",
     error: "La contraseña no es correcta.",
   },
   guests: {
@@ -144,6 +145,9 @@ export const adminContent = {
       unassignedText: "No hay invitados asignados a esta mesa.",
       unassignSeat: "Liberar asiento",
       unassigningSeat: "Liberando...",
+      unassignSeatTitle: "Liberar asiento",
+      unassignSeatMessage: (guestName, tableName, seatNumber) =>
+        `Se liberara el asiento ${seatNumber} de la mesa ${tableName} asignado a ${guestName}. Esta accion no se puede deshacer desde este panel.`,
       remove: "Eliminar",
       assign: "Asignar invitado",
       assigning: "Asignando...",

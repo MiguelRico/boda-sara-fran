@@ -1034,6 +1034,7 @@ function SeatAssignmentDialog({
   const canRemoveGuest = Boolean(currentGuest);
   const [selectedGuest, setSelectedGuest] = useState(currentGuestValue);
   const [selectedGuestDirection, setSelectedGuestDirection] = useState(1);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const selectedGuestDetails = getGuestFromOptionValue(guests, selectedGuest);
   const reduceMotion = useReducedMotion();
   const selectedGuestDetailsVariants = reduceMotion
@@ -1072,17 +1073,24 @@ function SeatAssignmentDialog({
     onAssign({ guestGroupName, guestIndex, guestName });
   };
 
+  const handleConfirmRemove = () => {
+    setShowRemoveConfirm(false);
+    onRemove();
+  };
+
   return (
-    <SeatAssignmentModal
-      eyebrow={tableContent.card.seatAssignmentEyebrow({
-        seat: seat.seat,
-        table: tableLabel,
-      })}
-      maxWidthClassName="max-w-2xl"
-      onClose={onCancel}
-      title={adminContent.tables.dialogs.assignmentTitle}
-    >
-      <form noValidate onSubmit={handleSubmit}>
+    <>
+      <SeatAssignmentModal
+        blockRouteChange={!showRemoveConfirm}
+        eyebrow={tableContent.card.seatAssignmentEyebrow({
+          seat: seat.seat,
+          table: tableLabel,
+        })}
+        maxWidthClassName="max-w-2xl"
+        onClose={onCancel}
+        title={adminContent.tables.dialogs.assignmentTitle}
+      >
+        <form noValidate onSubmit={handleSubmit}>
         <div className="mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
           <div
             className={`grid w-full gap-3 ${
@@ -1095,7 +1103,7 @@ function SeatAssignmentDialog({
                 disabled={assigning}
                 icon={<Trash2 size={16} strokeWidth={1.8} />}
                 label={adminContent.tables.dialogs.remove}
-                onClick={onRemove}
+                onClick={() => setShowRemoveConfirm(true)}
                 tone="danger"
                 type="button"
               >
@@ -1177,8 +1185,23 @@ function SeatAssignmentDialog({
             </AnimatePresence>
           </div>
         )}
-      </form>
-    </SeatAssignmentModal>
+        </form>
+      </SeatAssignmentModal>
+
+      {showRemoveConfirm && (
+        <DeleteDialog
+          confirmText={adminContent.tables.dialogs.unassignSeat}
+          message={adminContent.tables.dialogs.unassignSeatMessage(
+            currentGuestName,
+            tableLabel,
+            seat.seat,
+          )}
+          onCancel={() => setShowRemoveConfirm(false)}
+          onConfirm={handleConfirmRemove}
+          title={adminContent.tables.dialogs.unassignSeatTitle}
+        />
+      )}
+    </>
   );
 }
 
