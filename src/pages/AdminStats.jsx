@@ -5,7 +5,6 @@ import {
   BusFront,
   ClipboardCheck,
   MessageCircle,
-  RefreshCw,
   Salad,
   UsersRound,
   MailCheck,
@@ -20,12 +19,12 @@ import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import HeaderSection from "../components/ui/HeaderSection";
-import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
 import Chip from "../components/ui/Chip";
 import { COMMON_ALLERGIES } from "../constants/rsvp";
 import { Confirmation } from "../models";
 import { loadAdminDataOnce } from "../services/adminDataStore";
+import useIsMobileView from "../hooks/useIsMobileView";
 
 const ADMIN_OUTBOUND_BUS_OPTIONS = [
   { value: "No", label: "No" },
@@ -71,6 +70,7 @@ export default function AdminStats() {
   });
   const isAuthenticated =
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  const isMobileView = useIsMobileView();
   const [state, setState] = useState(emptyState);
 
   const loadStats = useCallback(async ({ showLoading = true } = {}) => {
@@ -133,6 +133,7 @@ export default function AdminStats() {
           <CinematicStaggeredRevealItem index={0} isVisible={statsInView}>
             <HeaderSection
               eyebrow="Panel privado"
+              isMobileView={isMobileView}
               title="Resumen"
               titleAs="h1"
               text="Seguimiento de respuestas recibidas y datos operativos"
@@ -142,7 +143,6 @@ export default function AdminStats() {
           <CinematicStaggeredRevealItem index={2} isVisible={statsInView}>
             <StatsOverview
               loading={state.loading}
-              onRefresh={loadStats}
               stats={stats}
             />
           </CinematicStaggeredRevealItem>
@@ -184,7 +184,7 @@ export default function AdminStats() {
   );
 }
 
-function StatsOverview({ loading, onRefresh, stats }) {
+function StatsOverview({ loading, stats }) {
   return (
     <div className="mb-4">
       <section className="premium-card">

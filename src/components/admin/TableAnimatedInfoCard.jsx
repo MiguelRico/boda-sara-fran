@@ -164,7 +164,7 @@ function AssignmentModal({
 
     return true;
   });
-  const { currentPage, isMobileList, pageSize, totalPages } = usePagedData({
+  const { currentPage, isMobileView, pageSize, totalPages } = usePagedData({
     desktopPageSize: 4,
     items: filteredAssignedSeats,
     mobilePageSize: 1,
@@ -172,7 +172,6 @@ function AssignmentModal({
   });
   const { handlePageChange, pageDirection } = usePageTransition({
     currentPage,
-    isMobileList,
     onPageChange: setPage,
     totalPages,
   });
@@ -259,7 +258,7 @@ function AssignmentModal({
             )
           }
           getKey={getAssignedSeatKey}
-          isMobileList={isMobileList}
+          isMobileView={isMobileView}
           items={filteredAssignedSeats}
           lockPageHeight={false}
           mobilePageLabel={adminContent.tables.dialogs.guestLabel}

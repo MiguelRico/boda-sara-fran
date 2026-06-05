@@ -15,8 +15,9 @@ export default function SearchInvitationCard({
   onEmailChange,
   onSearchInvitation,
   hideTextOnMobile = false,
+  isMobileView = false,
 }) {
-  const textClassName = hideTextOnMobile
+  const textClassName = hideTextOnMobile || isMobileView
     ? "hidden sm:block mt-3 text-sm leading-relaxed"
     : " mt-3 text-sm leading-relaxed";
   return (

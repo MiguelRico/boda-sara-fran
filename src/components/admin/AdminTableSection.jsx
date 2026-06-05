@@ -11,7 +11,7 @@ export default function AdminTableSection({
   eyebrow,
   filters,
   getKey,
-  isMobileList = false,
+  isMobileView = false,
   loading = false,
   lockPageHeight = false,
   mobilePageLabel,
@@ -82,7 +82,7 @@ export default function AdminTableSection({
             <Pagination
               className="mb-4"
               currentLabel={pageLabel}
-              isMobileList={isMobileList}
+              isMobileView={isMobileView}
               label={paginationLabel}
               mobileLabel={mobilePageLabel}
               onNext={onNextPage}

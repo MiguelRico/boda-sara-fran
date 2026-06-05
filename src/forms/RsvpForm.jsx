@@ -26,6 +26,7 @@ export default function RsvpForm({
   errors = {},
   formError = "",
   guests,
+  isMobileView = false,
   loading = false,
   onAddGuest,
   onCancel,
@@ -124,6 +125,7 @@ export default function RsvpForm({
               errors={errors}
               guests={guests}
               hasInvalidGuest={hasInvalidGuest}
+              isMobileView={isMobileView}
               loading={loading}
               onAddGuest={handleAddGuest}
               onGuestChange={onGuestChange}
@@ -228,6 +230,7 @@ function GuestPager({
   errors,
   guests,
   hasInvalidGuest,
+  isMobileView,
   loading,
   onAddGuest,
   onGuestChange,
@@ -311,6 +314,7 @@ function GuestPager({
         }
         eyebrow={adminContent.guests.editor.guestListEyebrow}
         getKey={(_guest, { index }) => index}
+        isMobileView={isMobileView}
         items={guests}
         lockPageHeight={false}
         onNextPage={() => onGuestPageChange(currentGuestPage + 1)}
@@ -350,6 +354,7 @@ function GuestPager({
 
       <Pagination
         className="mt-5"
+        isMobileView={isMobileView}
         label={pageLabel}
         nextLabel={rsvpContent.form.next}
         onNext={() => onGuestPageChange(currentGuestPage + 1)}

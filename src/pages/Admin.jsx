@@ -30,6 +30,7 @@ import {
 import { siteContent } from "../constants/siteContent";
 import { adminContent } from "../constants/adminContent";
 import { loadAdminDataOnce } from "../services/adminDataStore";
+import useIsMobileView from "../hooks/useIsMobileView";
 
 const adminCardIcons = {
   Invitados: ClipboardCheck,
@@ -55,6 +56,7 @@ export default function Admin() {
     once: true,
     amount: 0.35,
   });
+  const isMobileView = useIsMobileView();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -116,6 +118,7 @@ export default function Admin() {
             <HeaderSection
               className="mb-8"
               eyebrow={adminContent.auth.eyebrow}
+              isMobileView={isMobileView}
               text={adminContent.auth.headerText}
               title={siteContent.coupleName}
             />

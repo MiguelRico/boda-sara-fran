@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+
+import useIsMobileView from "./useIsMobileView";
 
 export default function usePagedData({
   desktopPageSize,
@@ -6,20 +8,10 @@ export default function usePagedData({
   mobilePageSize,
   page,
 }) {
-  const [isMobileList, setIsMobileList] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const updateIsMobileList = () => setIsMobileList(mediaQuery.matches);
-
-    updateIsMobileList();
-    mediaQuery.addEventListener("change", updateIsMobileList);
-
-    return () => mediaQuery.removeEventListener("change", updateIsMobileList);
-  }, []);
+  const isMobileView = useIsMobileView();
 
   return useMemo(() => {
-    const pageSize = isMobileList ? mobilePageSize : desktopPageSize;
+    const pageSize = isMobileView ? mobilePageSize : desktopPageSize;
     const totalPages = Math.max(Math.ceil(items.length / pageSize), 1);
     const currentPage = Math.min(page, totalPages);
     const pagedItems = items.slice(
@@ -29,10 +21,10 @@ export default function usePagedData({
 
     return {
       currentPage,
-      isMobileList,
+      isMobileView,
       pageSize,
       pagedItems,
       totalPages,
     };
-  }, [desktopPageSize, isMobileList, items, mobilePageSize, page]);
+  }, [desktopPageSize, isMobileView, items, mobilePageSize, page]);
 }

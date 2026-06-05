@@ -16,6 +16,7 @@ export default function IconButton({
   disabled = false,
   href,
   icon,
+  isMobileView = false,
   label,
   onClick,
   showText = true,
@@ -25,6 +26,8 @@ export default function IconButton({
   type = "button",
   ...props
 }) {
+  void isMobileView;
+
   const accessibleLabel =
     label || (typeof children === "string" ? children : "");
   const hasText = Boolean(

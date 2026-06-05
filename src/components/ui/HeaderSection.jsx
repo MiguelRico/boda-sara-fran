@@ -5,20 +5,26 @@ export default function HeaderSection({
   titleAs = "h2",
   className = "",
   hideTextOnMobile = false,
+  isMobileView = false,
   children,
 }) {
   const Title = titleAs;
   const textClassName = hideTextOnMobile
     ? "section-text hidden sm:block"
     : "section-text";
+  const shouldShowTitleAndText = !isMobileView;
 
   return (
     <div className={`mx-auto max-w-3xl text-center ${className}`}>
       {eyebrow && <p className="section-eyebrow">{eyebrow}</p>}
 
-      {title && <Title className="section-title">{title}</Title>}
+      {shouldShowTitleAndText && title && (
+        <Title className="section-title">{title}</Title>
+      )}
 
-      {text && <p className={textClassName}>{text}</p>}
+      {shouldShowTitleAndText && text && (
+        <p className={textClassName}>{text}</p>
+      )}
 
       {children}
     </div>

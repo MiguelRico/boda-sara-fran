@@ -168,7 +168,7 @@ export default function AdminGuests() {
   );
   const {
     currentPage,
-    isMobileList,
+    isMobileView,
     pagedItems: pagedRows,
     totalPages,
   } = usePagedData({
@@ -180,7 +180,6 @@ export default function AdminGuests() {
   const { cancelPageLoading, handlePageChange, pageDirection } =
     usePageTransition({
       currentPage,
-      isMobileList,
       onPageChange: setPage,
       totalPages,
     });
@@ -328,13 +327,13 @@ export default function AdminGuests() {
     const restoredTotalPages = Math.max(
       Math.ceil(
         restoredVisibleRows.length /
-          (isMobileList ? mobilePageSize : desktopPageSize),
+          (isMobileView ? mobilePageSize : desktopPageSize),
       ),
       1,
     );
 
     setPage((current) => Math.min(current, restoredTotalPages));
-  }, [filter, isMobileList, query, savedGroups]);
+  }, [filter, isMobileView, query, savedGroups]);
 
   const handleCancelBlockedNavigation = () => {
     blocker.reset?.();
@@ -382,6 +381,7 @@ export default function AdminGuests() {
           <CinematicStaggeredRevealItem index={0} isVisible={guestsInView}>
             <HeaderSection
               eyebrow={adminContent.guests.header.eyebrow}
+              isMobileView={isMobileView}
               title={adminContent.guests.header.title}
               titleAs="h1"
               text={adminContent.guests.header.text}
@@ -403,7 +403,7 @@ export default function AdminGuests() {
                   rows={rows}
                   saving={spinner.loading}
                   selectedGroup={selectedRow?.group}
-                  showText={!isMobileList}
+                  showText={!isMobileView}
                 />
               }
               contentRef={tableStartRef}
@@ -425,7 +425,7 @@ export default function AdminGuests() {
                 />
               }
               getKey={(row) => row.rowId}
-              isMobileList={isMobileList}
+              isMobileView={isMobileView}
               items={visibleRows}
               loading={state.loading}
               mobilePageLabel={adminContent.guests.list.mobilePageLabel}
@@ -438,7 +438,7 @@ export default function AdminGuests() {
               page={currentPage}
               pageDirection={pageDirection}
               pageLabel={adminContent.guests.list.pageLabel}
-              pageSize={isMobileList ? mobilePageSize : desktopPageSize}
+              pageSize={isMobileView ? mobilePageSize : desktopPageSize}
               renderMeasurePage={(items) => (
                 <AdminGuestPage
                   items={items}
@@ -474,6 +474,7 @@ export default function AdminGuests() {
       {editingGroup && (
         <GroupEditor
           group={editingGroup}
+          isMobileView={isMobileView}
           isCreation={!editingGroup.groupName}
           mode={editingMode}
           onClose={() => setEditingGroup(null)}
@@ -963,7 +964,14 @@ function GroupMenuIcon({ menu, ...props }) {
   return <Icon {...props} />;
 }
 
-function GroupEditor({ group, isCreation, mode = "full", onClose, onSave }) {
+function GroupEditor({
+  group,
+  isCreation,
+  isMobileView = false,
+  mode = "full",
+  onClose,
+  onSave,
+}) {
   const [draft, setDraft] = useState(group);
   const [errors, setErrors] = useState({});
   const [validationPopupOpen, setValidationPopupOpen] = useState(false);
@@ -1081,6 +1089,7 @@ function GroupEditor({ group, isCreation, mode = "full", onClose, onSave }) {
         disableContactFields={{ groupName: !isCreation }}
         errors={errors}
         guests={draft.guests}
+        isMobileView={isMobileView}
         loading={saving}
         onAddGuest={addGuest}
         onCancel={handleRequestClose}

@@ -222,7 +222,7 @@ export default function AdminTables() {
   );
   const {
     currentPage,
-    isMobileList,
+    isMobileView,
     pageSize,
     pagedItems: pagedTables,
     totalPages,
@@ -234,7 +234,6 @@ export default function AdminTables() {
   });
   const { handlePageChange, pageDirection } = usePageTransition({
     currentPage,
-    isMobileList,
     onPageChange: setPage,
     totalPages,
   });
@@ -782,6 +781,7 @@ export default function AdminTables() {
           <CinematicStaggeredRevealItem index={0} isVisible={tablesInView}>
             <HeaderSection
               eyebrow={adminContent.tables.header.adminEyebrow}
+              isMobileView={isMobileView}
               title={adminContent.tables.header.title}
               titleAs="h1"
               text={adminContent.tables.header.text}
@@ -814,14 +814,14 @@ export default function AdminTables() {
                       onSave={handleSavePendingChanges}
                       saving={spinner.loading}
                       selectedTable={selectedTable}
-                      showText={!isMobileList}
+                      showText={!isMobileView}
                       tables={tables}
                     />
                   }
                   contentRef={tablesStartRef}
                   eyebrow={adminContent.tables.header.eyebrow}
                   getKey={getTableRenderKey}
-                  isMobileList={isMobileList}
+                  isMobileView={isMobileView}
                   items={tables}
                   loading={state.loading}
                   lockPageHeight={false}
@@ -908,7 +908,7 @@ export default function AdminTables() {
                     )
                   }
                   getKey={getPendingGuestRowKey}
-                  isMobileList={isMobileList}
+                  isMobileView={isMobileView}
                   items={filteredPendingGuests}
                   loading={state.loading}
                   lockPageHeight={false}
@@ -1131,7 +1131,7 @@ function SeatAssignmentDialog({
 
     return true;
   });
-  const { currentPage, isMobileList, pageSize, pagedItems, totalPages } =
+  const { currentPage, isMobileView, pageSize, pagedItems, totalPages } =
     usePagedData({
       desktopPageSize: 4,
       items: filteredGuests,
@@ -1140,7 +1140,6 @@ function SeatAssignmentDialog({
     });
   const { handlePageChange, pageDirection } = usePageTransition({
     currentPage,
-    isMobileList,
     onPageChange: setPage,
     totalPages,
   });
@@ -1245,7 +1244,7 @@ function SeatAssignmentDialog({
             />
           }
           getKey={getPendingGuestRowKey}
-          isMobileList={isMobileList}
+          isMobileView={isMobileView}
           items={filteredGuests}
           lockPageHeight={false}
           mobilePageLabel={adminContent.tables.dialogs.guestLabel}
