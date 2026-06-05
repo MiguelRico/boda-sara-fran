@@ -34,6 +34,8 @@ export default function RsvpForm({
   onRemoveGuest,
   onSubmit,
   renderItem = defaultRenderItem,
+  showContactDetails = true,
+  showGuestList = true,
   submitText = rsvpContent.form.defaultSubmitText,
   variant = "public",
 }) {
@@ -97,17 +99,19 @@ export default function RsvpForm({
   return (
     <>
       <form className="mt-4 space-y-6" noValidate onSubmit={handleSubmit}>
-        {renderItem(
-          1,
-          <ContactDetailsCard
-            contact={contact}
-            disableFilledFields={disableContactFields}
-            errors={errors}
-            onContactChange={onContactChange}
-          />,
-        )}
+        {showContactDetails &&
+          renderItem(
+            1,
+            <ContactDetailsCard
+              contact={contact}
+              disableFilledFields={disableContactFields}
+              errors={errors}
+              onContactChange={onContactChange}
+            />,
+          )}
 
-        {currentGuest &&
+        {showGuestList &&
+          currentGuest &&
           renderItem(
             2,
             <GuestPager
@@ -133,6 +137,22 @@ export default function RsvpForm({
           )}
 
         {formError && <FieldError>{formError}</FieldError>}
+
+        {variant === "admin" && !showGuestList && (
+          <div className="grid w-full grid-cols-1 gap-3">
+            <IconButton
+              className="w-full"
+              disabled={loading}
+              icon={submitIcon}
+              label={submitText}
+              showText="always"
+              tone="primary"
+              type="submit"
+            >
+              {submitText}
+            </IconButton>
+          </div>
+        )}
 
         {variant !== "admin" &&
           renderItem(

@@ -47,24 +47,33 @@ export const adminContent = {
       guestCountLabel: ({ page, total }) => `${page} / ${total}`,
     },
     actions: {
+      discardChanges: "Deshacer cambios",
       export: "Exportar",
       refresh: "Actualizar",
+      saveChanges: "Guardar cambios",
       create: "Crear",
       edit: "Editar",
+      editGuests: "Editar invitados",
       delete: "Eliminar",
     },
     dialogs: {
       groupEditorTitle: "Editar grupo",
+      guestListEditorTitle: "Editar invitados",
       unsavedTitle: "Se perderan los cambios",
       unsavedMessage:
         "Tienes cambios sin guardar en esta confirmacion. Si sales ahora, se perderan.",
+      unsavedText:
+        "Tienes cambios pendientes en invitados. Si sales ahora, no se enviaran a Apps Script.",
+      keepEditing: "Seguir editando",
+      exitWithoutSaving: "Salir sin guardar",
+      saveAndExit: "Guardar y salir",
       discardChanges: "Salir sin guardar",
       validationTitle: "Revisa la confirmación",
       validationMessage:
         "Hay campos obligatorios o con formato incorrecto. Corrigelos antes de guardar la confirmacion.",
       deleteTitle: "Eliminar confirmación",
       deleteMessage: (label) =>
-        `Se eliminará el grupo asociado a ${label}. Esta acción no se puede deshacer desde el panel.`,
+        `Se marcará para eliminar el grupo asociado a ${label}. Podrás deshacerlo antes de guardar los cambios.`,
       loadError:
         "No se pudieron cargar los invitados. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
       saveError:
@@ -74,9 +83,12 @@ export const adminContent = {
       createdTitle: "Confirmación creada",
       updatedTitle: "Cambios guardados",
       deletedTitle: "Confirmación eliminada",
+      pendingTitle: "Cambios pendientes",
       createdMessage: "La confirmación se ha creado correctamente.",
       updatedMessage: "La confirmación se ha actualizado correctamente.",
       deletedMessage: "La confirmación se ha eliminado correctamente.",
+      pendingMessage:
+        "Los cambios se han aplicado en memoria. Usa Guardar cambios para enviarlos.",
       successEyebrow: "Confirmación",
       warningEyebrow: "Aviso",
       problemTitle: "Ha ocurrido un problema",
@@ -85,6 +97,7 @@ export const adminContent = {
     spinner: {
       create: "Creando confirmación...",
       save: "Guardando confirmación...",
+      saveChanges: "Guardando cambios...",
       delete: "Eliminando confirmación...",
     },
     csv: {

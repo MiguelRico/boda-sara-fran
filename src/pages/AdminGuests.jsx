@@ -1,7 +1,7 @@
 import { useInView } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRef } from "react";
-import { Navigate, useBeforeUnload } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
 import {
   AlertTriangle,
   Beef,
@@ -13,7 +13,11 @@ import {
   MessageCircle,
   Phone,
   Plus,
+  Save,
   Search,
+  Trash2,
+  Undo2,
+  X,
   Utensils,
   UsersRound,
 } from "lucide-react";
@@ -45,11 +49,11 @@ import { Confirmation, Guest } from "../models";
 import { deleteAdminGroup, saveAdminGroup } from "../services/rsvpService";
 import {
   loadAdminDataOnce,
-  removeAdminGroup,
-  upsertAdminGroup,
+  setAdminGroups,
 } from "../services/adminDataStore";
 import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
 import useSpinner from "../hooks/useSpinner";
+import useViewportScrollLock from "../hooks/useViewportScrollLock";
 import usePagedData from "../hooks/usePagedData";
 import usePageTransition from "../hooks/usePageTransition";
 import { downloadCsv as downloadGenericCsv } from "../utils/csvExport";
@@ -108,11 +112,13 @@ export default function AdminGuests() {
   const isAuthenticated =
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   const [state, setState] = useState(emptyState);
+  const [savedGroups, setSavedGroups] = useState([]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [selectedRowId, setSelectedRowId] = useState("");
   const [editingGroup, setEditingGroup] = useState(null);
+  const [editingMode, setEditingMode] = useState("full");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [popup, setPopup] = useState(createInitialPopup);
 
@@ -124,8 +130,11 @@ export default function AdminGuests() {
     try {
       const response = await loadAdminDataOnce({ password: ADMIN_PASSWORD });
 
+      const groups = normalizeAdminGroups(response.groups);
+
+      setSavedGroups(groups);
       setState({
-        groups: normalizeAdminGroups(response.groups),
+        groups,
         loading: false,
         error: "",
       });
@@ -188,6 +197,29 @@ export default function AdminGuests() {
     () => pagedRows.find((row) => row.rowId === effectiveSelectedRowId) || null,
     [effectiveSelectedRowId, pagedRows],
   );
+  const pendingChanges = useMemo(
+    () => buildPendingGuestChanges(savedGroups, state.groups),
+    [savedGroups, state.groups],
+  );
+  const hasPendingChanges = pendingChanges.length > 0;
+
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    return (
+      hasPendingChanges && currentLocation.pathname !== nextLocation.pathname
+    );
+  });
+
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (!hasPendingChanges) return;
+
+        event.preventDefault();
+        event.returnValue = "";
+      },
+      [hasPendingChanges],
+    ),
+  );
 
   const closePopup = () => {
     setPopup((current) => ({
@@ -196,40 +228,75 @@ export default function AdminGuests() {
     }));
   };
 
+  const applyGroups = useCallback((groups) => {
+    const normalizedGroups = setAdminGroups(groups);
+
+    setState({
+      groups: normalizedGroups,
+      loading: false,
+      error: "",
+    });
+
+    return normalizedGroups;
+  }, []);
+
+  const openGroupEditor = (group, mode = "full") => {
+    setEditingMode(mode);
+    setEditingGroup(createDraftGroup(group));
+  };
+
   const handleSaveGroup = async (group) => {
     const isCreation = !editingGroup?.groupName;
     const groupToSave = normalizeAdminGroupBeforeSave(group, { isCreation });
 
+    applyGroups(upsertGroupInList(state.groups, groupToSave));
+    setEditingGroup(null);
+    setPopup(
+      createAdminPopup({
+        message: adminContent.guests.dialogs.pendingMessage,
+        title: adminContent.guests.dialogs.pendingTitle,
+      }),
+    );
+  };
+
+  const handleDeleteGroup = () => {
+    if (!deleteTarget) return;
+
+    applyGroups(removeGroupFromList(state.groups, deleteTarget.groupName));
+    setDeleteTarget(null);
+    setPopup(
+      createAdminPopup({
+        message: adminContent.guests.dialogs.pendingMessage,
+        title: adminContent.guests.dialogs.pendingTitle,
+      }),
+    );
+  };
+
+  const handleSavePendingChanges = async () => {
+    if (!hasPendingChanges) return true;
+
     try {
-      spinner.show(
-        isCreation
-          ? adminContent.guests.spinner.create
-          : adminContent.guests.spinner.save,
-      );
+      spinner.show(adminContent.guests.spinner.saveChanges);
 
-      await saveAdminGroup({
-        group: groupToSave,
-        method: isCreation ? "POST" : "PUT",
-        password: ADMIN_PASSWORD,
+      await persistGuestChanges({
+        currentGroups: state.groups,
+        savedGroups,
       });
-      const nextGroups = upsertAdminGroup(groupToSave);
 
-      setEditingGroup(null);
+      const normalizedGroups = setAdminGroups(state.groups);
+      setSavedGroups(normalizedGroups);
       setState({
-        groups: nextGroups,
+        groups: normalizedGroups,
         loading: false,
         error: "",
       });
       setPopup(
         createAdminPopup({
-          message: isCreation
-            ? adminContent.guests.dialogs.createdMessage
-            : adminContent.guests.dialogs.updatedMessage,
-          title: isCreation
-            ? adminContent.guests.dialogs.createdTitle
-            : adminContent.guests.dialogs.updatedTitle,
+          message: adminContent.guests.dialogs.updatedMessage,
+          title: adminContent.guests.dialogs.updatedTitle,
         }),
       );
+      return true;
     } catch (error) {
       console.error(error);
       setPopup(
@@ -239,47 +306,58 @@ export default function AdminGuests() {
           type: "error",
         }),
       );
+      return false;
     } finally {
       spinner.hide();
     }
   };
 
-  const handleDeleteGroup = async () => {
-    if (!deleteTarget) return;
+  const handleDiscardPendingChanges = useCallback(() => {
+    const restoredGroups = setAdminGroups(savedGroups);
 
-    try {
-      spinner.show(adminContent.guests.spinner.delete);
+    setState({
+      groups: restoredGroups,
+      loading: false,
+      error: "",
+    });
+    setEditingGroup(null);
+    setDeleteTarget(null);
 
-      await deleteAdminGroup({
-        groupName: deleteTarget.groupName,
-        password: ADMIN_PASSWORD,
-      });
-      const nextGroups = removeAdminGroup(deleteTarget.groupName);
+    const restoredRows = Confirmation.toAdminRows(restoredGroups);
+    const restoredVisibleRows = Confirmation.filterAdminRows(
+      restoredRows,
+      query,
+      filter,
+    );
+    const restoredTotalPages = Math.max(
+      Math.ceil(
+        restoredVisibleRows.length /
+          (isMobileList ? mobilePageSize : desktopPageSize),
+      ),
+      1,
+    );
 
-      setDeleteTarget(null);
-      setState({
-        groups: nextGroups,
-        loading: false,
-        error: "",
-      });
-      setPopup(
-        createAdminPopup({
-          message: adminContent.guests.dialogs.deletedMessage,
-          title: adminContent.guests.dialogs.deletedTitle,
-        }),
-      );
-    } catch (error) {
-      console.error(error);
-      setPopup(
-        createAdminPopup({
-          message: adminContent.guests.dialogs.deleteError,
-          title: adminContent.guests.dialogs.problemTitle,
-          type: "error",
-        }),
-      );
-    } finally {
-      spinner.hide();
+    setPage((current) => Math.min(current, restoredTotalPages));
+  }, [filter, isMobileList, query, savedGroups]);
+
+  const handleCancelBlockedNavigation = () => {
+    blocker.reset?.();
+  };
+
+  const handleConfirmBlockedNavigation = () => {
+    handleDiscardPendingChanges();
+    blocker.proceed?.();
+  };
+
+  const handleSaveAndExitBlockedNavigation = async () => {
+    const saved = await handleSavePendingChanges();
+
+    if (saved) {
+      blocker.proceed?.();
+      return;
     }
+
+    blocker.reset?.();
   };
 
   if (!isAuthenticated) {
@@ -289,6 +367,15 @@ export default function AdminGuests() {
   return (
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
+
+      {blocker.state === "blocked" && (
+        <UnsavedGuestChangesDialog
+          changes={pendingChanges}
+          onCancel={handleCancelBlockedNavigation}
+          onConfirm={handleConfirmBlockedNavigation}
+          onSaveAndExit={handleSaveAndExitBlockedNavigation}
+        />
+      )}
 
       <CinematicSection
         className="surface-soft"
@@ -308,43 +395,20 @@ export default function AdminGuests() {
           <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
             <AdminTableSection
               actions={
-                <div className="grid w-full grid-cols-4 gap-3 sm:w-auto sm:grid-cols-5">
-                  <IconButton
-                    className="w-full"
-                    disabled={!rows.length}
-                    label={adminContent.guests.actions.export}
-                    tone="terciary"
-                    onClick={() => downloadGuestsCsv(rows)}
-                  >
-                    <Download size={16} strokeWidth={1.8} />
-                  </IconButton>
-
-                  <CardActions
-                    className="contents"
-                    item={selectedRow?.group}
-                    onDelete={
-                      selectedRow
-                        ? () => setDeleteTarget(selectedRow.group)
-                        : null
-                    }
-                    onEdit={
-                      selectedRow
-                        ? () =>
-                            setEditingGroup(createDraftGroup(selectedRow.group))
-                        : null
-                    }
-                    showText={!isMobileList}
-                  />
-
-                  <IconButton
-                    className="w-full"
-                    label={adminContent.guests.actions.create}
-                    tone="primary"
-                    onClick={() => setEditingGroup(createDraftGroup())}
-                  >
-                    <Plus size={18} strokeWidth={2.4} />
-                  </IconButton>
-                </div>
+                <GuestTableActions
+                  hasPendingChanges={hasPendingChanges}
+                  loading={state.loading}
+                  onCreate={() => openGroupEditor(undefined, "full")}
+                  onDelete={() => setDeleteTarget(selectedRow.group)}
+                  onDiscard={handleDiscardPendingChanges}
+                  onEdit={() => openGroupEditor(selectedRow.group, "group")}
+                  onExport={() => downloadGuestsCsv(rows)}
+                  onSave={handleSavePendingChanges}
+                  rows={rows}
+                  saving={spinner.loading}
+                  selectedGroup={selectedRow?.group}
+                  showText={!isMobileList}
+                />
               }
               contentRef={tableStartRef}
               eyebrow={adminContent.guests.list.eyebrow}
@@ -382,6 +446,7 @@ export default function AdminGuests() {
               renderMeasurePage={(items) => (
                 <AdminGuestPage
                   items={items}
+                  onEditGuests={() => {}}
                   onSelect={() => {}}
                   selectedRowId={effectiveSelectedRowId}
                 />
@@ -389,6 +454,7 @@ export default function AdminGuests() {
               renderPage={(items) => (
                 <AdminGuestPage
                   items={items}
+                  onEditGuests={(group) => openGroupEditor(group, "guests")}
                   onSelect={(row) => setSelectedRowId(row.rowId)}
                   selectedRowId={effectiveSelectedRowId}
                 />
@@ -406,6 +472,7 @@ export default function AdminGuests() {
         <GroupEditor
           group={editingGroup}
           isCreation={!editingGroup.groupName}
+          mode={editingMode}
           onClose={() => setEditingGroup(null)}
           onSave={handleSaveGroup}
         />
@@ -515,7 +582,169 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
   );
 }
 
-function AdminGuestPage({ items, onSelect, selectedRowId }) {
+function GuestTableActions({
+  hasPendingChanges,
+  loading,
+  onCreate,
+  onDelete,
+  onDiscard,
+  onEdit,
+  onExport,
+  onSave,
+  rows,
+  saving,
+  selectedGroup,
+  showText = true,
+}) {
+  return (
+    <div className="grid w-full gap-3">
+      <div className="grid w-full grid-cols-2 gap-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-3">
+        <IconButton
+          className="w-full"
+          disabled={!hasPendingChanges || loading}
+          icon={<Undo2 size={16} strokeWidth={1.8} />}
+          label={adminContent.guests.actions.discardChanges}
+          onClick={onDiscard}
+          showText={showText ? "always" : undefined}
+          tone="secondary"
+          type="button"
+        >
+          {showText ? adminContent.guests.actions.discardChanges : undefined}
+        </IconButton>
+
+        <IconButton
+          className="w-full"
+          disabled={!hasPendingChanges || saving}
+          icon={<Save size={16} strokeWidth={1.8} />}
+          label={adminContent.guests.actions.saveChanges}
+          onClick={onSave}
+          showText={showText ? "always" : undefined}
+          tone="primary"
+          type="button"
+        >
+          {showText ? adminContent.guests.actions.saveChanges : undefined}
+        </IconButton>
+      </div>
+
+      <div className="grid w-full grid-cols-4 gap-3 sm:w-auto sm:grid-cols-4">
+        <IconButton
+          className="w-full"
+          disabled={!rows.length}
+          icon={<Download size={16} strokeWidth={1.8} />}
+          label={adminContent.guests.actions.export}
+          onClick={onExport}
+          tone="terciary"
+          type="button"
+        >
+          {showText ? adminContent.guests.actions.export : undefined}
+        </IconButton>
+
+        <CardActions
+          className="contents"
+          deleteLabel={adminContent.guests.actions.delete}
+          editLabel={adminContent.guests.actions.edit}
+          item={selectedGroup}
+          onDelete={selectedGroup ? onDelete : null}
+          onEdit={selectedGroup ? onEdit : null}
+          showText={showText}
+        />
+
+        <IconButton
+          className="w-full"
+          icon={<Plus size={18} strokeWidth={2.4} />}
+          label={adminContent.guests.actions.create}
+          onClick={onCreate}
+          tone="primary"
+          type="button"
+        >
+          {showText ? adminContent.guests.actions.create : undefined}
+        </IconButton>
+      </div>
+    </div>
+  );
+}
+
+function UnsavedGuestChangesDialog({
+  changes,
+  onCancel,
+  onConfirm,
+  onSaveAndExit,
+}) {
+  useViewportScrollLock(true);
+
+  const dialog = (
+    <div className="rsvp-dialog-overlay">
+      <div
+        aria-labelledby="unsaved-guest-changes-title"
+        aria-modal="true"
+        className="premium-card rsvp-dialog-card"
+        role="alertdialog"
+      >
+        <p className="section-eyebrow mb-3">
+          {adminContent.guests.dialogs.warningEyebrow}
+        </p>
+        <h2
+          className="font-serif text-3xl text-[var(--color-accent-dark)]"
+          id="unsaved-guest-changes-title"
+        >
+          {adminContent.guests.dialogs.unsavedTitle}
+        </h2>
+        <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
+          {adminContent.guests.dialogs.unsavedText}
+        </p>
+        <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
+          {changes.map((change, index) => (
+            <li
+              className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
+              key={`${change}-${index}`}
+            >
+              {change}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <IconButton
+            className="flex-1"
+            icon={<Trash2 size={16} strokeWidth={1.8} />}
+            label={adminContent.guests.dialogs.exitWithoutSaving}
+            onClick={onConfirm}
+            showText="always"
+            tone="danger"
+            type="button"
+          >
+            {adminContent.guests.dialogs.exitWithoutSaving}
+          </IconButton>
+          <IconButton
+            className="flex-1"
+            icon={<Save size={16} strokeWidth={1.8} />}
+            label={adminContent.guests.dialogs.saveAndExit}
+            onClick={onSaveAndExit}
+            showText="always"
+            tone="primary"
+            type="button"
+          >
+            {adminContent.guests.dialogs.saveAndExit}
+          </IconButton>
+          <IconButton
+            className="flex-1"
+            icon={<X size={16} strokeWidth={1.8} />}
+            label={adminContent.guests.dialogs.keepEditing}
+            onClick={onCancel}
+            showText="always"
+            tone="terciary"
+            type="button"
+          >
+            {adminContent.guests.dialogs.keepEditing}
+          </IconButton>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(dialog, document.body);
+}
+
+function AdminGuestPage({ items, onEditGuests, onSelect, selectedRowId }) {
   return (
     <>
       <CardGrid
@@ -524,6 +753,7 @@ function AdminGuestPage({ items, onSelect, selectedRowId }) {
         items={items}
         renderCard={(row) => (
           <AdminGuestConfirmationCard
+            onEditGuests={onEditGuests}
             onSelect={onSelect}
             row={row}
             selected={row.rowId === selectedRowId}
@@ -535,6 +765,7 @@ function AdminGuestPage({ items, onSelect, selectedRowId }) {
         {items.map((row) => (
           <AdminGuestConfirmationCard
             key={row.rowId}
+            onEditGuests={onEditGuests}
             onSelect={onSelect}
             row={row}
             selected={row.rowId === selectedRowId}
@@ -562,6 +793,7 @@ function AdminGuestPage({ items, onSelect, selectedRowId }) {
 }
 
 function AdminGuestConfirmationCard({
+  onEditGuests,
   onSelect,
   row,
   selected,
@@ -572,13 +804,26 @@ function AdminGuestConfirmationCard({
 
   return (
     <div
-      className={`h-full rounded-[2rem] transition ${
+      className={`relative h-full rounded-[2rem] transition ${
         selected
           ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
           : "ring-0"
       }`}
       onClick={() => onSelect(row)}
     >
+      {onEditGuests && (
+        <IconButton
+          className="absolute right-4 top-4 z-10 h-10 w-10 !px-0"
+          icon={<UsersRound size={16} strokeWidth={1.8} />}
+          label={adminContent.guests.actions.editGuests}
+          onClick={(event) => {
+            event.stopPropagation();
+            onEditGuests(row.group);
+          }}
+          tone="secondary"
+          type="button"
+        />
+      )}
       <Card
         decorativeText={row.groupSize}
         eyebrow={`${row.groupSize} ${
@@ -715,7 +960,7 @@ function GroupMenuIcon({ menu, ...props }) {
   return <Icon {...props} />;
 }
 
-function GroupEditor({ group, isCreation, onClose, onSave }) {
+function GroupEditor({ group, isCreation, mode = "full", onClose, onSave }) {
   const [draft, setDraft] = useState(group);
   const [errors, setErrors] = useState({});
   const [validationPopupOpen, setValidationPopupOpen] = useState(false);
@@ -741,6 +986,11 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
       {children}
     </CinematicStaggeredRevealItem>
   );
+  const isGuestListMode = mode === "guests";
+  const isGroupMode = mode === "group";
+  const dialogTitle = isGuestListMode
+    ? adminContent.guests.dialogs.guestListEditorTitle
+    : adminContent.guests.dialogs.groupEditorTitle;
 
   useBeforeUnload(
     useCallback(
@@ -819,7 +1069,7 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
   return (
     <EditorDialog
       onClose={handleRequestClose}
-      title={adminContent.guests.dialogs.groupEditorTitle}
+      title={dialogTitle}
       titleId="group-editor-title"
     >
       <RsvpForm
@@ -838,6 +1088,8 @@ function GroupEditor({ group, isCreation, onClose, onSave }) {
         onRemoveGuest={removeGuest}
         onSubmit={handleSubmit}
         renderItem={renderFormItem}
+        showContactDetails={!isGuestListMode}
+        showGuestList={!isGroupMode}
         submitText="Guardar"
         variant="admin"
       />
@@ -903,6 +1155,102 @@ function downloadGuestsCsv(rows) {
 
 function getStableJson(value) {
   return JSON.stringify(value);
+}
+
+function upsertGroupInList(groups, group) {
+  const normalizedGroup = normalizeAdminGroups([group])[0];
+  const existingIndex = groups.findIndex(
+    (item) => item.groupName === normalizedGroup.groupName,
+  );
+
+  if (existingIndex === -1) {
+    return normalizeAdminGroups([...groups, normalizedGroup]);
+  }
+
+  return normalizeAdminGroups(
+    groups.map((item, index) =>
+      index === existingIndex ? normalizedGroup : item,
+    ),
+  );
+}
+
+function removeGroupFromList(groups, groupName) {
+  return normalizeAdminGroups(
+    groups.filter((group) => group.groupName !== groupName),
+  );
+}
+
+async function persistGuestChanges({ currentGroups, savedGroups }) {
+  const savedByGroupName = new Map(
+    savedGroups.map((group) => [group.groupName, group]),
+  );
+  const currentByGroupName = new Map(
+    currentGroups.map((group) => [group.groupName, group]),
+  );
+  const persistencePromises = [];
+
+  savedByGroupName.forEach((group, groupName) => {
+    if (!currentByGroupName.has(groupName)) {
+      persistencePromises.push(
+        deleteAdminGroup({
+          groupName,
+          password: ADMIN_PASSWORD,
+        }),
+      );
+    }
+  });
+
+  currentByGroupName.forEach((group, groupName) => {
+    const savedGroup = savedByGroupName.get(groupName);
+    const isCreation = !savedGroup;
+
+    if (!isCreation && getStableJson(savedGroup) === getStableJson(group)) {
+      return;
+    }
+
+    persistencePromises.push(
+      saveAdminGroup({
+        group,
+        method: isCreation ? "POST" : "PUT",
+        password: ADMIN_PASSWORD,
+      }),
+    );
+  });
+
+  await Promise.all(persistencePromises);
+}
+
+function buildPendingGuestChanges(savedGroups, currentGroups) {
+  const savedByGroupName = new Map(
+    savedGroups.map((group) => [group.groupName, group]),
+  );
+  const currentByGroupName = new Map(
+    currentGroups.map((group) => [group.groupName, group]),
+  );
+  const changes = [];
+
+  currentByGroupName.forEach((group, groupName) => {
+    const savedGroup = savedByGroupName.get(groupName);
+
+    if (!savedGroup) {
+      changes.push(`Grupo creado: ${groupName || group.email || "sin nombre"}`);
+      return;
+    }
+
+    if (getStableJson(savedGroup) !== getStableJson(group)) {
+      changes.push(...buildGroupEditorChanges(savedGroup, group, {
+        isCreation: false,
+      }));
+    }
+  });
+
+  savedByGroupName.forEach((group, groupName) => {
+    if (!currentByGroupName.has(groupName)) {
+      changes.push(`Grupo eliminado: ${groupName || group.email || "sin nombre"}`);
+    }
+  });
+
+  return changes;
 }
 
 function buildGroupEditorChanges(originalGroup, draftGroup, { isCreation }) {
@@ -1019,4 +1367,3 @@ function getGroupChangeLabel(original, draft) {
 
   return `${originalLabel} -> ${draftLabel}`;
 }
-
