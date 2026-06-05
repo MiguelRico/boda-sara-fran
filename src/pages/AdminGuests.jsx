@@ -520,6 +520,7 @@ export default function AdminGuests() {
                     />
                   )}
                   sectionRef={tableCardRef}
+                  sourceItemsCount={rows.length}
                   skeletonConfig={{
                     content: {
                       columnsClassName: "lg:grid-cols-2",
@@ -619,6 +620,7 @@ export default function AdminGuests() {
                     />
                   )}
                   sectionRef={tableCardRef}
+                  sourceItemsCount={guestItems.length}
                   skeletonConfig={{
                     content: {
                       columnsClassName: "lg:grid-cols-2",

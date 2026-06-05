@@ -286,6 +286,7 @@ function AssignmentModal({
               selectedSeatKey={effectiveSelectedSeatKey}
             />
           )}
+          sourceItemsCount={assignedSeats.length}
           title={adminContent.tables.dialogs.assignedTitle}
           totalPages={totalPages}
         />

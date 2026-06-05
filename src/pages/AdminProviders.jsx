@@ -464,6 +464,7 @@ export default function AdminProviders() {
                     },
                     filters: true,
                   }}
+                  sourceItemsCount={providers.length}
                   title={adminContent.providers.list.title}
                   totalPages={totalPages}
                 />
@@ -554,6 +555,7 @@ export default function AdminProviders() {
                     },
                     filters: true,
                   }}
+                  sourceItemsCount={services.length}
                   title={adminContent.providers.services.title}
                   totalPages={servicesTotalPages}
                 />

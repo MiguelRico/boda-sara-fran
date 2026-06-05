@@ -26,11 +26,13 @@ export default function AdminTableSection({
   renderPage,
   sectionRef,
   skeletonConfig = {},
+  sourceItemsCount,
   title,
   totalPages,
   items = [],
 }) {
   const hasResults = items.length > 0;
+  const hasSourceItems = (sourceItemsCount ?? items.length) > 0;
   const hasPagination = !loading && hasResults && page && pageSize && totalPages;
   const hasPaginationSlot =
     skeletonConfig.pagination ??
@@ -77,7 +79,7 @@ export default function AdminTableSection({
         />
       ) : (
         <>
-          {filters && <div className="mb-4">{filters}</div>}
+          {filters && hasSourceItems && <div className="mb-4">{filters}</div>}
 
           {hasPagination && (
             <Pagination

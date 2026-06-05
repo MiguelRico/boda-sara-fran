@@ -948,6 +948,7 @@ export default function AdminTables() {
                     },
                     filters: true,
                   }}
+                  sourceItemsCount={guestsPending.length}
                   title={adminContent.pendingGuests.title}
                   totalPages={
                     state.loading ? undefined : pendingGuestsTotalPages
@@ -1280,6 +1281,7 @@ function SeatAssignmentDialog({
               selectedGuestKey={effectiveSelectedGuestKey}
             />
           )}
+          sourceItemsCount={guests.length}
           title={adminContent.tables.dialogs.guestPlaceholder}
           totalPages={totalPages}
         />
