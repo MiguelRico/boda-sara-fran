@@ -1,6 +1,5 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
 import {
   Check,
@@ -8,11 +7,7 @@ import {
   CircleDashed,
   Grid2X2,
   Armchair,
-  Plus,
-  Save,
   Trash2,
-  Undo2,
-  X,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -21,11 +16,11 @@ import {
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
 import AdminTableSection from "../components/admin/AdminTableSection";
-import CardActions from "../components/admin/CardActions";
 import CardGrid from "../components/admin/CardGrid";
-import EditorDialog from "../components/admin/EditorDialog";
+import AdminEntityActions from "../components/admin/AdminEntityActions";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
-import TableForm from "../components/admin/TableForm";
+import TableEditorDialog from "../components/admin/tables/TableEditorDialog";
+import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
@@ -52,17 +47,16 @@ import {
   persistAdminTables,
   unassignGuestFromSeatLocal,
   upsertManualTable,
-  validateTableForm,
   getTableKey,
 } from "../services/tablesService";
-import { saveAdminGroup } from "../services/rsvpService";
+import { validateTableForm } from "../validators/tableValidators";
+import { saveAdminGroup } from "../api/confirmationsApi";
 import {
   loadAdminDataOnce,
   setAdminGroups,
   setAdminTables,
 } from "../services/adminDataStore";
 import useSpinner from "../hooks/useSpinner";
-import useViewportScrollLock from "../hooks/useViewportScrollLock";
 import usePagedData from "../hooks/usePagedData";
 import usePageTransition from "../hooks/usePageTransition";
 import { createEmptyTableForm } from "../constants/tables";
@@ -764,12 +758,6 @@ export default function AdminTables() {
     blocker.reset?.();
   };
 
-  const handleDiscardFromBlockedNavigation = () => {
-    handleDiscardPendingChanges();
-    setShowUnsavedChangesDialog(false);
-    blocker.reset?.();
-  };
-
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
   }
@@ -783,8 +771,16 @@ export default function AdminTables() {
           changes={pendingChanges}
           onCancel={handleCancelBlockedNavigation}
           onConfirm={handleConfirmBlockedNavigation}
-          onDiscard={handleDiscardFromBlockedNavigation}
           onSaveAndExit={handleSaveAndExitBlockedNavigation}
+          labels={{
+            eyebrow: adminContent.tables.dialogs.unsavedEyebrow,
+            exitWithoutSaving: adminContent.tables.dialogs.exitWithoutSaving,
+            keepEditing: adminContent.tables.dialogs.keepEditing,
+            saveAndExit: adminContent.tables.dialogs.saveAndExit,
+            text: adminContent.tables.dialogs.unsavedText,
+            title: adminContent.tables.dialogs.unsavedTitle,
+          }}
+          titleId="unsaved-table-changes-title"
         />
       )}
 
@@ -1010,7 +1006,7 @@ export default function AdminTables() {
       />
 
       {showTableForm && (
-        <TableEditor
+        <TableEditorDialog
           content={editingTable ? tableContent.form : undefined}
           errors={tableFormErrors}
           form={tableForm}
@@ -1054,38 +1050,6 @@ export default function AdminTables() {
         />
       )}
     </CinematicPage>
-  );
-}
-
-function TableEditor({
-  content,
-  errors,
-  form,
-  onCancel,
-  onChange,
-  onDelete,
-  onSubmit,
-  seatReductionWarning = [],
-  title = "Crear mesa",
-}) {
-  return (
-    <EditorDialog
-      icon={<Armchair size={22} strokeWidth={1.8} />}
-      onClose={onCancel}
-      title={title}
-      titleId="table-editor-title"
-    >
-      <TableForm
-        content={content}
-        errors={errors}
-        form={form}
-        seatReductionWarning={seatReductionWarning}
-        onCancel={onCancel}
-        onChange={onChange}
-        onDelete={onDelete}
-        onSubmit={onSubmit}
-      />
-    </EditorDialog>
   );
 }
 
@@ -1317,81 +1281,6 @@ function SeatAssignmentDialog({
   );
 }
 
-function UnsavedChangesDialog({ changes, onCancel, onConfirm, onSaveAndExit }) {
-  useViewportScrollLock(true);
-
-  const dialog = (
-    <div className="rsvp-dialog-overlay">
-      <div
-        aria-labelledby="unsaved-table-changes-title"
-        aria-modal="true"
-        className="premium-card rsvp-dialog-card"
-        role="alertdialog"
-      >
-        <p className="section-eyebrow mb-3">
-          {adminContent.tables.dialogs.unsavedEyebrow}
-        </p>
-        <h2
-          className="font-serif text-3xl text-[var(--color-accent-dark)]"
-          id="unsaved-table-changes-title"
-        >
-          {adminContent.tables.dialogs.unsavedTitle}
-        </h2>
-        <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
-          {adminContent.tables.dialogs.unsavedText}
-        </p>
-        <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
-          {changes.map((change, index) => (
-            <li
-              className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
-              key={`${change}-${index}`}
-            >
-              {change}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <IconButton
-            className="flex-1"
-            icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.dialogs.exitWithoutSaving}
-            onClick={onConfirm}
-            showText="always"
-            tone="danger"
-            type="button"
-          >
-            {adminContent.tables.dialogs.exitWithoutSaving}
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.dialogs.saveAndExit}
-            onClick={onSaveAndExit}
-            showText="always"
-            tone="primary"
-            type="button"
-          >
-            {adminContent.tables.dialogs.saveAndExit}
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<X size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.dialogs.keepEditing}
-            onClick={onCancel}
-            showText="always"
-            tone="terciary"
-            type="button"
-          >
-            {adminContent.tables.dialogs.keepEditing}
-          </IconButton>
-        </div>
-      </div>
-    </div>
-  );
-
-  return createPortal(dialog, document.body);
-}
-
 function TablesOverview({ loading, stats }) {
   return (
     <section className="premium-card mt-4 mb-5">
@@ -1471,84 +1360,25 @@ function TableTabActions({
   showText = true,
   tables,
 }) {
-  const hasItems = tables.length > 0;
-
-  if (!hasItems && !hasPendingChanges) {
-    return (
-      <div className="grid w-full gap-3">
-        <IconButton
-          className="w-full"
-          icon={<Plus size={18} strokeWidth={2.4} />}
-          label={adminContent.tables.actions.addTable}
-          onClick={onCreate}
-          showText={showText ? "always" : undefined}
-          tone="primary"
-          type="button"
-        >
-          {showText ? adminContent.tables.actions.addTable : undefined}
-        </IconButton>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid w-full gap-3">
-      {hasPendingChanges && (
-        <div className="grid w-full grid-cols-2 gap-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-3">
-          <IconButton
-            className="w-full"
-            disabled={loading}
-            icon={<Undo2 size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.actions.discardChanges}
-            onClick={onDiscard}
-            showText={showText ? "always" : undefined}
-            tone="secondary"
-          >
-            {showText ? adminContent.tables.actions.discardChanges : undefined}
-          </IconButton>
-
-          <IconButton
-            className="w-full"
-            disabled={saving}
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.actions.saveChanges}
-            onClick={onSave}
-            showText={showText ? "always" : undefined}
-            tone="primary"
-          >
-            {showText ? adminContent.tables.actions.saveChanges : undefined}
-          </IconButton>
-        </div>
-      )}
-
-      <div
-        className={`grid w-full gap-3 sm:w-auto ${
-          hasItems ? "grid-cols-3 sm:grid-cols-3" : "grid-cols-1"
-        }`}
-      >
-        {hasItems && (
-          <CardActions
-            className="contents"
-            deleteLabel={adminContent.tables.actions.deleteTable}
-            editLabel={adminContent.tables.actions.editTable}
-            item={selectedTable}
-            onDelete={selectedTable ? onDelete : null}
-            onEdit={selectedTable ? onEdit : null}
-            showText={showText}
-          />
-        )}
-
-        <IconButton
-          className="w-full"
-          icon={<Plus size={18} strokeWidth={2.4} />}
-          label={adminContent.tables.actions.addTable}
-          onClick={onCreate}
-          tone="primary"
-        >
-          {showText ? adminContent.tables.actions.addTable : undefined}
-        </IconButton>
-      </div>
-    </div>
+    <AdminEntityActions
+      addLabel={adminContent.tables.actions.addTable}
+      deleteLabel={adminContent.tables.actions.deleteTable}
+      discardLabel={adminContent.tables.actions.discardChanges}
+      editLabel={adminContent.tables.actions.editTable}
+      hasItems={tables.length > 0}
+      hasPendingChanges={hasPendingChanges}
+      loading={loading}
+      onCreate={onCreate}
+      onDelete={onDelete}
+      onDiscard={onDiscard}
+      onEdit={onEdit}
+      onSave={onSave}
+      saveLabel={adminContent.tables.actions.saveChanges}
+      saving={saving}
+      selectedItem={selectedTable}
+      showText={showText}
+    />
   );
 }
 

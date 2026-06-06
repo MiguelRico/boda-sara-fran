@@ -9,7 +9,13 @@ import {
   RETURN_BUS_OPTIONS,
 } from "../../constants/rsvp";
 import { rsvpContent } from "../../constants/rsvpContent";
-import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
+import {
+  FieldError,
+  FormCard,
+  inputClassName,
+  Label,
+  selectClassName,
+} from "./FormPrimitives";
 
 export default function GuestCard({
   canRemove,
@@ -371,7 +377,7 @@ function BusSelect({ label, onChange, options, value }) {
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className={inputClassName + " bg-white"}
+        className={selectClassName}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

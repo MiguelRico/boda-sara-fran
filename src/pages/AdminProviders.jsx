@@ -1,6 +1,5 @@
-import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
+import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
 import {
   BadgeEuro,
@@ -9,12 +8,7 @@ import {
   Euro,
   Mail,
   Phone,
-  Plus,
-  Save,
   Search,
-  Trash2,
-  Undo2,
-  X,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -30,14 +24,16 @@ import {
   getProviderTotal,
   normalizeProviders,
   persistProviders,
-  validateProvider,
 } from "../services/providersService";
+import { validateProvider } from "../validators/providerValidators";
 import { loadAdminDataOnce, setAdminProviders } from "../services/adminDataStore";
 import AdminTableSection from "../components/admin/AdminTableSection";
+import AdminEntityActions from "../components/admin/AdminEntityActions";
 import Card from "../components/admin/Card";
-import CardActions from "../components/admin/CardActions";
 import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
+import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
+import ProviderForm from "../components/admin/providers/ProviderForm";
 import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
@@ -46,8 +42,6 @@ import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import {
-  FieldError,
-  FormCard,
   inputClassName,
   Label,
   selectClassName,
@@ -56,7 +50,6 @@ import Chip from "../components/ui/Chip";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import HeaderSection from "../components/ui/HeaderSection";
-import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import TabNavigation from "../components/ui/TabNavigation";
@@ -64,7 +57,6 @@ import useIsMobileView from "../hooks/useIsMobileView";
 import usePagedData from "../hooks/usePagedData";
 import usePageTransition from "../hooks/usePageTransition";
 import useSpinner from "../hooks/useSpinner";
-import useViewportScrollLock from "../hooks/useViewportScrollLock";
 import { getEmailHref, getPhoneHref } from "../utils/contactLinks";
 
 const desktopPageSize = 6;
@@ -694,78 +686,23 @@ function UnsavedProviderChangesDialog({
   onConfirm,
   onSaveAndExit,
 }) {
-  useViewportScrollLock(true);
-
-  const dialog = (
-    <div className="rsvp-dialog-overlay">
-      <div
-        aria-labelledby="unsaved-provider-changes-title"
-        aria-modal="true"
-        className="premium-card rsvp-dialog-card"
-        role="alertdialog"
-      >
-        <p className="section-eyebrow mb-3">
-          {adminContent.providers.dialogs.warningEyebrow}
-        </p>
-        <h2
-          className="font-serif text-3xl text-[var(--color-accent-dark)]"
-          id="unsaved-provider-changes-title"
-        >
-          {adminContent.tables.dialogs.unsavedTitle}
-        </h2>
-        <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
-          {adminContent.providers.dialogs.unsavedText}
-        </p>
-        <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
-          {changes.map((change, index) => (
-            <li
-              className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
-              key={`${change}-${index}`}
-            >
-              {change}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <IconButton
-            className="flex-1"
-            icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.dialogs.exitWithoutSaving}
-            onClick={onConfirm}
-            showText="always"
-            tone="danger"
-            type="button"
-          >
-            {adminContent.tables.dialogs.exitWithoutSaving}
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.dialogs.saveAndExit}
-            onClick={onSaveAndExit}
-            showText="always"
-            tone="primary"
-            type="button"
-          >
-            {adminContent.tables.dialogs.saveAndExit}
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<X size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.dialogs.keepEditing}
-            onClick={onCancel}
-            showText="always"
-            tone="terciary"
-            type="button"
-          >
-            {adminContent.tables.dialogs.keepEditing}
-          </IconButton>
-        </div>
-      </div>
-    </div>
+  return (
+    <UnsavedChangesDialog
+      changes={changes}
+      labels={{
+        eyebrow: adminContent.providers.dialogs.warningEyebrow,
+        exitWithoutSaving: adminContent.tables.dialogs.exitWithoutSaving,
+        keepEditing: adminContent.tables.dialogs.keepEditing,
+        saveAndExit: adminContent.tables.dialogs.saveAndExit,
+        text: adminContent.providers.dialogs.unsavedText,
+        title: adminContent.tables.dialogs.unsavedTitle,
+      }}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      onSaveAndExit={onSaveAndExit}
+      titleId="unsaved-provider-changes-title"
+    />
   );
-
-  return createPortal(dialog, document.body);
 }
 
 function ProvidersOverview({ loading, stats }) {
@@ -888,90 +825,24 @@ function ProviderTableActions({
   selectedProvider,
   showText,
 }) {
-  const hasItems = providers.length > 0;
-
-  if (!hasItems && !hasPendingChanges) {
-    if (!onCreate) return null;
-
-    return (
-      <div className="grid w-full gap-3">
-        <IconButton
-          className="w-full"
-          icon={<Plus size={18} strokeWidth={2.4} />}
-          label={adminContent.providers.actions.add}
-          onClick={onCreate}
-          showText={showText ? "always" : undefined}
-          tone="primary"
-          type="button"
-        >
-          {showText ? adminContent.providers.actions.add : undefined}
-        </IconButton>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid w-full gap-3">
-      {hasPendingChanges && (
-        <div className="grid w-full grid-cols-2 gap-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-3">
-          <IconButton
-            className="w-full"
-            icon={<Undo2 size={16} strokeWidth={1.8} />}
-            label={adminContent.providers.actions.discardChanges}
-            onClick={onDiscard}
-            showText={showText ? "always" : undefined}
-            tone="secondary"
-            type="button"
-          >
-            {showText
-              ? adminContent.providers.actions.discardChanges
-              : undefined}
-          </IconButton>
-          <IconButton
-            className="w-full"
-            disabled={saving}
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label={adminContent.providers.actions.saveChanges}
-            onClick={onSave}
-            showText={showText ? "always" : undefined}
-            tone="primary"
-            type="button"
-          >
-            {showText ? adminContent.providers.actions.saveChanges : undefined}
-          </IconButton>
-        </div>
-      )}
-
-      <div
-        className={`grid w-full gap-3 sm:w-auto ${
-          hasItems ? "grid-cols-3 sm:grid-cols-3" : "grid-cols-1"
-        }`}
-      >
-        {hasItems && (
-          <CardActions
-            className="contents"
-            deleteLabel={adminContent.providers.actions.delete}
-            editLabel={adminContent.providers.actions.edit}
-            item={selectedProvider}
-            onDelete={selectedProvider ? onDelete : null}
-            onEdit={selectedProvider ? onEdit : null}
-            showText={showText}
-          />
-        )}
-        {onCreate && (
-          <IconButton
-            className="w-full"
-            icon={<Plus size={18} strokeWidth={2.4} />}
-            label={adminContent.providers.actions.add}
-            onClick={onCreate}
-            tone="primary"
-            type="button"
-          >
-            {showText ? adminContent.providers.actions.add : undefined}
-          </IconButton>
-        )}
-      </div>
-    </div>
+    <AdminEntityActions
+      addLabel={adminContent.providers.actions.add}
+      deleteLabel={adminContent.providers.actions.delete}
+      discardLabel={adminContent.providers.actions.discardChanges}
+      editLabel={adminContent.providers.actions.edit}
+      hasItems={providers.length > 0}
+      hasPendingChanges={hasPendingChanges}
+      onCreate={onCreate}
+      onDelete={onDelete}
+      onDiscard={onDiscard}
+      onEdit={onEdit}
+      onSave={onSave}
+      saveLabel={adminContent.providers.actions.saveChanges}
+      saving={saving}
+      selectedItem={selectedProvider}
+      showText={showText}
+    />
   );
 }
 
@@ -1180,291 +1051,6 @@ function ServicesEmptyState({
       <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
         {text}
       </p>
-    </div>
-  );
-}
-
-function ProviderForm({
-  errors,
-  form,
-  loading,
-  mode = "provider",
-  onAddService,
-  onChange,
-  onPaymentChange,
-  onRemoveService,
-  onServiceChange,
-  onSubmit,
-  selectedServiceId = "",
-}) {
-  const reduceMotion = useReducedMotion();
-  const paymentTransition = { duration: reduceMotion ? 0.12 : 0.32 };
-  const paymentVariants = reduceMotion
-    ? {
-        hidden: { opacity: 0 },
-        visible: { opacity: 1 },
-      }
-    : {
-        hidden: { opacity: 0, y: -8, filter: "blur(4px)" },
-        visible: { opacity: 1, y: 0, filter: "blur(0px)" },
-      };
-  const showProviderFields = mode !== "service";
-  const showServiceFields = mode !== "provider";
-  const serviceEntries = form.services
-    .map((service, serviceIndex) => ({ service, serviceIndex }))
-    .filter(({ service }) => mode !== "service" || service.id === selectedServiceId);
-
-  return (
-    <form className="mt-4 space-y-5" noValidate onSubmit={onSubmit}>
-      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-        <IconButton
-          className="w-full"
-          disabled={loading}
-          icon={<Save size={16} strokeWidth={1.8} />}
-          label={adminContent.providers.form.save}
-          showText="always"
-          tone="primary"
-          type="submit"
-        >
-          {adminContent.providers.form.save}
-        </IconButton>
-      </div>
-
-      {showProviderFields && (
-        <>
-          <FormCard>
-            <p className="section-eyebrow mb-2">
-              {adminContent.providers.form.contactTitle}
-            </p>
-            <div className="grid gap-5 md:grid-cols-2">
-              <ProviderField
-                error={errors.name}
-                label={adminContent.providers.form.fields.name}
-                onChange={(value) => onChange("name", value)}
-                value={form.name}
-              />
-              <div>
-                <Label>{adminContent.providers.form.fields.category}</Label>
-                <select
-                  className={selectClassName}
-                  onChange={(event) => onChange("category", event.target.value)}
-                  value={form.category}
-                >
-                  {PROVIDER_CATEGORIES.map((category) => (
-                    <option key={category.value} value={category.value}>
-                      {category.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <ProviderField
-                error={errors.phone}
-                label={adminContent.providers.form.fields.phone}
-                onChange={(value) => onChange("phone", value)}
-                type="tel"
-                value={form.phone}
-              />
-              <ProviderField
-                error={errors.email}
-                label={adminContent.providers.form.fields.email}
-                onChange={(value) => onChange("email", value)}
-                type="email"
-                value={form.email}
-              />
-            </div>
-          </FormCard>
-
-          <CollapsiblePanel title="Datos opcionales">
-            <div className="grid gap-5 md:grid-cols-2">
-              <ProviderField
-                label={adminContent.providers.form.fields.address}
-                onChange={(value) => onChange("address", value)}
-                value={form.address}
-              />
-              <ProviderField
-                label={adminContent.providers.form.fields.web}
-                onChange={(value) => onChange("web", value)}
-                type="url"
-                value={form.web}
-              />
-              <div className="md:col-span-2">
-                <ProviderField
-                  label={adminContent.providers.form.fields.accountNumber}
-                  onChange={(value) => onChange("accountNumber", value)}
-                  value={form.accountNumber}
-                />
-              </div>
-            </div>
-          </CollapsiblePanel>
-        </>
-      )}
-
-      {showServiceFields && (
-        <FormCard>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="section-eyebrow mb-2">
-                {adminContent.providers.form.servicesTitle}
-              </p>
-              <h3 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-                {mode === "service" ? "1 servicio" : `${form.services.length} servicios`}
-              </h3>
-            </div>
-            {mode !== "service" && (
-              <IconButton
-                icon={<Plus size={16} strokeWidth={1.8} />}
-                label={adminContent.providers.form.addService}
-                onClick={onAddService}
-                tone="secondary"
-                type="button"
-              />
-            )}
-          </div>
-
-          <div className="mt-5 grid gap-4">
-            {serviceEntries.map(({ service, serviceIndex }) => (
-              <div
-                className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4"
-                key={service.id}
-              >
-                <div className="grid gap-4 md:grid-cols-[1fr_10rem_8rem_auto] md:items-end">
-                  <ProviderField
-                    error={errors[`service_${serviceIndex}_name`]}
-                    label={adminContent.providers.form.fields.serviceName}
-                    onChange={(value) =>
-                      onServiceChange(serviceIndex, "name", value)
-                    }
-                    value={service.name}
-                  />
-                  <ProviderField
-                    error={errors[`service_${serviceIndex}_price`]}
-                    label={adminContent.providers.form.fields.servicePrice}
-                    onChange={(value) =>
-                      onServiceChange(serviceIndex, "price", value)
-                    }
-                    type="number"
-                    value={service.price}
-                  />
-                  <div>
-                    <Label>
-                      {adminContent.providers.form.fields.paymentCount}
-                    </Label>
-                    <select
-                      className={selectClassName}
-                      onChange={(event) =>
-                        onServiceChange(
-                          serviceIndex,
-                          "paymentCount",
-                          Number(event.target.value),
-                        )
-                      }
-                      value={service.paymentCount}
-                    >
-                      {[1, 2, 3].map((count) => (
-                        <option key={count} value={count}>
-                          {count}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {mode !== "service" && (
-                    <IconButton
-                      icon={<Trash2 size={16} strokeWidth={1.8} />}
-                      label={adminContent.providers.form.deleteService}
-                      onClick={() => onRemoveService(serviceIndex)}
-                      tone="danger"
-                      type="button"
-                    />
-                  )}
-                </div>
-
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  <AnimatePresence initial={false}>
-                    {service.payments
-                      .slice(0, service.paymentCount)
-                      .map((payment, paymentIndex) => (
-                        <motion.div
-                          animate="visible"
-                          className="rounded-2xl border border-[var(--color-border)] bg-white/50 p-3"
-                          exit="hidden"
-                          initial="hidden"
-                          key={paymentIndex}
-                          layout
-                          transition={paymentTransition}
-                          variants={paymentVariants}
-                        >
-                          <p className="section-eyebrow mb-3">
-                            {adminContent.providers.form.payment(paymentIndex + 1)}
-                          </p>
-                          <input
-                            className={inputClassName}
-                            onChange={(event) =>
-                              onPaymentChange(
-                                serviceIndex,
-                                paymentIndex,
-                                "amount",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="Importe"
-                            type="number"
-                            value={payment.amount}
-                          />
-                          <input
-                            className={`${inputClassName} mt-3`}
-                            onChange={(event) =>
-                              onPaymentChange(
-                                serviceIndex,
-                                paymentIndex,
-                                "date",
-                                event.target.value,
-                              )
-                            }
-                            type="date"
-                            value={payment.date}
-                          />
-                          <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 px-4 py-3 text-sm text-[var(--color-accent-dark)] transition hover:bg-white">
-                            <span>Pagado</span>
-                            <input
-                              checked={payment.paid}
-                              className="peer sr-only"
-                              onChange={(event) =>
-                                onPaymentChange(
-                                  serviceIndex,
-                                  paymentIndex,
-                                  "paid",
-                                  event.target.checked,
-                                )
-                              }
-                              type="checkbox"
-                            />
-                            <span className="relative h-6 w-11 rounded-full bg-[var(--color-border-strong)] transition after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--color-accent-dark)] peer-checked:after:translate-x-full" />
-                          </label>
-                        </motion.div>
-                      ))}
-                  </AnimatePresence>
-                </div>
-                <FieldError>{errors[`service_${serviceIndex}_payments`]}</FieldError>
-              </div>
-            ))}
-          </div>
-        </FormCard>
-      )}
-    </form>
-  );
-}
-
-function ProviderField({ error, label, onChange, type = "text", value }) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <input
-        className={inputClassName}
-        onChange={(event) => onChange(event.target.value)}
-        type={type}
-        value={value}
-      />
-      <FieldError>{error}</FieldError>
     </div>
   );
 }

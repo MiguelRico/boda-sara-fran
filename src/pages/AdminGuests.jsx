@@ -1,22 +1,15 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
 import {
   AlertTriangle,
   Beef,
   BusFront,
-  ChevronDown,
   Fish,
   Mail,
   MessageCircle,
   Phone,
-  Plus,
-  Save,
   Search,
-  Trash2,
-  Undo2,
-  X,
   Utensils,
   UsersRound,
 } from "lucide-react";
@@ -30,11 +23,12 @@ import IconButton from "../components/ui/IconButton";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
+import AdminEntityActions from "../components/admin/AdminEntityActions";
 import Card from "../components/admin/Card";
-import CardActions from "../components/admin/CardActions";
 import CardGrid from "../components/admin/CardGrid";
 import EditorDialog from "../components/admin/EditorDialog";
 import AdminTableSection from "../components/admin/AdminTableSection";
+import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
 import { AdminMetricGrid } from "../components/admin/AdminMetricGrid";
 import TableGuestCard from "../components/admin/TableGuestCard";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
@@ -47,11 +41,14 @@ import {
   MAX_GUESTS,
 } from "../constants/rsvp";
 import { Confirmation, Guest } from "../models";
-import { deleteAdminGroup, saveAdminGroup } from "../services/rsvpService";
+import { deleteAdminGroup, saveAdminGroup } from "../api/confirmationsApi";
 import { loadAdminDataOnce, setAdminGroups } from "../services/adminDataStore";
-import { inputClassName, Label } from "../components/rsvp/FormPrimitives";
+import {
+  inputClassName,
+  Label,
+  selectClassName,
+} from "../components/rsvp/FormPrimitives";
 import useSpinner from "../hooks/useSpinner";
-import useViewportScrollLock from "../hooks/useViewportScrollLock";
 import usePagedData from "../hooks/usePagedData";
 import usePageTransition from "../hooks/usePageTransition";
 import {
@@ -61,7 +58,7 @@ import {
 import { getEmailHref, getPhoneHref } from "../utils/contactLinks";
 import { adminContent } from "../constants/adminContent";
 import { normalizeAdminGroups } from "../utils/rsvpGroups";
-import { validateRsvpForm } from "../utils/rsvpValidation";
+import { validateRsvpForm } from "../validators/confirmationValidators";
 
 const desktopPageSize = 8;
 const mobilePageSize = 1;
@@ -800,24 +797,17 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
 
         <div>
           <Label>{adminContent.guests.filters.showLabel}</Label>
-          <div className="relative">
-            <select
-              className={`${inputClassName} appearance-none bg-white pr-11`}
-              onChange={(event) => onFilterChange(event.target.value)}
-              value={filter}
-            >
-              {filters.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
-              size={18}
-              strokeWidth={1.8}
-            />
-          </div>
+          <select
+            className={selectClassName}
+            onChange={(event) => onFilterChange(event.target.value)}
+            value={filter}
+          >
+            {filters.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     </CollapsiblePanel>
@@ -837,91 +827,25 @@ function GuestTableActions({
   selectedGroup,
   showText = true,
 }) {
-  const hasItems = rows.length > 0;
-
-  if (!hasItems && !hasPendingChanges) {
-    if (!onCreate) return null;
-
-    return (
-      <div className="grid w-full gap-3">
-        <IconButton
-          className="w-full"
-          icon={<Plus size={18} strokeWidth={2.4} />}
-          label={adminContent.guests.actions.create}
-          onClick={onCreate}
-          showText={showText ? "always" : undefined}
-          tone="primary"
-          type="button"
-        >
-          {showText ? adminContent.guests.actions.create : undefined}
-        </IconButton>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid w-full gap-3">
-      {hasPendingChanges && (
-        <div className="grid w-full grid-cols-2 gap-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-3">
-          <IconButton
-            className="w-full"
-            disabled={loading}
-            icon={<Undo2 size={16} strokeWidth={1.8} />}
-            label={adminContent.guests.actions.discardChanges}
-            onClick={onDiscard}
-            showText={showText ? "always" : undefined}
-            tone="secondary"
-            type="button"
-          >
-            {showText ? adminContent.guests.actions.discardChanges : undefined}
-          </IconButton>
-
-          <IconButton
-            className="w-full"
-            disabled={saving}
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label={adminContent.guests.actions.saveChanges}
-            onClick={onSave}
-            showText={showText ? "always" : undefined}
-            tone="primary"
-            type="button"
-          >
-            {showText ? adminContent.guests.actions.saveChanges : undefined}
-          </IconButton>
-        </div>
-      )}
-
-      <div
-        className={`grid w-full gap-3 sm:w-auto ${
-          hasItems ? "grid-cols-3 sm:grid-cols-3" : "grid-cols-1"
-        }`}
-      >
-        {hasItems && (
-          <CardActions
-            className="contents"
-            deleteLabel={adminContent.guests.actions.delete}
-            editLabel={adminContent.guests.actions.edit}
-            item={selectedGroup}
-            onDelete={selectedGroup ? onDelete : null}
-            onEdit={selectedGroup ? onEdit : null}
-            showText={showText}
-          />
-        )}
-
-        {onCreate && (
-          <IconButton
-            className="w-full"
-            icon={<Plus size={18} strokeWidth={2.4} />}
-            label={adminContent.guests.actions.create}
-            onClick={onCreate}
-            tone="primary"
-            type="button"
-          >
-            {showText ? adminContent.guests.actions.create : undefined}
-          </IconButton>
-        )}
-      </div>
-    </div>
+    <AdminEntityActions
+      addLabel={adminContent.guests.actions.create}
+      deleteLabel={adminContent.guests.actions.delete}
+      discardLabel={adminContent.guests.actions.discardChanges}
+      editLabel={adminContent.guests.actions.edit}
+      hasItems={rows.length > 0}
+      hasPendingChanges={hasPendingChanges}
+      loading={loading}
+      onCreate={onCreate}
+      onDelete={onDelete}
+      onDiscard={onDiscard}
+      onEdit={onEdit}
+      onSave={onSave}
+      saveLabel={adminContent.guests.actions.saveChanges}
+      saving={saving}
+      selectedItem={selectedGroup}
+      showText={showText}
+    />
   );
 }
 
@@ -931,78 +855,23 @@ function UnsavedGuestChangesDialog({
   onConfirm,
   onSaveAndExit,
 }) {
-  useViewportScrollLock(true);
-
-  const dialog = (
-    <div className="rsvp-dialog-overlay">
-      <div
-        aria-labelledby="unsaved-guest-changes-title"
-        aria-modal="true"
-        className="premium-card rsvp-dialog-card"
-        role="alertdialog"
-      >
-        <p className="section-eyebrow mb-3">
-          {adminContent.guests.dialogs.warningEyebrow}
-        </p>
-        <h2
-          className="font-serif text-3xl text-[var(--color-accent-dark)]"
-          id="unsaved-guest-changes-title"
-        >
-          {adminContent.guests.dialogs.unsavedTitle}
-        </h2>
-        <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
-          {adminContent.guests.dialogs.unsavedText}
-        </p>
-        <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
-          {changes.map((change, index) => (
-            <li
-              className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
-              key={`${change}-${index}`}
-            >
-              {change}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <IconButton
-            className="flex-1"
-            icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label={adminContent.guests.dialogs.exitWithoutSaving}
-            onClick={onConfirm}
-            showText="always"
-            tone="danger"
-            type="button"
-          >
-            {adminContent.guests.dialogs.exitWithoutSaving}
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label={adminContent.guests.dialogs.saveAndExit}
-            onClick={onSaveAndExit}
-            showText="always"
-            tone="primary"
-            type="button"
-          >
-            {adminContent.guests.dialogs.saveAndExit}
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<X size={16} strokeWidth={1.8} />}
-            label={adminContent.guests.dialogs.keepEditing}
-            onClick={onCancel}
-            showText="always"
-            tone="terciary"
-            type="button"
-          >
-            {adminContent.guests.dialogs.keepEditing}
-          </IconButton>
-        </div>
-      </div>
-    </div>
+  return (
+    <UnsavedChangesDialog
+      changes={changes}
+      labels={{
+        eyebrow: adminContent.guests.dialogs.warningEyebrow,
+        exitWithoutSaving: adminContent.guests.dialogs.exitWithoutSaving,
+        keepEditing: adminContent.guests.dialogs.keepEditing,
+        saveAndExit: adminContent.guests.dialogs.saveAndExit,
+        text: adminContent.guests.dialogs.unsavedText,
+        title: adminContent.guests.dialogs.unsavedTitle,
+      }}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      onSaveAndExit={onSaveAndExit}
+      titleId="unsaved-guest-changes-title"
+    />
   );
-
-  return createPortal(dialog, document.body);
 }
 
 function GuestItemsPage({ emptyState, items, onSelect, selectedGuestId }) {
