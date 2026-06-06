@@ -1291,25 +1291,21 @@ function getTableSummaryItems(stats) {
     {
       label: adminContent.tables.overview.metrics.tableCount,
       value: stats.totalTables,
-      detail: adminContent.tables.overview.metrics.tables,
       emoji: <Grid2X2 size={22} strokeWidth={1.8} />,
     },
     {
       label: adminContent.tables.overview.metrics.seatCount,
       value: stats.totalSeats,
-      detail: adminContent.tables.overview.metrics.seats,
       emoji: <Armchair size={22} strokeWidth={1.8} />,
     },
     {
       label: adminContent.tables.overview.metrics.assignedSeats,
       value: stats.assignedSeats,
-      detail: adminContent.tables.overview.metrics.assigned,
       emoji: <CircleCheckBig size={22} strokeWidth={1.8} />,
     },
     {
       label: adminContent.tables.overview.metrics.pendingSeats,
       value: stats.pendingSeats,
-      detail: adminContent.tables.overview.metrics.pending,
       emoji: <CircleDashed size={22} strokeWidth={1.8} />,
     },
   ];

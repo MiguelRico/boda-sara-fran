@@ -213,19 +213,16 @@ function getSummaryItems(stats) {
     {
       label: "Recibidas",
       value: stats.totalGroups,
-      detail: "Recibidas",
       emoji: <MailCheck size={22} strokeWidth={1.8} />,
     },
     {
       label: "Personas",
       value: stats.totalGuests,
-      detail: "Personas",
       emoji: <UsersRound size={22} strokeWidth={1.8} />,
     },
     {
       label: "Notas",
       value: `${stats.guestsWithComments}`,
-      detail: "Notas",
       emoji: <MessageCircle size={22} strokeWidth={1.8} />,
     },
   ];

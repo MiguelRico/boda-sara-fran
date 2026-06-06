@@ -697,25 +697,21 @@ function ProvidersOverview({ loading, stats }) {
           items={[
             {
               emoji: <BriefcaseBusiness size={22} strokeWidth={1.8} />,
-              detail: adminContent.providers.overview.metrics.providers,
               label: adminContent.providers.overview.metrics.providers,
               value: stats.providerCount,
             },
             {
               emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
-              detail: adminContent.providers.overview.metrics.services,
               label: adminContent.providers.overview.metrics.services,
               value: stats.serviceCount,
             },
             {
               emoji: <Euro size={22} strokeWidth={1.8} />,
-              detail: adminContent.providers.overview.metrics.budget,
               label: adminContent.providers.overview.metrics.budget,
               value: formatCurrency(stats.totalBudget),
             },
             {
               emoji: <CalendarDays size={22} strokeWidth={1.8} />,
-              detail: adminContent.providers.overview.metrics.paid,
               label: adminContent.providers.overview.metrics.paid,
               value: formatCurrency(stats.totalPaid),
             },

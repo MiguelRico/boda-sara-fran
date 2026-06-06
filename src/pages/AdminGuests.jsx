@@ -31,7 +31,10 @@ import Card from "../components/admin/Card";
 import CardGrid from "../components/admin/CardGrid";
 import AdminTableSection from "../components/admin/AdminTableSection";
 import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
-import { AdminMetricGrid } from "../components/admin/AdminMetricGrid";
+import {
+  AdminMetricGrid,
+  AdminMetricGridSkeleton,
+} from "../components/admin/AdminMetricGrid";
 import TableGuestCard from "../components/admin/TableGuestCard";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import Chip from "../components/ui/Chip";
@@ -440,7 +443,7 @@ export default function AdminGuests() {
         rootRef={guestsRef}
       >
         <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
-          <GuestsOverview stats={guestStats} />
+          <GuestsOverview loading={state.loading} stats={guestStats} />
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
@@ -703,7 +706,7 @@ export default function AdminGuests() {
   );
 }
 
-function GuestsOverview({ stats }) {
+function GuestsOverview({ loading, stats }) {
   const metrics = adminContent.guests.overview.metrics;
 
   return (
@@ -714,35 +717,38 @@ function GuestsOverview({ stats }) {
       <h2 className="mb-5 font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
         {adminContent.guests.overview.title}
       </h2>
-      <AdminMetricGrid
-        className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
-        items={[
-          {
-            emoji: <UsersRound size={22} strokeWidth={1.8} />,
-            detail: metrics.confirmations,
-            label: metrics.confirmations,
-            value: stats.groupCount,
-          },
-          {
-            emoji: <UsersRound size={22} strokeWidth={1.8} />,
-            detail: metrics.guests,
-            label: metrics.guests,
-            value: stats.guestCount,
-          },
-          {
-            emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
-            detail: metrics.allergies,
-            label: metrics.allergies,
-            value: stats.allergyCount,
-          },
-          {
-            emoji: <BusFront size={22} strokeWidth={1.8} />,
-            detail: metrics.bus,
-            label: metrics.bus,
-            value: stats.busCount,
-          },
-        ]}
-      />
+      {loading ? (
+        <AdminMetricGridSkeleton
+          className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
+          count={4}
+        />
+      ) : (
+        <AdminMetricGrid
+          className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
+          items={[
+            {
+              emoji: <UsersRound size={22} strokeWidth={1.8} />,
+              label: metrics.confirmations,
+              value: stats.groupCount,
+            },
+            {
+              emoji: <UsersRound size={22} strokeWidth={1.8} />,
+              label: metrics.guests,
+              value: stats.guestCount,
+            },
+            {
+              emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
+              label: metrics.allergies,
+              value: stats.allergyCount,
+            },
+            {
+              emoji: <BusFront size={22} strokeWidth={1.8} />,
+              label: metrics.bus,
+              value: stats.busCount,
+            },
+          ]}
+        />
+      )}
     </section>
   );
 }

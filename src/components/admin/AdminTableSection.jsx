@@ -31,8 +31,10 @@ export default function AdminTableSection({
   totalPages,
   items = [],
 }) {
+  const sourceItemsTotal = sourceItemsCount ?? items.length;
   const hasResults = items.length > 0;
-  const hasSourceItems = (sourceItemsCount ?? items.length) > 0;
+  const hasFilterSlot =
+    loading && sourceItemsCount == null ? Boolean(filters) : sourceItemsTotal > 1;
   const hasPagination =
     !loading &&
     hasResults &&
@@ -78,14 +80,14 @@ export default function AdminTableSection({
           cardCount={contentSkeletonConfig.count ?? skeletonConfig.cardCount}
           columnsClassName={contentSkeletonConfig.columnsClassName}
           count={skeletonConfig.count ?? Boolean(count)}
-          filters={skeletonConfig.filters ?? Boolean(filters)}
+          filters={skeletonConfig.filters ?? Boolean(filters && hasFilterSlot)}
           itemClassName={contentSkeletonConfig.itemClassName}
           lines={contentSkeletonConfig.lines}
           pagination={hasPaginationSlot}
         />
       ) : (
         <>
-          {filters && hasSourceItems && <div className="mb-4">{filters}</div>}
+          {filters && hasFilterSlot && <div className="mb-4">{filters}</div>}
 
           {hasPagination && (
             <Pagination
