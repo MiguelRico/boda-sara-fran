@@ -33,7 +33,8 @@ export default function AdminTableSection({
 }) {
   const hasResults = items.length > 0;
   const hasSourceItems = (sourceItemsCount ?? items.length) > 0;
-  const hasPagination = !loading && hasResults && page && pageSize && totalPages;
+  const hasPagination =
+    !loading && hasResults && page && pageSize && totalPages;
   const hasPaginationSlot =
     skeletonConfig.pagination ??
     Boolean(
@@ -45,7 +46,7 @@ export default function AdminTableSection({
     <section className={`premium-card ${className}`} ref={sectionRef}>
       <div className="mb-4">
         <p className="section-eyebrow mb-2">{eyebrow}</p>
-        <h2 className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+        <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
           {title}
         </h2>
 

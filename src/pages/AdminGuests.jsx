@@ -208,7 +208,10 @@ export default function AdminGuests() {
     selectedId: selectedRowId,
   });
 
-  const allGuestItems = useMemo(() => getGuestItems(state.confirmations), [state.confirmations]);
+  const allGuestItems = useMemo(
+    () => getGuestItems(state.confirmations),
+    [state.confirmations],
+  );
   const guestItems = useMemo(
     () => (selectedRow?.group ? getGuestItems([selectedRow.group]) : []),
     [selectedRow],
@@ -251,7 +254,8 @@ export default function AdminGuests() {
   const selectedGuestGroup =
     selectedGuestItem?.group || selectedRow?.group || null;
   const pendingChanges = useMemo(
-    () => buildPendingConfirmationChanges(savedConfirmations, state.confirmations),
+    () =>
+      buildPendingConfirmationChanges(savedConfirmations, state.confirmations),
     [savedConfirmations, state.confirmations],
   );
   const hasPendingChanges = pendingChanges.length > 0;
@@ -293,7 +297,9 @@ export default function AdminGuests() {
     const isCreation = !editingGroup?.confirmationName;
     const groupToSave = normalizeAdminGroupBeforeSave(group, { isCreation });
 
-    applyConfirmations(upsertConfirmationInList(state.confirmations, groupToSave));
+    applyConfirmations(
+      upsertConfirmationInList(state.confirmations, groupToSave),
+    );
     setEditingGroup(null);
     setPopup(
       createAdminPopup({
@@ -306,7 +312,9 @@ export default function AdminGuests() {
   const handleDeleteGroup = () => {
     if (!deleteTarget) return;
 
-    applyConfirmations(removeConfirmationFromList(state.confirmations, deleteTarget));
+    applyConfirmations(
+      removeConfirmationFromList(state.confirmations, deleteTarget),
+    );
     setDeleteTarget(null);
     setPopup(
       createAdminPopup({
@@ -428,212 +436,209 @@ export default function AdminGuests() {
         isVisible={guestsInView}
         rootRef={guestsRef}
       >
-          <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
-            <GuestsOverview stats={guestStats} />
-          </CinematicStaggeredRevealItem>
+        <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
+          <GuestsOverview stats={guestStats} />
+        </CinematicStaggeredRevealItem>
 
-          <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
-            <AdminEntityTabs
-                activeTab={activeTab}
-                onChange={setActiveTab}
-                tabs={adminContent.guests.tabs}
-              >
-
-              {activeTab === "confirmations" ? (
-                <AdminTableSection
-                  actions={
+        <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
+          <AdminEntityTabs
+            activeTab={activeTab}
+            onChange={setActiveTab}
+            tabs={adminContent.guests.tabs}
+          >
+            {activeTab === "confirmations" ? (
+              <AdminTableSection
+                actions={
+                  <GuestTableActions
+                    hasPendingChanges={hasPendingChanges}
+                    loading={state.loading}
+                    onCreate={() => openGroupEditor(undefined, "full")}
+                    onDelete={() => setDeleteTarget(selectedRow.group)}
+                    onDiscard={handleDiscardPendingChanges}
+                    onEdit={() => openGroupEditor(selectedRow.group, "group")}
+                    onSave={handleSavePendingChanges}
+                    rows={rows}
+                    saving={spinner.loading}
+                    selectedGroup={selectedRow?.group}
+                    showText={!isMobileView}
+                  />
+                }
+                contentRef={tableStartRef}
+                eyebrow={adminContent.guests.list.eyebrow}
+                filters={
+                  <FiltersCard
+                    filter={filter}
+                    onFilterChange={(value) => {
+                      cancelPageLoading();
+                      setFilter(value);
+                      setPage(1);
+                      setGuestPage(1);
+                    }}
+                    onQueryChange={(value) => {
+                      cancelPageLoading();
+                      setQuery(value);
+                      setPage(1);
+                      setGuestPage(1);
+                    }}
+                    query={query}
+                  />
+                }
+                getKey={(row) => row.rowId}
+                isMobileView={isMobileView}
+                items={visibleRows}
+                loading={state.loading}
+                mobilePageLabel={adminContent.guests.list.mobilePageLabel}
+                onNextPage={() =>
+                  handlePageChange(currentPage + 1, tableStartRef.current)
+                }
+                onPrevPage={() =>
+                  handlePageChange(currentPage - 1, tableStartRef.current)
+                }
+                page={currentPage}
+                pageDirection={pageDirection}
+                pageLabel={adminContent.guests.list.pageLabel}
+                pageSize={isMobileView ? mobilePageSize : desktopPageSize}
+                renderMeasurePage={(items) => (
+                  <AdminGuestPage
+                    emptyState={getGroupEmptyState(rows.length)}
+                    items={items}
+                    onSelect={() => {}}
+                    selectedRowId={effectiveSelectedRowId}
+                  />
+                )}
+                renderPage={(items) => (
+                  <AdminGuestPage
+                    emptyState={getGroupEmptyState(rows.length)}
+                    items={items}
+                    onSelect={(row) => {
+                      setSelectedRowId(row.rowId);
+                      setGuestPage(1);
+                      setSelectedGuestId("");
+                    }}
+                    selectedRowId={effectiveSelectedRowId}
+                  />
+                )}
+                sectionRef={tableCardRef}
+                sourceItemsCount={rows.length}
+                skeletonConfig={{
+                  content: {
+                    columnsClassName: "lg:grid-cols-2",
+                    itemClassName: "min-h-40",
+                    lines: 2,
+                  },
+                  filters: true,
+                }}
+                title={adminContent.guests.list.title}
+                totalPages={totalPages}
+              />
+            ) : (
+              <AdminTableSection
+                actions={
+                  hasPendingChanges ||
+                  visibleGuestItems.length ||
+                  selectedGuestGroup ? (
                     <GuestTableActions
                       hasPendingChanges={hasPendingChanges}
                       loading={state.loading}
-                      onCreate={() => openGroupEditor(undefined, "full")}
-                      onDelete={() => setDeleteTarget(selectedRow.group)}
+                      onCreate={
+                        selectedGuestGroup
+                          ? () => openGroupEditor(selectedGuestGroup, "guests")
+                          : null
+                      }
+                      onDelete={() =>
+                        selectedGuestItem && openGuestEditor(selectedGuestItem)
+                      }
                       onDiscard={handleDiscardPendingChanges}
-                      onEdit={() => openGroupEditor(selectedRow.group, "group")}
+                      onEdit={() =>
+                        selectedGuestItem && openGuestEditor(selectedGuestItem)
+                      }
                       onSave={handleSavePendingChanges}
-                      rows={rows}
+                      rows={visibleGuestItems}
                       saving={spinner.loading}
-                      selectedGroup={selectedRow?.group}
+                      selectedGroup={selectedGuestGroup}
                       showText={!isMobileView}
                     />
-                  }
-                  contentRef={tableStartRef}
-                  eyebrow={adminContent.guests.list.eyebrow}
-                  filters={
-                    <FiltersCard
-                      filter={filter}
-                      onFilterChange={(value) => {
-                        cancelPageLoading();
-                        setFilter(value);
-                        setPage(1);
-                        setGuestPage(1);
-                      }}
-                      onQueryChange={(value) => {
-                        cancelPageLoading();
-                        setQuery(value);
-                        setPage(1);
-                        setGuestPage(1);
-                      }}
-                      query={query}
-                    />
-                  }
-                  getKey={(row) => row.rowId}
-                  isMobileView={isMobileView}
-                  items={visibleRows}
-                  loading={state.loading}
-                  mobilePageLabel={adminContent.guests.list.mobilePageLabel}
-                  onNextPage={() =>
-                    handlePageChange(currentPage + 1, tableStartRef.current)
-                  }
-                  onPrevPage={() =>
-                    handlePageChange(currentPage - 1, tableStartRef.current)
-                  }
-                  page={currentPage}
-                  pageDirection={pageDirection}
-                  pageLabel={adminContent.guests.list.pageLabel}
-                  pageSize={isMobileView ? mobilePageSize : desktopPageSize}
-                  renderMeasurePage={(items) => (
-                    <AdminGuestPage
-                      emptyState={getGroupEmptyState(rows.length)}
-                      items={items}
-                      onSelect={() => {}}
-                      selectedRowId={effectiveSelectedRowId}
-                    />
-                  )}
-                  renderPage={(items) => (
-                    <AdminGuestPage
-                      emptyState={getGroupEmptyState(rows.length)}
-                      items={items}
-                      onSelect={(row) => {
-                        setSelectedRowId(row.rowId);
-                        setGuestPage(1);
-                        setSelectedGuestId("");
-                      }}
-                      selectedRowId={effectiveSelectedRowId}
-                    />
-                  )}
-                  sectionRef={tableCardRef}
-                  sourceItemsCount={rows.length}
-                  skeletonConfig={{
-                    content: {
-                      columnsClassName: "lg:grid-cols-2",
-                      itemClassName: "min-h-40",
-                      lines: 2,
-                    },
-                    filters: true,
-                  }}
-                  title={adminContent.guests.list.title}
-                  totalPages={totalPages}
-                />
-              ) : (
-                <AdminTableSection
-                  actions={
-                    hasPendingChanges ||
-                    visibleGuestItems.length ||
-                    selectedGuestGroup ? (
-                      <GuestTableActions
-                        hasPendingChanges={hasPendingChanges}
-                        loading={state.loading}
-                        onCreate={
-                          selectedGuestGroup
-                            ? () => openGroupEditor(selectedGuestGroup, "guests")
-                            : null
-                        }
-                        onDelete={() =>
-                          selectedGuestItem &&
-                          openGuestEditor(selectedGuestItem)
-                        }
-                        onDiscard={handleDiscardPendingChanges}
-                        onEdit={() =>
-                          selectedGuestItem &&
-                          openGuestEditor(selectedGuestItem)
-                        }
-                        onSave={handleSavePendingChanges}
-                        rows={visibleGuestItems}
-                        saving={spinner.loading}
-                        selectedGroup={selectedGuestGroup}
-                        showText={!isMobileView}
-                      />
-                    ) : null
-                  }
-                  contentRef={tableStartRef}
-                  eyebrow={adminContent.guests.guestList.eyebrow}
-                  filters={
-                    <FiltersCard
-                      filter={filter}
-                      onFilterChange={(value) => {
-                        cancelPageLoading();
-                        setFilter(value);
-                        setPage(1);
-                        setGuestPage(1);
-                      }}
-                      onQueryChange={(value) => {
-                        cancelPageLoading();
-                        setQuery(value);
-                        setPage(1);
-                        setGuestPage(1);
-                      }}
-                      query={query}
-                    />
-                  }
-                  getKey={(guest) => guest.rowId}
-                  isMobileView={isMobileView}
-                  items={visibleGuestItems}
-                  loading={state.loading}
-                  mobilePageLabel={adminContent.guests.guestList.mobilePageLabel}
-                  onNextPage={() =>
-                    handleGuestPageChange(
-                      currentGuestPage + 1,
-                      tableStartRef.current,
-                    )
-                  }
-                  onPrevPage={() =>
-                    handleGuestPageChange(
-                      currentGuestPage - 1,
-                      tableStartRef.current,
-                    )
-                  }
-                  page={currentGuestPage}
-                  pageDirection={guestPageDirection}
-                  pageLabel={adminContent.guests.list.pageLabel}
-                  pageSize={guestPageSize}
-                  renderMeasurePage={(items) => (
-                    <GuestItemsPage
-                      emptyState={getGuestListEmptyState(
-                        rows.length,
-                        guestItems.length,
-                      )}
-                      items={items}
-                      onSelect={() => {}}
-                      selectedGuestId={effectiveSelectedGuestId}
-                    />
-                  )}
-                  renderPage={(items) => (
-                    <GuestItemsPage
-                      emptyState={getGuestListEmptyState(
-                        rows.length,
-                        guestItems.length,
-                      )}
-                      items={items}
-                      onSelect={(guest) => setSelectedGuestId(guest.rowId)}
-                      selectedGuestId={effectiveSelectedGuestId}
-                    />
-                  )}
-                  sectionRef={tableCardRef}
-                  sourceItemsCount={guestItems.length}
-                  skeletonConfig={{
-                    content: {
-                      columnsClassName: "lg:grid-cols-2",
-                      itemClassName: "min-h-40",
-                      lines: 2,
-                    },
-                    filters: true,
-                  }}
-                  title={adminContent.guests.guestList.title}
-                  totalPages={guestTotalPages}
-                />
-              )}
-            </AdminEntityTabs>
-          </CinematicStaggeredRevealItem>
+                  ) : null
+                }
+                contentRef={tableStartRef}
+                eyebrow={adminContent.guests.guestList.eyebrow}
+                filters={
+                  <FiltersCard
+                    filter={filter}
+                    onFilterChange={(value) => {
+                      cancelPageLoading();
+                      setFilter(value);
+                      setPage(1);
+                      setGuestPage(1);
+                    }}
+                    onQueryChange={(value) => {
+                      cancelPageLoading();
+                      setQuery(value);
+                      setPage(1);
+                      setGuestPage(1);
+                    }}
+                    query={query}
+                  />
+                }
+                getKey={(guest) => guest.rowId}
+                isMobileView={isMobileView}
+                items={visibleGuestItems}
+                loading={state.loading}
+                mobilePageLabel={adminContent.guests.guestList.mobilePageLabel}
+                onNextPage={() =>
+                  handleGuestPageChange(
+                    currentGuestPage + 1,
+                    tableStartRef.current,
+                  )
+                }
+                onPrevPage={() =>
+                  handleGuestPageChange(
+                    currentGuestPage - 1,
+                    tableStartRef.current,
+                  )
+                }
+                page={currentGuestPage}
+                pageDirection={guestPageDirection}
+                pageLabel={adminContent.guests.list.pageLabel}
+                pageSize={guestPageSize}
+                renderMeasurePage={(items) => (
+                  <GuestItemsPage
+                    emptyState={getGuestListEmptyState(
+                      rows.length,
+                      guestItems.length,
+                    )}
+                    items={items}
+                    onSelect={() => {}}
+                    selectedGuestId={effectiveSelectedGuestId}
+                  />
+                )}
+                renderPage={(items) => (
+                  <GuestItemsPage
+                    emptyState={getGuestListEmptyState(
+                      rows.length,
+                      guestItems.length,
+                    )}
+                    items={items}
+                    onSelect={(guest) => setSelectedGuestId(guest.rowId)}
+                    selectedGuestId={effectiveSelectedGuestId}
+                  />
+                )}
+                sectionRef={tableCardRef}
+                sourceItemsCount={guestItems.length}
+                skeletonConfig={{
+                  content: {
+                    columnsClassName: "lg:grid-cols-2",
+                    itemClassName: "min-h-40",
+                    lines: 2,
+                  },
+                  filters: true,
+                }}
+                title={adminContent.guests.guestList.title}
+                totalPages={guestTotalPages}
+              />
+            )}
+          </AdminEntityTabs>
+        </CinematicStaggeredRevealItem>
       </AdminPageShell>
 
       {editingGroup && (
@@ -690,7 +695,7 @@ function GuestsOverview({ stats }) {
       <p className="section-eyebrow mb-2">
         {adminContent.guests.overview.eyebrow}
       </p>
-      <h2 className="mb-5 font-serif text-4xl leading-none text-[var(--color-accent-dark)]">
+      <h2 className="mb-5 font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
         {adminContent.guests.overview.title}
       </h2>
       <AdminMetricGrid
@@ -1144,7 +1149,9 @@ function GroupEditor({
   const [saving, setSaving] = useState(false);
   const savedDraftSnapshot = useMemo(
     () =>
-      getStableJson(normalizeAdminGroupBeforeSave(initialDraft, { isCreation })),
+      getStableJson(
+        normalizeAdminGroupBeforeSave(initialDraft, { isCreation }),
+      ),
     [initialDraft, isCreation],
   );
   const currentDraftSnapshot = useMemo(
@@ -1346,7 +1353,8 @@ function mergeSingleGuestIntoGroup(group, editedGuest, guestIndex) {
             ...editedGuest,
             confirmationId: guest.confirmationId || editedGuest.confirmationId,
             guestId: guest.guestId || guest.id || editedGuest.guestId,
-            confirmationName: guest.confirmationName || editedGuest.confirmationName,
+            confirmationName:
+              guest.confirmationName || editedGuest.confirmationName,
             id: guest.id || guest.guestId || editedGuest.id,
           }
         : guest,
@@ -1467,11 +1475,16 @@ function removeConfirmationFromList(confirmations, target) {
   const targetKey = getConfirmationKey(target);
 
   return normalizeAdminConfirmations(
-    confirmations.filter((group) => group !== target && getConfirmationKey(group) !== targetKey),
+    confirmations.filter(
+      (group) => group !== target && getConfirmationKey(group) !== targetKey,
+    ),
   );
 }
 
-async function persistGuestChanges({ currentConfirmations, savedConfirmations }) {
+async function persistGuestChanges({
+  currentConfirmations,
+  savedConfirmations,
+}) {
   const savedByconfirmationName = new Map(
     savedConfirmations.map((group) => [getConfirmationKey(group), group]),
   );
@@ -1511,7 +1524,10 @@ async function persistGuestChanges({ currentConfirmations, savedConfirmations })
   await Promise.all(persistencePromises);
 }
 
-function buildPendingConfirmationChanges(savedConfirmations, currentConfirmations) {
+function buildPendingConfirmationChanges(
+  savedConfirmations,
+  currentConfirmations,
+) {
   const savedByconfirmationName = new Map(
     savedConfirmations.map((group) => [getConfirmationKey(group), group]),
   );
@@ -1655,16 +1671,11 @@ function getGuestChangeLabel(guest, guestKey) {
 }
 
 function getGroupChangeLabel(original, draft) {
-  const originalLabel = original.confirmationName || original.email || "sin nombre";
+  const originalLabel =
+    original.confirmationName || original.email || "sin nombre";
   const draftLabel = draft.confirmationName || draft.email || "sin nombre";
 
   if (originalLabel === draftLabel) return draftLabel;
 
   return `${originalLabel} -> ${draftLabel}`;
 }
-
-
-
-
-
-

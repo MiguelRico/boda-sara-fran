@@ -31,13 +31,11 @@ export default function Card({
         <div>
           <p className="section-eyebrow mb-2">{eyebrow}</p>
           <div
-            className={`flex flex-col gap-3 ${
-              hasChildren ? "mb-4" : ""
-            } ${hasActions ? "sm:flex-row sm:items-center sm:justify-between" : ""}`}
+            className={`flex flex-col gap-3 ${hasActions ? "sm:flex-row sm:items-center sm:justify-between" : ""}`}
           >
             <div className="min-w-0 flex-1">
               <h3
-                className="break-words font-serif text-3xl leading-none text-[var(--color-text)] sm:text-4xl"
+                className="break-words font-serif text-2xl leading-none text-[var(--color-text)] sm:text-4xl"
                 ref={titleRef}
                 style={titleStyle}
               >

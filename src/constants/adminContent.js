@@ -23,7 +23,7 @@ export const adminContent = {
     },
     overview: {
       eyebrow: "Resumen",
-      title: "Invitados",
+      title: "Resumen",
       metrics: {
         confirmations: "Confirmaciones",
         guests: "Invitados",
@@ -44,14 +44,15 @@ export const adminContent = {
       ],
     },
     list: {
-      eyebrow: "Invitados",
-      title: "Invitados",
-      pageLabel: "Página",
+      eyebrow: "Gestión de confirmaciones",
+      title: "Gestión de confirmaciones",
+      pageLabel: "Confirmación",
       mobilePageLabel: "Confirmación",
       emptyTitle: "Sin resultados",
       emptyText: "Prueba con otra búsqueda o cambia el filtro seleccionado.",
       noConfirmationsTitle: "Sin confirmaciones",
-      noConfirmationsText: "Crea una confirmación para empezar a registrar invitados.",
+      noConfirmationsText:
+        "Crea una confirmación para empezar a registrar invitados.",
       countLabel: ({ confirmations, guests }) =>
         `${confirmations} ${confirmations === 1 ? "confirmación" : "confirmaciones"} en esta página · ${guests} ${
           guests === 1 ? "persona" : "personas"
@@ -63,8 +64,8 @@ export const adminContent = {
       guestCountLabel: ({ page, total }) => `${page} / ${total}`,
     },
     guestList: {
-      eyebrow: "Invitados",
-      title: "Invitados",
+      eyebrow: "Invitados confirmados",
+      title: "Invitados confirmados",
       mobilePageLabel: "Invitado",
       noConfirmationsTitle: "Sin confirmaciones",
       noConfirmationsText:
@@ -152,8 +153,8 @@ export const adminContent = {
       adminEyebrow: "Panel privado",
       title: "Mesas",
       text: "Organización de mesas, asientos e invitados asignados.",
-      eyebrow: "Invitados asignados",
-      sectionTitle: "Invitados asignados",
+      eyebrow: "Gestión de mesas",
+      sectionTitle: "Gestión de mesas",
       exportTable: "Exportar tabla",
       pageLabel: "Pagina",
       mobilePageLabel: "Mesas",
@@ -210,8 +211,8 @@ export const adminContent = {
       warningEyebrow: "Aviso",
     },
     overview: {
-      eyebrow: "Distribución",
-      title: "Distribución",
+      eyebrow: "Resumen",
+      title: "Resumen",
       metrics: {
         tableCount: "Mesas",
         tables: "Mesas",
@@ -253,8 +254,8 @@ export const adminContent = {
       text: "Gestión de proveedores, servicios contratados y plazos de pago.",
     },
     overview: {
-      eyebrow: "Presupuesto",
-      title: "Proveedores",
+      eyebrow: "Resumen",
+      title: "Resumen",
       metrics: {
         providers: "Proveedores",
         services: "Servicios",
@@ -263,19 +264,20 @@ export const adminContent = {
       },
     },
     list: {
-      eyebrow: "Proveedores",
-      title: "Proveedores",
-      pageLabel: "Página",
-      mobilePageLabel: "Proveedor",
+      eyebrow: "Gestión de proveedores",
+      title: "Gestión de proveedores",
+      pageLabel: "Proveedores",
+      mobilePageLabel: "Proveedores",
       emptyTitle: "Sin proveedores",
       emptyText: "Agrega proveedores para comenzar a organizar el presupuesto.",
       noFilterText:
         "No hay proveedores que coincidan con la busqueda o la categoria seleccionada.",
     },
     services: {
-      eyebrow: "Servicios",
-      title: "Servicios",
-      mobilePageLabel: "Servicio",
+      eyebrow: "Servicios del proveedor",
+      title: "Servicios del proveedor",
+      pageLabel: "Servicios",
+      mobilePageLabel: "Servicios",
       emptyTitle: "Sin servicios",
       emptyText: "Agrega servicios dentro de un proveedor para verlos aquí.",
       noProvidersTitle: "Sin proveedores",
@@ -366,5 +368,3 @@ export const adminContent = {
     emptySeatsLabel: (count) => `${count} asientos libres`,
   },
 };
-
-
