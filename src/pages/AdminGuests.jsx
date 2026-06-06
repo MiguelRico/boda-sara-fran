@@ -24,6 +24,7 @@ import Spinner from "../components/ui/Spinner";
 import AdminEntityActions from "../components/admin/AdminEntityActions";
 import AdminEntityTabs from "../components/admin/AdminEntityTabs";
 import AdminEmptyState from "../components/admin/AdminEmptyState";
+import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
 import AdminPageShell from "../components/admin/AdminPageShell";
 import AdminEditorDialog from "../components/admin/AdminEditorDialog";
 import Card from "../components/admin/Card";
@@ -47,6 +48,7 @@ import {
 } from "../api/confirmationsApi";
 import {
   loadAdminDataOnce,
+  markAdminDataSaved,
   setAdminConfirmations,
 } from "../services/adminDataStore";
 import {
@@ -336,6 +338,7 @@ export default function AdminGuests() {
       });
 
       const normalizedGroups = setAdminConfirmations(state.confirmations);
+      markAdminDataSaved({ confirmations: normalizedGroups });
       setSavedConfirmations(normalizedGroups);
       setState({
         confirmations: normalizedGroups,
@@ -441,6 +444,19 @@ export default function AdminGuests() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
+          <AdminPendingChangesActions
+            discardLabel={adminContent.guests.actions.discardChanges}
+            hasPendingChanges={hasPendingChanges}
+            loading={state.loading}
+            onDiscard={handleDiscardPendingChanges}
+            onSave={handleSavePendingChanges}
+            saveLabel={adminContent.guests.actions.saveChanges}
+            saving={spinner.loading}
+            showText={!isMobileView}
+          />
+        </CinematicStaggeredRevealItem>
+
+        <CinematicStaggeredRevealItem index={4} isVisible={guestsInView}>
           <AdminEntityTabs
             activeTab={activeTab}
             onChange={setActiveTab}
@@ -699,25 +715,29 @@ function GuestsOverview({ stats }) {
         {adminContent.guests.overview.title}
       </h2>
       <AdminMetricGrid
-        className="flex flex-wrap justify-between gap-2 sm:items-start sm:gap-3"
+        className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
         items={[
           {
             emoji: <UsersRound size={22} strokeWidth={1.8} />,
+            detail: metrics.confirmations,
             label: metrics.confirmations,
             value: stats.groupCount,
           },
           {
             emoji: <UsersRound size={22} strokeWidth={1.8} />,
+            detail: metrics.guests,
             label: metrics.guests,
             value: stats.guestCount,
           },
           {
             emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
+            detail: metrics.allergies,
             label: metrics.allergies,
             value: stats.allergyCount,
           },
           {
             emoji: <BusFront size={22} strokeWidth={1.8} />,
+            detail: metrics.bus,
             label: metrics.bus,
             value: stats.busCount,
           },
@@ -1540,26 +1560,34 @@ function buildPendingConfirmationChanges(
     const savedGroup = savedByconfirmationName.get(confirmationName);
 
     if (!savedGroup) {
-      changes.push(
-        `Grupo creado: ${group.confirmationName || confirmationName || group.email || "sin nombre"}`,
-      );
+      changes.push({
+        details: buildGroupEditorChanges({}, group, {
+          isCreation: true,
+        }),
+        title: `Confirmacion creada: ${group.confirmationName || confirmationName || group.email || "sin nombre"}`,
+      });
       return;
     }
 
     if (getStableJson(savedGroup) !== getStableJson(group)) {
-      changes.push(
-        ...buildGroupEditorChanges(savedGroup, group, {
+      changes.push({
+        details: buildGroupEditorChanges(savedGroup, group, {
           isCreation: false,
         }),
-      );
+        title: `Confirmacion editada: ${getGroupChangeLabel(savedGroup, group)}`,
+      });
     }
   });
 
   savedByconfirmationName.forEach((group, confirmationName) => {
     if (!currentByconfirmationName.has(confirmationName)) {
-      changes.push(
-        `Grupo eliminado: ${group.confirmationName || confirmationName || group.email || "sin nombre"}`,
-      );
+      changes.push({
+        details: Guest.normalizeList(group.guests, { ensureOne: false }).map(
+          (guest, index) =>
+            `Invitado eliminado: ${Guest.getDisplayName(guest, index)}`,
+        ),
+        title: `Confirmacion eliminada: ${group.confirmationName || confirmationName || group.email || "sin nombre"}`,
+      });
     }
   });
 
@@ -1572,11 +1600,11 @@ function buildGroupEditorChanges(originalGroup, draftGroup, { isCreation }) {
   const contactChanges = [];
 
   if (isCreation) {
-    contactChanges.push("Grupo nuevo");
+    contactChanges.push("Confirmacion nueva");
   }
 
   [
-    ["confirmationName", "Nombre de grupo"],
+    ["confirmationName", "Nombre de confirmacion"],
     ["email", "Email"],
     ["phone", "Telefono"],
   ].forEach(([field, label]) => {
@@ -1590,28 +1618,28 @@ function buildGroupEditorChanges(originalGroup, draftGroup, { isCreation }) {
   const changeParts = [];
 
   if (contactChanges.length) {
-    changeParts.push(`contacto: ${contactChanges.join(", ")}`);
+    changeParts.push(`Contacto: ${contactChanges.join(", ")}`);
   }
 
   if (guestChanges.added.length) {
-    changeParts.push(`invitados anadidos: ${guestChanges.added.join(", ")}`);
+    changeParts.push(`Invitados anadidos: ${guestChanges.added.join(", ")}`);
   }
 
   if (guestChanges.removed.length) {
     changeParts.push(
-      `invitados eliminados: ${guestChanges.removed.join(", ")}`,
+      `Invitados eliminados: ${guestChanges.removed.join(", ")}`,
     );
   }
 
   if (guestChanges.modified.length) {
     changeParts.push(
-      `invitados modificados: ${guestChanges.modified.join(", ")}`,
+      `Invitados modificados: ${guestChanges.modified.join(", ")}`,
     );
   }
 
-  return changeParts.length
-    ? [`Grupo ${groupLabel}: ${changeParts.join("; ")}`]
-    : ["Cambios sin guardar"];
+  void groupLabel;
+
+  return changeParts.length ? changeParts : ["Cambios sin guardar"];
 }
 
 function buildGuestEditorChanges(originalGuests = [], draftGuests = []) {

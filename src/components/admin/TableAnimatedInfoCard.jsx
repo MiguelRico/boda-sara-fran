@@ -250,7 +250,7 @@ function AssignmentModal({
           filters={
             assignedSeats.length > 0 && (
               <PendingGuestsFilters
-                availableGroups={availableGroups}
+                availableConfirmations={availableGroups}
                 availableMenus={availableMenus}
                 filters={filters}
                 onFilterChange={handleFilterChange}

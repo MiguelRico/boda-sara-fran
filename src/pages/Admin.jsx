@@ -15,6 +15,7 @@ import {
   ADMIN_PASSWORD,
   ADMIN_SESSION_KEY,
 } from "../constants/admin";
+import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
 import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
@@ -30,7 +31,12 @@ import {
 } from "../components/rsvp/FormPrimitives";
 import { siteContent } from "../constants/siteContent";
 import { adminContent } from "../constants/adminContent";
-import { loadAdminDataOnce } from "../services/adminDataStore";
+import {
+  discardAdminPendingChanges,
+  hasAdminPendingChanges,
+  loadAdminDataOnce,
+  saveAdminPendingChanges,
+} from "../services/adminDataStore";
 import useIsMobileView from "../hooks/useIsMobileView";
 
 const adminCardIcons = {
@@ -56,7 +62,7 @@ export default function Admin() {
   const adminRef = useRef(null);
   const adminInView = useInView(adminRef, {
     once: true,
-    amount: 0.35,
+    amount: 0.12,
   });
   const isMobileView = useIsMobileView();
   const [password, setPassword] = useState("");
@@ -217,14 +223,49 @@ function AdminLogin({
 }
 
 function AdminDashboard() {
+  const [hasPendingChanges, setHasPendingChanges] = useState(
+    hasAdminPendingChanges,
+  );
+  const [saving, setSaving] = useState(false);
+  const refreshPendingChanges = () =>
+    setHasPendingChanges(hasAdminPendingChanges());
+  const handleDiscard = () => {
+    discardAdminPendingChanges();
+    refreshPendingChanges();
+  };
+  const handleSave = async () => {
+    setSaving(true);
+
+    try {
+      await saveAdminPendingChanges({ password: ADMIN_PASSWORD });
+      refreshPendingChanges();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    const intervalId = window.setInterval(refreshPendingChanges, 500);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   return (
-    <div className="mx-auto w-full max-w-6xl">
+    <div className="mx-auto w-full max-w-6xl space-y-5">
+      <AdminPendingChangesActions
+        hasPendingChanges={hasPendingChanges}
+        onDiscard={handleDiscard}
+        onSave={handleSave}
+        saving={saving}
+        showText="always"
+      />
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {siteContent.admin.cards.map((card, index) => (
           <AnimatedInfoCard
             key={card.title}
             card={getAdminCard(card)}
-            index={index}
+            index={Math.min(index, 2)}
           />
         ))}
       </div>

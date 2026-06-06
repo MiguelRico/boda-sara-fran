@@ -36,9 +36,18 @@ export default function UnsavedChangesDialog({
           {changes.map((change, index) => (
             <li
               className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
-              key={`${change}-${index}`}
+              key={`${getChangeTitle(change)}-${index}`}
             >
-              {change}
+              <p className="font-medium text-[var(--color-accent-dark)]">
+                {getChangeTitle(change)}
+              </p>
+              {Array.isArray(change?.details) && change.details.length > 0 && (
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-relaxed">
+                  {change.details.map((detail) => (
+                    <li key={detail}>{detail}</li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
@@ -82,4 +91,10 @@ export default function UnsavedChangesDialog({
   );
 
   return createPortal(dialog, document.body);
+}
+
+function getChangeTitle(change) {
+  if (typeof change === "string") return change;
+
+  return change?.title || "Cambio sin guardar";
 }

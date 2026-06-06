@@ -34,7 +34,12 @@ export default function AdminTableSection({
   const hasResults = items.length > 0;
   const hasSourceItems = (sourceItemsCount ?? items.length) > 0;
   const hasPagination =
-    !loading && hasResults && page && pageSize && totalPages;
+    !loading &&
+    hasResults &&
+    items.length > 1 &&
+    page &&
+    pageSize &&
+    totalPages > 1;
   const hasPaginationSlot =
     skeletonConfig.pagination ??
     Boolean(

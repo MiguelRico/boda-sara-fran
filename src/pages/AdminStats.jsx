@@ -58,9 +58,9 @@ const emptyState = {
   error: "",
 };
 const CONFIRMATIONS_METRIC_GRID_CLASS =
-  "flex flex-wrap justify-between gap-2 sm:items-start sm:justify-center sm:gap-4";
+  "grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6";
 const CONFIRMATIONS_METRIC_CARD_CLASS =
-  "rounded-[1.5rem] border-[var(--color-border)] bg-white/45 p-2 sm:p-5";
+  "rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 sm:p-5";
 
 export default function AdminStats() {
   const statsRef = useRef(null);
@@ -200,7 +200,6 @@ function StatsOverview({ loading, stats }) {
           <AdminMetricGrid
             cardClassName={CONFIRMATIONS_METRIC_CARD_CLASS}
             className={CONFIRMATIONS_METRIC_GRID_CLASS}
-            compactSummary
             items={getSummaryItems(stats)}
           />
         )}

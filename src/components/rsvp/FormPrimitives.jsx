@@ -1,5 +1,5 @@
 export const inputClassName =
-  "w-full rounded-2xl border border-[var(--color-border-strong)] bg-white px-4 py-3 text-[var(--color-accent-dark)] outline-none transition-all duration-300 placeholder:text-[var(--color-accent)] focus:border-[var(--color-border)] focus:bg-[var(--color-bg)]/70 disabled:border-[var(--color-border-strong)] disabled:bg-[var(--color-accent-dark)] disabled:text-white";
+  "w-full rounded-2xl border border-[var(--color-border-strong)] bg-white px-4 py-3 text-[var(--color-accent-dark)] outline-none transition-all duration-300 placeholder:text-[var(--color-accent)] focus:border-[var(--color-border)] focus:bg-[var(--color-bg)]/70 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-500 disabled:placeholder:text-gray-400";
 export const selectClassName = `${inputClassName} appearance-none bg-white bg-[linear-gradient(45deg,transparent_50%,var(--color-accent-dark)_50%),linear-gradient(135deg,var(--color-accent-dark)_50%,transparent_50%)] bg-[length:5px_5px,5px_5px] bg-[position:calc(100%-1.15rem)_calc(50%-2px),calc(100%-0.85rem)_calc(50%-2px)] bg-no-repeat pr-10`;
 
 export function FormCard({ children, className = "" }) {

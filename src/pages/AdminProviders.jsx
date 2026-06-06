@@ -28,12 +28,14 @@ import {
 import { validateProvider } from "../validators/providerValidators";
 import {
   loadAdminDataOnce,
+  markAdminDataSaved,
   setAdminProviders,
 } from "../services/adminDataStore";
 import AdminTableSection from "../components/admin/AdminTableSection";
 import AdminEntityActions from "../components/admin/AdminEntityActions";
 import AdminEntityTabs from "../components/admin/AdminEntityTabs";
 import AdminEmptyState from "../components/admin/AdminEmptyState";
+import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
 import Card from "../components/admin/Card";
 import CardGrid from "../components/admin/CardGrid";
 import AdminEditorDialog from "../components/admin/AdminEditorDialog";
@@ -224,6 +226,7 @@ export default function AdminProviders() {
       });
 
       setAdminProviders(normalizedProviders);
+      markAdminDataSaved({ providers: normalizedProviders });
       setSavedProviders(normalizedProviders);
       setProviders(normalizedProviders);
       return true;
@@ -375,15 +378,7 @@ export default function AdminProviders() {
 
   return (
     <CinematicPage>
-      {(spinner.loading || loadingProviders) && (
-        <Spinner
-          text={
-            loadingProviders
-              ? adminContent.providers.spinner.load
-              : spinner.text
-          }
-        />
-      )}
+      {spinner.loading && <Spinner text={spinner.text} />}
 
       {blocker.state === "blocked" && (
         <UnsavedProviderChangesDialog
@@ -405,6 +400,18 @@ export default function AdminProviders() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={providersInView}>
+          <AdminPendingChangesActions
+            discardLabel={adminContent.providers.actions.discardChanges}
+            hasPendingChanges={hasPendingChanges}
+            onDiscard={handleDiscardPendingChanges}
+            onSave={handleSavePendingChanges}
+            saveLabel={adminContent.providers.actions.saveChanges}
+            saving={spinner.loading}
+            showText={!isMobileView}
+          />
+        </CinematicStaggeredRevealItem>
+
+        <CinematicStaggeredRevealItem index={4} isVisible={providersInView}>
           <AdminEntityTabs
             activeTab={activeTab}
             onChange={setActiveTab}
@@ -681,30 +688,34 @@ function ProvidersOverview({ loading, stats }) {
       </h2>
       {loading ? (
         <AdminMetricGridSkeleton
-          className="flex flex-wrap justify-between gap-2 sm:items-start sm:gap-3"
+          className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
           count={4}
         />
       ) : (
         <AdminMetricGrid
-          className="flex flex-wrap justify-between gap-2 sm:items-start sm:gap-3"
+          className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
           items={[
             {
               emoji: <BriefcaseBusiness size={22} strokeWidth={1.8} />,
+              detail: adminContent.providers.overview.metrics.providers,
               label: adminContent.providers.overview.metrics.providers,
               value: stats.providerCount,
             },
             {
               emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
+              detail: adminContent.providers.overview.metrics.services,
               label: adminContent.providers.overview.metrics.services,
               value: stats.serviceCount,
             },
             {
               emoji: <Euro size={22} strokeWidth={1.8} />,
+              detail: adminContent.providers.overview.metrics.budget,
               label: adminContent.providers.overview.metrics.budget,
               value: formatCurrency(stats.totalBudget),
             },
             {
               emoji: <CalendarDays size={22} strokeWidth={1.8} />,
+              detail: adminContent.providers.overview.metrics.paid,
               label: adminContent.providers.overview.metrics.paid,
               value: formatCurrency(stats.totalPaid),
             },

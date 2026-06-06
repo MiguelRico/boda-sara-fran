@@ -20,6 +20,7 @@ import CardGrid from "../components/admin/CardGrid";
 import AdminEntityActions from "../components/admin/AdminEntityActions";
 import AdminEntityTabs from "../components/admin/AdminEntityTabs";
 import AdminEmptyState from "../components/admin/AdminEmptyState";
+import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
 import AdminPageShell from "../components/admin/AdminPageShell";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
 import TableEditorDialog from "../components/admin/tables/TableEditorDialog";
@@ -53,6 +54,7 @@ import { validateTableForm } from "../validators/tableValidators";
 import { saveAdminConfirmation } from "../api/confirmationsApi";
 import {
   loadAdminDataOnce,
+  markAdminDataSaved,
   setAdminConfirmations,
   setAdminTables,
 } from "../services/adminDataStore";
@@ -83,7 +85,7 @@ const emptyState = {
   error: "",
 };
 const TABLE_METRIC_GRID_CLASS =
-  "flex flex-wrap justify-between gap-2 sm:items-start sm:gap-3";
+  "grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4";
 export default function AdminTables() {
   const spinner = useSpinner();
   const tablesRef = useRef(null);
@@ -469,6 +471,10 @@ export default function AdminTables() {
 
       setAdminTables(manualTables);
       setAdminConfirmations(state.confirmations);
+      markAdminDataSaved({
+        confirmations: state.confirmations,
+        tables: manualTables,
+      });
       setSavedSnapshot({
         confirmations: state.confirmations,
         manualTables,
@@ -773,6 +779,19 @@ export default function AdminTables() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={tablesInView}>
+          <AdminPendingChangesActions
+            discardLabel={adminContent.tables.actions.discardChanges}
+            hasPendingChanges={hasPendingChanges}
+            loading={state.loading}
+            onDiscard={handleDiscardPendingChanges}
+            onSave={handleSavePendingChanges}
+            saveLabel={adminContent.tables.actions.saveChanges}
+            saving={spinner.loading}
+            showText={!isMobileView}
+          />
+        </CinematicStaggeredRevealItem>
+
+        <CinematicStaggeredRevealItem index={4} isVisible={tablesInView}>
           <AdminEntityTabs
             tabs={SECTION_TABS}
             activeTab={activeTab}
@@ -1382,7 +1401,7 @@ function PendingGuestAssignmentActions({
       <div>
         <Label>{adminContent.pendingGuests.seatLabel}</Label>
         <select
-          className={`${selectClassName} text-sm disabled:opacity-50`}
+          className={`${selectClassName} text-sm`}
           disabled={!selectedTable || disabled || assigning}
           onChange={(event) => onSeatChange(event.target.value)}
           value={selectedSeat}

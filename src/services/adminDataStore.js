@@ -3,6 +3,12 @@ import { Table } from "../models";
 import { findAllConfirmations } from "../api/confirmationsApi";
 import { findAllProviders } from "../api/providersApi";
 import { findAllTables } from "../api/tablesApi";
+import {
+  saveAdminConfirmation,
+  deleteAdminConfirmation,
+} from "../api/confirmationsApi";
+import { saveAdminProviders } from "../api/providersApi";
+import { saveAdminTables } from "../api/tablesApi";
 import { mapAdminConfirmations } from "../mappers/confirmationMapper";
 import { mapAdminProviders } from "../mappers/providerMapper";
 import { mapAdminTables } from "../mappers/tableMapper";
@@ -12,6 +18,9 @@ const emptySnapshot = {
   loaded: false,
   loadingPromise: null,
   providers: [],
+  savedConfirmations: [],
+  savedProviders: [],
+  savedTables: [],
   tables: [],
 };
 
@@ -19,12 +28,16 @@ const store = { ...emptySnapshot };
 
 const getConfirmationKey = (group = {}) =>
   group.confirmationId || group.id || `draft:${group.email || ""}:${group.phone || ""}`;
+const getStableJson = (value) => JSON.stringify(value);
 
 export const clearAdminDataStore = () => {
   store.confirmations = [];
   store.loaded = false;
   store.loadingPromise = null;
   store.providers = [];
+  store.savedConfirmations = [];
+  store.savedProviders = [];
+  store.savedTables = [];
   store.tables = [];
 };
 
@@ -49,6 +62,7 @@ export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
         mapAdminTables(tablesResponse?.tables || []),
       );
       store.providers = mapAdminProviders(providersResponse?.providers || []);
+      markAdminDataSaved();
       store.loaded = true;
 
       return getAdminDataSnapshot();
@@ -63,8 +77,91 @@ export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
 export const getAdminDataSnapshot = () => ({
   confirmations: store.confirmations,
   providers: store.providers,
+  savedConfirmations: store.savedConfirmations,
+  savedProviders: store.savedProviders,
+  savedTables: store.savedTables,
   tables: store.tables,
 });
+
+export const hasAdminPendingChanges = () =>
+  getStableJson(store.confirmations) !== getStableJson(store.savedConfirmations) ||
+  getStableJson(store.tables) !== getStableJson(store.savedTables) ||
+  getStableJson(store.providers) !== getStableJson(store.savedProviders);
+
+export const markAdminDataSaved = ({
+  confirmations = store.confirmations,
+  providers = store.providers,
+  tables = store.tables,
+} = {}) => {
+  store.savedConfirmations = mapAdminConfirmations(confirmations);
+  store.savedProviders = mapAdminProviders(providers);
+  store.savedTables = Table.normalizeList(tables);
+
+  return getAdminDataSnapshot();
+};
+
+export const discardAdminPendingChanges = () => {
+  store.confirmations = mapAdminConfirmations(store.savedConfirmations);
+  store.providers = mapAdminProviders(store.savedProviders);
+  store.tables = Table.normalizeList(store.savedTables);
+
+  return getAdminDataSnapshot();
+};
+
+export const saveAdminPendingChanges = async ({
+  password = ADMIN_PASSWORD,
+} = {}) => {
+  const savedById = new Map(
+    store.savedConfirmations.map((confirmation) => [
+      getConfirmationKey(confirmation),
+      confirmation,
+    ]),
+  );
+  const currentById = new Map(
+    store.confirmations.map((confirmation) => [
+      getConfirmationKey(confirmation),
+      confirmation,
+    ]),
+  );
+  const confirmationRequests = [];
+
+  store.confirmations.forEach((confirmation) => {
+    const key = getConfirmationKey(confirmation);
+
+    if (getStableJson(savedById.get(key)) === getStableJson(confirmation)) {
+      return;
+    }
+
+    confirmationRequests.push(
+      saveAdminConfirmation({
+        confirmation,
+        method: savedById.has(key) ? "PUT" : "POST",
+        password,
+      }),
+    );
+  });
+
+  store.savedConfirmations.forEach((confirmation) => {
+    const key = getConfirmationKey(confirmation);
+
+    if (currentById.has(key) || !confirmation.confirmationId) return;
+
+    confirmationRequests.push(
+      deleteAdminConfirmation({
+        confirmationId: confirmation.confirmationId,
+        password,
+      }),
+    );
+  });
+
+  await Promise.all([
+    ...confirmationRequests,
+    saveAdminTables({ password, tables: store.tables }),
+    saveAdminProviders({ password, providers: store.providers }),
+  ]);
+
+  return markAdminDataSaved();
+};
 
 export const setAdminConfirmations = (confirmations) => {
   store.confirmations = mapAdminConfirmations(confirmations);

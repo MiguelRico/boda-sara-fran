@@ -1,13 +1,7 @@
 import { useCallback } from "react";
-import { useBeforeUnload, useBlocker } from "react-router-dom";
+import { useBeforeUnload } from "react-router-dom";
 
 export default function useUnsavedChangesNavigation(hasPendingChanges) {
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-    return (
-      hasPendingChanges && currentLocation.pathname !== nextLocation.pathname
-    );
-  });
-
   useBeforeUnload(
     useCallback(
       (event) => {
@@ -20,5 +14,9 @@ export default function useUnsavedChangesNavigation(hasPendingChanges) {
     ),
   );
 
-  return blocker;
+  return {
+    proceed: () => {},
+    reset: () => {},
+    state: "unblocked",
+  };
 }

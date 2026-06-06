@@ -56,7 +56,7 @@ export default function IconButton({
       ? "min-h-11 gap-2 px-5 py-3"
       : "h-10 w-10 sm:min-h-11 sm:w-auto sm:gap-2 sm:px-5 sm:py-3"
     : "h-10 w-10 sm:h-11 sm:w-11";
-  const baseClass = `inline-flex shrink-0 items-center justify-center rounded-full border font-sans transition-all duration-500 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 ${toneClass} ${sizeClass} ${className}`;
+  const baseClass = `inline-flex shrink-0 items-center justify-center rounded-full border font-sans transition-all duration-500 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-500 disabled:shadow-none disabled:hover:translate-y-0 ${toneClass} ${sizeClass} ${className}`;
 
   if (to) {
     return (
