@@ -12,14 +12,12 @@ export default function AdminPendingChangesActions({
   saving = false,
   showText = true,
 }) {
-  if (!hasPendingChanges) return null;
-
   return (
     <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
       <div className="grid w-full grid-cols-2 gap-3">
         <IconButton
           className="w-full"
-          disabled={loading || saving}
+          disabled={!hasPendingChanges || loading || saving}
           icon={<Undo2 size={16} strokeWidth={1.8} />}
           label={discardLabel}
           onClick={onDiscard}
@@ -32,7 +30,7 @@ export default function AdminPendingChangesActions({
 
         <IconButton
           className="w-full"
-          disabled={saving}
+          disabled={!hasPendingChanges || loading || saving}
           icon={<Save size={16} strokeWidth={1.8} />}
           label={saveLabel}
           onClick={onSave}

@@ -73,6 +73,9 @@ export const adminContent = {
       noGuestsTitle: "Sin invitados",
       noGuestsText:
         "La confirmación seleccionada todavia no tiene invitados registrados.",
+      noSelectionTitle: "Selecciona una confirmación",
+      noSelectionText:
+        "Elige una confirmación en el tab principal para gestionar sus invitados.",
       noFilterText:
         "No hay invitados que coincidan con la busqueda o el filtro seleccionado.",
     },
@@ -285,6 +288,9 @@ export const adminContent = {
       noProvidersTitle: "Sin proveedores",
       noProvidersText:
         "Crea un proveedor antes de agregar o consultar servicios.",
+      noSelectionTitle: "Selecciona un proveedor",
+      noSelectionText:
+        "Elige un proveedor en el tab principal para gestionar sus servicios.",
       noFilterText:
         "No hay servicios que coincidan con la busqueda o la categoria seleccionada.",
     },

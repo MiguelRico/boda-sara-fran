@@ -1,10 +1,13 @@
 import {
   AlertTriangle,
   Beef,
+  BriefcaseBusiness,
   Fish,
+  Heart,
   MessageCircle,
   Trash2,
   Armchair,
+  UsersRound,
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
@@ -23,6 +26,12 @@ import Card from "./Card";
 import CardActions from "./CardActions";
 import { PendingGuestsFilters } from "./PendingGuestsList";
 import TableGuestCard from "./TableGuestCard";
+
+const TABLE_GROUP_ICON_MAP = {
+  briefcase: BriefcaseBusiness,
+  heart: Heart,
+  users: UsersRound,
+};
 
 export default function TableAnimatedInfoCard({
   index = 0,
@@ -71,6 +80,7 @@ function TableInfoCard({
   const groupOption = getTableGroupOption(table.group);
   const groupLabel = groupOption?.label;
   const shapeLabel = Table.getShapeLabel(table);
+  const GroupIcon = TABLE_GROUP_ICON_MAP[groupOption?.icon];
 
   return (
     <>
@@ -87,7 +97,13 @@ function TableInfoCard({
           />
         }
         decorativeText={
-          groupOption?.emoji || (table.shape === TABLE_SHAPES.round ? "O" : "[]")
+          GroupIcon ? (
+            <GroupIcon size={54} strokeWidth={1.5} />
+          ) : table.shape === TABLE_SHAPES.round ? (
+            "O"
+          ) : (
+            "[]"
+          )
         }
         detail={tableContent.card.detail({
           assigned: assignedGuests.length,

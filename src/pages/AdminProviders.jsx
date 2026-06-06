@@ -4,18 +4,32 @@ import { Navigate } from "react-router-dom";
 import {
   BadgeEuro,
   BriefcaseBusiness,
+  BusFront,
   CalendarDays,
+  Camera,
+  ClipboardList,
   Euro,
+  Flower2,
+  Gift,
+  GlassWater,
+  Headphones,
+  Hotel,
+  Lightbulb,
   Mail,
+  Music,
   Phone,
+  ReceiptText,
   Search,
+  Sparkles,
+  Utensils,
+  Video,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import { adminContent } from "../constants/adminContent";
 import {
   PROVIDER_CATEGORIES,
-  PROVIDER_CATEGORY_EMOJIS,
+  PROVIDER_CATEGORY_ICONS,
   PROVIDER_CATEGORY_LABELS,
 } from "../constants/providers";
 import {
@@ -72,6 +86,22 @@ const desktopPageSize = 6;
 const mobilePageSize = 1;
 const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = "adminProvidersActiveTab";
 const getEntityId = (item) => item.id;
+const PROVIDER_ICON_COMPONENTS = {
+  bus: BusFront,
+  camera: Camera,
+  clipboard: ClipboardList,
+  flower: Flower2,
+  gift: Gift,
+  glass: GlassWater,
+  headphones: Headphones,
+  hotel: Hotel,
+  lightbulb: Lightbulb,
+  music: Music,
+  receipt: ReceiptText,
+  sparkles: Sparkles,
+  utensils: Utensils,
+  video: Video,
+};
 
 export default function AdminProviders() {
   const providersRef = useRef(null);
@@ -326,7 +356,21 @@ export default function AdminProviders() {
 
     if (Object.keys(validationErrors).length) return;
 
-    applyProviders(upsertProvider(providers, editingProvider));
+    const normalizedProviders = upsertProvider(providers, editingProvider);
+
+    applyProviders(normalizedProviders);
+    setSelectedProviderId(editingProvider.id);
+
+    if (editingProviderMode === "service") {
+      setSelectedServiceId(editingServiceId);
+      setServicesPage(1);
+    } else {
+      setCategory("");
+      setQuery("");
+      setSelectedServiceId("");
+      setPage(1);
+    }
+
     setEditingProvider(null);
   };
   const handleProviderChange = (field, value) => {
@@ -524,6 +568,11 @@ export default function AdminProviders() {
                   ) : null
                 }
                 contentRef={tableStartRef}
+                count={
+                  selectedProvider
+                    ? `${adminContent.providers.list.pageLabel}: ${selectedProvider.name || "Proveedor sin nombre"}`
+                    : ""
+                }
                 eyebrow={adminContent.providers.services.eyebrow}
                 filters={
                   <ProviderFilters
@@ -570,6 +619,7 @@ export default function AdminProviders() {
                     emptyState={getServiceEmptyState(
                       providers.length,
                       services.length,
+                      selectedProvider,
                     )}
                     items={items}
                     onSelect={() => {}}
@@ -581,6 +631,7 @@ export default function AdminProviders() {
                     emptyState={getServiceEmptyState(
                       providers.length,
                       services.length,
+                      selectedProvider,
                     )}
                     items={items}
                     onSelect={(service) => setSelectedServiceId(service.id)}
@@ -886,7 +937,7 @@ function ProviderCard({ onSelect, provider, selected }) {
       onClick={() => onSelect(provider)}
     >
       <Card
-        decorativeText={PROVIDER_CATEGORY_EMOJIS[provider.category]}
+        decorativeText={getProviderCategoryIcon(provider.category)}
         eyebrow={PROVIDER_CATEGORY_LABELS[provider.category]}
         title={provider.name || "Proveedor sin nombre"}
       >
@@ -923,6 +974,12 @@ function ProviderCard({ onSelect, provider, selected }) {
       </Card>
     </div>
   );
+}
+
+function getProviderCategoryIcon(category) {
+  const Icon = PROVIDER_ICON_COMPONENTS[PROVIDER_CATEGORY_ICONS[category]];
+
+  return Icon ? <Icon size={54} strokeWidth={1.5} /> : null;
 }
 
 function ProvidersEmptyState({
@@ -980,7 +1037,7 @@ function ServiceCard({ onSelect, selected, service }) {
       onClick={() => onSelect(service)}
     >
       <Card
-        decorativeText={PROVIDER_CATEGORY_EMOJIS[service.category]}
+        decorativeText={getProviderCategoryIcon(service.category)}
         eyebrow={service.providerName}
         title={service.name || "Servicio sin nombre"}
       >
@@ -1104,11 +1161,18 @@ function getProviderEmptyState(sourceCount) {
   };
 }
 
-function getServiceEmptyState(providerCount, serviceCount) {
+function getServiceEmptyState(providerCount, serviceCount, selectedProvider) {
   if (providerCount === 0) {
     return {
       text: adminContent.providers.services.noProvidersText,
       title: adminContent.providers.services.noProvidersTitle,
+    };
+  }
+
+  if (!selectedProvider) {
+    return {
+      text: adminContent.providers.services.noSelectionText,
+      title: adminContent.providers.services.noSelectionTitle,
     };
   }
 

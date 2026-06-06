@@ -72,7 +72,10 @@ import {
 import { getEmailHref, getPhoneHref } from "../utils/contactLinks";
 import { adminContent } from "../constants/adminContent";
 import { normalizeAdminConfirmations } from "../utils/rsvpGroups";
-import { validateRsvpForm } from "../validators/confirmationValidators";
+import {
+  validateRsvpContact,
+  validateRsvpForm,
+} from "../utils/rsvpValidation";
 
 const desktopPageSize = 8;
 const mobilePageSize = 1;
@@ -297,14 +300,53 @@ export default function AdminGuests() {
 
     openGroupEditor(guestItem.group, "guest", guestItem.guestIndex);
   };
+  const openNewGuestEditor = (group) => {
+    if (!group) return;
+
+    const currentGuests = Guest.normalizeList(group.guests, {
+      ensureOne: false,
+    });
+
+    openGroupEditor(
+      {
+        ...group,
+        guests: [...currentGuests, Guest.create()],
+      },
+      "guest",
+      currentGuests.length,
+    );
+  };
 
   const handleSaveGroup = async (group) => {
     const isCreation = !editingGroup?.confirmationName;
     const groupToSave = normalizeAdminGroupBeforeSave(group, { isCreation });
-
-    applyConfirmations(
-      upsertConfirmationInList(state.confirmations, groupToSave),
+    const nextConfirmations = upsertConfirmationInList(
+      state.confirmations,
+      groupToSave,
     );
+    const normalizedGroups = applyConfirmations(nextConfirmations);
+    const selectedRow = findAdminRowForGroup(normalizedGroups, groupToSave);
+
+    if (selectedRow) {
+      setSelectedRowId(selectedRow.rowId);
+      setGuestPage(1);
+    }
+
+    if (editingMode === "guest") {
+      const guestItems = getGuestItems([selectedRow?.group || groupToSave]);
+      const selectedGuest =
+        editingGuestIndex == null
+          ? guestItems.at(-1)
+          : guestItems[Number(editingGuestIndex)];
+
+      setSelectedGuestId(selectedGuest?.rowId || "");
+    } else {
+      setFilter("all");
+      setQuery("");
+      setPage(1);
+      setSelectedGuestId("");
+    }
+
     setEditingGroup(null);
     setPopup(
       createAdminPopup({
@@ -471,7 +513,7 @@ export default function AdminGuests() {
                   <GuestTableActions
                     hasPendingChanges={hasPendingChanges}
                     loading={state.loading}
-                    onCreate={() => openGroupEditor(undefined, "full")}
+                    onCreate={() => openGroupEditor(undefined, "group")}
                     onDelete={() => setDeleteTarget(selectedRow.group)}
                     onDiscard={handleDiscardPendingChanges}
                     onEdit={() => openGroupEditor(selectedRow.group, "group")}
@@ -561,7 +603,7 @@ export default function AdminGuests() {
                       loading={state.loading}
                       onCreate={
                         selectedGuestGroup
-                          ? () => openGroupEditor(selectedGuestGroup, "guests")
+                          ? () => openNewGuestEditor(selectedGuestGroup)
                           : null
                       }
                       onDelete={() =>
@@ -580,6 +622,15 @@ export default function AdminGuests() {
                   ) : null
                 }
                 contentRef={tableStartRef}
+                count={
+                  selectedGuestGroup
+                    ? `${adminContent.guests.list.pageLabel}: ${
+                        selectedGuestGroup.confirmationName ||
+                        selectedGuestGroup.email ||
+                        "Confirmación sin nombre"
+                      }`
+                    : ""
+                }
                 eyebrow={adminContent.guests.guestList.eyebrow}
                 filters={
                   <FiltersCard
@@ -625,6 +676,7 @@ export default function AdminGuests() {
                     emptyState={getGuestListEmptyState(
                       rows.length,
                       guestItems.length,
+                      selectedGuestGroup,
                     )}
                     items={items}
                     onSelect={() => {}}
@@ -636,6 +688,7 @@ export default function AdminGuests() {
                     emptyState={getGuestListEmptyState(
                       rows.length,
                       guestItems.length,
+                      selectedGuestGroup,
                     )}
                     items={items}
                     onSelect={(guest) => setSelectedGuestId(guest.rowId)}
@@ -1163,7 +1216,7 @@ function GroupEditor({
       isSingleGuestMode
         ? {
             ...group,
-            guests: [group.guests?.[guestIndex]].filter(Boolean),
+            guests: [group.guests?.[guestIndex] || Guest.create()],
           }
         : group,
     [group, guestIndex, isSingleGuestMode],
@@ -1256,11 +1309,23 @@ function GroupEditor({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const groupToSave = normalizeAdminGroupBeforeSave(draft, { isCreation });
-    const validationErrors = validateRsvpForm({
-      contact: groupToSave,
-      guests: groupToSave.guests,
+    const groupDraft = isGroupMode
+      ? {
+          ...draft,
+          guests: isCreation
+            ? []
+            : Guest.normalizeList(group.guests, { ensureOne: false }),
+        }
+      : draft;
+    const groupToSave = normalizeAdminGroupBeforeSave(groupDraft, {
+      isCreation,
     });
+    const validationErrors = isGroupMode
+      ? validateRsvpContact(groupToSave)
+      : validateRsvpForm({
+          contact: groupToSave,
+          guests: groupToSave.guests,
+        });
 
     if (Object.keys(validationErrors).length) {
       setErrors(validationErrors);
@@ -1355,9 +1420,17 @@ function getGuestItems(confirmations) {
         confirmationName: group.confirmationName,
         guestIndex,
         phone: group.phone,
-        rowId: `${group.confirmationName || "group"}-${guestIndex}`,
+        rowId: `${group.confirmationId || group.id || group.confirmationName || "group"}-${guest.guestId || guest.id || guestIndex}`,
       }),
     ),
+  );
+}
+
+function findAdminRowForGroup(confirmations, group) {
+  const targetKey = getConfirmationKey(group);
+
+  return Confirmation.toAdminRows(confirmations).find(
+    (row) => getConfirmationKey(row.group) === targetKey,
   );
 }
 
@@ -1371,6 +1444,21 @@ function mergeSingleGuestIntoGroup(group, editedGuest, guestIndex) {
     normalizedGuestIndex < 0
   ) {
     return normalizedGroup;
+  }
+
+  if (normalizedGuestIndex >= normalizedGroup.guests.length) {
+    return Confirmation.normalize({
+      ...normalizedGroup,
+      guests: [
+        ...normalizedGroup.guests,
+        {
+          ...editedGuest,
+          confirmationId:
+            normalizedGroup.confirmationId || normalizedGroup.id || "",
+          confirmationName: normalizedGroup.confirmationName,
+        },
+      ],
+    });
   }
 
   return Confirmation.normalize({
@@ -1444,11 +1532,18 @@ function getGroupEmptyState(groupCount) {
   };
 }
 
-function getGuestListEmptyState(groupCount, guestCount) {
+function getGuestListEmptyState(groupCount, guestCount, selectedGroup) {
   if (groupCount === 0) {
     return {
       text: adminContent.guests.guestList.noConfirmationsText,
       title: adminContent.guests.guestList.noConfirmationsTitle,
+    };
+  }
+
+  if (!selectedGroup) {
+    return {
+      text: adminContent.guests.guestList.noSelectionText,
+      title: adminContent.guests.guestList.noSelectionTitle,
     };
   }
 

@@ -52,7 +52,7 @@ export default function Card({
           </div>
         </div>
 
-        {hasChildren && children}
+        {hasChildren && <div className="mt-5 sm:mt-6">{children}</div>}
       </div>
     </article>
   );
