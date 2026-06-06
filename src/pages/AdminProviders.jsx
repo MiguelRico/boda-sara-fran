@@ -4,32 +4,15 @@ import { Navigate } from "react-router-dom";
 import {
   BadgeEuro,
   BriefcaseBusiness,
-  BusFront,
   CalendarDays,
-  Camera,
-  ClipboardList,
   Euro,
-  Flower2,
-  Gift,
-  GlassWater,
-  Headphones,
-  Hotel,
-  Lightbulb,
-  Mail,
-  Music,
-  Phone,
-  ReceiptText,
   Search,
-  Sparkles,
-  Utensils,
-  Video,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import { adminContent } from "../constants/adminContent";
 import {
   PROVIDER_CATEGORIES,
-  PROVIDER_CATEGORY_ICONS,
   PROVIDER_CATEGORY_LABELS,
 } from "../constants/providers";
 import {
@@ -49,12 +32,13 @@ import {
 import AdminTableSection from "../components/admin/AdminTableSection";
 import AdminEntityActions from "../components/admin/AdminEntityActions";
 import AdminEntityTabs from "../components/admin/AdminEntityTabs";
-import AdminEmptyState from "../components/admin/AdminEmptyState";
 import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
-import Card from "../components/admin/Card";
-import CardGrid from "../components/admin/CardGrid";
 import AdminEditorDialog from "../components/admin/AdminEditorDialog";
 import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
+import {
+  ProviderCardsPage,
+  ServiceCardsPage,
+} from "../components/admin/providers/ProviderCards";
 import ProviderForm from "../components/admin/providers/ProviderForm";
 import {
   AdminMetricGrid,
@@ -68,7 +52,6 @@ import {
   Label,
   selectClassName,
 } from "../components/rsvp/FormPrimitives";
-import Chip from "../components/ui/Chip";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import StatusDialog from "../components/ui/StatusDialog";
@@ -80,28 +63,12 @@ import useEffectiveSelection from "../hooks/useEffectiveSelection";
 import useAdminActiveTab from "../hooks/useAdminActiveTab";
 import useSpinner from "../hooks/useSpinner";
 import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
-import { getEmailHref, getPhoneHref } from "../utils/contactLinks";
+import { formatCurrency } from "../utils/formatters";
 
 const desktopPageSize = 6;
 const mobilePageSize = 1;
 const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = "adminProvidersActiveTab";
 const getEntityId = (item) => item.id;
-const PROVIDER_ICON_COMPONENTS = {
-  bus: BusFront,
-  camera: Camera,
-  clipboard: ClipboardList,
-  flower: Flower2,
-  gift: Gift,
-  glass: GlassWater,
-  headphones: Headphones,
-  hotel: Hotel,
-  lightbulb: Lightbulb,
-  music: Music,
-  receipt: ReceiptText,
-  sparkles: Sparkles,
-  utensils: Utensils,
-  video: Video,
-};
 
 export default function AdminProviders() {
   const providersRef = useRef(null);
@@ -887,196 +854,6 @@ function ProviderTableActions({
   );
 }
 
-function ProviderCardsPage({
-  emptyState,
-  items,
-  onSelect,
-  selectedProviderId,
-}) {
-  if (!items.length) return <ProvidersEmptyState {...emptyState} />;
-
-  return (
-    <>
-      <CardGrid
-        className="hidden gap-4 md:grid lg:grid-cols-2"
-        getKey={(provider) => provider.id}
-        items={items}
-        renderCard={(provider) => (
-          <ProviderCard
-            onSelect={onSelect}
-            provider={provider}
-            selected={provider.id === selectedProviderId}
-          />
-        )}
-      />
-      <div className="grid gap-4 md:hidden">
-        {items.map((provider) => (
-          <ProviderCard
-            key={provider.id}
-            onSelect={onSelect}
-            provider={provider}
-            selected={provider.id === selectedProviderId}
-          />
-        ))}
-      </div>
-    </>
-  );
-}
-
-function ProviderCard({ onSelect, provider, selected }) {
-  const total = getProviderTotal(provider);
-  const paid = getProviderPaidTotal(provider);
-
-  return (
-    <div
-      className={`h-full rounded-[2rem] transition ${
-        selected
-          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
-          : "ring-0"
-      }`}
-      onClick={() => onSelect(provider)}
-    >
-      <Card
-        decorativeText={getProviderCategoryIcon(provider.category)}
-        eyebrow={PROVIDER_CATEGORY_LABELS[provider.category]}
-        title={provider.name || "Proveedor sin nombre"}
-      >
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <Chip
-            className="col-span-2"
-            href={getEmailHref(provider.email)}
-            icon={<Mail size={13} strokeWidth={1.8} />}
-            tone="secondary"
-            value={provider.email || "-"}
-          />
-          <Chip
-            href={getPhoneHref(provider.phone)}
-            icon={<Phone size={13} strokeWidth={1.8} />}
-            tone="secondary"
-            value={provider.phone || "-"}
-          />
-          <Chip
-            icon={<BriefcaseBusiness size={13} strokeWidth={1.8} />}
-            strong
-            value={`${provider.services.length} servicios`}
-          />
-          <Chip
-            icon={<Euro size={13} strokeWidth={1.8} />}
-            strong
-            value={formatCurrency(total)}
-          />
-          <Chip
-            icon={<CalendarDays size={13} strokeWidth={1.8} />}
-            value={`Pagado: ${formatCurrency(paid)}`}
-          />
-          {provider.web && <Chip className="col-span-2" value={provider.web} />}
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function getProviderCategoryIcon(category) {
-  const Icon = PROVIDER_ICON_COMPONENTS[PROVIDER_CATEGORY_ICONS[category]];
-
-  return Icon ? <Icon size={54} strokeWidth={1.5} /> : null;
-}
-
-function ProvidersEmptyState({
-  text = adminContent.providers.list.emptyText,
-  title = adminContent.providers.list.emptyTitle,
-}) {
-  return <AdminEmptyState icon={BriefcaseBusiness} text={text} title={title} />;
-}
-
-function ServiceCardsPage({ emptyState, items, onSelect, selectedServiceId }) {
-  if (!items.length) return <ServicesEmptyState {...emptyState} />;
-
-  return (
-    <>
-      <CardGrid
-        className="hidden gap-4 md:grid lg:grid-cols-2"
-        getKey={(service) => service.id}
-        items={items}
-        renderCard={(service) => (
-          <ServiceCard
-            onSelect={onSelect}
-            selected={service.id === selectedServiceId}
-            service={service}
-          />
-        )}
-      />
-      <div className="grid gap-4 md:hidden">
-        {items.map((service) => (
-          <ServiceCard
-            key={service.id}
-            onSelect={onSelect}
-            selected={service.id === selectedServiceId}
-            service={service}
-          />
-        ))}
-      </div>
-    </>
-  );
-}
-
-function ServiceCard({ onSelect, selected, service }) {
-  const paid = service.payments.reduce(
-    (total, payment) =>
-      total + (payment.paid ? Number(payment.amount) || 0 : 0),
-    0,
-  );
-
-  return (
-    <div
-      className={`h-full rounded-[2rem] transition ${
-        selected
-          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
-          : "ring-0"
-      }`}
-      onClick={() => onSelect(service)}
-    >
-      <Card
-        decorativeText={getProviderCategoryIcon(service.category)}
-        eyebrow={service.providerName}
-        title={service.name || "Servicio sin nombre"}
-      >
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <Chip
-            className="col-span-2"
-            icon={<BriefcaseBusiness size={13} strokeWidth={1.8} />}
-            strong
-            value={PROVIDER_CATEGORY_LABELS[service.category]}
-          />
-          <Chip
-            icon={<Euro size={13} strokeWidth={1.8} />}
-            strong
-            value={formatCurrency(service.price)}
-          />
-          <Chip
-            icon={<CalendarDays size={13} strokeWidth={1.8} />}
-            value={`${service.paymentCount} ${
-              service.paymentCount === 1 ? "plazo" : "plazos"
-            }`}
-          />
-          <Chip
-            className="col-span-2"
-            icon={<BadgeEuro size={13} strokeWidth={1.8} />}
-            value={`Pagado: ${formatCurrency(paid)}`}
-          />
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function ServicesEmptyState({
-  text = adminContent.providers.services.emptyText,
-  title = adminContent.providers.services.emptyTitle,
-}) {
-  return <AdminEmptyState icon={BadgeEuro} text={text} title={title} />;
-}
-
 function buildProviderStats(providers) {
   return providers.reduce(
     (stats, provider) => ({
@@ -1228,12 +1005,4 @@ function upsertProvider(providers, provider) {
   return normalizeProviders(
     providers.map((item) => (item.id === provider.id ? provider : item)),
   );
-}
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat("es-ES", {
-    currency: "EUR",
-    maximumFractionDigits: 0,
-    style: "currency",
-  }).format(Number(value) || 0);
 }

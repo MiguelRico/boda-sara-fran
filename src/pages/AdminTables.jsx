@@ -16,12 +16,11 @@ import {
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
 import AdminTableSection from "../components/admin/AdminTableSection";
-import CardGrid from "../components/admin/CardGrid";
 import AdminEntityActions from "../components/admin/AdminEntityActions";
 import AdminEntityTabs from "../components/admin/AdminEntityTabs";
-import AdminEmptyState from "../components/admin/AdminEmptyState";
 import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
 import AdminPageShell from "../components/admin/AdminPageShell";
+import SelectableCardPage from "../components/admin/SelectableCardPage";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
 import TableEditorDialog from "../components/admin/tables/TableEditorDialog";
 import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
@@ -1311,15 +1310,6 @@ function getTableSummaryItems(stats) {
   ];
 }
 
-function TablesEmptyState() {
-  return (
-    <AdminEmptyState
-      text={adminContent.tables.empty.text}
-      title={adminContent.tables.empty.title}
-    />
-  );
-}
-
 function TableTabActions({
   hasPendingChanges,
   loading,
@@ -1478,38 +1468,33 @@ function TableCardsPage({
   onUnassignSeat,
   selectedTableKey,
 }) {
-  if (!items.length) return <TablesEmptyState />;
-
   return (
-    <>
-      <CardGrid
-        getKey={getTableRenderKey}
-        items={items}
-        renderCard={(table, index) => (
-          <TableCardWithActions
-            index={index}
-            onSeatClick={onSeatClick}
-            onSelect={onSelect}
-            onUnassignSeat={onUnassignSeat}
-            selected={getTableKey(table) === selectedTableKey}
-            table={table}
-          />
-        )}
-      />
-      <div className="grid gap-4 md:hidden">
-        {items.map((table, index) => (
-          <TableCardWithActions
-            key={getTableRenderKey(table, { index })}
-            onSeatClick={onSeatClick}
-            onSelect={onSelect}
-            onUnassignSeat={onUnassignSeat}
-            reveal={false}
-            selected={getTableKey(table) === selectedTableKey}
-            table={table}
-          />
-        ))}
-      </div>
-    </>
+    <SelectableCardPage
+      emptyIcon={Grid2X2}
+      emptyState={adminContent.tables.empty}
+      getKey={getTableRenderKey}
+      items={items}
+      renderCard={(table, index) => (
+        <TableCardWithActions
+          index={index}
+          onSeatClick={onSeatClick}
+          onSelect={onSelect}
+          onUnassignSeat={onUnassignSeat}
+          selected={getTableKey(table) === selectedTableKey}
+          table={table}
+        />
+      )}
+      renderMobileCard={(table) => (
+        <TableCardWithActions
+          onSeatClick={onSeatClick}
+          onSelect={onSelect}
+          onUnassignSeat={onUnassignSeat}
+          reveal={false}
+          selected={getTableKey(table) === selectedTableKey}
+          table={table}
+        />
+      )}
+    />
   );
 }
 

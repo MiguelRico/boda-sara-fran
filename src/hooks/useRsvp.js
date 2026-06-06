@@ -40,7 +40,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
       ? Confirmation.normalize(location.state.group)
       : null;
 
-  const [currentconfirmationName, setCurrentconfirmationName] = useState(
+  const [currentConfirmationName, setCurrentConfirmationName] = useState(
     () => navigationGroup?.confirmationName || null,
   );
   const [contact, setContact] = useState(() => ({
@@ -68,7 +68,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const loadFoundGroup = useCallback((response) => {
     const confirmation = Confirmation.normalize(response);
 
-    setCurrentconfirmationName(confirmation.confirmationName);
+    setCurrentConfirmationName(confirmation.confirmationName);
     setContact({
       email: confirmation.email,
       confirmationName: confirmation.confirmationName,
@@ -211,7 +211,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
       const payload = {
         ...Confirmation.normalize({
           ...contact,
-          confirmationName: currentconfirmationName || contact.confirmationName,
+          confirmationName: currentConfirmationName || contact.confirmationName,
           guests,
         }),
       };
@@ -222,7 +222,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
         method: isEdition ? "PUT" : "POST",
       });
 
-      setCurrentconfirmationName(null);
+      setCurrentConfirmationName(null);
       setContact({
         email: "",
         confirmationName: "",
@@ -314,7 +314,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     closePopup,
     contact,
     errors,
-    confirmationName: currentconfirmationName,
+    confirmationName: currentConfirmationName,
     guests,
     handleAddGuest,
     handleContactChange,

@@ -3,30 +3,25 @@ function getSpreadsheet() {
   return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
 
-function getConfirmationsSheet() {
+function getOrCreateSheet(sheetName, headers) {
   const spreadsheet = getSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(CONFIRMATIONS_SHEET_NAME);
+  let sheet = spreadsheet.getSheetByName(sheetName);
 
   if (!sheet) {
-    sheet = spreadsheet.insertSheet(CONFIRMATIONS_SHEET_NAME);
+    sheet = spreadsheet.insertSheet(sheetName);
   }
 
-  ensureHeader(sheet, CONFIRMATIONS_HEADERS);
+  ensureHeader(sheet, headers);
 
   return sheet;
 }
 
+function getConfirmationsSheet() {
+  return getOrCreateSheet(CONFIRMATIONS_SHEET_NAME, CONFIRMATIONS_HEADERS);
+}
+
 function getSheet() {
-  const spreadsheet = getSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(SHEET_NAME);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(SHEET_NAME);
-  }
-
-  ensureHeader(sheet, GUESTS_HEADERS);
-
-  return sheet;
+  return getOrCreateSheet(SHEET_NAME, GUESTS_HEADERS);
 }
 
 const CONFIRMATIONS_HEADERS = [
@@ -229,81 +224,36 @@ function ensureHeader(sheet, headers) {
 }
 
 function getTablesSheet() {
-  const spreadsheet = getSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(TABLES_SHEET_NAME);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(TABLES_SHEET_NAME);
-  }
-
-  ensureHeader(sheet, TABLES_HEADERS);
-
-  return sheet;
+  return getOrCreateSheet(TABLES_SHEET_NAME, TABLES_HEADERS);
 }
 
 function getSeatsSheet() {
-  const spreadsheet = getSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(SEATS_SHEET_NAME);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(SEATS_SHEET_NAME);
-  }
-
-  ensureHeader(sheet, SEATS_HEADERS);
-
-  return sheet;
+  return getOrCreateSheet(SEATS_SHEET_NAME, SEATS_HEADERS);
 }
 
 function getTableAssignmentsSheet() {
-  const spreadsheet = getSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(TABLE_ASSIGNMENTS_SHEET_NAME);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(TABLE_ASSIGNMENTS_SHEET_NAME);
-  }
-
-  ensureHeader(sheet, TABLE_ASSIGNMENTS_HEADERS);
-
-  return sheet;
+  return getOrCreateSheet(
+    TABLE_ASSIGNMENTS_SHEET_NAME,
+    TABLE_ASSIGNMENTS_HEADERS,
+  );
 }
 
 function getProvidersSheet() {
-  const spreadsheet = getSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(PROVIDERS_SHEET_NAME);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(PROVIDERS_SHEET_NAME);
-  }
-
-  ensureHeader(sheet, PROVIDERS_HEADERS);
-
-  return sheet;
+  return getOrCreateSheet(PROVIDERS_SHEET_NAME, PROVIDERS_HEADERS);
 }
 
 function getProviderServicesSheet() {
-  const spreadsheet = getSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(PROVIDER_SERVICES_SHEET_NAME);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(PROVIDER_SERVICES_SHEET_NAME);
-  }
-
-  ensureHeader(sheet, PROVIDER_SERVICES_HEADERS);
-
-  return sheet;
+  return getOrCreateSheet(
+    PROVIDER_SERVICES_SHEET_NAME,
+    PROVIDER_SERVICES_HEADERS,
+  );
 }
 
 function getProviderPaymentsSheet() {
-  const spreadsheet = getSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(PROVIDER_PAYMENTS_SHEET_NAME);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(PROVIDER_PAYMENTS_SHEET_NAME);
-  }
-
-  ensureHeader(sheet, PROVIDER_PAYMENTS_HEADERS);
-
-  return sheet;
+  return getOrCreateSheet(
+    PROVIDER_PAYMENTS_SHEET_NAME,
+    PROVIDER_PAYMENTS_HEADERS,
+  );
 }
 
 function jsonResponse(obj, e) {

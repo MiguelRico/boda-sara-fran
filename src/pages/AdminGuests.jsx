@@ -23,12 +23,11 @@ import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import AdminEntityActions from "../components/admin/AdminEntityActions";
 import AdminEntityTabs from "../components/admin/AdminEntityTabs";
-import AdminEmptyState from "../components/admin/AdminEmptyState";
 import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
 import AdminPageShell from "../components/admin/AdminPageShell";
 import AdminEditorDialog from "../components/admin/AdminEditorDialog";
 import Card from "../components/admin/Card";
-import CardGrid from "../components/admin/CardGrid";
+import SelectableCardPage from "../components/admin/SelectableCardPage";
 import AdminTableSection from "../components/admin/AdminTableSection";
 import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
 import {
@@ -930,41 +929,23 @@ function UnsavedGuestChangesDialog({
 }
 
 function GuestItemsPage({ emptyState, items, onSelect, selectedGuestId }) {
-  if (!items.length) {
-    return (
-      <AdminEmptyState
-        icon={UsersRound}
-        text={emptyState?.text || adminContent.guests.list.emptyText}
-        title={emptyState?.title || adminContent.guests.list.emptyTitle}
-      />
-    );
-  }
-
   return (
-    <>
-      <CardGrid
-        className="hidden gap-4 md:grid lg:grid-cols-2"
-        getKey={(guest) => guest.rowId}
-        items={items}
-        renderCard={(guest) => (
-          <GuestItemCard
-            guestItem={guest}
-            onSelect={onSelect}
-            selected={guest.rowId === selectedGuestId}
-          />
-        )}
-      />
-      <div className="grid gap-4 md:hidden">
-        {items.map((guest) => (
-          <GuestItemCard
-            guestItem={guest}
-            key={guest.rowId}
-            onSelect={onSelect}
-            selected={guest.rowId === selectedGuestId}
-          />
-        ))}
-      </div>
-    </>
+    <SelectableCardPage
+      emptyIcon={UsersRound}
+      emptyState={{
+        text: emptyState?.text || adminContent.guests.list.emptyText,
+        title: emptyState?.title || adminContent.guests.list.emptyTitle,
+      }}
+      getKey={(guest) => guest.rowId}
+      items={items}
+      renderCard={(guest) => (
+        <GuestItemCard
+          guestItem={guest}
+          onSelect={onSelect}
+          selected={guest.rowId === selectedGuestId}
+        />
+      )}
+    />
   );
 }
 
@@ -995,41 +976,23 @@ function AdminGuestPage({
   selectedRowId,
 }) {
   return (
-    <>
-      <CardGrid
-        className="hidden gap-4 md:grid lg:grid-cols-2"
-        getKey={(row) => row.rowId}
-        items={items}
-        renderCard={(row) => (
-          <AdminGuestConfirmationCard
-            onEditGuests={onEditGuests}
-            onSelect={onSelect}
-            row={row}
-            selected={row.rowId === selectedRowId}
-          />
-        )}
-      />
-
-      <div className="grid gap-4 md:hidden">
-        {items.map((row) => (
-          <AdminGuestConfirmationCard
-            key={row.rowId}
-            onEditGuests={onEditGuests}
-            onSelect={onSelect}
-            row={row}
-            selected={row.rowId === selectedRowId}
-          />
-        ))}
-      </div>
-
-      {!items.length && (
-        <AdminEmptyState
-          icon={UsersRound}
-          text={emptyState?.text || adminContent.guests.list.emptyText}
-          title={emptyState?.title || adminContent.guests.list.emptyTitle}
+    <SelectableCardPage
+      emptyIcon={UsersRound}
+      emptyState={{
+        text: emptyState?.text || adminContent.guests.list.emptyText,
+        title: emptyState?.title || adminContent.guests.list.emptyTitle,
+      }}
+      getKey={(row) => row.rowId}
+      items={items}
+      renderCard={(row) => (
+        <AdminGuestConfirmationCard
+          onEditGuests={onEditGuests}
+          onSelect={onSelect}
+          row={row}
+          selected={row.rowId === selectedRowId}
         />
       )}
-    </>
+    />
   );
 }
 
