@@ -1,5 +1,8 @@
-name,tag,shape,seats,notes
-Mesa rectangular completa,familia,rectangular,4,Mesa rectangular completa con 4 invitados asignados
-Mesa rectangular pendiente,familia,rectangular,6,Mesa rectangular con 4 de 6 asientos asignados
-Mesa redonda completa,amistades,round,8,Mesa redonda completa con 8 invitados asignados
-Mesa redonda pendiente,trabajo,round,10,Mesa redonda con 7 de 10 asientos asignados
+tableId,name,group,tag,shape,seatCount,notes,createdAt,updatedAt
+mesa_001,Mesa Presidencial,familia,familia,rectangular,6,Padres y familia directa con acceso comodo,2026-06-01T11:00:00.000Z,2026-06-01T11:00:00.000Z
+mesa_002,Familia Novia,familia,familia,round,8,Familia cercana de la novia,2026-06-01T11:00:00.000Z,2026-06-01T11:00:00.000Z
+mesa_003,Familia Novio,familia,familia,round,8,Familia cercana del novio,2026-06-01T11:00:00.000Z,2026-06-01T11:00:00.000Z
+mesa_004,Amigos Universidad,amistades,amistades,round,10,Grupo de universidad con retorno tarde,2026-06-01T11:00:00.000Z,2026-06-01T11:00:00.000Z
+mesa_005,Companeros Trabajo,trabajo,trabajo,rectangular,8,Companeros de hospital y trabajo,2026-06-01T11:00:00.000Z,2026-06-01T11:00:00.000Z
+mesa_006,Corrales y Pequenos,amistades,amistades,round,8,Vecinos y ninos de arras,2026-06-01T11:00:00.000Z,2026-06-01T11:00:00.000Z
+mesa_007,Invitados Viaje,familia,familia,rectangular,8,Familia que viene de fuera y plazas libres,2026-06-01T11:00:00.000Z,2026-06-01T11:00:00.000Z

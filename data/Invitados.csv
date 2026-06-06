@@ -1,28 +1,51 @@
-groupName,name,lastname,allergies,otherAllergies,comments,outboundBus,returnBus,menu,table,seat
-Familia Romero Silva,Javier,Romero Silva,,,,18:00,3:00,Carne,Mesa rectangular completa,1
-Familia Romero Silva,Marta,Lopez Carmona,Lactosa,,Leche sin lactosa tambien en el cafe,18:00,3:00,Pescado,Mesa rectangular completa,2
-Familia Romero Silva,Claudia,Romero Lopez,Frutos secos,,Alergia severa a nueces y almendras,18:00,3:00,Carne,Mesa rectangular completa,3
-Familia Romero Silva,Nicolas,Romero Lopez,,Fresa,Otra alergia no listada: fresa,18:00,3:00,Pescado,Mesa rectangular completa,4
-Cano Rivas,Luis,Cano Morales,,,,18:20,6:00,Carne,Mesa rectangular pendiente,1
-Cano Rivas,Beatriz,Rivas Nunez,Gluten,,Menu celiaco por favor,18:20,6:00,Pescado,Mesa rectangular pendiente,2
-Ana Martin,Ana,Martin Prieto,Vegetariano,,,,No,Carne,,
-Familia Dominguez,Rafael,Dominguez Ferrer,,,Iremos en coche a la ida, pero volvemos en bus,No,6:00,Carne,Mesa rectangular pendiente,3
-Familia Dominguez,Teresa,Ferrer Marin,,,,No,6:00,Pescado,Mesa rectangular pendiente,4
-Familia Dominguez,Marina,Dominguez Ferrer,Huevo,,Necesita trona si hay disponible,No,6:00,Carne,,
-Familia Dominguez,Ines,Dominguez Ferrer,,,Menu infantil sin tomate,No,No,Pescado,,
-Amigos Universidad,David,Munoz Aguilar,,,,18:00,3:00,Carne,Mesa redonda completa,1
-Amigos Universidad,Sofia,Delgado Pino,Gluten, Lactosa,,,18:00,3:00,Pescado,Mesa redonda completa,2
-Amigos Universidad,Raul,Nieto Campos,,,Se queda hasta el final,18:00,6:00,Carne,Mesa redonda completa,3
-Amigos Universidad,Cristina,Arias Soler,,Kiwi,Otra alergia no listada: kiwi,18:20,3:00,Pescado,Mesa redonda completa,4
-Amigos Universidad,Elena,Santos Vega,Soja,,Prefiere estar lejos de altavoces,18:20,,Carne,Mesa redonda completa,5
-Trabajo Francisco,Victor,Prieto Campos,,,,18:00,6:00,Carne,Mesa redonda completa,6
-Trabajo Francisco,Natalia,Herrera Gil,Vegetariano, Soja,,,18:00,6:00,Pescado,Mesa redonda completa,7
-Trabajo Francisco,Oscar,Fuentes Lara,,,Sale desde otro punto,No,No,Carne,Mesa redonda completa,8
-Familia Navarro Moya,Elena,Navarro Moya,,,,18:00,6:00,Pescado,Mesa redonda pendiente,1
-Familia Navarro Moya,Sergio,Sanchez Paredes,,,,18:00,6:00,Carne,Mesa redonda pendiente,2
-Familia Navarro Moya,Julia,Sanchez Navarro,Lactosa, Huevo,,,18:00,6:00,Pescado,Mesa redonda pendiente,3
-Familia Navarro Moya,Diego,Sanchez Navarro,,,Vuelve con los abuelos,18:00,3:00,Carne,Mesa redonda pendiente,4
-Vecinos Corrales,Rosa,Calderon Luna,,,,No,No,Pescado,Mesa redonda pendiente,5
-Vecinos Corrales,Antonio,Luna Cabrera,Marisco, Frutos secos,,Alergias importantes,No,No,Carne,Mesa redonda pendiente,6
-Vecinos Corrales,Belen,Cabrera Rios,,,Se apunta al bus a ultima hora,18:20,3:00,Pescado,Mesa redonda pendiente,7
-Marta Rojas,Marta,Rojas Iglesias,,,Embarazada de 6 meses,18:20,No,Carne,,
+guestId,confirmationId,groupName,name,lastname,allergies,otherAllergies,comments,outboundBus,returnBus,menu,createdAt,updatedAt
+guest_001,conf_001,Familia Garcia Ruiz,Elena,Garcia Ruiz,,,Prefiere sitio cerca de la salida,18:00,3:00,Carne,2026-06-01T10:00:00.000Z,2026-06-01T10:00:00.000Z
+guest_002,conf_001,Familia Garcia Ruiz,Manuel,Santos Vega,,Sin cilantro,,18:00,3:00,Pescado,2026-06-01T10:00:00.000Z,2026-06-01T10:00:00.000Z
+guest_003,conf_001,Familia Garcia Ruiz,Lucia,Santos Garcia,Gluten,,,18:00,3:00,Carne,2026-06-01T10:00:00.000Z,2026-06-01T10:00:00.000Z
+guest_004,conf_001,Familia Garcia Ruiz,Alvaro,Santos Garcia,,,Menu infantil si es posible,18:00,3:00,Carne,2026-06-01T10:00:00.000Z,2026-06-01T10:00:00.000Z
+guest_005,conf_001,Familia Garcia Ruiz,Carmen,Ruiz Molina,Lactosa,,,No,No,Pescado,2026-06-01T10:00:00.000Z,2026-06-01T10:00:00.000Z
+guest_006,conf_002,Primos Lopez Moreno,Javier,Lopez Moreno,,,Llega directamente desde Sevilla,No,No,Carne,2026-06-01T10:05:00.000Z,2026-06-01T10:05:00.000Z
+guest_007,conf_002,Primos Lopez Moreno,Patricia,Campos Leon,Vegetariano,,,No,No,Pescado,2026-06-01T10:05:00.000Z,2026-06-01T10:05:00.000Z
+guest_008,conf_002,Primos Lopez Moreno,Marcos,Lopez Campos,,,Trona para el pequeno,No,No,Carne,2026-06-01T10:05:00.000Z,2026-06-01T10:05:00.000Z
+guest_009,conf_002,Primos Lopez Moreno,Nerea,Lopez Campos,Huevo,,,No,No,Pescado,2026-06-01T10:05:00.000Z,2026-06-01T10:05:00.000Z
+guest_010,conf_003,Amigos Universidad,Raul,Fernandez Prieto,,,Quiere estar con Laura y Sergio,18:20,6:00,Carne,2026-06-01T10:10:00.000Z,2026-06-01T10:10:00.000Z
+guest_011,conf_003,Amigos Universidad,Laura,Martin Solis,Frutos secos,,,18:20,6:00,Pescado,2026-06-01T10:10:00.000Z,2026-06-01T10:10:00.000Z
+guest_012,conf_003,Amigos Universidad,Sergio,Nunez Romero,,,Sin alcohol durante la cena,18:20,3:00,Carne,2026-06-01T10:10:00.000Z,2026-06-01T10:10:00.000Z
+guest_013,conf_003,Amigos Universidad,Miriam,Ortega Pina,"Gluten, Lactosa",,,18:20,6:00,Pescado,2026-06-01T10:10:00.000Z,2026-06-01T10:10:00.000Z
+guest_014,conf_003,Amigos Universidad,Daniel,Herrera Cano,,,,18:20,6:00,Carne,2026-06-01T10:10:00.000Z,2026-06-01T10:10:00.000Z
+guest_015,conf_003,Amigos Universidad,Clara,Vidal Ramos,Marisco,,,18:20,3:00,Pescado,2026-06-01T10:10:00.000Z,2026-06-01T10:10:00.000Z
+guest_016,conf_003,Amigos Universidad,Victor,Alonso Gil,,,Necesita opcion sin cafeina,No,6:00,Carne,2026-06-01T10:10:00.000Z,2026-06-01T10:10:00.000Z
+guest_017,conf_003,Amigos Universidad,Natalia,Moreno Arias,Soja,,,18:20,6:00,Pescado,2026-06-01T10:10:00.000Z,2026-06-01T10:10:00.000Z
+guest_018,conf_004,Companeros Hospital,Beatriz,Ramos Fuentes,,,,18:00,3:00,Carne,2026-06-01T10:15:00.000Z,2026-06-01T10:15:00.000Z
+guest_019,conf_004,Companeros Hospital,Hector,Diaz Valera,Gluten,,,18:00,3:00,Pescado,2026-06-01T10:15:00.000Z,2026-06-01T10:15:00.000Z
+guest_020,conf_004,Companeros Hospital,Isabel,Suarez Ponce,,,Embarazada de seis meses,18:00,3:00,Carne,2026-06-01T10:15:00.000Z,2026-06-01T10:15:00.000Z
+guest_021,conf_004,Companeros Hospital,Oscar,Molina Reyes,Frutos secos,,,18:00,6:00,Carne,2026-06-01T10:15:00.000Z,2026-06-01T10:15:00.000Z
+guest_022,conf_004,Companeros Hospital,Sara,Benitez Mora,,,,No,No,Pescado,2026-06-01T10:15:00.000Z,2026-06-01T10:15:00.000Z
+guest_023,conf_004,Companeros Hospital,Adrian,Castillo Leon,Lactosa,,,18:00,6:00,Carne,2026-06-01T10:15:00.000Z,2026-06-01T10:15:00.000Z
+guest_024,conf_005,Familia Novia Sevilla,Rocio,Delgado Marin,,,,18:20,3:00,Pescado,2026-06-01T10:20:00.000Z,2026-06-01T10:20:00.000Z
+guest_025,conf_005,Familia Novia Sevilla,Antonio,Delgado Rivas,,,Movilidad reducida,18:20,3:00,Carne,2026-06-01T10:20:00.000Z,2026-06-01T10:20:00.000Z
+guest_026,conf_005,Familia Novia Sevilla,Mercedes,Marin Pastor,"Gluten, Huevo",,,18:20,3:00,Pescado,2026-06-01T10:20:00.000Z,2026-06-01T10:20:00.000Z
+guest_027,conf_005,Familia Novia Sevilla,Irene,Delgado Marin,Vegetariano,,,18:20,6:00,Pescado,2026-06-01T10:20:00.000Z,2026-06-01T10:20:00.000Z
+guest_028,conf_005,Familia Novia Sevilla,Carlos,Delgado Marin,,,,No,No,Carne,2026-06-01T10:20:00.000Z,2026-06-01T10:20:00.000Z
+guest_029,conf_006,Familia Novio Huelva,Francisco,Rico Vazquez,,,,18:00,6:00,Carne,2026-06-01T10:25:00.000Z,2026-06-01T10:25:00.000Z
+guest_030,conf_006,Familia Novio Huelva,Teresa,Vazquez Cano,Marisco,,,18:00,6:00,Pescado,2026-06-01T10:25:00.000Z,2026-06-01T10:25:00.000Z
+guest_031,conf_006,Familia Novio Huelva,Jose,Rico Molina,,,Silla junto al pasillo,18:00,3:00,Carne,2026-06-01T10:25:00.000Z,2026-06-01T10:25:00.000Z
+guest_032,conf_006,Familia Novio Huelva,Paqui,Cano Perez,Lactosa,,,18:00,3:00,Pescado,2026-06-01T10:25:00.000Z,2026-06-01T10:25:00.000Z
+guest_033,conf_006,Familia Novio Huelva,Manuel,Rico Cano,,,,No,No,Carne,2026-06-01T10:25:00.000Z,2026-06-01T10:25:00.000Z
+guest_034,conf_006,Familia Novio Huelva,Julia,Rico Cano,Frutos secos,,,18:00,6:00,Pescado,2026-06-01T10:25:00.000Z,2026-06-01T10:25:00.000Z
+guest_035,conf_007,Vecinos Corrales,Inma,Perez Jimenez,,,,18:20,3:00,Carne,2026-06-01T10:30:00.000Z,2026-06-01T10:30:00.000Z
+guest_036,conf_007,Vecinos Corrales,Juan,Romero Aguilar,Gluten,,,18:20,3:00,Pescado,2026-06-01T10:30:00.000Z,2026-06-01T10:30:00.000Z
+guest_037,conf_007,Vecinos Corrales,Alicia,Romero Perez,,,Quiere mesa tranquila,18:20,6:00,Carne,2026-06-01T10:30:00.000Z,2026-06-01T10:30:00.000Z
+guest_038,conf_008,Tios Barcelona,Montserrat,Soler Puig,Soja,,,No,No,Pescado,2026-06-01T10:35:00.000Z,2026-06-01T10:35:00.000Z
+guest_039,conf_008,Tios Barcelona,Jordi,Puig Ferrer,,,,No,No,Carne,2026-06-01T10:35:00.000Z,2026-06-01T10:35:00.000Z
+guest_040,conf_008,Tios Barcelona,Laia,Puig Soler,Vegetariano,,,No,No,Pescado,2026-06-01T10:35:00.000Z,2026-06-01T10:35:00.000Z
+guest_041,conf_008,Tios Barcelona,Marc,Puig Soler,,,Llegan el dia anterior,No,No,Carne,2026-06-01T10:35:00.000Z,2026-06-01T10:35:00.000Z
+guest_042,conf_009,Pequenos Arras,Leo,Navarro Gil,Huevo,,Necesita menu infantil,No,No,Carne,2026-06-01T10:40:00.000Z,2026-06-01T10:40:00.000Z
+guest_043,conf_009,Pequenos Arras,Valeria,Mora Gil,,No le gusta el tomate,Menu infantil,No,No,Pescado,2026-06-01T10:40:00.000Z,2026-06-01T10:40:00.000Z
+guest_044,conf_010,Amigos Futbol,Alberto,Sanchez Vega,,,,18:20,6:00,Carne,2026-06-01T10:45:00.000Z,2026-06-01T10:45:00.000Z
+guest_045,conf_010,Amigos Futbol,Pablo,Reina Santos,Marisco,,,18:20,6:00,Pescado,2026-06-01T10:45:00.000Z,2026-06-01T10:45:00.000Z
+guest_046,conf_010,Amigos Futbol,Miguel,Cruz Leal,,,Llega despues de la ceremonia,No,6:00,Carne,2026-06-01T10:45:00.000Z,2026-06-01T10:45:00.000Z
+guest_047,conf_010,Amigos Futbol,Fernando,Galvez Soto,Gluten,,,18:20,6:00,Carne,2026-06-01T10:45:00.000Z,2026-06-01T10:45:00.000Z
+guest_048,conf_010,Amigos Futbol,Nacho,Vargas Navas,,,,18:20,3:00,Pescado,2026-06-01T10:45:00.000Z,2026-06-01T10:45:00.000Z
+guest_049,conf_011,Ana y Pablo,Ana,Carrasco Nieto,Vegetariano,,,No,No,Pescado,2026-06-01T10:50:00.000Z,2026-06-01T10:50:00.000Z
+guest_050,conf_011,Ana y Pablo,Pablo,Medina Serrano,,,Sin alcohol,No,No,Carne,2026-06-01T10:50:00.000Z,2026-06-01T10:50:00.000Z

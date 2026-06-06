@@ -1,0 +1,14 @@
+providerId,nombre,categoria,telefono,email,direccion,web,numeroCuenta,activo,createdAt,updatedAt
+prov_001,Hacienda Los Laureles,catering,954612330,eventos@haciendaloslaureles.es,Camino de la Ribera 12 Sevilla,https://haciendaloslaureles.es,ES7621000813610123456789,TRUE,2026-06-01T12:00:00.000Z,2026-06-01T12:00:00.000Z
+prov_002,Son de Abril,musica,658441203,contratacion@sondeabril.es,Calle Feria 44 Sevilla,https://sondeabril.es,ES9120385778983000760236,TRUE,2026-06-01T12:02:00.000Z,2026-06-01T12:02:00.000Z
+prov_003,DJ Mario Leon,dj,607884512,mario@djmaroleon.es,Avenida Andalucia 18 Huelva,https://djmaroleon.es,ES4821002331990200034567,TRUE,2026-06-01T12:04:00.000Z,2026-06-01T12:04:00.000Z
+prov_004,Luz del Sur Eventos,iluminacion,677230981,info@luzdelsureventos.es,Poligono Tartessos Nave 7 Huelva,https://luzdelsureventos.es,ES1120805801101234567890,TRUE,2026-06-01T12:06:00.000Z,2026-06-01T12:06:00.000Z
+prov_005,Floristeria Azahar,floristeria,955721004,bodas@floristeriaazahar.es,Calle Sierpes 38 Sevilla,https://floristeriaazahar.es,ES2521007000210012345678,TRUE,2026-06-01T12:08:00.000Z,2026-06-01T12:08:00.000Z
+prov_006,Atrezzo y Mantel,decoracion,689301556,hola@atrezzoymantel.es,Calle Puerto 9 Huelva,https://atrezzoymantel.es,ES6620381234566000456123,TRUE,2026-06-01T12:10:00.000Z,2026-06-01T12:10:00.000Z
+prov_007,Clara Vidal Fotografia,fotografia,649225718,clara@claravidalfoto.es,Plaza Nueva 3 Sevilla,https://claravidalfoto.es,ES5521001999320112345671,TRUE,2026-06-01T12:12:00.000Z,2026-06-01T12:12:00.000Z
+prov_008,Plano Secuencia Bodas,video,622704819,info@planosecuenciabodas.es,Calle Rascón 21 Huelva,https://planosecuenciabodas.es,ES3021004112340009876543,TRUE,2026-06-01T12:14:00.000Z,2026-06-01T12:14:00.000Z
+prov_009,Cocteleria La Jara,barra-libre,671830245,reservas@coctelerialajara.es,Avenida del Decano 6 Punta Umbria,https://coctelerialajara.es,ES9820384501237000667788,TRUE,2026-06-01T12:16:00.000Z,2026-06-01T12:16:00.000Z
+prov_010,Detalles Romero,regalos,954883107,pedidos@detallesromero.es,Calle Cuna 15 Sevilla,https://detallesromero.es,ES1821002000410203040506,TRUE,2026-06-01T12:18:00.000Z,2026-06-01T12:18:00.000Z
+prov_011,Elena Robles Weddings,wedding-planner,618990234,elena@elenaroblesweddings.es,Calle Betis 24 Sevilla,https://elenaroblesweddings.es,ES4021009099000011223344,TRUE,2026-06-01T12:20:00.000Z,2026-06-01T12:20:00.000Z
+prov_012,Hotel Marismas del Odiel,alojamiento,959420118,grupos@hotelmarismasodiel.es,Avenida Costa de la Luz 2 Huelva,https://hotelmarismasodiel.es,ES7120381122334455667788,TRUE,2026-06-01T12:22:00.000Z,2026-06-01T12:22:00.000Z
+prov_013,Autocares Costa Luz,otros,959331870,bodas@autocarescostaluz.es,Carretera A-497 Km 4 Huelva,https://autocarescostaluz.es,ES8621004455667788990011,TRUE,2026-06-01T12:24:00.000Z,2026-06-01T12:24:00.000Z

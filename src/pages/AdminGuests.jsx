@@ -213,10 +213,15 @@ export default function AdminGuests() {
     () => pagedRows.find((row) => row.rowId === effectiveSelectedRowId) || null,
     [effectiveSelectedRowId, pagedRows],
   );
-  const guestItems = useMemo(() => getGuestItems(state.groups), [state.groups]);
+
+  const allGuestItems = useMemo(() => getGuestItems(state.groups), [state.groups]);
+  const guestItems = useMemo(
+    () => (selectedRow?.group ? getGuestItems([selectedRow.group]) : []),
+    [selectedRow],
+  );
   const guestStats = useMemo(
-    () => buildGuestStats(rows, guestItems),
-    [guestItems, rows],
+    () => buildGuestStats(rows, allGuestItems),
+    [allGuestItems, rows],
   );
   const visibleGuestItems = useMemo(
     () => filterGuestItems(guestItems, query, filter),
@@ -526,7 +531,11 @@ export default function AdminGuests() {
                       emptyState={getGroupEmptyState(rows.length)}
                       items={items}
                       onEditGuests={(group) => openGroupEditor(group, "guests")}
-                      onSelect={(row) => setSelectedRowId(row.rowId)}
+                      onSelect={(row) => {
+                        setSelectedRowId(row.rowId);
+                        setGuestPage(1);
+                        setSelectedGuestId("");
+                      }}
                       selectedRowId={effectiveSelectedRowId}
                     />
                   )}

@@ -167,7 +167,11 @@ export default function AdminProviders() {
     pagedProviders.find(
       (provider) => provider.id === effectiveSelectedProviderId,
     ) || null;
-  const services = useMemo(() => getProviderServices(providers), [providers]);
+
+  const services = useMemo(
+    () => (selectedProvider ? getProviderServices([selectedProvider]) : []),
+    [selectedProvider],
+  );
   const filteredServices = useMemo(
     () => filterServices(services, { category, query }),
     [category, query, services],
@@ -497,9 +501,11 @@ export default function AdminProviders() {
                     <ProviderCardsPage
                       emptyState={getProviderEmptyState(providers.length)}
                       items={items}
-                      onSelect={(provider) =>
-                        setSelectedProviderId(provider.id)
-                      }
+                      onSelect={(provider) => {
+                        setSelectedProviderId(provider.id);
+                        setServicesPage(1);
+                        setSelectedServiceId("");
+                      }}
                       selectedProviderId={effectiveSelectedProviderId}
                     />
                   )}
@@ -530,7 +536,7 @@ export default function AdminProviders() {
                         }
                         onDiscard={handleDiscardPendingChanges}
                         onEdit={() => handleEditService(selectedService)}
-                        onExport={() => downloadServicesCsv(services)}
+                        onExport={() => downloadServicesCsv(filteredServices)}
                         onSave={handleSavePendingChanges}
                         providers={filteredServices}
                         saving={spinner.loading}
@@ -584,8 +590,8 @@ export default function AdminProviders() {
                   renderMeasurePage={(items) => (
                     <ServiceCardsPage
                       emptyState={getServiceEmptyState(
-                        providers.length,
-                        services.length,
+                          providers.length,
+                          services.length,
                       )}
                       items={items}
                       onSelect={() => {}}
@@ -595,8 +601,8 @@ export default function AdminProviders() {
                   renderPage={(items) => (
                     <ServiceCardsPage
                       emptyState={getServiceEmptyState(
-                        providers.length,
-                        services.length,
+                          providers.length,
+                          services.length,
                       )}
                       items={items}
                       onSelect={(service) => setSelectedServiceId(service.id)}
