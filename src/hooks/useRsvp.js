@@ -4,12 +4,12 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { MAX_GUESTS } from "../constants/rsvp";
 import { Confirmation, Guest } from "../models";
 import {
+  findConfirmationByEmail,
   findConfirmationById,
-  findGroupByEmail,
-  findGroupByPhone,
-  saveGroup,
-} from "../services/rsvpService";
-import { getConfirmationIdUrl } from "../utils/groupNameCodec";
+  findConfirmationByPhone,
+  savePublicConfirmation,
+} from "../api/confirmationsApi";
+import { getConfirmationIdUrl } from "../utils/confirmationNameCodec";
 import {
   validateRsvpContact,
   validateRsvpForm,
@@ -40,12 +40,12 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
       ? Confirmation.normalize(location.state.group)
       : null;
 
-  const [currentGroupName, setCurrentGroupName] = useState(
-    () => navigationGroup?.groupName || null,
+  const [currentconfirmationName, setCurrentconfirmationName] = useState(
+    () => navigationGroup?.confirmationName || null,
   );
   const [contact, setContact] = useState(() => ({
     email: navigationGroup?.email || "",
-    groupName: navigationGroup?.groupName || "",
+    confirmationName: navigationGroup?.confirmationName || "",
     phone: navigationGroup?.phone || "",
   }));
   const [guests, setGuests] = useState(() =>
@@ -57,7 +57,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const totalGuests = useMemo(() => guests.length, [guests]);
 
   const handleContactChange = (field, value) => {
-    if (isEdition && field === "groupName") return;
+    if (isEdition && field === "confirmationName") return;
 
     setContact((prev) => ({
       ...prev,
@@ -68,10 +68,10 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const loadFoundGroup = useCallback((response) => {
     const confirmation = Confirmation.normalize(response);
 
-    setCurrentGroupName(confirmation.groupName);
+    setCurrentconfirmationName(confirmation.confirmationName);
     setContact({
       email: confirmation.email,
-      groupName: confirmation.groupName,
+      confirmationName: confirmation.confirmationName,
       phone: confirmation.phone,
     });
     setGuests(Guest.normalizeList(confirmation.guests));
@@ -124,8 +124,8 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
       show("Buscando confirmación...");
 
       const response = contact.email.trim()
-        ? await findGroupByEmail(contact.email)
-        : await findGroupByPhone(contact.phone);
+        ? await findConfirmationByEmail(contact.email)
+        : await findConfirmationByPhone(contact.phone);
 
       if (!response.found) {
         setPopup({
@@ -173,7 +173,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     setErrors((current) => ({
       ...current,
       email: validationErrors.email,
-      groupName: validationErrors.groupName,
+      confirmationName: validationErrors.confirmationName,
       phone: validationErrors.phone,
     }));
 
@@ -211,21 +211,21 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
       const payload = {
         ...Confirmation.normalize({
           ...contact,
-          groupName: currentGroupName || contact.groupName,
+          confirmationName: currentconfirmationName || contact.confirmationName,
           guests,
         }),
       };
 
       show("Enviando confirmación...");
 
-      await saveGroup(payload, {
+      await savePublicConfirmation(payload, {
         method: isEdition ? "PUT" : "POST",
       });
 
-      setCurrentGroupName(null);
+      setCurrentconfirmationName(null);
       setContact({
         email: "",
-        groupName: "",
+        confirmationName: "",
         phone: "",
       });
       setGuests(Guest.normalizeList());
@@ -314,7 +314,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     closePopup,
     contact,
     errors,
-    groupName: currentGroupName,
+    confirmationName: currentconfirmationName,
     guests,
     handleAddGuest,
     handleContactChange,
@@ -330,3 +330,4 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     totalGuests,
   };
 }
+

@@ -23,8 +23,8 @@ function saveConfirmation(data) {
   const assignmentsSheet = getTableAssignmentsSheet();
   const confirmation = getNormalizedConfirmationData(data);
 
-  if (!confirmation.groupName) {
-    throw new Error("Missing groupName");
+  if (!confirmation.confirmationName) {
+    throw new Error("Missing confirmationName");
   }
 
   if (!confirmation.confirmationId) {
@@ -41,7 +41,7 @@ function saveConfirmation(data) {
     ...guest,
     guestId: String(guest.guestId || guest.id || "").trim() || createEntityId("guest"),
     confirmationId: confirmation.confirmationId,
-    groupName: confirmation.groupName,
+    confirmationName: confirmation.confirmationName,
   }));
 
   guestsWithIds.forEach((guest) => {
@@ -53,12 +53,12 @@ function saveConfirmation(data) {
 
   sendConfirmationEmail(
     confirmation.email,
-    confirmation.groupName,
+    confirmation.confirmationName,
     guestsWithIds,
     confirmation.confirmationId,
   );
   sendAdminNotification(
-    confirmation.groupName,
+    confirmation.confirmationName,
     confirmation.email,
     confirmation.phone,
     guestsWithIds,
@@ -67,7 +67,7 @@ function saveConfirmation(data) {
   return jsonResponse({
     success: true,
     confirmationId: confirmation.confirmationId,
-    groupName: encodeGroupName(confirmation.groupName),
+    confirmationName: encodeConfirmationName(confirmation.confirmationName),
   });
 }
 
@@ -242,3 +242,4 @@ function saveProviders(data) {
     payments: paymentRows.length,
   });
 }
+

@@ -5,7 +5,7 @@ const GUEST_DEFAULTS = {
   confirmationId: "",
   email: "",
   guestId: "",
-  groupName: "",
+  confirmationName: "",
   id: "",
   name: "",
   lastname: "",
@@ -42,7 +42,7 @@ export const Guest = {
       confirmationId: normalizeString(overrides.confirmationId),
       email: normalizeString(overrides.email),
       guestId: normalizeString(overrides.guestId || overrides.id),
-      groupName: normalizeString(overrides.groupName),
+      confirmationName: normalizeString(overrides.confirmationName),
       id: normalizeString(overrides.guestId || overrides.id),
       name: normalizeString(overrides.name),
       lastname: normalizeString(overrides.lastname),
@@ -176,7 +176,7 @@ export const Guest = {
 
     return Object.entries(normalizedGuest).every(([field, value]) => {
       if (
-        field === "groupName" ||
+        field === "confirmationName" ||
         field === "outboundBus" ||
         field === "returnBus"
       ) {
@@ -241,3 +241,4 @@ export const Guest = {
     );
   },
 };
+

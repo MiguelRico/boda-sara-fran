@@ -51,10 +51,10 @@ export const Table = {
       tableId: normalizeString(overrides.tableId || overrides.id).trim(),
       name,
       group: normalizeString(
-        overrides.group || overrides.tag || overrides.groupName,
+        overrides.group || overrides.tag || overrides.confirmationName,
       ).trim(),
       tag: normalizeString(
-        overrides.tag || overrides.group || overrides.groupName,
+        overrides.tag || overrides.group || overrides.confirmationName,
       ).trim(),
       notes: normalizeString(overrides.notes).trim(),
       shape,
@@ -261,3 +261,4 @@ export const Table = {
   },
 
 };
+

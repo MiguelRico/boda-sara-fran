@@ -13,7 +13,7 @@ export const adminContent = {
   },
   guests: {
     tabs: [
-      { id: "groups", label: "Confirmaciones" },
+      { id: "confirmations", label: "Confirmaciones" },
       { id: "guests", label: "Invitados" },
     ],
     header: {
@@ -25,7 +25,7 @@ export const adminContent = {
       eyebrow: "Resumen",
       title: "Invitados",
       metrics: {
-        groups: "Confirmaciones",
+        confirmations: "Confirmaciones",
         guests: "Invitados",
         allergies: "Alergias",
         bus: "Bus",
@@ -50,10 +50,10 @@ export const adminContent = {
       mobilePageLabel: "Confirmación",
       emptyTitle: "Sin resultados",
       emptyText: "Prueba con otra búsqueda o cambia el filtro seleccionado.",
-      noGroupsTitle: "Sin confirmaciones",
-      noGroupsText: "Crea una confirmación para empezar a registrar invitados.",
-      countLabel: ({ groups, guests }) =>
-        `${groups} ${groups === 1 ? "confirmación" : "confirmaciones"} en esta página · ${guests} ${
+      noConfirmationsTitle: "Sin confirmaciones",
+      noConfirmationsText: "Crea una confirmación para empezar a registrar invitados.",
+      countLabel: ({ confirmations, guests }) =>
+        `${confirmations} ${confirmations === 1 ? "confirmación" : "confirmaciones"} en esta página · ${guests} ${
           guests === 1 ? "persona" : "personas"
         }`,
     },
@@ -66,8 +66,8 @@ export const adminContent = {
       eyebrow: "Invitados",
       title: "Invitados",
       mobilePageLabel: "Invitado",
-      noGroupsTitle: "Sin confirmaciones",
-      noGroupsText:
+      noConfirmationsTitle: "Sin confirmaciones",
+      noConfirmationsText:
         "Crea una confirmación antes de agregar o consultar invitados.",
       noGuestsTitle: "Sin invitados",
       noGuestsText:
@@ -340,8 +340,8 @@ export const adminContent = {
   pendingGuests: {
     filtersEyebrow: "Filtros",
     title: "Invitados pendientes",
-    groupLabel: "Confirmación",
-    allGroups: "Todas las confirmaciones",
+    confirmationLabel: "Confirmación",
+    allConfirmations: "Todas las confirmaciones",
     menuLabel: "Preferencia de menú",
     allMenus: "Todos los menús",
     emptyTitle: "Sin invitados pendientes",
@@ -366,3 +366,5 @@ export const adminContent = {
     emptySeatsLabel: (count) => `${count} asientos libres`,
   },
 };
+
+

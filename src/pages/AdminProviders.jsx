@@ -1,6 +1,6 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import {
   BadgeEuro,
   BriefcaseBusiness,
@@ -29,17 +29,19 @@ import { validateProvider } from "../validators/providerValidators";
 import { loadAdminDataOnce, setAdminProviders } from "../services/adminDataStore";
 import AdminTableSection from "../components/admin/AdminTableSection";
 import AdminEntityActions from "../components/admin/AdminEntityActions";
+import AdminEntityTabs from "../components/admin/AdminEntityTabs";
+import AdminEmptyState from "../components/admin/AdminEmptyState";
 import Card from "../components/admin/Card";
 import CardGrid from "../components/admin/CardGrid";
-import EditorDialog from "../components/admin/EditorDialog";
+import AdminEditorDialog from "../components/admin/AdminEditorDialog";
 import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
 import ProviderForm from "../components/admin/providers/ProviderForm";
 import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
+import AdminPageShell from "../components/admin/AdminPageShell";
 import CinematicPage from "../components/cinematic/CinematicPage";
-import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import {
   inputClassName,
@@ -49,19 +51,21 @@ import {
 import Chip from "../components/ui/Chip";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import DeleteDialog from "../components/ui/DeleteDialog";
-import HeaderSection from "../components/ui/HeaderSection";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
-import TabNavigation from "../components/ui/TabNavigation";
 import useIsMobileView from "../hooks/useIsMobileView";
 import usePagedData from "../hooks/usePagedData";
 import usePageTransition from "../hooks/usePageTransition";
+import useEffectiveSelection from "../hooks/useEffectiveSelection";
+import useAdminActiveTab from "../hooks/useAdminActiveTab";
 import useSpinner from "../hooks/useSpinner";
+import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
 import { getEmailHref, getPhoneHref } from "../utils/contactLinks";
 
 const desktopPageSize = 6;
 const mobilePageSize = 1;
 const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = "adminProvidersActiveTab";
+const getEntityId = (item) => item.id;
 
 export default function AdminProviders() {
   const providersRef = useRef(null);
@@ -89,16 +93,10 @@ export default function AdminProviders() {
   const [editingServiceId, setEditingServiceId] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [errors, setErrors] = useState({});
-  const [activeTab, setActiveTab] = useState(() => {
-    try {
-      return (
-        window.localStorage.getItem(ADMIN_PROVIDERS_ACTIVE_TAB_KEY) ||
-        "providers"
-      );
-    } catch {
-      return "providers";
-    }
-  });
+  const [activeTab, setActiveTab] = useAdminActiveTab(
+    ADMIN_PROVIDERS_ACTIVE_TAB_KEY,
+    "providers",
+  );
   const [popup, setPopup] = useState({
     message: "",
     open: false,
@@ -150,15 +148,14 @@ export default function AdminProviders() {
     onPageChange: setPage,
     totalPages,
   });
-  const effectiveSelectedProviderId = pagedProviders.some(
-    (provider) => provider.id === selectedProviderId,
-  )
-    ? selectedProviderId
-    : pagedProviders[0]?.id || "";
-  const selectedProvider =
-    pagedProviders.find(
-      (provider) => provider.id === effectiveSelectedProviderId,
-    ) || null;
+  const {
+    effectiveSelectedId: effectiveSelectedProviderId,
+    selectedItem: selectedProvider,
+  } = useEffectiveSelection({
+    getId: getEntityId,
+    items: pagedProviders,
+    selectedId: selectedProviderId,
+  });
 
   const services = useMemo(
     () => (selectedProvider ? getProviderServices([selectedProvider]) : []),
@@ -187,14 +184,14 @@ export default function AdminProviders() {
     onPageChange: setServicesPage,
     totalPages: servicesTotalPages,
   });
-  const effectiveSelectedServiceId = pagedServices.some(
-    (service) => service.id === selectedServiceId,
-  )
-    ? selectedServiceId
-    : pagedServices[0]?.id || "";
-  const selectedService =
-    pagedServices.find((service) => service.id === effectiveSelectedServiceId) ||
-    null;
+  const {
+    effectiveSelectedId: effectiveSelectedServiceId,
+    selectedItem: selectedService,
+  } = useEffectiveSelection({
+    getId: getEntityId,
+    items: pagedServices,
+    selectedId: selectedServiceId,
+  });
   const selectedServiceProvider =
     providers.find((provider) => provider.id === selectedService?.providerId) ||
     selectedProvider;
@@ -202,23 +199,7 @@ export default function AdminProviders() {
     JSON.stringify(savedProviders) !== JSON.stringify(providers);
   const stats = useMemo(() => buildProviderStats(providers), [providers]);
 
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-    return (
-      hasPendingChanges && currentLocation.pathname !== nextLocation.pathname
-    );
-  });
-
-  useBeforeUnload(
-    useCallback(
-      (event) => {
-        if (!hasPendingChanges) return;
-
-        event.preventDefault();
-        event.returnValue = "";
-      },
-      [hasPendingChanges],
-    ),
-  );
+  const blocker = useUnsavedChangesNavigation(hasPendingChanges);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -227,14 +208,6 @@ export default function AdminProviders() {
     initialLoadStartedRef.current = true;
     loadProvidersData();
   }, [isAuthenticated, loadProvidersData]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(ADMIN_PROVIDERS_ACTIVE_TAB_KEY, activeTab);
-    } catch {
-      // Storage can be unavailable in private or locked browser contexts.
-    }
-  }, [activeTab]);
 
   const applyProviders = (nextProviders) => {
     setProviders(normalizeProviders(nextProviders));
@@ -416,33 +389,22 @@ export default function AdminProviders() {
         />
       )}
 
-      <CinematicSection
-        className="surface-soft admin-section"
-        innerClassName="max-w-6xl py-6"
-        reveal={false}
+      <AdminPageShell
+        header={adminContent.providers.header}
+        isMobileView={isMobileView}
+        isVisible={providersInView}
+        rootRef={providersRef}
       >
-        <div ref={providersRef}>
-          <CinematicStaggeredRevealItem index={0} isVisible={providersInView}>
-            <HeaderSection
-              eyebrow={adminContent.providers.header.eyebrow}
-              isMobileView={isMobileView}
-              title={adminContent.providers.header.title}
-              titleAs="h1"
-              text={adminContent.providers.header.text}
-            />
-          </CinematicStaggeredRevealItem>
-
           <CinematicStaggeredRevealItem index={2} isVisible={providersInView}>
             <ProvidersOverview loading={loadingProviders} stats={stats} />
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={providersInView}>
-            <div className="space-y-5 mt-4">
-              <TabNavigation
+            <AdminEntityTabs
                 activeTab={activeTab}
                 onChange={setActiveTab}
                 tabs={adminContent.providers.tabs}
-              />
+              >
 
               {activeTab === "providers" ? (
                 <AdminTableSection
@@ -626,13 +588,12 @@ export default function AdminProviders() {
                   totalPages={loadingProviders ? undefined : servicesTotalPages}
                 />
               )}
-            </div>
+            </AdminEntityTabs>
           </CinematicStaggeredRevealItem>
-        </div>
-      </CinematicSection>
+      </AdminPageShell>
 
       {editingProvider && (
-        <EditorDialog
+        <AdminEditorDialog
           onClose={() => setEditingProvider(null)}
           title={
             providers.some((provider) => provider.id === editingProvider.id)
@@ -654,7 +615,7 @@ export default function AdminProviders() {
             onSubmit={handleSubmitProvider}
             selectedServiceId={editingServiceId}
           />
-        </EditorDialog>
+        </AdminEditorDialog>
       )}
 
       {deleteTarget && (
@@ -936,21 +897,7 @@ function ProvidersEmptyState({
   text = adminContent.providers.list.emptyText,
   title = adminContent.providers.list.emptyTitle,
 }) {
-  return (
-    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
-      <BriefcaseBusiness
-        className="mx-auto text-[var(--color-accent-dark)]"
-        size={28}
-        strokeWidth={1.7}
-      />
-      <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
-        {title}
-      </p>
-      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-        {text}
-      </p>
-    </div>
-  );
+  return <AdminEmptyState icon={BriefcaseBusiness} text={text} title={title} />;
 }
 
 function ServiceCardsPage({ emptyState, items, onSelect, selectedServiceId }) {
@@ -1038,21 +985,7 @@ function ServicesEmptyState({
   text = adminContent.providers.services.emptyText,
   title = adminContent.providers.services.emptyTitle,
 }) {
-  return (
-    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
-      <BadgeEuro
-        className="mx-auto text-[var(--color-accent-dark)]"
-        size={28}
-        strokeWidth={1.7}
-      />
-      <p className="mt-4 font-serif text-3xl text-[var(--color-accent-dark)]">
-        {title}
-      </p>
-      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-        {text}
-      </p>
-    </div>
-  );
+  return <AdminEmptyState icon={BadgeEuro} text={text} title={title} />;
 }
 
 function buildProviderStats(providers) {

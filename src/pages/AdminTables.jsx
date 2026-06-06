@@ -1,6 +1,6 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useBeforeUnload, useBlocker } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import {
   Check,
   CircleCheckBig,
@@ -18,17 +18,17 @@ import {
 import AdminTableSection from "../components/admin/AdminTableSection";
 import CardGrid from "../components/admin/CardGrid";
 import AdminEntityActions from "../components/admin/AdminEntityActions";
+import AdminEntityTabs from "../components/admin/AdminEntityTabs";
+import AdminEmptyState from "../components/admin/AdminEmptyState";
+import AdminPageShell from "../components/admin/AdminPageShell";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
 import TableEditorDialog from "../components/admin/tables/TableEditorDialog";
 import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
 import CinematicPage from "../components/cinematic/CinematicPage";
-import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
-import TabNavigation from "../components/ui/TabNavigation";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import SeatAssignmentModal from "../components/ui/SeatAssignmentModal";
 import PendingGuestsList, {
@@ -50,15 +50,18 @@ import {
   getTableKey,
 } from "../services/tablesService";
 import { validateTableForm } from "../validators/tableValidators";
-import { saveAdminGroup } from "../api/confirmationsApi";
+import { saveAdminConfirmation } from "../api/confirmationsApi";
 import {
   loadAdminDataOnce,
-  setAdminGroups,
+  setAdminConfirmations,
   setAdminTables,
 } from "../services/adminDataStore";
 import useSpinner from "../hooks/useSpinner";
 import usePagedData from "../hooks/usePagedData";
 import usePageTransition from "../hooks/usePageTransition";
+import useEffectiveSelection from "../hooks/useEffectiveSelection";
+import useAdminActiveTab from "../hooks/useAdminActiveTab";
+import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
 import { createEmptyTableForm } from "../constants/tables";
 import { getTableRenderKey } from "../utils/renderKeys";
 import { adminContent } from "../constants/adminContent";
@@ -71,11 +74,11 @@ const desktopPageSize = 4;
 const pendingGuestsDesktopPageSize = 8;
 const mobilePageSize = 1;
 const emptySavedSnapshot = {
-  groups: [],
+  confirmations: [],
   manualTables: [],
 };
 const emptyState = {
-  groups: [],
+  confirmations: [],
   loading: true,
   error: "",
 };
@@ -120,13 +123,10 @@ export default function AdminTables() {
   const [selectedTableKey, setSelectedTableKey] = useState("");
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
     useState(false);
-  const [activeTab, setActiveTab] = useState(() => {
-    try {
-      return window.localStorage.getItem(ADMIN_ACTIVE_TAB_KEY) || "tables";
-    } catch {
-      return "tables";
-    }
-  });
+  const [activeTab, setActiveTab] = useAdminActiveTab(
+    ADMIN_ACTIVE_TAB_KEY,
+    "tables",
+  );
 
   const loadTables = useCallback(
     async ({ includeStoredTables = true, showLoading = true } = {}) => {
@@ -136,7 +136,7 @@ export default function AdminTables() {
 
       try {
         const snapshot = await loadAdminDataOnce({ password: ADMIN_PASSWORD });
-        const groups = snapshot.groups;
+        const confirmations = snapshot.confirmations;
         const storedTables = includeStoredTables
           ? snapshot.tables
           : manualTablesRef.current;
@@ -146,11 +146,11 @@ export default function AdminTables() {
         }
 
         setSavedSnapshot({
-          groups,
+          confirmations,
           manualTables: storedTables || manualTablesRef.current || [],
         });
         setState({
-          groups,
+          confirmations,
           loading: false,
           error: "",
         });
@@ -158,7 +158,7 @@ export default function AdminTables() {
         console.error(error);
 
         setState({
-          groups: [],
+          confirmations: [],
           loading: false,
           error: adminContent.tables.errors.load,
         });
@@ -181,24 +181,16 @@ export default function AdminTables() {
     return () => window.clearTimeout(timeoutId);
   }, [isAuthenticated, loadTables]);
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(ADMIN_ACTIVE_TAB_KEY, activeTab);
-    } catch {
-      // Storage can be unavailable in private or locked browser contexts.
-    }
-  }, [activeTab]);
-
   const tables = useMemo(() => {
-    return buildTables({ groups: state.groups, manualTables });
-  }, [manualTables, state.groups]);
+    return buildTables({ confirmations: state.confirmations, manualTables });
+  }, [manualTables, state.confirmations]);
   const assignableGuests = useMemo(
-    () => getAssignableGuests(state.groups),
-    [state.groups],
+    () => getAssignableGuests(state.confirmations),
+    [state.confirmations],
   );
   const guestsPending = useMemo(
-    () => getPendingGuests(state.groups),
-    [state.groups],
+    () => getPendingGuests(state.confirmations),
+    [state.confirmations],
   );
   const guestsAssigned = useMemo(
     () => assignableGuests.filter((guest) => guest.table && guest.seat),
@@ -229,51 +221,31 @@ export default function AdminTables() {
     onPageChange: setPage,
     totalPages,
   });
-  const effectiveSelectedTableKey = pagedTables.some(
-    (table) => getTableKey(table) === selectedTableKey,
-  )
-    ? selectedTableKey
-    : getTableKey(pagedTables[0]) || "";
-  const selectedTable = useMemo(
-    () =>
-      pagedTables.find(
-        (table) => getTableKey(table) === effectiveSelectedTableKey,
-      ) || null,
-    [effectiveSelectedTableKey, pagedTables],
-  );
+  const {
+    effectiveSelectedId: effectiveSelectedTableKey,
+    selectedItem: selectedTable,
+  } = useEffectiveSelection({
+    getId: getTableKey,
+    items: pagedTables,
+    selectedId: selectedTableKey,
+  });
   const pendingChanges = useMemo(
     () =>
       buildPendingTableChanges({
-        currentGroups: state.groups,
+        currentConfirmations: state.confirmations,
         currentManualTables: manualTables,
-        savedGroups: savedSnapshot.groups,
+        savedConfirmations: savedSnapshot.confirmations,
         savedManualTables: savedSnapshot.manualTables,
       }),
-    [manualTables, savedSnapshot, state.groups],
+    [manualTables, savedSnapshot, state.confirmations],
   );
   const hasPendingChanges = pendingChanges.length > 0;
-  const changedGroups = useMemo(
-    () => getChangedGroups(savedSnapshot.groups, state.groups),
-    [savedSnapshot.groups, state.groups],
+  const changedConfirmations = useMemo(
+    () => getChangedConfirmations(savedSnapshot.confirmations, state.confirmations),
+    [savedSnapshot.confirmations, state.confirmations],
   );
 
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-    return (
-      hasPendingChanges && currentLocation.pathname !== nextLocation.pathname
-    );
-  });
-
-  useBeforeUnload(
-    useCallback(
-      (event) => {
-        if (!hasPendingChanges) return;
-
-        event.preventDefault();
-        event.returnValue = "";
-      },
-      [hasPendingChanges],
-    ),
-  );
+  const blocker = useUnsavedChangesNavigation(hasPendingChanges);
 
   useEffect(() => {
     if (blocker.state === "blocked") {
@@ -281,9 +253,9 @@ export default function AdminTables() {
     }
   }, [blocker.state]);
 
-  const pendingGuestGroups = useMemo(() => {
+  const pendingGuestConfirmations = useMemo(() => {
     const groupSet = new Set(
-      guestsPending.map((guest) => guest.groupName).filter(Boolean),
+      guestsPending.map((guest) => guest.confirmationName).filter(Boolean),
     );
 
     return Array.from(groupSet);
@@ -299,7 +271,7 @@ export default function AdminTables() {
     return guestsPending.filter((guest) => {
       if (
         pendingGuestsFilters.group &&
-        guest.groupName !== pendingGuestsFilters.group
+        guest.confirmationName !== pendingGuestsFilters.group
       ) {
         return false;
       }
@@ -417,7 +389,7 @@ export default function AdminTables() {
     const nextManualTables = manualTables.filter(
       (table) => getTableKey(table) !== tableKey,
     );
-    const updatedGroups = state.groups.map((group) => {
+    const updatedConfirmations = state.confirmations.map((group) => {
       let changed = false;
 
       const guests = group.guests.map((guest) => {
@@ -440,18 +412,18 @@ export default function AdminTables() {
     setAdminTables(nextManualTables);
     setState((prev) => ({
       ...prev,
-      groups: updatedGroups,
+      confirmations: updatedConfirmations,
       loading: false,
       error: "",
     }));
-    setAdminGroups(updatedGroups);
+    setAdminConfirmations(updatedConfirmations);
 
     if (editingTable && getTableKey(editingTable) === tableKey) {
       handleCloseTableForm();
     }
 
     const nextTables = buildTables({
-      groups: updatedGroups,
+      confirmations: updatedConfirmations,
       manualTables: nextManualTables,
     });
     const nextPage = Math.min(
@@ -484,9 +456,9 @@ export default function AdminTables() {
           password: ADMIN_PASSWORD,
           tables: manualTables,
         }),
-        ...changedGroups.map((group) =>
-          saveAdminGroup({
-            group,
+        ...changedConfirmations.map((group) =>
+          saveAdminConfirmation({
+        confirmation: group,
             password: ADMIN_PASSWORD,
           }),
         ),
@@ -495,9 +467,9 @@ export default function AdminTables() {
       await Promise.all(persistencePromises);
 
       setAdminTables(manualTables);
-      setAdminGroups(state.groups);
+      setAdminConfirmations(state.confirmations);
       setSavedSnapshot({
-        groups: state.groups,
+        confirmations: state.confirmations,
         manualTables,
       });
       return true;
@@ -515,14 +487,14 @@ export default function AdminTables() {
 
   const handleDiscardPendingChanges = useCallback(() => {
     const restoredManualTables = savedSnapshot.manualTables;
-    const restoredGroups = savedSnapshot.groups;
+    const restoredConfirmations = savedSnapshot.confirmations;
 
     setManualTables(restoredManualTables);
     setAdminTables(restoredManualTables);
-    setAdminGroups(restoredGroups);
+    setAdminConfirmations(restoredConfirmations);
     setState((prev) => ({
       ...prev,
-      groups: restoredGroups,
+      confirmations: restoredConfirmations,
       loading: false,
       error: "",
     }));
@@ -531,7 +503,7 @@ export default function AdminTables() {
     handleCloseTableForm();
 
     const restoredTables = buildTables({
-      groups: restoredGroups,
+      confirmations: restoredConfirmations,
       manualTables: restoredManualTables,
     });
     const restoredTotalPages = Math.max(
@@ -540,22 +512,22 @@ export default function AdminTables() {
     );
 
     setPage((current) => Math.min(current, restoredTotalPages));
-  }, [pageSize, savedSnapshot.groups, savedSnapshot.manualTables]);
+  }, [pageSize, savedSnapshot.confirmations, savedSnapshot.manualTables]);
 
   const handleAssignGuestToTable = useCallback(
     async ({
       confirmationId,
       guestId,
-      guestGroupName,
+      guestconfirmationName,
       guestIndex,
       tableName,
       seatNumber,
     }) => {
       try {
-        const updatedGroups = assignPendingGuestToSeatLocal({
-          groups: state.groups,
+        const updatedConfirmations = assignPendingGuestToSeatLocal({
+          confirmations: state.confirmations,
           confirmationId,
-          guestGroupName,
+          guestconfirmationName,
           guestId,
           guestIndex,
           seatNumber,
@@ -564,11 +536,11 @@ export default function AdminTables() {
         });
         setState((prev) => ({
           ...prev,
-          groups: updatedGroups,
+          confirmations: updatedConfirmations,
           loading: false,
           error: "",
         }));
-        setAdminGroups(updatedGroups);
+        setAdminConfirmations(updatedConfirmations);
       } catch (error) {
         console.error("Error al asignar mesa:", error);
         setState((prev) => ({
@@ -578,7 +550,7 @@ export default function AdminTables() {
         throw error;
       }
     },
-    [state.groups, tables],
+    [state.confirmations, tables],
   );
 
   const handlePendingGuestsFilterChange = (filterKey, value) => {
@@ -602,7 +574,7 @@ export default function AdminTables() {
         await handleAssignGuestToTable({
           confirmationId: guest.confirmationId,
           guestId: guest.guestId || guest.id,
-          guestGroupName: guest.groupName,
+          guestconfirmationName: guest.confirmationName,
           guestIndex: guest.guestIndex,
           tableName,
           seatNumber,
@@ -623,21 +595,21 @@ export default function AdminTables() {
   const handleAssignGuestToSeat = async ({
     confirmationId,
     guestId,
-    guestGroupName,
+    guestconfirmationName,
     guestIndex,
     guestName,
   }) => {
-    if (!seatAssignmentTarget || (!confirmationId && !guestGroupName)) return;
+    if (!seatAssignmentTarget || (!confirmationId && !guestconfirmationName)) return;
 
     setAssigningSeat(true);
     setState((prev) => ({ ...prev, error: "" }));
 
     try {
-      const updatedGroups = assignGuestToSeatLocal({
+      const updatedConfirmations = assignGuestToSeatLocal({
         confirmationId,
-        groups: state.groups,
+        confirmations: state.confirmations,
         guestId,
-        guestGroupName,
+        guestconfirmationName,
         guestIndex,
         guestName,
         seat: seatAssignmentTarget.seat,
@@ -646,11 +618,11 @@ export default function AdminTables() {
       setSeatAssignmentTarget(null);
       setState((prev) => ({
         ...prev,
-        groups: updatedGroups,
+        confirmations: updatedConfirmations,
         loading: false,
         error: "",
       }));
-      setAdminGroups(updatedGroups);
+      setAdminConfirmations(updatedConfirmations);
     } catch (error) {
       console.error("Error al asignar asiento:", error);
       setState((prev) => ({
@@ -669,8 +641,8 @@ export default function AdminTables() {
     setState((prev) => ({ ...prev, error: "" }));
 
     try {
-      const updatedGroups = unassignGuestFromSeatLocal({
-        groups: state.groups,
+      const updatedConfirmations = unassignGuestFromSeatLocal({
+        confirmations: state.confirmations,
         seat: target.seat,
         table: target.table,
       });
@@ -679,11 +651,11 @@ export default function AdminTables() {
       }
       setState((prev) => ({
         ...prev,
-        groups: updatedGroups,
+        confirmations: updatedConfirmations,
         loading: false,
         error: "",
       }));
-      setAdminGroups(updatedGroups);
+      setAdminConfirmations(updatedConfirmations);
     } catch (error) {
       console.error("Error al liberar asiento:", error);
       setState((prev) => ({
@@ -710,23 +682,23 @@ export default function AdminTables() {
       form: tableForm,
       manualTables,
     });
-    const updatedGroups = editingTable
+    const updatedConfirmations = editingTable
       ? unassignGuestsOutsideTableSize({
-          groups: state.groups,
+          confirmations: state.confirmations,
           seatCount: tableForm.seatCount,
           table: editingTable,
         })
-      : state.groups;
+      : state.confirmations;
 
     setManualTables(nextManualTables);
     setAdminTables(nextManualTables);
     setState((prev) => ({
       ...prev,
-      groups: updatedGroups,
+      confirmations: updatedConfirmations,
       loading: false,
       error: "",
     }));
-    setAdminGroups(updatedGroups);
+    setAdminConfirmations(updatedConfirmations);
 
     if (!editingTable) {
       setPage(Math.max(Math.ceil((tables.length + 1) / pageSize), 1));
@@ -784,33 +756,26 @@ export default function AdminTables() {
         />
       )}
 
-      <CinematicSection
-        className="surface-soft admin-section"
-        innerClassName="max-w-6xl py-6"
-        reveal={false}
+      <AdminPageShell
+        header={{
+          eyebrow: adminContent.tables.header.adminEyebrow,
+          text: adminContent.tables.header.text,
+          title: adminContent.tables.header.title,
+        }}
+        isMobileView={isMobileView}
+        isVisible={tablesInView}
+        rootRef={tablesRef}
       >
-        <div ref={tablesRef}>
-          <CinematicStaggeredRevealItem index={0} isVisible={tablesInView}>
-            <HeaderSection
-              eyebrow={adminContent.tables.header.adminEyebrow}
-              isMobileView={isMobileView}
-              title={adminContent.tables.header.title}
-              titleAs="h1"
-              text={adminContent.tables.header.text}
-            />
-          </CinematicStaggeredRevealItem>
-
           <CinematicStaggeredRevealItem index={2} isVisible={tablesInView}>
             <TablesOverview loading={state.loading} stats={tableStats} />
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={tablesInView}>
-            <div className="space-y-5 mt-4">
-              <TabNavigation
+            <AdminEntityTabs
                 tabs={SECTION_TABS}
                 activeTab={activeTab}
                 onChange={setActiveTab}
-              />
+              >
 
               {activeTab === "tables" ? (
                 <AdminTableSection
@@ -913,7 +878,7 @@ export default function AdminTables() {
                   filters={
                     tables.length > 0 && guestsPending.length > 0 && (
                       <PendingGuestsFilters
-                        availableGroups={pendingGuestGroups}
+                        availableConfirmations={pendingGuestConfirmations}
                         availableMenus={pendingGuestMenus}
                         filters={pendingGuestsFilters}
                         onFilterChange={handlePendingGuestsFilterChange}
@@ -991,10 +956,9 @@ export default function AdminTables() {
                   )}
                 />
               )}
-            </div>
+            </AdminEntityTabs>
           </CinematicStaggeredRevealItem>
-        </div>
-      </CinematicSection>
+      </AdminPageShell>
 
       <StatusDialog
         eyebrow={adminContent.tables.dialogs.warningEyebrow}
@@ -1092,14 +1056,14 @@ function SeatAssignmentDialog({
       getPendingGuestRowKey(guest) === getPendingGuestRowKey(currentGuest)
     );
   });
-  const availableGroups = Array.from(
-    new Set(assignableGuests.map((guest) => guest.groupName).filter(Boolean)),
+  const availableConfirmations = Array.from(
+    new Set(assignableGuests.map((guest) => guest.confirmationName).filter(Boolean)),
   );
   const availableMenus = Array.from(
     new Set(assignableGuests.map((guest) => guest.menu).filter(Boolean)),
   );
   const filteredGuests = assignableGuests.filter((guest) => {
-    if (filters.group && guest.groupName !== filters.group) {
+    if (filters.group && guest.confirmationName !== filters.group) {
       return false;
     }
 
@@ -1139,7 +1103,7 @@ function SeatAssignmentDialog({
     onAssign({
       confirmationId: selectedGuest.confirmationId,
       guestId: selectedGuest.guestId || selectedGuest.id,
-      guestGroupName: selectedGuest.groupName,
+      guestconfirmationName: selectedGuest.confirmationName,
       guestIndex: selectedGuest.guestIndex,
       guestName: Guest.getFullName(selectedGuest, "Invitado"),
     });
@@ -1217,7 +1181,7 @@ function SeatAssignmentDialog({
           eyebrow={adminContent.tables.dialogs.guestLabel}
           filters={
             <PendingGuestsFilters
-              availableGroups={availableGroups}
+              availableConfirmations={availableConfirmations}
               availableMenus={availableMenus}
               filters={filters}
               onFilterChange={handleFilterChange}
@@ -1336,14 +1300,10 @@ function getTableSummaryItems(stats) {
 
 function TablesEmptyState() {
   return (
-    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
-      <p className="font-serif text-3xl text-[var(--color-accent-dark)]">
-        {adminContent.tables.empty.title}
-      </p>
-      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-        {adminContent.tables.empty.text}
-      </p>
-    </div>
+    <AdminEmptyState
+      text={adminContent.tables.empty.text}
+      title={adminContent.tables.empty.title}
+    />
   );
 }
 
@@ -1576,14 +1536,14 @@ function getSeatAssignmentEmptyState(sourceGuestCount) {
 }
 
 function buildPendingTableChanges({
-  currentGroups,
+  currentConfirmations,
   currentManualTables,
-  savedGroups,
+  savedConfirmations,
   savedManualTables,
 }) {
   const changes = [
     ...buildManualTableChanges(savedManualTables, currentManualTables),
-    ...buildSeatAssignmentChanges(savedGroups, currentGroups),
+    ...buildSeatAssignmentChanges(savedConfirmations, currentConfirmations),
   ];
 
   return changes.length ? changes : [];
@@ -1622,13 +1582,13 @@ function buildManualTableChanges(savedTables, currentTables) {
   return changes;
 }
 
-function buildSeatAssignmentChanges(savedGroups, currentGroups) {
+function buildSeatAssignmentChanges(savedConfirmations, currentConfirmations) {
   const savedByConfirmationId = new Map(
-    savedGroups.map((group) => [getConfirmationKey(group), group]),
+    savedConfirmations.map((group) => [getConfirmationKey(group), group]),
   );
   const changes = [];
 
-  currentGroups.forEach((group) => {
+  currentConfirmations.forEach((group) => {
     const savedGroup = savedByConfirmationId.get(getConfirmationKey(group));
 
     group.guests.forEach((guest, index) => {
@@ -1650,12 +1610,12 @@ function buildSeatAssignmentChanges(savedGroups, currentGroups) {
   return changes;
 }
 
-function getChangedGroups(savedGroups, currentGroups) {
+function getChangedConfirmations(savedConfirmations, currentConfirmations) {
   const savedByConfirmationId = new Map(
-    savedGroups.map((group) => [getConfirmationKey(group), getStableJson(group)]),
+    savedConfirmations.map((group) => [getConfirmationKey(group), getStableJson(group)]),
   );
 
-  return currentGroups.filter(
+  return currentConfirmations.filter(
     (group) => savedByConfirmationId.get(getConfirmationKey(group)) !== getStableJson(group),
   );
 }
@@ -1681,13 +1641,13 @@ function getGuestsUnassignedBySeatReduction(table, seatCount) {
     }));
 }
 
-function unassignGuestsOutsideTableSize({ groups, seatCount, table }) {
+function unassignGuestsOutsideTableSize({ confirmations, seatCount, table }) {
   const tableKey = getTableKey(table);
   const nextSeatCount = Number(seatCount) || 0;
 
-  if (!tableKey || !nextSeatCount) return groups;
+  if (!tableKey || !nextSeatCount) return confirmations;
 
-  return groups.map((group) => {
+  return confirmations.map((group) => {
     let changed = false;
     const guests = group.guests.map((guest) => {
       const isRemovedSeat =
@@ -1724,3 +1684,9 @@ function getPendingGuestRowKey(guest) {
 function getConfirmationKey(group) {
   return group.confirmationId || group.id;
 }
+
+
+
+
+
+

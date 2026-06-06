@@ -139,7 +139,7 @@ function AssignmentModal({
     () =>
       Array.from(
         new Set(
-          assignedSeats.map((seat) => seat.guest?.groupName).filter(Boolean),
+          assignedSeats.map((seat) => seat.guest?.confirmationName).filter(Boolean),
         ),
       ),
     [assignedSeats],
@@ -154,7 +154,7 @@ function AssignmentModal({
   const filteredAssignedSeats = assignedSeats.filter((seat) => {
     const guest = seat.guest || {};
 
-    if (filters.group && guest.groupName !== filters.group) {
+    if (filters.group && guest.confirmationName !== filters.group) {
       return false;
     }
 
@@ -312,7 +312,7 @@ function AssignmentModal({
 }
 
 function AssignedSeatCard({ onSelect, seat, selected }) {
-  const guestGroup = String(seat.guest.groupName || "").trim();
+  const guestGroup = String(seat.guest.confirmationName || "").trim();
   const eyebrow = tableContent.card.seatEyebrow({
     group: guestGroup,
     seat: seat.seat,
@@ -607,3 +607,4 @@ function getAssignedSeatKey(seat = {}) {
     ? `${seat.seat || ""}-${guestKey}`
     : `${seat.seat || ""}-${Guest.getFullName(guest, "Invitado")}`;
 }
+

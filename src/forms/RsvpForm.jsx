@@ -568,7 +568,7 @@ function ContactSummaryCard({ contact, guests, onEdit }) {
         <div>
           <p className="section-eyebrow mb-2">Grupo</p>
           <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-            {contact.groupName || "Grupo sin nombre"}
+            {contact.confirmationName || "Grupo sin nombre"}
           </h2>
         </div>
         <IconButton
@@ -965,3 +965,4 @@ function GuestPager({
     </>
   );
 }
+

@@ -3,14 +3,9 @@ import { Plus, Save, Trash2 } from "lucide-react";
 
 import { adminContent } from "../../../constants/adminContent";
 import { PROVIDER_CATEGORIES } from "../../../constants/providers";
-import {
-  FieldError,
-  FormCard,
-  inputClassName,
-  Label,
-  selectClassName,
-} from "../../rsvp/FormPrimitives";
+import { FieldError, FormCard, inputClassName } from "../../rsvp/FormPrimitives";
 import CollapsiblePanel from "../../ui/CollapsiblePanel";
+import { SelectField, TextField } from "../../ui/FormFields";
 import IconButton from "../../ui/IconButton";
 
 export default function ProviderForm({
@@ -68,34 +63,26 @@ export default function ProviderForm({
               {adminContent.providers.form.contactTitle}
             </p>
             <div className="grid gap-5 md:grid-cols-2">
-              <ProviderField
+              <TextField
                 error={errors.name}
                 label={adminContent.providers.form.fields.name}
                 onChange={(value) => onChange("name", value)}
                 value={form.name}
               />
-              <div>
-                <Label>{adminContent.providers.form.fields.category}</Label>
-                <select
-                  className={selectClassName}
-                  onChange={(event) => onChange("category", event.target.value)}
-                  value={form.category}
-                >
-                  {PROVIDER_CATEGORIES.map((category) => (
-                    <option key={category.value} value={category.value}>
-                      {category.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <ProviderField
+              <SelectField
+                label={adminContent.providers.form.fields.category}
+                onChange={(value) => onChange("category", value)}
+                options={PROVIDER_CATEGORIES}
+                value={form.category}
+              />
+              <TextField
                 error={errors.phone}
                 label={adminContent.providers.form.fields.phone}
                 onChange={(value) => onChange("phone", value)}
                 type="tel"
                 value={form.phone}
               />
-              <ProviderField
+              <TextField
                 error={errors.email}
                 label={adminContent.providers.form.fields.email}
                 onChange={(value) => onChange("email", value)}
@@ -107,19 +94,19 @@ export default function ProviderForm({
 
           <CollapsiblePanel title="Datos opcionales">
             <div className="grid gap-5 md:grid-cols-2">
-              <ProviderField
+              <TextField
                 label={adminContent.providers.form.fields.address}
                 onChange={(value) => onChange("address", value)}
                 value={form.address}
               />
-              <ProviderField
+              <TextField
                 label={adminContent.providers.form.fields.web}
                 onChange={(value) => onChange("web", value)}
                 type="url"
                 value={form.web}
               />
               <div className="md:col-span-2">
-                <ProviderField
+                <TextField
                   label={adminContent.providers.form.fields.accountNumber}
                   onChange={(value) => onChange("accountNumber", value)}
                   value={form.accountNumber}
@@ -161,7 +148,7 @@ export default function ProviderForm({
                 key={service.id}
               >
                 <div className="grid gap-4 md:grid-cols-[1fr_10rem_8rem_auto] md:items-end">
-                  <ProviderField
+                  <TextField
                     error={errors[`service_${serviceIndex}_name`]}
                     label={adminContent.providers.form.fields.serviceName}
                     onChange={(value) =>
@@ -169,7 +156,7 @@ export default function ProviderForm({
                     }
                     value={service.name}
                   />
-                  <ProviderField
+                  <TextField
                     error={errors[`service_${serviceIndex}_price`]}
                     label={adminContent.providers.form.fields.servicePrice}
                     onChange={(value) =>
@@ -178,28 +165,17 @@ export default function ProviderForm({
                     type="number"
                     value={service.price}
                   />
-                  <div>
-                    <Label>
-                      {adminContent.providers.form.fields.paymentCount}
-                    </Label>
-                    <select
-                      className={selectClassName}
-                      onChange={(event) =>
-                        onServiceChange(
-                          serviceIndex,
-                          "paymentCount",
-                          Number(event.target.value),
-                        )
-                      }
-                      value={service.paymentCount}
-                    >
-                      {[1, 2, 3].map((count) => (
-                        <option key={count} value={count}>
-                          {count}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <SelectField
+                    label={adminContent.providers.form.fields.paymentCount}
+                    onChange={(value) =>
+                      onServiceChange(serviceIndex, "paymentCount", Number(value))
+                    }
+                    options={[1, 2, 3].map((count) => ({
+                      label: count,
+                      value: count,
+                    }))}
+                    value={service.paymentCount}
+                  />
                   {mode !== "service" && (
                     <IconButton
                       icon={<Trash2 size={16} strokeWidth={1.8} />}
@@ -284,20 +260,5 @@ export default function ProviderForm({
         </FormCard>
       )}
     </form>
-  );
-}
-
-function ProviderField({ error, label, onChange, type = "text", value }) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <input
-        className={inputClassName}
-        onChange={(event) => onChange(event.target.value)}
-        type={type}
-        value={value}
-      />
-      <FieldError>{error}</FieldError>
-    </div>
   );
 }

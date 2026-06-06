@@ -20,7 +20,7 @@ export const rsvpContent = {
     eyebrow: "Datos de contacto",
     title: "Datos de contacto",
     fields: {
-      groupName: {
+      confirmationName: {
         label: "Nombre de grupo *",
         placeholder: "Ej: Familia Garcia",
       },
@@ -102,3 +102,4 @@ export const rsvpContent = {
     commentsMaxLength: "Máximo 300 caracteres",
   },
 };
+

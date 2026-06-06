@@ -53,7 +53,7 @@ const DONUT_COLORS = [
 const TRANSPORT_DONUT_COLORS = ["#344531", "#6f8b6b", "#bccdb5"];
 
 const emptyState = {
-  groups: [],
+  confirmations: [],
   loading: true,
   error: "",
 };
@@ -82,7 +82,7 @@ export default function AdminStats() {
       const response = await loadAdminDataOnce();
 
       setState({
-        groups: response.groups,
+        confirmations: response.confirmations,
         loading: false,
         error: "",
       });
@@ -90,7 +90,7 @@ export default function AdminStats() {
       console.error(error);
 
       setState({
-        groups: [],
+        confirmations: [],
         loading: false,
         error:
           "No se pudieron cargar las estadísticas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
@@ -110,12 +110,12 @@ export default function AdminStats() {
 
   const stats = useMemo(
     () =>
-      Confirmation.buildStats(state.groups, {
+      Confirmation.buildStats(state.confirmations, {
         allergies: COMMON_ALLERGIES,
         outboundBusOptions: ADMIN_OUTBOUND_BUS_OPTIONS,
         returnBusOptions: ADMIN_RETURN_BUS_OPTIONS,
       }),
-    [state.groups],
+    [state.confirmations],
   );
 
   if (!isAuthenticated) {
@@ -647,3 +647,4 @@ function ChartLegend({
     </div>
   );
 }
+

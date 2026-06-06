@@ -5,7 +5,7 @@ Todas las columnas pueden estar formateadas como texto en Google Sheets. La apli
 ## Confirmaciones
 
 ```csv
-confirmationId,groupName,email,phone,guestCount,createdAt,updatedAt
+confirmationId,confirmationName,email,phone,guestCount,createdAt,updatedAt
 ```
 
 - `confirmationId`: texto, ID estable generado por la app/script.
@@ -15,7 +15,7 @@ confirmationId,groupName,email,phone,guestCount,createdAt,updatedAt
 ## Invitados
 
 ```csv
-guestId,confirmationId,groupName,name,lastname,allergies,otherAllergies,comments,outboundBus,returnBus,menu,createdAt,updatedAt
+guestId,confirmationId,confirmationName,name,lastname,allergies,otherAllergies,comments,outboundBus,returnBus,menu,createdAt,updatedAt
 ```
 
 - `guestId`: texto, ID estable del invitado.
@@ -99,3 +99,4 @@ paymentId,serviceId,numeroPlazo,importe,fechaPrevista,fechaPago,pagado,notas,cre
 - `fechaPrevista`, `fechaPago`: texto en formato `YYYY-MM-DD` o vacio.
 - `pagado`: texto booleano recomendado `TRUE`/`FALSE`.
 - `createdAt`, `updatedAt`: texto ISO 8601.
+

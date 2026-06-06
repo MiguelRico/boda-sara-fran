@@ -12,7 +12,7 @@ export default function ContactDetailsCard({
       ? disableFilledFields
       : {
           email: disableFilledFields,
-          groupName: disableFilledFields,
+          confirmationName: disableFilledFields,
           phone: disableFilledFields,
         };
 
@@ -26,20 +26,20 @@ export default function ContactDetailsCard({
 
       <div className="grid gap-5 md:grid-cols-3 mt-4">
         <div>
-          <Label>{rsvpContent.contact.fields.groupName.label}</Label>
+          <Label>{rsvpContent.contact.fields.confirmationName.label}</Label>
 
           <input
             type="text"
-            value={contact.groupName}
+            value={contact.confirmationName}
             onChange={(event) =>
-              onContactChange("groupName", event.target.value)
+              onContactChange("confirmationName", event.target.value)
             }
             className={inputClassName}
-            placeholder={rsvpContent.contact.fields.groupName.placeholder}
-            disabled={disabledFields.groupName}
+            placeholder={rsvpContent.contact.fields.confirmationName.placeholder}
+            disabled={disabledFields.confirmationName}
           />
 
-          <FieldError>{errors.groupName}</FieldError>
+          <FieldError>{errors.confirmationName}</FieldError>
         </div>
 
         <div>
@@ -75,3 +75,4 @@ export default function ContactDetailsCard({
     </FormCard>
   );
 }
+

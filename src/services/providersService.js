@@ -2,7 +2,7 @@ import {
   PROVIDER_CATEGORIES,
   PROVIDER_PAYMENT_COUNT,
 } from "../constants/providers";
-import { findAllProviders, saveAdminProviders } from "./rsvpService";
+import { findAllProviders, saveAdminProviders } from "../api/providersApi";
 
 const normalizeString = (value) => (value == null ? "" : String(value));
 const createId = () =>

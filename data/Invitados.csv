@@ -1,4 +1,4 @@
-guestId,confirmationId,groupName,name,lastname,allergies,otherAllergies,comments,outboundBus,returnBus,menu,createdAt,updatedAt
+guestId,confirmationId,confirmationName,name,lastname,allergies,otherAllergies,comments,outboundBus,returnBus,menu,createdAt,updatedAt
 guest_001,conf_001,Familia Garcia Ruiz,Elena,Garcia Ruiz,,,Prefiere sitio cerca de la salida,18:00,3:00,Carne,2026-06-01T10:00:00.000Z,2026-06-01T10:00:00.000Z
 guest_002,conf_001,Familia Garcia Ruiz,Manuel,Santos Vega,,Sin cilantro,,18:00,3:00,Pescado,2026-06-01T10:00:00.000Z,2026-06-01T10:00:00.000Z
 guest_003,conf_001,Familia Garcia Ruiz,Lucia,Santos Garcia,Gluten,,,18:00,3:00,Carne,2026-06-01T10:00:00.000Z,2026-06-01T10:00:00.000Z
@@ -49,3 +49,4 @@ guest_047,conf_010,Amigos Futbol,Fernando,Galvez Soto,Gluten,,,18:20,6:00,Carne,
 guest_048,conf_010,Amigos Futbol,Nacho,Vargas Navas,,,,18:20,3:00,Pescado,2026-06-01T10:45:00.000Z,2026-06-01T10:45:00.000Z
 guest_049,conf_011,Ana y Pablo,Ana,Carrasco Nieto,Vegetariano,,,No,No,Pescado,2026-06-01T10:50:00.000Z,2026-06-01T10:50:00.000Z
 guest_050,conf_011,Ana y Pablo,Pablo,Medina Serrano,,,Sin alcohol,No,No,Carne,2026-06-01T10:50:00.000Z,2026-06-01T10:50:00.000Z
+

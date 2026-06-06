@@ -49,7 +49,7 @@ const EMAIL_COPY = {
     subject: "Nueva confirmación boda Sara & Fran",
     eyebrow: "Sara & Fran",
     title: "Nueva confirmación recibida",
-    groupNameLabel: "Nombre grupo",
+    confirmationNameLabel: "Nombre grupo",
     emailLabel: "Email",
     phoneLabel: "Teléfono",
     guestsTitle: "Invitados",
@@ -68,3 +68,4 @@ const EMAIL_COPY = {
     },
   },
 };
+

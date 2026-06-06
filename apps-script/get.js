@@ -190,7 +190,7 @@ function listConfirmations(e) {
   return jsonResponse(
     {
       success: true,
-      groups: Object.values(confirmationsByKey).map(encodeConfirmationForApi),
+      confirmations: Object.values(confirmationsByKey).map(encodeConfirmationForApi),
     },
     e,
   );

@@ -57,7 +57,7 @@ function emailShell(content, options) {
   `;
 }
 
-function sendConfirmationEmail(email, groupName, guests, confirmationId) {
+function sendConfirmationEmail(email, confirmationName, guests, confirmationId) {
   const copy = EMAIL_COPY.confirmation;
   const appUrl = `${RSVP_URL}/edit?confirmationId=${encodeURIComponent(
     String(confirmationId || "").trim(),
@@ -117,7 +117,7 @@ function sendConfirmationEmail(email, groupName, guests, confirmationId) {
   );
 }
 
-function sendAdminNotification(groupName, email, phone, guests) {
+function sendAdminNotification(confirmationName, email, phone, guests) {
   const copy = EMAIL_COPY.admin;
   const fallback = EMAIL_COPY.fallback;
   const labels = copy.labels;
@@ -167,8 +167,8 @@ function sendAdminNotification(groupName, email, phone, guests) {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 24px;background:white;border:1px solid ${COLOR_BORDER};border-radius:24px;overflow:hidden;">
         <tr>
           <td style="padding:18px 20px;border-bottom:1px solid ${COLOR_BORDER};">
-            <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${COLOR_ACCENT};margin-bottom:6px;">${escapeEmailHtml(copy.groupNameLabel)}</div>
-            <div style="font-size:18px;line-height:1.5;color:${COLOR_TEXT};font-weight:600;">${emailValue(groupName, "-")}</div>
+            <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${COLOR_ACCENT};margin-bottom:6px;">${escapeEmailHtml(copy.confirmationNameLabel)}</div>
+            <div style="font-size:18px;line-height:1.5;color:${COLOR_TEXT};font-weight:600;">${emailValue(confirmationName, "-")}</div>
           </td>
         </tr>
         <tr>
@@ -212,3 +212,4 @@ function sendAdminNotification(groupName, email, phone, guests) {
     htmlBody: html,
   });
 }
+

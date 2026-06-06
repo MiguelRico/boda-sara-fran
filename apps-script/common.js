@@ -31,7 +31,7 @@ function getSheet() {
 
 const CONFIRMATIONS_HEADERS = [
   "confirmationId",
-  "groupName",
+  "confirmationName",
   "email",
   "phone",
   "guestCount",
@@ -41,7 +41,7 @@ const CONFIRMATIONS_HEADERS = [
 
 const CONFIRMATIONS_COLUMNS = {
   confirmationId: 0,
-  groupName: 1,
+  confirmationName: 1,
   email: 2,
   phone: 3,
   guestCount: 4,
@@ -52,7 +52,7 @@ const CONFIRMATIONS_COLUMNS = {
 const GUESTS_HEADERS = [
   "guestId",
   "confirmationId",
-  "groupName",
+  "confirmationName",
   "name",
   "lastname",
   "allergies",
@@ -68,7 +68,7 @@ const GUESTS_HEADERS = [
 const GUESTS_COLUMNS = {
   guestId: 0,
   confirmationId: 1,
-  groupName: 2,
+  confirmationName: 2,
   name: 3,
   lastname: 4,
   allergies: 5,
@@ -340,7 +340,7 @@ function getCurrentTimestamp() {
   return new Date().toISOString();
 }
 
-function decodeGroupName(value) {
+function decodeConfirmationName(value) {
   const text = String(value || "").trim();
 
   if (!text) return "";
@@ -352,7 +352,7 @@ function decodeGroupName(value) {
   }
 }
 
-function encodeGroupName(value) {
+function encodeConfirmationName(value) {
   const text = String(value || "").trim();
 
   if (!text) return "";
@@ -361,12 +361,12 @@ function encodeGroupName(value) {
 }
 
 function encodeConfirmationForApi(confirmation) {
-  const encodedGroupName = encodeGroupName(confirmation.groupName);
+  const encodedConfirmationName = encodeConfirmationName(confirmation.confirmationName);
 
   return {
     confirmationId: confirmation.confirmationId || "",
     id: confirmation.confirmationId || "",
-    groupName: encodedGroupName,
+    confirmationName: encodedConfirmationName,
     email: confirmation.email || "",
     phone: confirmation.phone || "",
     guests: (confirmation.guests || []).map((guest) => ({
@@ -374,7 +374,7 @@ function encodeConfirmationForApi(confirmation) {
       confirmationId: confirmation.confirmationId || guest.confirmationId || "",
       guestId: guest.guestId || guest.id || "",
       id: guest.guestId || guest.id || "",
-      groupName: encodedGroupName,
+      confirmationName: encodedConfirmationName,
     })),
   };
 }
@@ -387,7 +387,7 @@ function validateAdmin(e) {
       {
         success: false,
         error: "Unauthorized",
-        groups: [],
+        confirmations: [],
       },
       e,
     );
@@ -418,19 +418,19 @@ function normalizeMenu(value) {
 }
 
 function getNormalizedConfirmationData(data) {
-  const groupName = decodeGroupName(data.groupName);
+  const confirmationName = decodeConfirmationName(data.confirmationName);
   const confirmationId = String(data.confirmationId || data.id || "").trim();
 
   return {
     confirmationId,
-    groupName,
+    confirmationName,
     email: String(data.email || "").trim(),
     phone: String(data.phone || "").trim(),
     guests: Array.isArray(data.guests)
       ? data.guests.map((guest) => ({
           ...guest,
           confirmationId,
-          groupName,
+          confirmationName,
         }))
       : [],
   };
@@ -473,7 +473,7 @@ function deleteConfirmationRow(sheet, confirmation) {
 function buildConfirmationFromRow(row, guests) {
   return {
     confirmationId: row[CONFIRMATIONS_COLUMNS.confirmationId] || "",
-    groupName: row[CONFIRMATIONS_COLUMNS.groupName] || "",
+    confirmationName: row[CONFIRMATIONS_COLUMNS.confirmationName] || "",
     email: row[CONFIRMATIONS_COLUMNS.email] || "",
     phone: row[CONFIRMATIONS_COLUMNS.phone] || "",
     guests: guests || [],
@@ -485,7 +485,7 @@ function buildConfirmationRow(data) {
 
   return [
     data.confirmationId,
-    data.groupName,
+    data.confirmationName,
     data.email,
     data.phone,
     data.guests.length,
@@ -495,7 +495,7 @@ function buildConfirmationRow(data) {
 }
 
 function buildGuestFromRow(row, confirmation, assignmentContext) {
-  const groupName = row[GUESTS_COLUMNS.groupName] || confirmation.groupName || "";
+  const confirmationName = row[GUESTS_COLUMNS.confirmationName] || confirmation.confirmationName || "";
   const confirmationId =
     row[GUESTS_COLUMNS.confirmationId] || confirmation.confirmationId || "";
   const guestId = row[GUESTS_COLUMNS.guestId] || "";
@@ -511,7 +511,7 @@ function buildGuestFromRow(row, confirmation, assignmentContext) {
     confirmationId,
     guestId,
     id: guestId,
-    groupName,
+    confirmationName,
     email: confirmation.email || "",
     phone: confirmation.phone || "",
     name: row[GUESTS_COLUMNS.name] || "",
@@ -535,7 +535,7 @@ function buildGuestRow(data, guest) {
   return [
     guestId,
     data.confirmationId,
-    data.groupName,
+    data.confirmationName,
     guest.name,
     guest.lastname,
     normalizeAllergies(guest.allergies),
@@ -726,3 +726,4 @@ function isActiveSheetValue(value) {
 function getProviderTimestamp(value, fallback) {
   return String(value || fallback || new Date().toISOString());
 }
+

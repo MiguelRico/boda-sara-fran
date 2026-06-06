@@ -1,15 +1,15 @@
 const normalizeString = (value) => (value == null ? "" : String(value));
 
-export const encodeGroupName = (groupName) => {
-  const value = normalizeString(groupName).trim();
+export const encodeConfirmationName = (confirmationName) => {
+  const value = normalizeString(confirmationName).trim();
 
   if (!value) return "";
 
   return btoa(unescape(encodeURIComponent(value)));
 };
 
-export const decodeGroupName = (encodedGroupName) => {
-  const value = normalizeString(encodedGroupName).trim();
+export const decodeConfirmationName = (encodedConfirmationName) => {
+  const value = normalizeString(encodedConfirmationName).trim();
 
   if (!value) return "";
 
@@ -22,3 +22,4 @@ export const decodeGroupName = (encodedGroupName) => {
 
 export const getConfirmationIdUrl = (confirmationId) =>
   `/rsvp/edit?confirmationId=${encodeURIComponent(normalizeString(confirmationId).trim())}`;
+

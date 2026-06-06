@@ -42,7 +42,7 @@ export default function RsvpCreate() {
         contact={rsvp.contact}
         disableContactFields={{
           email: false,
-          groupName: false,
+          confirmationName: false,
           phone: false,
         }}
         errors={rsvp.errors}
@@ -64,3 +64,4 @@ export default function RsvpCreate() {
     </RsvpPageShell>
   );
 }
+

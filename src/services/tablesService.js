@@ -1,19 +1,18 @@
 import { ADMIN_TABLES_STORAGE_KEY } from "../constants/tables";
 import { Confirmation, Guest, Table } from "../models";
 import {
-  findAllGroups,
-  findAllTables,
-  saveAdminGroup,
-  saveAdminTables,
-} from "./rsvpService";
-import { normalizeAdminGroups } from "../utils/rsvpGroups";
+  findAllConfirmations,
+  saveAdminConfirmation,
+} from "../api/confirmationsApi";
+import { findAllTables, saveAdminTables } from "../api/tablesApi";
+import { normalizeAdminConfirmations } from "../utils/rsvpGroups";
 import { getTableGroupOption, TABLE_GROUP_OPTIONS } from "../constants/tables";
 import { tableContent } from "../constants/tableContent";
 
-export const loadAdminTableGroups = async ({ password } = {}) => {
-  const response = await findAllGroups({ password });
+export const loadAdminTableConfirmations = async ({ password } = {}) => {
+  const response = await findAllConfirmations({ password });
 
-  return normalizeAdminGroups(response);
+  return normalizeAdminConfirmations(response);
 };
 
 export const loadAdminTables = async ({ password } = {}) => {
@@ -63,8 +62,8 @@ export const persistAdminTables = async ({ password, tables }) => {
   });
 };
 
-export const buildTables = ({ groups, manualTables }) => {
-  const guests = Confirmation.getGuestsWithConfirmation(groups);
+export const buildTables = ({ confirmations, manualTables }) => {
+  const guests = Confirmation.getGuestsWithConfirmation(confirmations);
   const assignedTables = Table.fromGuests(guests);
 
   return Table.mergeLists(manualTables, assignedTables);
@@ -72,14 +71,14 @@ export const buildTables = ({ groups, manualTables }) => {
 
 export const buildTableStats = (tables) => Table.buildStats(tables);
 
-const getGuestsWithGroupIndex = (groups) =>
-  Confirmation.normalizeList(groups).flatMap((confirmation) =>
+const getGuestsWithGroupIndex = (confirmations) =>
+  Confirmation.normalizeList(confirmations).flatMap((confirmation) =>
     confirmation.guests.map((guest, guestIndex) => ({
       ...guest,
       confirmationId: guest.confirmationId || confirmation.confirmationId,
       guestId: guest.guestId || guest.id,
       email: confirmation.email,
-      groupName: confirmation.groupName,
+      confirmationName: confirmation.confirmationName,
       phone: confirmation.phone,
       guestIndex,
     })),
@@ -101,7 +100,7 @@ const doesGuestMatch = ({
   group,
   guest,
   confirmationId,
-  guestGroupName,
+  guestconfirmationName,
   guestId,
   guestIndex,
   guestName,
@@ -110,7 +109,7 @@ const doesGuestMatch = ({
   const groupConfirmationId = group.confirmationId || group.id;
 
   if (confirmationId && groupConfirmationId !== confirmationId) return false;
-  if (!confirmationId && group.groupName !== guestGroupName) return false;
+  if (!confirmationId && group.confirmationName !== guestconfirmationName) return false;
 
   const normalizedGuestId = String(guestId || "").trim();
   const currentGuestId = String(guest.guestId || guest.id || "").trim();
@@ -133,10 +132,10 @@ const doesGuestMatch = ({
   );
 };
 
-export const getPendingGuests = (groups) =>
-  getGuestsWithGroupIndex(groups).filter((guest) => !guest.table || !guest.seat);
+export const getPendingGuests = (confirmations) =>
+  getGuestsWithGroupIndex(confirmations).filter((guest) => !guest.table || !guest.seat);
 
-export const getAssignableGuests = (groups) => getGuestsWithGroupIndex(groups);
+export const getAssignableGuests = (confirmations) => getGuestsWithGroupIndex(confirmations);
 
 export const createTableFormFromTable = (table) => {
   const normalizedTable = Table.normalize(table);
@@ -211,20 +210,20 @@ export const upsertManualTable = ({ editingTable, form, manualTables }) => {
 
 export const assignPendingGuestToSeatLocal = ({
   confirmationId,
-  groups,
-  guestGroupName,
+  confirmations,
+  guestconfirmationName,
   guestId,
   guestIndex,
   seatNumber,
   tableName,
   tables,
 }) => {
-  const confirmation = groups.find((group) => {
+  const confirmation = confirmations.find((group) => {
     const groupConfirmationId = group.confirmationId || group.id;
 
     return confirmationId
       ? groupConfirmationId === confirmationId
-      : group.groupName === guestGroupName;
+      : group.confirmationName === guestconfirmationName;
   });
 
   if (!confirmation) {
@@ -236,7 +235,7 @@ export const assignPendingGuestToSeatLocal = ({
       group: confirmation,
       confirmationId,
       guest,
-      guestGroupName,
+      guestconfirmationName,
       guestId,
       guestIndex,
       index,
@@ -283,7 +282,7 @@ export const assignPendingGuestToSeatLocal = ({
     ),
   };
 
-  return groups.map((group) =>
+  return confirmations.map((group) =>
     (group.confirmationId || group.id) ===
     (updatedConfirmation.confirmationId || updatedConfirmation.id)
       ? updatedConfirmation
@@ -293,8 +292,8 @@ export const assignPendingGuestToSeatLocal = ({
 
 export const assignPendingGuestToSeat = async ({
   confirmationId,
-  groups,
-  guestGroupName,
+  confirmations,
+  guestconfirmationName,
   guestId,
   guestIndex,
   password,
@@ -302,35 +301,35 @@ export const assignPendingGuestToSeat = async ({
   tableName,
   tables,
 }) => {
-  const updatedGroups = assignPendingGuestToSeatLocal({
-    groups,
+  const updatedConfirmations = assignPendingGuestToSeatLocal({
+    confirmations,
     confirmationId,
-    guestGroupName,
+    guestconfirmationName,
     guestId,
     guestIndex,
     seatNumber,
     tableName,
     tables,
   });
-  const updatedConfirmation = updatedGroups.find(
+  const updatedConfirmation = updatedConfirmations.find(
     (group) =>
       confirmationId
         ? (group.confirmationId || group.id) === confirmationId
-        : group.groupName === guestGroupName,
+        : group.confirmationName === guestconfirmationName,
   );
 
-  await saveAdminGroup({
-    group: updatedConfirmation,
+  await saveAdminConfirmation({
+        confirmation: updatedConfirmation,
     password,
   });
 
-  return updatedGroups;
+  return updatedConfirmations;
 };
 
 export const assignGuestToSeatLocal = ({
   confirmationId,
-  groups,
-  guestGroupName,
+  confirmations,
+  guestconfirmationName,
   guestId,
   guestIndex,
   guestName,
@@ -340,14 +339,14 @@ export const assignGuestToSeatLocal = ({
   const tableName = getTableKey(table);
   const seatNumber = seat.seat;
   let selectedGuestFound = false;
-  const updatedGroups = groups.map((group) => {
+  const updatedConfirmations = confirmations.map((group) => {
     let changed = false;
     const guests = group.guests.map((guest, index) => {
       const isSelectedGuest = doesGuestMatch({
         group,
         confirmationId,
         guest,
-        guestGroupName,
+        guestconfirmationName,
         guestId,
         guestIndex,
         guestName,
@@ -386,13 +385,13 @@ export const assignGuestToSeatLocal = ({
     throw new Error("Invitado no encontrado en el grupo");
   }
 
-  return updatedGroups;
+  return updatedConfirmations;
 };
 
 export const assignGuestToSeat = async ({
   confirmationId,
-  groups,
-  guestGroupName,
+  confirmations,
+  guestconfirmationName,
   guestId,
   guestIndex,
   guestName,
@@ -400,36 +399,36 @@ export const assignGuestToSeat = async ({
   seat,
   table,
 }) => {
-  const updatedGroups = assignGuestToSeatLocal({
-    groups,
+  const updatedConfirmations = assignGuestToSeatLocal({
+    confirmations,
     confirmationId,
-    guestGroupName,
+    guestconfirmationName,
     guestId,
     guestIndex,
     guestName,
     seat,
     table,
   });
-  const changedGroups = updatedGroups.filter(
-    (group, index) => group !== groups[index],
+  const changedConfirmations = updatedConfirmations.filter(
+    (group, index) => group !== confirmations[index],
   );
 
   await Promise.all(
-    changedGroups.map((group) =>
-      saveAdminGroup({
-        group,
+    changedConfirmations.map((group) =>
+      saveAdminConfirmation({
+        confirmation: group,
         password,
       }),
     ),
   );
 
-  return updatedGroups;
+  return updatedConfirmations;
 };
 
-export const unassignGuestFromSeatLocal = ({ groups, seat, table }) => {
+export const unassignGuestFromSeatLocal = ({ confirmations, seat, table }) => {
   const tableName = getTableKey(table);
   const seatNumber = seat.seat;
-  const updatedGroups = groups.map((group) => {
+  const updatedConfirmations = confirmations.map((group) => {
     let changed = false;
     const guests = group.guests.map((guest) => {
       const isCurrentSeatGuest =
@@ -450,33 +449,33 @@ export const unassignGuestFromSeatLocal = ({ groups, seat, table }) => {
 
     return changed ? { ...group, guests } : group;
   });
-  const changedGroups = updatedGroups.filter(
-    (group, index) => group !== groups[index],
+  const changedConfirmations = updatedConfirmations.filter(
+    (group, index) => group !== confirmations[index],
   );
 
-  if (!changedGroups.length) {
+  if (!changedConfirmations.length) {
     throw new Error("No hay ningun invitado asignado a este asiento");
   }
 
-  return updatedGroups;
+  return updatedConfirmations;
 };
 
-export const unassignGuestFromSeat = async ({ groups, password, seat, table }) => {
-  const updatedGroups = unassignGuestFromSeatLocal({ groups, seat, table });
-  const changedGroups = updatedGroups.filter(
-    (group, index) => group !== groups[index],
+export const unassignGuestFromSeat = async ({ confirmations, password, seat, table }) => {
+  const updatedConfirmations = unassignGuestFromSeatLocal({ confirmations, seat, table });
+  const changedConfirmations = updatedConfirmations.filter(
+    (group, index) => group !== confirmations[index],
   );
 
   await Promise.all(
-    changedGroups.map((group) =>
-      saveAdminGroup({
-        group,
+    changedConfirmations.map((group) =>
+      saveAdminConfirmation({
+        confirmation: group,
         password,
       }),
     ),
   );
 
-  return updatedGroups;
+  return updatedConfirmations;
 };
 
 export const downloadTablesCsv = (tables) => {
@@ -517,3 +516,8 @@ export const downloadTablesCsv = (tables) => {
 
 const escapeCsvValue = (value) =>
   `"${String(value || "").replaceAll('"', '""')}"`;
+
+
+
+
+

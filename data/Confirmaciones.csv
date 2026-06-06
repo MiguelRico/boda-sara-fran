@@ -1,4 +1,4 @@
-confirmationId,groupName,email,phone,guestCount,createdAt,updatedAt
+confirmationId,confirmationName,email,phone,guestCount,createdAt,updatedAt
 conf_001,Familia Garcia Ruiz,familia.garcia.ruiz@example.com,611240018,5,2026-06-01T10:00:00.000Z,2026-06-01T10:00:00.000Z
 conf_002,Primos Lopez Moreno,primos.lopez.moreno@example.com,633725441,4,2026-06-01T10:05:00.000Z,2026-06-01T10:05:00.000Z
 conf_003,Amigos Universidad,amigos.universidad@example.com,622518304,8,2026-06-01T10:10:00.000Z,2026-06-01T10:10:00.000Z
@@ -10,3 +10,4 @@ conf_008,Tios Barcelona,tios.barcelona@example.com,656927804,4,2026-06-01T10:35:
 conf_009,Pequenos Arras,pequenos.arras@example.com,698245903,2,2026-06-01T10:40:00.000Z,2026-06-01T10:40:00.000Z
 conf_010,Amigos Futbol,amigos.futbol@example.com,612408673,5,2026-06-01T10:45:00.000Z,2026-06-01T10:45:00.000Z
 conf_011,Ana y Pablo,ana.pablo@example.com,634850219,2,2026-06-01T10:50:00.000Z,2026-06-01T10:50:00.000Z
+

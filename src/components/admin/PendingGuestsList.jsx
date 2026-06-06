@@ -5,6 +5,7 @@ import { Guest } from "../../models";
 import CollapsiblePanel from "../ui/CollapsiblePanel";
 import TableGuestCard from "./TableGuestCard";
 import { selectClassName, Label } from "../rsvp/FormPrimitives";
+import AdminEmptyState from "./AdminEmptyState";
 
 export default function PendingGuestsList({
   emptyText = adminContent.pendingGuests.emptyText,
@@ -15,16 +16,7 @@ export default function PendingGuestsList({
   selectedGuestKey = "",
 }) {
   if (!guests.length) {
-    return (
-      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-6 text-center sm:p-8">
-        <p className="font-serif text-3xl text-[var(--color-accent-dark)]">
-          {emptyTitle}
-        </p>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--color-muted)]">
-          {emptyText}
-        </p>
-      </div>
-    );
+    return <AdminEmptyState text={emptyText} title={emptyTitle} />;
   }
 
   return (
@@ -49,7 +41,7 @@ export default function PendingGuestsList({
 }
 
 export function PendingGuestsFilters({
-  availableGroups = [],
+  availableConfirmations = [],
   availableMenus = [],
   filters,
   onFilterChange,
@@ -78,16 +70,18 @@ export function PendingGuestsFilters({
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label>{adminContent.pendingGuests.groupLabel}</Label>
+          <Label>{adminContent.pendingGuests.confirmationLabel}</Label>
           <select
             value={filters.group}
             onChange={(event) => onFilterChange("group", event.target.value)}
             className={selectClassName}
           >
-            <option value="">{adminContent.pendingGuests.allGroups}</option>
-            {availableGroups.map((group) => (
-              <option key={group} value={group}>
-                {group}
+            <option value="">
+              {adminContent.pendingGuests.allConfirmations}
+            </option>
+            {availableConfirmations.map((confirmation) => (
+              <option key={confirmation} value={confirmation}>
+                {confirmation}
               </option>
             ))}
           </select>
@@ -148,7 +142,7 @@ function GuestAssignmentRow({
     >
       <TableGuestCard
         decorativeText="?"
-        eyebrow={guest.groupName || adminContent.pendingGuests.pendingEyebrow}
+        eyebrow={guest.confirmationName || adminContent.pendingGuests.pendingEyebrow}
         guest={guest}
       />
     </div>
@@ -162,3 +156,4 @@ function getPendingGuestRowKey(guest) {
     `${guest.confirmationId || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`
   );
 }
+

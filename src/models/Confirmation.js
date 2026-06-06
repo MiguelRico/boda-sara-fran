@@ -4,7 +4,7 @@ import { rsvpContent } from "../constants/rsvpContent";
 const CONFIRMATION_DEFAULTS = {
   confirmationId: "",
   id: "",
-  groupName: "",
+  confirmationName: "",
   email: "",
   phone: "",
   guests: [],
@@ -26,15 +26,15 @@ const getRate = (value, total) => {
 
 export const Confirmation = {
   create(overrides = {}) {
-    const groupName = normalizeString(
-      overrides.groupName || overrides.nombre_grupo,
+    const confirmationName = normalizeString(
+      overrides.confirmationName || overrides.nombre_grupo,
     );
 
     return {
       ...CONFIRMATION_DEFAULTS,
       confirmationId: normalizeString(overrides.confirmationId || overrides.id),
       id: normalizeString(overrides.confirmationId || overrides.id),
-      groupName,
+      confirmationName,
       email: normalizeString(overrides.email),
       phone: normalizeString(overrides.phone),
       guests: Guest.normalizeList(overrides.guests, { ensureOne: false }).map(
@@ -43,7 +43,7 @@ export const Confirmation = {
           confirmationId:
             guest.confirmationId ||
             normalizeString(overrides.confirmationId || overrides.id),
-          groupName: guest.groupName || groupName,
+          confirmationName: guest.confirmationName || confirmationName,
         }),
       ),
     };
@@ -230,7 +230,7 @@ export const Confirmation = {
     const normalizedConfirmation = Confirmation.normalize(confirmation);
 
     if (!normalizedConfirmation.email.trim()) return "El email es obligatorio.";
-    if (!normalizedConfirmation.groupName.trim()) {
+    if (!normalizedConfirmation.confirmationName.trim()) {
       return "El nombre de grupo es obligatorio.";
     }
     if (!normalizedConfirmation.phone.trim())
@@ -258,8 +258,8 @@ export const Confirmation = {
       errors.email = emailError;
     }
 
-    if (!normalizedConfirmation.groupName.trim()) {
-      errors.groupName = "El nombre de grupo es obligatorio";
+    if (!normalizedConfirmation.confirmationName.trim()) {
+      errors.confirmationName = "El nombre de grupo es obligatorio";
     }
 
     if (!normalizedConfirmation.phone.trim()) {
@@ -302,7 +302,7 @@ export const Confirmation = {
       email: normalizedConfirmation.email,
       fishText: Confirmation.getMenuText(normalizedConfirmation, "Pescado"),
       group: normalizedConfirmation,
-      groupName: normalizedConfirmation.groupName,
+      confirmationName: normalizedConfirmation.confirmationName,
       groupSize: Confirmation.getGuestCount(normalizedConfirmation),
       guestNames: Confirmation.getGuestNames(normalizedConfirmation),
       guests: normalizedConfirmation.guests,
@@ -332,7 +332,7 @@ export const Confirmation = {
       const matchesQuery =
         !normalizedQuery ||
         normalizeText(
-          `${row.email} ${row.phone} ${row.groupName} ${row.guestNames}`,
+          `${row.email} ${row.phone} ${row.confirmationName} ${row.guestNames}`,
         ).includes(normalizedQuery);
       const matchesFilter =
         filter === "all" ||
@@ -352,7 +352,7 @@ export const Confirmation = {
         confirmationId: confirmation.confirmationId,
         guestId: guest.guestId || guest.id,
         email: confirmation.email,
-        groupName: confirmation.groupName,
+        confirmationName: confirmation.confirmationName,
         phone: confirmation.phone,
       })),
     );
@@ -434,3 +434,4 @@ export const Confirmation = {
       }));
   },
 };
+

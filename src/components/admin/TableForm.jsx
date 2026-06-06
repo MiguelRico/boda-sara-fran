@@ -17,10 +17,9 @@ import { tableContent } from "../../constants/tableContent";
 import {
   FieldError,
   FormCard,
-  inputClassName,
   Label,
-  selectClassName,
 } from "../rsvp/FormPrimitives";
+import { SelectField, TextareaField, TextField } from "../ui/FormFields";
 import IconButton from "../ui/IconButton";
 
 const groupIcons = {
@@ -100,19 +99,13 @@ export default function TableForm({
 
       <FormCard>
         <div className="mt-2 grid gap-5 md:grid-cols-2">
-          <div>
-            <Label>{content.fields.name.label}</Label>
-
-            <input
-              className={inputClassName}
-              onChange={(event) => onChange("name", event.target.value)}
-              placeholder={content.fields.name.placeholder}
-              type="text"
-              value={form.name}
-            />
-
-            <FieldError>{errors.name}</FieldError>
-          </div>
+          <TextField
+            error={errors.name}
+            label={content.fields.name.label}
+            onChange={(value) => onChange("name", value)}
+            placeholder={content.fields.name.placeholder}
+            value={form.name}
+          />
 
           <div>
             <Label>{content.fields.group.label}</Label>
@@ -184,24 +177,16 @@ export default function TableForm({
           </div>
 
           <div>
-            <Label>{content.fields.seatCount.label}</Label>
-
-            <select
-              className={selectClassName}
-              onChange={(event) =>
-                onChange("seatCount", Number(event.target.value))
-              }
+            <SelectField
+              error={errors.seatCount}
+              label={content.fields.seatCount.label}
+              onChange={(value) => onChange("seatCount", Number(value))}
+              options={seatOptions.map((seatCount) => ({
+                label: seatCount,
+                value: seatCount,
+              }))}
               value={form.seatCount}
-            >
-              {seatOptions.map((seatCount) => (
-                <option key={seatCount} value={seatCount}>
-                  {seatCount}
-                </option>
-              ))}
-            </select>
-
-            <FieldError>{errors.seatCount}</FieldError>
-
+            />
             {seatReductionWarning.length > 0 && (
               <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm leading-relaxed text-amber-900">
                 <div className="flex items-start gap-2">
@@ -228,17 +213,14 @@ export default function TableForm({
           </div>
         </div>
         <div className="mt-5">
-          <Label>{content.fields.notes.label}</Label>
-
-          <textarea
-            className={`${inputClassName} resize-none`}
-            onChange={(event) => onChange("notes", event.target.value)}
+          <TextareaField
+            error={errors.notes}
+            label={content.fields.notes.label}
+            onChange={(value) => onChange("notes", value)}
             placeholder={content.fields.notes.placeholder}
             rows={4}
             value={form.notes}
           />
-
-          <FieldError>{errors.notes}</FieldError>
         </div>
       </FormCard>
     </form>

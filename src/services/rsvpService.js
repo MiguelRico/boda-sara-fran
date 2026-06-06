@@ -1,5 +1,8 @@
 import { Confirmation } from "../models";
-import { decodeGroupName, encodeGroupName } from "../utils/groupNameCodec";
+import {
+  decodeConfirmationName,
+  encodeConfirmationName,
+} from "../utils/confirmationNameCodec";
 
 const getRsvpApiUrl = () => import.meta.env.VITE_RSVP_API_URL;
 const inFlightJsonpRequests = new Map();
@@ -73,17 +76,18 @@ const sendToRsvpApi = async (payload) => {
 const decodeConfirmationPayload = (payload) => {
   if (!payload || typeof payload !== "object") return payload;
 
-  const groupName = decodeGroupName(payload.groupName);
+  const confirmationName = decodeConfirmationName(payload.confirmationName);
 
   return {
     ...payload,
     confirmationId: payload.confirmationId || payload.id || "",
     id: payload.confirmationId || payload.id || "",
-    groupName,
+    confirmationName,
     guests: Array.isArray(payload.guests)
       ? payload.guests.map((guest) => ({
           ...guest,
-          groupName: decodeGroupName(guest.groupName) || groupName,
+          confirmationName:
+            decodeConfirmationName(guest.confirmationName) || confirmationName,
         }))
       : payload.guests,
   };
@@ -98,23 +102,25 @@ const decodeApiResponse = (response) => {
 
   return {
     ...decodeConfirmationPayload(response),
-    groups: Array.isArray(response.groups)
-      ? response.groups.map(decodeConfirmationPayload)
-      : response.groups,
+    confirmations: Array.isArray(response.confirmations)
+      ? response.confirmations.map(decodeConfirmationPayload)
+      : response.confirmations,
   };
 };
 
-const encodeConfirmationPayload = (group) => {
-  const confirmation = Confirmation.normalize(group);
-  const encodedGroupName = encodeGroupName(confirmation.groupName);
+const encodeConfirmationPayload = (confirmationInput) => {
+  const confirmation = Confirmation.normalize(confirmationInput);
+  const encodedConfirmationName = encodeConfirmationName(
+    confirmation.confirmationName,
+  );
 
   return {
     ...confirmation,
     confirmationId: confirmation.confirmationId || confirmation.id || "",
-    groupName: encodedGroupName,
+    confirmationName: encodedConfirmationName,
     guests: confirmation.guests.map((guest) => ({
       ...guest,
-      groupName: encodedGroupName,
+      confirmationName: encodedConfirmationName,
     })),
   };
 };
@@ -129,7 +135,7 @@ export const findConfirmationById = async (confirmationId) => {
   );
 };
 
-export const findGroupByEmail = async (email) => {
+export const findConfirmationByEmail = async (email) => {
   return decodeApiResponse(
     await requestJsonp({
       email: String(email || "").trim(),
@@ -139,7 +145,7 @@ export const findGroupByEmail = async (email) => {
   );
 };
 
-export const findGroupByPhone = async (phone) => {
+export const findConfirmationByPhone = async (phone) => {
   return decodeApiResponse(
     await requestJsonp({
       entity: "confirmations",
@@ -149,7 +155,7 @@ export const findGroupByPhone = async (phone) => {
   );
 };
 
-export const findAllGroups = async ({ password } = {}) => {
+export const findAllConfirmations = async ({ password } = {}) => {
   return decodeApiResponse(
     await requestJsonp({
       entity: "confirmations",
@@ -175,7 +181,7 @@ export const findAllProviders = async ({ password } = {}) => {
   });
 };
 
-export const saveGroup = async (payload, { method = "POST" } = {}) => {
+export const savePublicConfirmation = async (payload, { method = "POST" } = {}) => {
   const confirmation = encodeConfirmationPayload(payload);
 
   await sendToRsvpApi({
@@ -187,12 +193,16 @@ export const saveGroup = async (payload, { method = "POST" } = {}) => {
   return {
     success: true,
     confirmationId: responsePlaceholderConfirmationId(payload),
-    groupName: Confirmation.normalize(payload).groupName,
+    confirmationName: Confirmation.normalize(payload).confirmationName,
   };
 };
 
-export const saveAdminGroup = async ({ group, method = "PUT", password }) => {
-  const confirmation = encodeConfirmationPayload(group);
+export const saveAdminConfirmation = async ({
+  confirmation: confirmationInput,
+  method = "PUT",
+  password,
+}) => {
+  const confirmation = encodeConfirmationPayload(confirmationInput);
   const payload = {
     ...confirmation,
     entity: "confirmations",
@@ -204,8 +214,8 @@ export const saveAdminGroup = async ({ group, method = "PUT", password }) => {
 
   return {
     success: true,
-    confirmationId: responsePlaceholderConfirmationId(group),
-    groupName: Confirmation.normalize(group).groupName,
+    confirmationId: responsePlaceholderConfirmationId(confirmationInput),
+    confirmationName: Confirmation.normalize(confirmationInput).confirmationName,
   };
 };
 
@@ -223,7 +233,7 @@ export const saveAdminTables = async ({ password, tables }) => {
   };
 };
 
-export const deleteAdminGroup = async ({ confirmationId, password }) => {
+export const deleteAdminConfirmation = async ({ confirmationId, password }) => {
   await sendToRsvpApi({
     entity: "confirmations",
     confirmationId,
@@ -237,8 +247,8 @@ export const deleteAdminGroup = async ({ confirmationId, password }) => {
   };
 };
 
-const responsePlaceholderConfirmationId = (group) =>
-  Confirmation.normalize(group).confirmationId;
+const responsePlaceholderConfirmationId = (confirmationInput) =>
+  Confirmation.normalize(confirmationInput).confirmationId;
 
 export const saveAdminProviders = async ({ password, providers }) => {
   await sendToRsvpApi({
@@ -253,3 +263,4 @@ export const saveAdminProviders = async ({ password, providers }) => {
     providers,
   };
 };
+

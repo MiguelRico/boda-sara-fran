@@ -49,7 +49,7 @@ export default function TableGuestCard({
       >
         <div className="min-w-0">
           <p className="section-eyebrow mb-2">
-            {eyebrow || guest.groupName || "Invitado"}
+            {eyebrow || guest.confirmationName || "Invitado"}
           </p>
           <h3
             className="break-words font-serif text-3xl leading-none text-[var(--color-text)]"
@@ -176,3 +176,4 @@ function TableGuestMenuIcon({ menu, ...props }) {
 
   return <Icon {...props} />;
 }
+
