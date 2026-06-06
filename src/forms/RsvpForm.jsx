@@ -39,6 +39,7 @@ export default function RsvpForm({
   addText = rsvpContent.form.defaultAddText,
   cancelText = rsvpContent.form.defaultCancelText,
   cancelTo,
+  canAddGuests = true,
   contact,
   deleteContextText = rsvpContent.form.defaultDeleteContext,
   disableContactFields = false,
@@ -127,6 +128,7 @@ export default function RsvpForm({
       <MobilePublicRsvpFlow
         addIcon={addIcon}
         addText={addText}
+        canAddGuests={canAddGuests}
         cancelIcon={cancelIcon}
         cancelText={cancelText}
         cancelTo={cancelTo}
@@ -181,6 +183,7 @@ export default function RsvpForm({
             2,
             <GuestPager
               addText={addText}
+              canAddGuests={canAddGuests}
               canRemove={guests.length > 1}
               currentGuest={currentGuest}
               currentGuestIndex={currentGuestIndex}
@@ -240,7 +243,7 @@ export default function RsvpForm({
                   {cancelText}
                 </IconButton>
 
-                {guests.length < MAX_GUESTS && (
+                {canAddGuests && guests.length < MAX_GUESTS && (
                   <IconButton
                     className="w-full"
                     disabled={loading || hasInvalidGuest}
@@ -287,6 +290,7 @@ export default function RsvpForm({
 function MobilePublicRsvpFlow({
   addIcon,
   addText,
+  canAddGuests,
   cancelIcon,
   cancelText,
   cancelTo,
@@ -392,7 +396,7 @@ function MobilePublicRsvpFlow({
         />
       )}
 
-      {guests.length < MAX_GUESTS && (
+      {canAddGuests && guests.length < MAX_GUESTS && (
         <IconButton
           className="w-full"
           disabled={loading || hasInvalidGuest}
@@ -816,6 +820,7 @@ function GuestSummaryCard({ guest, index }) {
 
 function GuestPager({
   addText,
+  canAddGuests,
   canRemove,
   currentGuest,
   currentGuestIndex,
@@ -881,7 +886,7 @@ function GuestPager({
           >
             {removeButton}
 
-            {guests.length < MAX_GUESTS && (
+            {canAddGuests && guests.length < MAX_GUESTS && (
               <IconButton
                 className="w-full"
                 disabled={loading || hasInvalidGuest}

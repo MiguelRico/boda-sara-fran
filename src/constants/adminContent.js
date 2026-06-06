@@ -13,7 +13,7 @@ export const adminContent = {
   },
   guests: {
     tabs: [
-      { id: "groups", label: "Grupos" },
+      { id: "groups", label: "Confirmaciones" },
       { id: "guests", label: "Invitados" },
     ],
     header: {
@@ -25,7 +25,7 @@ export const adminContent = {
       eyebrow: "Resumen",
       title: "Invitados",
       metrics: {
-        groups: "Grupos",
+        groups: "Confirmaciones",
         guests: "Invitados",
         allergies: "Alergias",
         bus: "Bus",
@@ -50,11 +50,10 @@ export const adminContent = {
       mobilePageLabel: "Confirmación",
       emptyTitle: "Sin resultados",
       emptyText: "Prueba con otra búsqueda o cambia el filtro seleccionado.",
-      noGroupsTitle: "Sin grupos",
-      noGroupsText:
-        "Crea el primer grupo para empezar a registrar invitados.",
+      noGroupsTitle: "Sin confirmaciones",
+      noGroupsText: "Crea una confirmación para empezar a registrar invitados.",
       countLabel: ({ groups, guests }) =>
-        `${groups} ${groups === 1 ? "grupo" : "grupos"} en esta página · ${guests} ${
+        `${groups} ${groups === 1 ? "confirmación" : "confirmaciones"} en esta página · ${guests} ${
           guests === 1 ? "persona" : "personas"
         }`,
     },
@@ -67,12 +66,12 @@ export const adminContent = {
       eyebrow: "Invitados",
       title: "Invitados",
       mobilePageLabel: "Invitado",
-      noGroupsTitle: "Sin grupos",
+      noGroupsTitle: "Sin confirmaciones",
       noGroupsText:
-        "Crea un grupo antes de agregar o consultar invitados.",
+        "Crea una confirmación antes de agregar o consultar invitados.",
       noGuestsTitle: "Sin invitados",
       noGuestsText:
-        "El grupo seleccionado todavia no tiene invitados registrados.",
+        "La confirmación seleccionada todavia no tiene invitados registrados.",
       noFilterText:
         "No hay invitados que coincidan con la busqueda o el filtro seleccionado.",
     },
@@ -341,8 +340,8 @@ export const adminContent = {
   pendingGuests: {
     filtersEyebrow: "Filtros",
     title: "Invitados pendientes",
-    groupLabel: "Grupo de invitación",
-    allGroups: "Todos los grupos",
+    groupLabel: "Confirmación",
+    allGroups: "Todas las confirmaciones",
     menuLabel: "Preferencia de menú",
     allMenus: "Todos los menús",
     emptyTitle: "Sin invitados pendientes",

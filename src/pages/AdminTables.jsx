@@ -6,7 +6,6 @@ import {
   Check,
   CircleCheckBig,
   CircleDashed,
-  Download,
   Grid2X2,
   Armchair,
   Plus,
@@ -48,7 +47,6 @@ import {
   buildTables,
   buildTableStats,
   createTableFormFromTable,
-  downloadTablesCsv,
   getAssignableGuests,
   getPendingGuests,
   persistAdminTables,
@@ -828,7 +826,6 @@ export default function AdminTables() {
                       onDelete={() => handleRequestDeleteTable(selectedTable)}
                       onDiscard={handleDiscardPendingChanges}
                       onEdit={() => handleEditTable(selectedTable)}
-                      onExport={() => downloadTablesCsv(tables)}
                       onSave={handleSavePendingChanges}
                       saving={spinner.loading}
                       selectedTable={selectedTable}
@@ -1468,7 +1465,6 @@ function TableTabActions({
   onDelete,
   onDiscard,
   onEdit,
-  onExport,
   onSave,
   saving,
   selectedTable,
@@ -1527,21 +1523,9 @@ function TableTabActions({
 
       <div
         className={`grid w-full gap-3 sm:w-auto ${
-          hasItems ? "grid-cols-4 sm:grid-cols-4" : "grid-cols-1"
+          hasItems ? "grid-cols-3 sm:grid-cols-3" : "grid-cols-1"
         }`}
       >
-        {hasItems && (
-          <IconButton
-            className="w-full"
-            icon={<Download size={16} strokeWidth={1.8} />}
-            label={adminContent.tables.header.exportTable}
-            onClick={onExport}
-            tone="terciary"
-          >
-            {showText ? adminContent.tables.header.exportTable : undefined}
-          </IconButton>
-        )}
-
         {hasItems && (
           <CardActions
             className="contents"

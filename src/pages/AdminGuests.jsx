@@ -7,7 +7,6 @@ import {
   Beef,
   BusFront,
   ChevronDown,
-  Download,
   Fish,
   Mail,
   MessageCircle,
@@ -55,7 +54,6 @@ import useSpinner from "../hooks/useSpinner";
 import useViewportScrollLock from "../hooks/useViewportScrollLock";
 import usePagedData from "../hooks/usePagedData";
 import usePageTransition from "../hooks/usePageTransition";
-import { downloadCsv as downloadGenericCsv } from "../utils/csvExport";
 import {
   createDraftGroup,
   normalizeAdminGroupBeforeSave,
@@ -121,6 +119,7 @@ export default function AdminGuests() {
   const [selectedGuestId, setSelectedGuestId] = useState("");
   const [editingGroup, setEditingGroup] = useState(null);
   const [editingMode, setEditingMode] = useState("full");
+  const [editingGuestIndex, setEditingGuestIndex] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [popup, setPopup] = useState(createInitialPopup);
   const [activeTab, setActiveTab] = useState(() => {
@@ -299,9 +298,16 @@ export default function AdminGuests() {
     return normalizedGroups;
   }, []);
 
-  const openGroupEditor = (group, mode = "full") => {
+  const openGroupEditor = (group, mode = "full", guestIndex = null) => {
     setEditingMode(mode);
+    setEditingGuestIndex(guestIndex);
     setEditingGroup(createDraftGroup(group));
+  };
+
+  const openGuestEditor = (guestItem) => {
+    if (!guestItem?.group) return;
+
+    openGroupEditor(guestItem.group, "guest", guestItem.guestIndex);
   };
 
   const handleSaveGroup = async (group) => {
@@ -474,7 +480,6 @@ export default function AdminGuests() {
                       onDelete={() => setDeleteTarget(selectedRow.group)}
                       onDiscard={handleDiscardPendingChanges}
                       onEdit={() => openGroupEditor(selectedRow.group, "group")}
-                      onExport={() => downloadGuestsCsv(rows)}
                       onSave={handleSavePendingChanges}
                       rows={rows}
                       saving={spinner.loading}
@@ -521,7 +526,6 @@ export default function AdminGuests() {
                     <AdminGuestPage
                       emptyState={getGroupEmptyState(rows.length)}
                       items={items}
-                      onEditGuests={() => {}}
                       onSelect={() => {}}
                       selectedRowId={effectiveSelectedRowId}
                     />
@@ -530,7 +534,6 @@ export default function AdminGuests() {
                     <AdminGuestPage
                       emptyState={getGroupEmptyState(rows.length)}
                       items={items}
-                      onEditGuests={(group) => openGroupEditor(group, "guests")}
                       onSelect={(row) => {
                         setSelectedRowId(row.rowId);
                         setGuestPage(1);
@@ -568,14 +571,13 @@ export default function AdminGuests() {
                         }
                         onDelete={() =>
                           selectedGuestItem &&
-                          openGroupEditor(selectedGuestItem.group, "guests")
+                          openGuestEditor(selectedGuestItem)
                         }
                         onDiscard={handleDiscardPendingChanges}
                         onEdit={() =>
                           selectedGuestItem &&
-                          openGroupEditor(selectedGuestItem.group, "guests")
+                          openGuestEditor(selectedGuestItem)
                         }
-                        onExport={() => downloadGuestsCsv(rows)}
                         onSave={handleSavePendingChanges}
                         rows={visibleGuestItems}
                         saving={spinner.loading}
@@ -672,6 +674,7 @@ export default function AdminGuests() {
           isMobileView={isMobileView}
           isCreation={!editingGroup.groupName}
           mode={editingMode}
+          guestIndex={editingGuestIndex}
           onClose={() => setEditingGroup(null)}
           onSave={handleSaveGroup}
         />
@@ -828,7 +831,6 @@ function GuestTableActions({
   onDelete,
   onDiscard,
   onEdit,
-  onExport,
   onSave,
   rows,
   saving,
@@ -891,22 +893,9 @@ function GuestTableActions({
 
       <div
         className={`grid w-full gap-3 sm:w-auto ${
-          hasItems ? "grid-cols-4 sm:grid-cols-4" : "grid-cols-1"
+          hasItems ? "grid-cols-3 sm:grid-cols-3" : "grid-cols-1"
         }`}
       >
-        {hasItems && (
-          <IconButton
-            className="w-full"
-            icon={<Download size={16} strokeWidth={1.8} />}
-            label={adminContent.guests.actions.export}
-            onClick={onExport}
-            tone="terciary"
-            type="button"
-          >
-            {showText ? adminContent.guests.actions.export : undefined}
-          </IconButton>
-        )}
-
         {hasItems && (
           <CardActions
             className="contents"
@@ -1306,20 +1295,33 @@ function GroupMenuIcon({ menu, ...props }) {
 
 function GroupEditor({
   group,
+  guestIndex = null,
   isCreation,
   isMobileView = false,
   mode = "full",
   onClose,
   onSave,
 }) {
-  const [draft, setDraft] = useState(group);
+  const isSingleGuestMode = mode === "guest";
+  const initialDraft = useMemo(
+    () =>
+      isSingleGuestMode
+        ? {
+            ...group,
+            guests: [group.guests?.[guestIndex]].filter(Boolean),
+          }
+        : group,
+    [group, guestIndex, isSingleGuestMode],
+  );
+  const [draft, setDraft] = useState(initialDraft);
   const [errors, setErrors] = useState({});
   const [validationPopupOpen, setValidationPopupOpen] = useState(false);
   const [unsavedChangesOpen, setUnsavedChangesOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const savedDraftSnapshot = useMemo(
-    () => getStableJson(normalizeAdminGroupBeforeSave(group, { isCreation })),
-    [group, isCreation],
+    () =>
+      getStableJson(normalizeAdminGroupBeforeSave(initialDraft, { isCreation })),
+    [initialDraft, isCreation],
   );
   const currentDraftSnapshot = useMemo(
     () => getStableJson(normalizeAdminGroupBeforeSave(draft, { isCreation })),
@@ -1335,11 +1337,13 @@ function GroupEditor({
       {children}
     </CinematicStaggeredRevealItem>
   );
-  const isGuestListMode = mode === "guests";
+  const isGuestListMode = mode === "guests" || isSingleGuestMode;
   const isGroupMode = mode === "group";
-  const dialogTitle = isGuestListMode
+  const dialogTitle = isSingleGuestMode
     ? adminContent.guests.dialogs.guestListEditorTitle
-    : adminContent.guests.dialogs.groupEditorTitle;
+    : isGuestListMode
+      ? adminContent.guests.dialogs.guestListEditorTitle
+      : adminContent.guests.dialogs.groupEditorTitle;
 
   useBeforeUnload(
     useCallback(
@@ -1409,7 +1413,11 @@ function GroupEditor({
     setErrors({});
 
     try {
-      await onSave(groupToSave);
+      await onSave(
+        isSingleGuestMode
+          ? mergeSingleGuestIntoGroup(group, groupToSave.guests[0], guestIndex)
+          : groupToSave,
+      );
     } finally {
       setSaving(false);
     }
@@ -1438,6 +1446,7 @@ function GroupEditor({
         onRemoveGuest={removeGuest}
         onSubmit={handleSubmit}
         renderItem={renderFormItem}
+        canAddGuests={!isSingleGuestMode}
         showContactDetails={!isGuestListMode}
         showGuestList={!isGroupMode}
         submitText="Guardar"
@@ -1477,32 +1486,6 @@ function GroupEditor({
     </EditorDialog>
   );
 }
-function downloadGuestsCsv(rows) {
-  downloadGenericCsv({
-    filename: adminContent.guests.csv.filename,
-    headers: [
-      "email",
-      "telefono",
-      "nombre_grupo",
-      "total_invitados",
-      "mesa_menu_asiento",
-      "alergias",
-      "transporte",
-      "notas",
-    ],
-    rows: rows.map((row) => [
-      row.email,
-      row.phone,
-      row.groupName,
-      row.groupSize,
-      row.assignmentText,
-      row.allergyText,
-      row.transportText,
-      row.commentsText,
-    ]),
-  });
-}
-
 function getGuestItems(groups) {
   return normalizeAdminGroups(groups).flatMap((group) =>
     Guest.normalizeList(group.guests, { ensureOne: false }).map(
@@ -1517,6 +1500,34 @@ function getGuestItems(groups) {
       }),
     ),
   );
+}
+
+function mergeSingleGuestIntoGroup(group, editedGuest, guestIndex) {
+  const normalizedGroup = Confirmation.normalize(group);
+  const normalizedGuestIndex = Number(guestIndex);
+
+  if (
+    !editedGuest ||
+    !Number.isInteger(normalizedGuestIndex) ||
+    normalizedGuestIndex < 0
+  ) {
+    return normalizedGroup;
+  }
+
+  return Confirmation.normalize({
+    ...normalizedGroup,
+    guests: normalizedGroup.guests.map((guest, index) =>
+      index === normalizedGuestIndex
+        ? {
+            ...editedGuest,
+            confirmationId: guest.confirmationId || editedGuest.confirmationId,
+            guestId: guest.guestId || guest.id || editedGuest.guestId,
+            groupName: guest.groupName || editedGuest.groupName,
+            id: guest.id || guest.guestId || editedGuest.id,
+          }
+        : guest,
+    ),
+  });
 }
 
 function filterGuestItems(guests, query, filter) {
