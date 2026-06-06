@@ -87,7 +87,9 @@ export const adminContent = {
       delete: "Eliminar",
     },
     dialogs: {
-      groupEditorTitle: "Editar grupo",
+      groupCreateTitle: "Crear confirmación",
+      groupEditorTitle: "Editar confirmación",
+      guestEditorTitle: "Editar invitado",
       guestListEditorTitle: "Editar invitados",
       unsavedTitle: "Se perderan los cambios",
       unsavedMessage:
@@ -103,7 +105,7 @@ export const adminContent = {
         "Hay campos obligatorios o con formato incorrecto. Corrigelos antes de guardar la confirmacion.",
       deleteTitle: "Eliminar confirmación",
       deleteMessage: (label) =>
-        `Se marcará para eliminar el grupo asociado a ${label}. Podrás deshacerlo antes de guardar los cambios.`,
+        `Se marcará para eliminar la confirmación asociada a ${label}. Podrás deshacerlo antes de guardar los cambios.`,
       loadError:
         "No se pudieron cargar los invitados. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
       saveError:
@@ -304,6 +306,8 @@ export const adminContent = {
     dialogs: {
       createTitle: "Crear proveedor",
       editTitle: "Editar proveedor",
+      createServiceTitle: "Crear servicio",
+      editServiceTitle: "Editar servicio",
       deleteTitle: "Eliminar proveedor",
       deleteMessage: (name) =>
         `Se marcará para eliminar el proveedor ${name}. Podrás deshacerlo antes de guardar los cambios.`,

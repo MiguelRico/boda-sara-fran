@@ -15,6 +15,7 @@ import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import { adminContent } from "../constants/adminContent";
 import {
   PROVIDER_CATEGORIES,
+  PROVIDER_CATEGORY_EMOJIS,
   PROVIDER_CATEGORY_LABELS,
 } from "../constants/providers";
 import {
@@ -606,11 +607,12 @@ export default function AdminProviders() {
       {editingProvider && (
         <AdminEditorDialog
           onClose={() => setEditingProvider(null)}
-          title={
-            providers.some((provider) => provider.id === editingProvider.id)
-              ? adminContent.providers.dialogs.editTitle
-              : adminContent.providers.dialogs.createTitle
-          }
+          title={getProviderEditorTitle({
+            mode: editingProviderMode,
+            provider: editingProvider,
+            providers,
+            serviceId: editingServiceId,
+          })}
           titleId="provider-editor-title"
         >
           <ProviderForm
@@ -720,6 +722,22 @@ function ProvidersOverview({ loading, stats }) {
       )}
     </section>
   );
+}
+
+function getProviderEditorTitle({ mode, provider, providers, serviceId }) {
+  if (mode === "service") {
+    const existingService = providers
+      .flatMap((item) => item.services)
+      .some((service) => service.id === serviceId);
+
+    return existingService
+      ? adminContent.providers.dialogs.editServiceTitle
+      : adminContent.providers.dialogs.createServiceTitle;
+  }
+
+  return providers.some((item) => item.id === provider.id)
+    ? adminContent.providers.dialogs.editTitle
+    : adminContent.providers.dialogs.createTitle;
 }
 
 function ProviderFilters({ category, onCategoryChange, onQueryChange, query }) {
@@ -868,7 +886,7 @@ function ProviderCard({ onSelect, provider, selected }) {
       onClick={() => onSelect(provider)}
     >
       <Card
-        decorativeText={provider.services.length}
+        decorativeText={PROVIDER_CATEGORY_EMOJIS[provider.category]}
         eyebrow={PROVIDER_CATEGORY_LABELS[provider.category]}
         title={provider.name || "Proveedor sin nombre"}
       >
@@ -962,7 +980,7 @@ function ServiceCard({ onSelect, selected, service }) {
       onClick={() => onSelect(service)}
     >
       <Card
-        decorativeText={service.paymentCount}
+        decorativeText={PROVIDER_CATEGORY_EMOJIS[service.category]}
         eyebrow={service.providerName}
         title={service.name || "Servicio sin nombre"}
       >

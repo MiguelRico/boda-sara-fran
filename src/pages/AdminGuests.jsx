@@ -1197,10 +1197,12 @@ function GroupEditor({
   const isGuestListMode = mode === "guests" || isSingleGuestMode;
   const isGroupMode = mode === "group";
   const dialogTitle = isSingleGuestMode
-    ? adminContent.guests.dialogs.guestListEditorTitle
+    ? adminContent.guests.dialogs.guestEditorTitle
     : isGuestListMode
       ? adminContent.guests.dialogs.guestListEditorTitle
-      : adminContent.guests.dialogs.groupEditorTitle;
+      : isCreation
+        ? adminContent.guests.dialogs.groupCreateTitle
+        : adminContent.guests.dialogs.groupEditorTitle;
 
   useBeforeUnload(
     useCallback(

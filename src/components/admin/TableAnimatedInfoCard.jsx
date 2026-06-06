@@ -68,7 +68,8 @@ function TableInfoCard({
   const [showAssignments, setShowAssignments] = useState(false);
   const assignedGuests = Table.getAssignedGuests(table);
   const tableLabel = table.name;
-  const groupLabel = getTableGroupOption(table.group)?.label;
+  const groupOption = getTableGroupOption(table.group);
+  const groupLabel = groupOption?.label;
   const shapeLabel = Table.getShapeLabel(table);
 
   return (
@@ -85,7 +86,9 @@ function TableInfoCard({
             showText={false}
           />
         }
-        decorativeText={table.shape === TABLE_SHAPES.round ? "O" : "[]"}
+        decorativeText={
+          groupOption?.emoji || (table.shape === TABLE_SHAPES.round ? "O" : "[]")
+        }
         detail={tableContent.card.detail({
           assigned: assignedGuests.length,
           seats: table.seats.length,

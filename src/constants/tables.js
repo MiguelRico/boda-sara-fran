@@ -23,16 +23,19 @@ export const TABLE_GROUP_OPTIONS = [
   {
     value: "familia",
     label: "Familia",
+    emoji: "👪",
     icon: "users",
   },
   {
     value: "amistades",
     label: "Amistades",
+    emoji: "💛",
     icon: "heart",
   },
   {
     value: "trabajo",
     label: "Trabajo",
+    emoji: "💼",
     icon: "briefcase",
   },
 ];
