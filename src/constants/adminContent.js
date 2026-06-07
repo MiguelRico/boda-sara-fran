@@ -25,7 +25,7 @@ export const adminContent = {
       eyebrow: "Resumen",
       title: "Resumen",
       metrics: {
-        confirmations: "Confirmaciones",
+        confirmations: "Recibidas",
         guests: "Invitados",
         allergies: "Alergias",
         bus: "Bus",
@@ -59,7 +59,7 @@ export const adminContent = {
         }`,
     },
     editor: {
-      guestListEyebrow: "Invitados",
+      guestListEyebrow: "Lista de invitados",
       guestListTitle: "Invitados",
       guestCountLabel: ({ page, total }) => `${page} / ${total}`,
     },

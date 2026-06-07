@@ -14,6 +14,7 @@ import {
   UserPlus,
   UsersRound,
   Utensils,
+  MailCheck,
   X,
 } from "lucide-react";
 
@@ -26,7 +27,11 @@ import Chip from "../components/ui/Chip";
 import IconButton from "../components/ui/IconButton";
 import PaginatedContent from "../components/ui/PaginatedContent";
 import Pagination from "../components/ui/Pagination";
-import { COMMON_ALLERGIES, GUEST_MENU_OPTIONS, MAX_GUESTS } from "../constants/rsvp";
+import {
+  COMMON_ALLERGIES,
+  GUEST_MENU_OPTIONS,
+  MAX_GUESTS,
+} from "../constants/rsvp";
 import { adminContent } from "../constants/adminContent";
 import { rsvpContent } from "../constants/rsvpContent";
 import { Guest } from "../models";
@@ -81,7 +86,7 @@ export default function RsvpForm({
     variant === "admin" ? (
       <Save size={16} strokeWidth={1.8} />
     ) : (
-      <Check size={16} strokeWidth={1.8} />
+      <MailCheck size={16} strokeWidth={1.8} />
     );
   const cancelIcon =
     variant === "admin" ? (
@@ -365,7 +370,9 @@ function MobilePublicRsvpFlow({
   const handleRemoveGuest = (guest, index) => {
     if (Guest.isEmpty(guest)) {
       onRemoveGuest(index);
-      onGuestPageChange(Math.min(currentGuestPage, Math.max(guests.length - 1, 1)));
+      onGuestPageChange(
+        Math.min(currentGuestPage, Math.max(guests.length - 1, 1)),
+      );
       return;
     }
 
@@ -375,7 +382,9 @@ function MobilePublicRsvpFlow({
     if (!guestDeleteTarget) return;
 
     onRemoveGuest(guestDeleteTarget.index);
-    onGuestPageChange(Math.min(currentGuestPage, Math.max(guests.length - 1, 1)));
+    onGuestPageChange(
+      Math.min(currentGuestPage, Math.max(guests.length - 1, 1)),
+    );
     setGuestDeleteTarget(null);
   };
   const guestActionsClassName = canRemove
@@ -438,56 +447,41 @@ function MobilePublicRsvpFlow({
           >
             {step === "contact" && (
               <div className="space-y-5">
+                <FormCard>
+                  <div className="grid grid-cols-1">
+                    <IconButton
+                      className="w-full"
+                      disabled={loading}
+                      icon={<UserPlus size={16} strokeWidth={1.8} />}
+                      label="Añadir invitados"
+                      onClick={handleContinueToGuests}
+                      showText="always"
+                      tone="primary"
+                      type="button"
+                    >
+                      Añadir invitados
+                    </IconButton>
+                  </div>
+                </FormCard>
+
                 <ContactDetailsCard
                   contact={contact}
                   disableFilledFields={disableContactFields}
                   errors={errors}
                   onContactChange={onContactChange}
                 />
-
-                <FormCard>
-                  <p className="section-eyebrow mb-4">
-                    {rsvpContent.form.actionsEyebrow}
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <IconButton
-                      className="w-full"
-                      disabled={loading}
-                      icon={cancelIcon}
-                      label={cancelText}
-                      onClick={onCancel}
-                      showText="always"
-                      to={cancelTo}
-                      tone="terciary"
-                    >
-                      {cancelText}
-                    </IconButton>
-                    <IconButton
-                      className="w-full"
-                      disabled={loading}
-                      icon={<Check size={16} strokeWidth={1.8} />}
-                      label="Continuar"
-                      onClick={handleContinueToGuests}
-                      showText="always"
-                      tone="primary"
-                      type="button"
-                    >
-                      Continuar
-                    </IconButton>
-                  </div>
-                </FormCard>
               </div>
             )}
 
             {step === "guests" && (
               <div className="space-y-5">
-                <MobileActionsPanel>{guestActions}</MobileActionsPanel>
-
                 <ContactSummaryCard
                   contact={contact}
                   guests={guests}
                   onEdit={() => setStep("contact")}
                 />
+
+                <MobileActionsPanel>{guestActions}</MobileActionsPanel>
 
                 <AdminTableSection
                   eyebrow={adminContent.guests.editor.guestListEyebrow}
@@ -566,7 +560,7 @@ function ContactSummaryCard({ contact, guests, onEdit }) {
     <FormCard>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="section-eyebrow mb-2">Grupo</p>
+          <p className="section-eyebrow mb-2">Datos de contacto</p>
           <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
             {contact.confirmationName || "Grupo sin nombre"}
           </h2>
@@ -743,9 +737,9 @@ function MobileRsvpReview({
       <FormCard>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="section-eyebrow mb-2">Resumen</p>
+            <p className="section-eyebrow mb-2">Invitados confirmados</p>
             <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-              Invitados
+              {guests.length} Invitados
             </h2>
           </div>
           <IconButton
@@ -965,4 +959,3 @@ function GuestPager({
     </>
   );
 }
-

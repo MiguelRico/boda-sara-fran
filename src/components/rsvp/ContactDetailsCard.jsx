@@ -21,7 +21,7 @@ export default function ContactDetailsCard({
       <p className="section-eyebrow">{rsvpContent.contact.eyebrow}</p>
 
       <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-        Datos de contacto
+        {rsvpContent.contact.title}
       </h2>
 
       <div className="grid gap-5 md:grid-cols-3 mt-4">
@@ -35,7 +35,9 @@ export default function ContactDetailsCard({
               onContactChange("confirmationName", event.target.value)
             }
             className={inputClassName}
-            placeholder={rsvpContent.contact.fields.confirmationName.placeholder}
+            placeholder={
+              rsvpContent.contact.fields.confirmationName.placeholder
+            }
             disabled={disabledFields.confirmationName}
           />
 
@@ -75,4 +77,3 @@ export default function ContactDetailsCard({
     </FormCard>
   );
 }
-

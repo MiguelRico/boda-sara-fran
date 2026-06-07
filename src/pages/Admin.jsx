@@ -115,16 +115,14 @@ export default function Admin() {
   return (
     <CinematicPage>
       {loading && <Spinner text={adminContent.auth.loading} />}
-
       <CinematicSection
         className="surface-soft admin-section"
-        innerClassName="max-w-5xl"
+        innerClassName="max-w-7xl py-6"
         reveal={false}
       >
         <div ref={adminRef}>
           <CinematicStaggeredRevealItem index={0} isVisible={adminInView}>
             <HeaderSection
-              className="mb-8"
               eyebrow={adminContent.auth.eyebrow}
               isMobileView={isMobileView}
               text={adminContent.auth.headerText}

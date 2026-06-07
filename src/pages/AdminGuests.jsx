@@ -12,6 +12,7 @@ import {
   Search,
   Utensils,
   UsersRound,
+  MailCheck,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -71,10 +72,7 @@ import {
 import { getEmailHref, getPhoneHref } from "../utils/contactLinks";
 import { adminContent } from "../constants/adminContent";
 import { normalizeAdminConfirmations } from "../utils/rsvpGroups";
-import {
-  validateRsvpContact,
-  validateRsvpForm,
-} from "../utils/rsvpValidation";
+import { validateRsvpContact, validateRsvpForm } from "../utils/rsvpValidation";
 
 const desktopPageSize = 8;
 const mobilePageSize = 1;
@@ -779,7 +777,7 @@ function GuestsOverview({ loading, stats }) {
           className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
           items={[
             {
-              emoji: <UsersRound size={22} strokeWidth={1.8} />,
+              emoji: <MailCheck size={22} strokeWidth={1.8} />,
               label: metrics.confirmations,
               value: stats.groupCount,
             },

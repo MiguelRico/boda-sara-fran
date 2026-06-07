@@ -8,19 +8,22 @@ export default function CreateInvitationCard({
   hideTextOnMobile = false,
   isMobileView = false,
 }) {
-  const textClassName = hideTextOnMobile || isMobileView
-    ? "hidden sm:block mt-3 text-sm leading-relaxed"
-    : " mt-3 text-sm leading-relaxed";
+  const textClassName =
+    hideTextOnMobile || isMobileView
+      ? "hidden sm:block mt-3 text-sm leading-relaxed"
+      : " mt-3 text-sm leading-relaxed";
   return (
     <FormCard>
       <div className="mb-4">
-        <p className="section-eyebrow mb-3">{rsvpContent.createInvitation.eyebrow}</p>
-
-        <h2 className="font-serif text-3xl">{rsvpContent.createInvitation.title}</h2>
-
-        <p className={textClassName}>
-          {rsvpContent.createInvitation.text}
+        <p className="section-eyebrow mb-3">
+          {rsvpContent.createInvitation.eyebrow}
         </p>
+
+        <h2 className="font-serif text-3xl">
+          {rsvpContent.createInvitation.title}
+        </h2>
+
+        <p className={textClassName}>{rsvpContent.createInvitation.text}</p>
       </div>
 
       <div className="mt-4 flex flex-col gap-4 sm:flex-row">
