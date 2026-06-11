@@ -1,13 +1,7 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useBeforeUnload } from "react-router-dom";
-import {
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-  UsersRound,
-} from "lucide-react";
+import { Pencil, Plus, Search, Trash2, UsersRound } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
@@ -835,12 +829,7 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
   );
 }
 
-function GuestTableActions({
-  loading,
-  onCreate,
-  rows,
-  showText = true,
-}) {
+function GuestTableActions({ loading, onCreate, rows, showText = true }) {
   void rows;
 
   if (!onCreate) return null;
@@ -1025,7 +1014,7 @@ function AdminGuestConfirmationCard({
         titleRef={titleRef}
         titleStyle={titleStyle}
       >
-        <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
           {chips.map((chip) => (
             <Chip
               className={chip.className}

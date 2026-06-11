@@ -30,9 +30,7 @@ export default function TableGuestCard({
         {decorativeText}
       </div>
 
-      {actions && (
-        <div className="absolute right-5 top-4 z-20">{actions}</div>
-      )}
+      {actions && <div className="absolute right-5 top-4 z-20">{actions}</div>}
 
       <div
         className={`relative grid gap-5 ${
@@ -87,7 +85,7 @@ export function GuestDetailChips({ className = "", guest = {} }) {
   if (!chips.length) return null;
 
   return (
-    <div className={`grid grid-cols-2 gap-2 text-xs ${className}`}>
+    <div className={`mt-4 grid grid-cols-2 gap-2 text-xs ${className}`}>
       {chips.map((chip) => (
         <Chip
           className={chip.className}
@@ -101,4 +99,3 @@ export function GuestDetailChips({ className = "", guest = {} }) {
     </div>
   );
 }
-

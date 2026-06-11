@@ -6,10 +6,9 @@ import {
   Heart,
   MessageCircle,
   Trash2,
-  Armchair,
   UsersRound,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { Guest, Table } from "../../models";
 import { getTableGroupOption, TABLE_SHAPES } from "../../constants/tables";
@@ -24,7 +23,6 @@ import DeleteDialog from "../ui/DeleteDialog";
 import AdminTableSection from "./AdminTableSection";
 import Card from "./Card";
 import CardActions from "./CardActions";
-import { PendingGuestsFilters } from "./PendingGuestsList";
 import TableGuestCard from "./TableGuestCard";
 
 const TABLE_GROUP_ICON_MAP = {
@@ -144,50 +142,16 @@ function AssignmentModal({
   onUnassignSeat,
   table,
   onClose,
-  title = adminContent.tables.dialogs.assignedTitle,
 }) {
   const contentRef = useRef(null);
   const assignedSeats = table.seats.filter((seat) => seat.guest);
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState({
-    group: "",
-    menu: "",
-  });
   const [selectedSeatKey, setSelectedSeatKey] = useState("");
   const [removingSeat, setRemovingSeat] = useState("");
   const [seatToUnassign, setSeatToUnassign] = useState(null);
-  const availableGroups = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          assignedSeats.map((seat) => seat.guest?.confirmationName).filter(Boolean),
-        ),
-      ),
-    [assignedSeats],
-  );
-  const availableMenus = useMemo(
-    () =>
-      Array.from(
-        new Set(assignedSeats.map((seat) => seat.guest?.menu).filter(Boolean)),
-      ),
-    [assignedSeats],
-  );
-  const filteredAssignedSeats = assignedSeats.filter((seat) => {
-    const guest = seat.guest || {};
-
-    if (filters.group && guest.confirmationName !== filters.group) {
-      return false;
-    }
-
-    if (filters.menu && guest.menu !== filters.menu) {
-      return false;
-    }
-
-    return true;
-  });
   const { currentPage, isMobileView, pageSize, totalPages } = usePagedData({
     desktopPageSize: 4,
-    items: filteredAssignedSeats,
+    items: assignedSeats,
     mobilePageSize: 1,
     page,
   });
@@ -196,13 +160,13 @@ function AssignmentModal({
     onPageChange: setPage,
     totalPages,
   });
-  const effectiveSelectedSeatKey = filteredAssignedSeats.some(
+  const effectiveSelectedSeatKey = assignedSeats.some(
     (seat) => getAssignedSeatKey(seat) === selectedSeatKey,
   )
     ? selectedSeatKey
-    : getAssignedSeatKey(filteredAssignedSeats[0]);
+    : getAssignedSeatKey(assignedSeats[0]);
   const selectedSeat =
-    filteredAssignedSeats.find(
+    assignedSeats.find(
       (seat) => getAssignedSeatKey(seat) === effectiveSelectedSeatKey,
     ) || null;
 
@@ -222,30 +186,13 @@ function AssignmentModal({
   const seatToUnassignGuestName = seatToUnassign?.guest
     ? Guest.getFullName(seatToUnassign.guest, "Invitado")
     : "";
-  const handleFilterChange = (filterKey, value) => {
-    setFilters((current) => ({
-      ...current,
-      [filterKey]: value,
-    }));
-    setPage(1);
-  };
-
   return (
     <>
       <SeatAssignmentModal
         blockRouteChange={!seatToUnassign}
-        eyebrow={`Mesa ${table.name} ${assignedSeats.length} ${
-          assignedSeats.length === 1
-            ? "invitado asignado"
-            : "invitados asignados"
-        }`}
+        eyebrow={table.name}
         onClose={onClose}
-        title={
-          <span className="inline-flex items-center gap-2">
-            <Armchair size={22} strokeWidth={1.8} />
-            {title}
-          </span>
-        }
+        title={table.name}
       >
         <AdminTableSection
           actions={
@@ -268,19 +215,9 @@ function AssignmentModal({
           className="p-4 shadow-none hover:translate-y-0 sm:p-5"
           contentRef={contentRef}
           eyebrow={adminContent.tables.dialogs.assignedTitle}
-          filters={
-            assignedSeats.length > 0 && (
-              <PendingGuestsFilters
-                availableConfirmations={availableGroups}
-                availableMenus={availableMenus}
-                filters={filters}
-                onFilterChange={handleFilterChange}
-              />
-            )
-          }
           getKey={getAssignedSeatKey}
           isMobileView={isMobileView}
-          items={filteredAssignedSeats}
+          items={assignedSeats}
           lockPageHeight={false}
           mobilePageLabel={adminContent.tables.dialogs.guestLabel}
           onNextPage={() =>
@@ -333,11 +270,7 @@ function AssignmentModal({
 }
 
 function AssignedSeatCard({ onSelect, seat, selected }) {
-  const guestGroup = String(seat.guest.confirmationName || "").trim();
-  const eyebrow = tableContent.card.seatEyebrow({
-    group: guestGroup,
-    seat: seat.seat,
-  });
+  const seatLabel = `Asiento ${seat.seat}`;
 
   return (
     <div
@@ -350,8 +283,9 @@ function AssignedSeatCard({ onSelect, seat, selected }) {
     >
       <TableGuestCard
         decorativeText={seat.seat}
-        eyebrow={eyebrow}
+        eyebrow={seatLabel}
         guest={seat.guest}
+        title={seatLabel}
       />
     </div>
   );

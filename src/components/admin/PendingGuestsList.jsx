@@ -12,6 +12,8 @@ export default function PendingGuestsList({
   emptyTitle = adminContent.pendingGuests.emptyTitle,
   error = "",
   guests = [],
+  rowEyebrow,
+  rowTitle,
   onSelect,
   selectedGuestKey = "",
 }) {
@@ -33,6 +35,8 @@ export default function PendingGuestsList({
 
       <PendingGuestsPage
         guests={guests}
+        rowEyebrow={rowEyebrow}
+        rowTitle={rowTitle}
         onSelect={onSelect}
         selectedGuestKey={selectedGuestKey}
       />
@@ -109,6 +113,8 @@ export function PendingGuestsFilters({
 
 function PendingGuestsPage({
   guests,
+  rowEyebrow,
+  rowTitle,
   onSelect,
   selectedGuestKey,
 }) {
@@ -118,6 +124,8 @@ function PendingGuestsPage({
         <GuestAssignmentRow
           guest={guest}
           key={getPendingGuestRowKey(guest)}
+          rowEyebrow={rowEyebrow}
+          rowTitle={rowTitle}
           onSelect={onSelect}
           selected={getPendingGuestRowKey(guest) === selectedGuestKey}
         />
@@ -128,6 +136,8 @@ function PendingGuestsPage({
 
 function GuestAssignmentRow({
   guest,
+  rowEyebrow,
+  rowTitle,
   onSelect,
   selected,
 }) {
@@ -142,8 +152,13 @@ function GuestAssignmentRow({
     >
       <TableGuestCard
         decorativeText="?"
-        eyebrow={guest.confirmationName || adminContent.pendingGuests.pendingEyebrow}
+        eyebrow={
+          rowEyebrow ||
+          guest.confirmationName ||
+          adminContent.pendingGuests.pendingEyebrow
+        }
         guest={guest}
+        title={rowTitle}
       />
     </div>
   );

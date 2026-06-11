@@ -1032,6 +1032,7 @@ function SeatAssignmentDialog({
 }) {
   const tableKey = table.name;
   const tableLabel = table.name;
+  const seatLabel = `Asiento ${seat.seat}`;
   const contentRef = useRef(null);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
@@ -1131,13 +1132,10 @@ function SeatAssignmentDialog({
     <>
       <SeatAssignmentModal
         blockRouteChange={!showRemoveConfirm}
-        eyebrow={tableContent.card.seatAssignmentEyebrow({
-          seat: seat.seat,
-          table: tableLabel,
-        })}
+        eyebrow={tableLabel}
         maxWidthClassName="max-w-2xl"
         onClose={onCancel}
-        title={adminContent.tables.dialogs.assignmentTitle}
+        title={tableLabel}
       >
         <AdminTableSection
           actions={
@@ -1181,10 +1179,7 @@ function SeatAssignmentDialog({
           }
           className="p-4 shadow-none hover:translate-y-0 sm:p-5"
           contentRef={contentRef}
-          count={`${filteredGuests.length} ${
-            filteredGuests.length === 1 ? "invitado" : "invitados"
-          }`}
-          eyebrow={adminContent.tables.dialogs.guestLabel}
+          eyebrow={seatLabel}
           filters={
             <PendingGuestsFilters
               availableConfirmations={availableConfirmations}
@@ -1214,6 +1209,8 @@ function SeatAssignmentDialog({
               emptyTitle={getSeatAssignmentEmptyState(guests.length).title}
               guests={items}
               onSelect={() => {}}
+              rowEyebrow={seatLabel}
+              rowTitle={seatLabel}
               selectedGuestKey={effectiveSelectedGuestKey}
             />
           )}
@@ -1225,11 +1222,13 @@ function SeatAssignmentDialog({
               onSelect={(guest) =>
                 setSelectedGuestKey(getPendingGuestRowKey(guest))
               }
+              rowEyebrow={seatLabel}
+              rowTitle={seatLabel}
               selectedGuestKey={effectiveSelectedGuestKey}
             />
           )}
           sourceItemsCount={guests.length}
-          title={adminContent.tables.dialogs.guestPlaceholder}
+          title={seatLabel}
           totalPages={totalPages}
         />
       </SeatAssignmentModal>

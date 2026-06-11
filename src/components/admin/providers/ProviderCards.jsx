@@ -136,7 +136,7 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
         eyebrow={PROVIDER_CATEGORY_LABELS[provider.category]}
         title={provider.name || "Proveedor sin nombre"}
       >
-        <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
           <Chip
             className="col-span-2"
             href={getEmailHref(provider.email)}
@@ -203,7 +203,7 @@ function ServiceCard({ onDelete, onEdit, onSelect, selected, service }) {
         eyebrow={service.providerName}
         title={service.name || "Servicio sin nombre"}
       >
-        <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
           <Chip
             className="col-span-2"
             icon={<BriefcaseBusiness size={13} strokeWidth={1.8} />}
