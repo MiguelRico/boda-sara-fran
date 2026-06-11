@@ -9,11 +9,10 @@ export default function AdminPendingChangesActions({
   changes = [],
   discardLabel = "Deshacer cambios",
   dialogEyebrow = adminContent.tables.dialogs.unsavedEyebrow,
-  discardDialogText =
-    "Eliminar cambios limpiara todo cambio en memoria de admin.",
+  discardDialogText = "Eliminar cambios limpiara todo cambio en memoria de admin.",
   discardDialogTitle = "Eliminar cambios",
   hasPendingChanges,
-  keepEditingLabel = "Deshacer cambios",
+  keepEditingLabel = "Seguir editando",
   loading = false,
   onConfirmDiscard,
   onConfirmSave,
@@ -92,8 +91,7 @@ export default function AdminPendingChangesActions({
           changes={changes}
           labels={{
             eyebrow: dialogEyebrow,
-            text:
-              dialogMode === "discard" ? discardDialogText : saveDialogText,
+            text: dialogMode === "discard" ? discardDialogText : saveDialogText,
             title:
               dialogMode === "discard" ? discardDialogTitle : saveDialogTitle,
           }}

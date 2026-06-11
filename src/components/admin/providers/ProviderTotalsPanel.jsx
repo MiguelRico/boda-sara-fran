@@ -2,13 +2,14 @@ import {
   BadgeEuro,
   BriefcaseBusiness,
   CalendarDays,
-  CircleCheckBig,
   CircleDashed,
   Euro,
+  FolderOpen,
+  ReceiptText,
 } from "lucide-react";
 
 import { adminContent } from "../../../constants/adminContent";
-import { formatCurrency } from "../../../utils/formatters";
+import { formatCurrency, formatDate } from "../../../utils/formatters";
 import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
@@ -27,12 +28,12 @@ export default function ProviderTotalsPanel({ loading, stats }) {
       </h2>
       {loading ? (
         <AdminMetricGridSkeleton
-          className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6"
-          count={6}
+          className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-9"
+          count={9}
         />
       ) : (
         <AdminMetricGrid
-          className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6"
+          className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-9"
           items={[
             {
               emoji: <BriefcaseBusiness size={22} strokeWidth={1.8} />,
@@ -43,6 +44,11 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
               label: metrics.services,
               value: stats.serviceCount,
+            },
+            {
+              emoji: <FolderOpen size={22} strokeWidth={1.8} />,
+              label: metrics.categories,
+              value: stats.categoryCount,
             },
             {
               emoji: <Euro size={22} strokeWidth={1.8} />,
@@ -60,9 +66,19 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               value: formatCurrency(stats.totalPending),
             },
             {
-              emoji: <CircleCheckBig size={22} strokeWidth={1.8} />,
-              label: metrics.paidServices,
-              value: stats.paidServiceCount,
+              emoji: <ReceiptText size={22} strokeWidth={1.8} />,
+              label: metrics.nextPayments,
+              value: stats.nextPaymentCount,
+            },
+            {
+              emoji: <CalendarDays size={22} strokeWidth={1.8} />,
+              label: metrics.nextPaymentDate,
+              value: formatDate(stats.nextPaymentDate),
+            },
+            {
+              emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
+              label: metrics.nextPaymentAmount,
+              value: formatCurrency(stats.nextPaymentAmount),
             },
           ]}
         />

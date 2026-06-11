@@ -44,7 +44,7 @@ export default function TableGuestCard({
             {eyebrow || guest.confirmationName || "Invitado"}
           </p>
           <h3
-            className="break-words font-serif text-3xl leading-none text-[var(--color-text)]"
+            className="break-words font-serif text-2xl leading-none text-[var(--color-text)] sm:text-4xl"
             ref={titleRef}
             style={titleStyle}
           >

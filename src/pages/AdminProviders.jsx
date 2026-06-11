@@ -18,7 +18,10 @@ import {
 import {
   createEmptyProvider,
   createEmptyService,
+  getActiveProviderCategories,
+  getNextPaymentInfoFromServices,
   getProviderPaidTotal,
+  getProviderPendingTotal,
   getProviderTotal,
   normalizeProviders,
   persistProviders,
@@ -977,7 +980,7 @@ function ProviderTableActions({
 }
 
 function buildProviderStats(providers) {
-  return providers.reduce(
+  const baseStats = providers.reduce(
     (stats, provider) => {
       const providerTotal = getProviderTotal(provider);
       const providerPaid = getProviderPaidTotal(provider);
@@ -989,7 +992,7 @@ function buildProviderStats(providers) {
         serviceCount: stats.serviceCount + provider.services.length,
         totalBudget: stats.totalBudget + providerTotal,
         totalPaid: stats.totalPaid + providerPaid,
-        totalPending: stats.totalPending + Math.max(providerTotal - providerPaid, 0),
+        totalPending: stats.totalPending + getProviderPendingTotal(provider),
       };
     },
     {
@@ -1001,6 +1004,17 @@ function buildProviderStats(providers) {
       totalPending: 0,
     },
   );
+  const nextPayment = getNextPaymentInfoFromServices(
+    getProviderServices(providers),
+  );
+
+  return {
+    ...baseStats,
+    categoryCount: getActiveProviderCategories(providers),
+    nextPaymentAmount: nextPayment.amount,
+    nextPaymentCount: nextPayment.count,
+    nextPaymentDate: nextPayment.date,
+  };
 }
 
 function filterProviders(providers, { category, query }) {

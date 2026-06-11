@@ -272,9 +272,13 @@ export const adminContent = {
       metrics: {
         providers: "Proveedores",
         services: "Servicios",
+        categories: "Categorías",
         budget: "Presupuesto",
         paid: "Pagado",
         pending: "Pendiente",
+        nextPayments: "Próximos pagos",
+        nextPaymentDate: "Fecha próximo pago",
+        nextPaymentAmount: "Importe próximo pago",
         paidServices: "Servicios pagados",
       },
     },

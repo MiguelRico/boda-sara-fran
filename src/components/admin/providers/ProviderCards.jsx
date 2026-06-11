@@ -9,6 +9,7 @@ import {
   Flower2,
   Gift,
   GlassWater,
+  Globe,
   Headphones,
   Hotel,
   Lightbulb,
@@ -26,11 +27,17 @@ import {
   PROVIDER_CATEGORY_LABELS,
 } from "../../../constants/providers";
 import {
+  getProviderNextPaymentInfo,
   getProviderPaidTotal,
+  getProviderPendingTotal,
   getProviderTotal,
+  getServicePaidTotal,
+  getServicePaymentStats,
+  getServicePendingTotal,
+  getNextPaymentInfoFromServices,
 } from "../../../services/providersService";
 import { getEmailHref, getPhoneHref } from "../../../utils/contactLinks";
-import { formatCurrency } from "../../../utils/formatters";
+import { formatCurrency, formatDate } from "../../../utils/formatters";
 import Card from "../Card";
 import CardActions from "../CardActions";
 import SelectableCardPage from "../SelectableCardPage";
@@ -110,6 +117,9 @@ export function ServiceCardsPage({
 function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
   const total = getProviderTotal(provider);
   const paid = getProviderPaidTotal(provider);
+  const pending = getProviderPendingTotal(provider);
+  const nextPayment = getProviderNextPaymentInfo(provider);
+  const webHref = getWebHref(provider.web);
 
   return (
     <div
@@ -150,7 +160,17 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
             tone="secondary"
             value={provider.phone || "-"}
           />
+          {provider.web && (
+            <Chip
+              className="col-span-2"
+              href={webHref}
+              icon={<Globe size={13} strokeWidth={1.8} />}
+              target="_blank"
+              value={provider.web}
+            />
+          )}
           <Chip
+            className="col-span-2"
             icon={<BriefcaseBusiness size={13} strokeWidth={1.8} />}
             strong
             value={`${provider.services.length} servicios`}
@@ -161,10 +181,22 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
             value={formatCurrency(total)}
           />
           <Chip
-            icon={<CalendarDays size={13} strokeWidth={1.8} />}
-            value={`Pagado: ${formatCurrency(paid)}`}
+            icon={<BadgeEuro size={13} strokeWidth={1.8} />}
+            strong
+            value={formatCurrency(paid)}
           />
-          {provider.web && <Chip className="col-span-2" value={provider.web} />}
+          <Chip
+            icon={<ReceiptText size={13} strokeWidth={1.8} />}
+            value={formatCurrency(pending)}
+          />
+          <Chip
+            icon={<CalendarDays size={13} strokeWidth={1.8} />}
+            value={formatDate(nextPayment.date)}
+          />
+          <Chip
+            icon={<BadgeEuro size={13} strokeWidth={1.8} />}
+            value={formatCurrency(nextPayment.amount)}
+          />
         </div>
       </Card>
     </div>
@@ -172,11 +204,10 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
 }
 
 function ServiceCard({ onDelete, onEdit, onSelect, selected, service }) {
-  const paid = service.payments.reduce(
-    (total, payment) =>
-      total + (payment.paid ? Number(payment.amount) || 0 : 0),
-    0,
-  );
+  const paid = getServicePaidTotal(service);
+  const pending = getServicePendingTotal(service);
+  const paymentStats = getServicePaymentStats(service);
+  const nextPayment = getNextPaymentInfoFromServices([service]);
 
   return (
     <div
@@ -205,7 +236,6 @@ function ServiceCard({ onDelete, onEdit, onSelect, selected, service }) {
       >
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
           <Chip
-            className="col-span-2"
             icon={<BriefcaseBusiness size={13} strokeWidth={1.8} />}
             strong
             value={PROVIDER_CATEGORY_LABELS[service.category]}
@@ -216,20 +246,50 @@ function ServiceCard({ onDelete, onEdit, onSelect, selected, service }) {
             value={formatCurrency(service.price)}
           />
           <Chip
+            icon={<BadgeEuro size={13} strokeWidth={1.8} />}
+            strong
+            value={formatCurrency(paid)}
+          />
+          <Chip
+            icon={<ReceiptText size={13} strokeWidth={1.8} />}
+            value={formatCurrency(pending)}
+          />
+          <Chip
             icon={<CalendarDays size={13} strokeWidth={1.8} />}
-            value={`${service.paymentCount} ${
-              service.paymentCount === 1 ? "plazo" : "plazos"
+            value={`${paymentStats.totalCount} ${
+              paymentStats.totalCount === 1 ? "plazo" : "plazos"
             }`}
           />
           <Chip
-            className="col-span-2"
             icon={<BadgeEuro size={13} strokeWidth={1.8} />}
-            value={`Pagado: ${formatCurrency(paid)}`}
+            value={`${paymentStats.paidCount} pagados`}
+          />
+          <Chip
+            icon={<ReceiptText size={13} strokeWidth={1.8} />}
+            value={`${paymentStats.pendingCount} pendientes`}
+          />
+          <Chip
+            icon={<CalendarDays size={13} strokeWidth={1.8} />}
+            value={formatDate(nextPayment.date)}
+          />
+          <Chip
+            icon={<BadgeEuro size={13} strokeWidth={1.8} />}
+            value={formatCurrency(nextPayment.amount)}
           />
         </div>
       </Card>
     </div>
   );
+}
+
+function getWebHref(web) {
+  const normalizedWeb = String(web || "").trim();
+
+  if (!normalizedWeb) return undefined;
+
+  return /^https?:\/\//i.test(normalizedWeb)
+    ? normalizedWeb
+    : `https://${normalizedWeb}`;
 }
 
 function getProviderCategoryIcon(category) {
