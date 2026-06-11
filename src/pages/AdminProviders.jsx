@@ -3,7 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
   Plus,
+  Save,
   Search,
+  Trash2,
+  X,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -90,6 +93,7 @@ export default function AdminProviders() {
   const [editingProviderMode, setEditingProviderMode] = useState("provider");
   const [editingServiceId, setEditingServiceId] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showSaveChangesDialog, setShowSaveChangesDialog] = useState(false);
   const [errors, setErrors] = useState({});
   const [activeTab, setActiveTab] = useAdminActiveTab(
     ADMIN_PROVIDERS_ACTIVE_TAB_KEY,
@@ -199,6 +203,10 @@ export default function AdminProviders() {
   });
   const hasPendingChanges =
     JSON.stringify(savedProviders) !== JSON.stringify(providers);
+  const pendingChanges = useMemo(
+    () => buildPendingProviderChanges(savedProviders, providers),
+    [providers, savedProviders],
+  );
   const stats = useMemo(() => buildProviderStats(providers), [providers]);
 
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
@@ -212,9 +220,14 @@ export default function AdminProviders() {
   }, [isAuthenticated, loadProvidersData]);
 
   const applyProviders = (nextProviders) => {
-    setProviders(normalizeProviders(nextProviders));
+    const normalizedProviders = normalizeProviders(nextProviders);
+
+    setProviders(normalizedProviders);
+    setAdminProviders(normalizedProviders);
   };
   const handleSavePendingChanges = async () => {
+    if (!hasPendingChanges) return true;
+
     try {
       spinner.show(adminContent.providers.spinner.save);
       const normalizedProviders = await persistProviders({
@@ -242,6 +255,7 @@ export default function AdminProviders() {
   };
   const handleDiscardPendingChanges = () => {
     setProviders(savedProviders);
+    setAdminProviders(savedProviders);
     setEditingProvider(null);
     setDeleteTarget(null);
   };
@@ -331,6 +345,18 @@ export default function AdminProviders() {
 
     blocker.reset?.();
   };
+  const handleRequestSavePendingChanges = () => {
+    if (!hasPendingChanges || loadingProviders || spinner.loading) return;
+
+    setShowSaveChangesDialog(true);
+  };
+  const handleConfirmSavePendingChanges = async () => {
+    const saved = await handleSavePendingChanges();
+
+    if (saved) {
+      setShowSaveChangesDialog(false);
+    }
+  };
   const handleSubmitProvider = (event) => {
     event.preventDefault();
 
@@ -412,12 +438,19 @@ export default function AdminProviders() {
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
 
-      {blocker.state === "blocked" && (
+      {(blocker.state === "blocked" || showSaveChangesDialog) && (
         <UnsavedProviderChangesDialog
-          changes={buildPendingProviderChanges(savedProviders, providers)}
-          onCancel={handleCancelBlockedNavigation}
+          changes={pendingChanges}
+          mode={showSaveChangesDialog ? "save" : "navigate"}
+          onCancel={
+            showSaveChangesDialog
+              ? () => setShowSaveChangesDialog(false)
+              : handleCancelBlockedNavigation
+          }
           onConfirm={handleConfirmBlockedNavigation}
+          onSave={handleConfirmSavePendingChanges}
           onSaveAndExit={handleSaveAndExitBlockedNavigation}
+          saving={spinner.loading}
         />
       )}
 
@@ -436,7 +469,7 @@ export default function AdminProviders() {
             discardLabel={adminContent.providers.actions.discardChanges}
             hasPendingChanges={hasPendingChanges}
             onDiscard={handleDiscardPendingChanges}
-            onSave={handleSavePendingChanges}
+            onSave={handleRequestSavePendingChanges}
             saveLabel={adminContent.providers.actions.saveChanges}
             saving={spinner.loading}
             showText={!isMobileView}
@@ -713,20 +746,62 @@ export default function AdminProviders() {
 
 function UnsavedProviderChangesDialog({
   changes,
+  mode = "navigate",
   onCancel,
   onConfirm,
+  onSave,
   onSaveAndExit,
+  saving = false,
 }) {
+  const isSaveMode = mode === "save";
+
   return (
     <UnsavedChangesDialog
+      actions={
+        isSaveMode
+          ? [
+              {
+                disabled: saving,
+                icon: <Save size={16} strokeWidth={1.8} />,
+                label: adminContent.providers.actions.saveChanges,
+                onClick: onSave,
+                tone: "primary",
+              },
+              {
+                disabled: saving,
+                icon: <X size={16} strokeWidth={1.8} />,
+                label: adminContent.tables.dialogs.keepEditing,
+                onClick: onCancel,
+                tone: "terciary",
+              },
+            ]
+          : [
+              {
+                icon: <Trash2 size={16} strokeWidth={1.8} />,
+                label: adminContent.tables.dialogs.exitWithoutSaving,
+                onClick: onConfirm,
+                tone: "danger",
+              },
+              {
+                icon: <X size={16} strokeWidth={1.8} />,
+                label: adminContent.tables.dialogs.keepEditing,
+                onClick: onCancel,
+                tone: "terciary",
+              },
+            ]
+      }
       changes={changes}
       labels={{
         eyebrow: adminContent.providers.dialogs.warningEyebrow,
         exitWithoutSaving: adminContent.tables.dialogs.exitWithoutSaving,
         keepEditing: adminContent.tables.dialogs.keepEditing,
         saveAndExit: adminContent.tables.dialogs.saveAndExit,
-        text: adminContent.providers.dialogs.unsavedText,
-        title: adminContent.tables.dialogs.unsavedTitle,
+        text: isSaveMode
+          ? "Se enviaran estos cambios a Apps Script."
+          : adminContent.providers.dialogs.unsavedText,
+        title: isSaveMode
+          ? adminContent.providers.actions.saveChanges
+          : adminContent.tables.dialogs.unsavedTitle,
       }}
       onCancel={onCancel}
       onConfirm={onConfirm}

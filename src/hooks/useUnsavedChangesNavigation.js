@@ -1,22 +1,84 @@
-import { useCallback } from "react";
-import { useBeforeUnload } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useBlocker } from "react-router-dom";
 
 export default function useUnsavedChangesNavigation(hasPendingChanges) {
-  useBeforeUnload(
-    useCallback(
-      (event) => {
-        if (!hasPendingChanges) return;
+  const [externalNavigation, setExternalNavigation] = useState(null);
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    if (!hasPendingChanges) return false;
 
-        event.preventDefault();
-        event.returnValue = "";
-      },
-      [hasPendingChanges],
-    ),
-  );
+    return (
+      currentLocation.pathname !== nextLocation.pathname ||
+      currentLocation.search !== nextLocation.search ||
+      currentLocation.hash !== nextLocation.hash
+    );
+  });
+
+  useEffect(() => {
+    if (!hasPendingChanges) return undefined;
+
+    const handleClick = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+
+      const link = event.target.closest?.("a[href]");
+      if (!link || link.hasAttribute("download")) return;
+
+      const href = link.getAttribute("href");
+      if (!href || href.startsWith("#")) return;
+
+      const targetUrl = new URL(href, window.location.href);
+      const isExternal =
+        targetUrl.origin !== window.location.origin ||
+        !["http:", "https:"].includes(targetUrl.protocol);
+
+      if (!isExternal) return;
+
+      event.preventDefault();
+      setExternalNavigation({
+        href: targetUrl.href,
+        target: link.getAttribute("target"),
+      });
+    };
+
+    document.addEventListener("click", handleClick, true);
+
+    return () => document.removeEventListener("click", handleClick, true);
+  }, [hasPendingChanges]);
+
+  const proceed = () => {
+    if (externalNavigation) {
+      const { href, target } = externalNavigation;
+
+      setExternalNavigation(null);
+
+      if (target === "_blank") {
+        window.open(href, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      window.location.href = href;
+      return;
+    }
+
+    blocker.proceed?.();
+  };
+
+  const reset = () => {
+    if (externalNavigation) {
+      setExternalNavigation(null);
+      return;
+    }
+
+    blocker.reset?.();
+  };
 
   return {
-    proceed: () => {},
-    reset: () => {},
-    state: "unblocked",
+    ...blocker,
+    proceed,
+    reset,
+    state: externalNavigation ? "blocked" : blocker.state,
   };
 }

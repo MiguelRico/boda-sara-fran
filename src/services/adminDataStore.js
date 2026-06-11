@@ -88,6 +88,38 @@ export const hasAdminPendingChanges = () =>
   getStableJson(store.tables) !== getStableJson(store.savedTables) ||
   getStableJson(store.providers) !== getStableJson(store.savedProviders);
 
+export const getAdminPendingChangesSummary = () => [
+  ...buildEntityChanges({
+    createdLabel: (item) =>
+      `Confirmacion creada: ${getConfirmationLabel(item)}`,
+    currentItems: store.confirmations,
+    deletedLabel: (item) =>
+      `Confirmacion eliminada: ${getConfirmationLabel(item)}`,
+    getKey: getConfirmationKey,
+    modifiedLabel: (item) =>
+      `Confirmacion modificada: ${getConfirmationLabel(item)}`,
+    savedItems: store.savedConfirmations,
+  }),
+  ...buildEntityChanges({
+    createdLabel: (item) => `Mesa creada: ${item.name || "sin nombre"}`,
+    currentItems: store.tables,
+    deletedLabel: (item) => `Mesa eliminada: ${item.name || "sin nombre"}`,
+    getKey: (item) => item.id || item.name,
+    modifiedLabel: (item) => `Mesa modificada: ${item.name || "sin nombre"}`,
+    savedItems: store.savedTables,
+  }),
+  ...buildEntityChanges({
+    createdLabel: (item) => `Proveedor creado: ${item.name || "sin nombre"}`,
+    currentItems: store.providers,
+    deletedLabel: (item) =>
+      `Proveedor eliminado: ${item.name || "sin nombre"}`,
+    getKey: (item) => item.id,
+    modifiedLabel: (item) =>
+      `Proveedor modificado: ${item.name || "sin nombre"}`,
+    savedItems: store.savedProviders,
+  }),
+];
+
 export const markAdminDataSaved = ({
   confirmations = store.confirmations,
   providers = store.providers,
@@ -206,4 +238,45 @@ export const setAdminProviders = (providers) => {
 
   return store.providers;
 };
+
+function buildEntityChanges({
+  createdLabel,
+  currentItems,
+  deletedLabel,
+  getKey,
+  modifiedLabel,
+  savedItems,
+}) {
+  const savedByKey = new Map(savedItems.map((item) => [getKey(item), item]));
+  const currentByKey = new Map(currentItems.map((item) => [getKey(item), item]));
+  const changes = [];
+
+  currentByKey.forEach((item, key) => {
+    if (!savedByKey.has(key)) {
+      changes.push(createdLabel(item));
+      return;
+    }
+
+    if (getStableJson(savedByKey.get(key)) !== getStableJson(item)) {
+      changes.push(modifiedLabel(item));
+    }
+  });
+
+  savedByKey.forEach((item, key) => {
+    if (!currentByKey.has(key)) {
+      changes.push(deletedLabel(item));
+    }
+  });
+
+  return changes;
+}
+
+function getConfirmationLabel(confirmation = {}) {
+  return (
+    confirmation.confirmationName ||
+    confirmation.email ||
+    confirmation.phone ||
+    "sin nombre"
+  );
+}
 

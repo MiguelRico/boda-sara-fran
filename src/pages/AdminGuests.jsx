@@ -1,7 +1,7 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate, useBeforeUnload } from "react-router-dom";
-import { Pencil, Plus, Search, Trash2, UsersRound } from "lucide-react";
+import { Navigate } from "react-router-dom";
+import { Pencil, Plus, Save, Search, Trash2, UsersRound, X } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
@@ -115,6 +115,7 @@ export default function AdminGuests() {
   const [editingMode, setEditingMode] = useState("full");
   const [editingGuestIndex, setEditingGuestIndex] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showSaveChangesDialog, setShowSaveChangesDialog] = useState(false);
   const [popup, setPopup] = useState(createInitialPopup);
   const [activeTab, setActiveTab] = useAdminActiveTab(
     ADMIN_GUESTS_ACTIVE_TAB_KEY,
@@ -463,6 +464,20 @@ export default function AdminGuests() {
     blocker.reset?.();
   };
 
+  const handleRequestSavePendingChanges = () => {
+    if (!hasPendingChanges || state.loading || spinner.loading) return;
+
+    setShowSaveChangesDialog(true);
+  };
+
+  const handleConfirmSavePendingChanges = async () => {
+    const saved = await handleSavePendingChanges();
+
+    if (saved) {
+      setShowSaveChangesDialog(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
   }
@@ -471,12 +486,19 @@ export default function AdminGuests() {
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
 
-      {blocker.state === "blocked" && (
+      {(blocker.state === "blocked" || showSaveChangesDialog) && (
         <UnsavedGuestChangesDialog
           changes={pendingChanges}
-          onCancel={handleCancelBlockedNavigation}
+          mode={showSaveChangesDialog ? "save" : "navigate"}
+          onCancel={
+            showSaveChangesDialog
+              ? () => setShowSaveChangesDialog(false)
+              : handleCancelBlockedNavigation
+          }
           onConfirm={handleConfirmBlockedNavigation}
+          onSave={handleConfirmSavePendingChanges}
           onSaveAndExit={handleSaveAndExitBlockedNavigation}
+          saving={spinner.loading}
         />
       )}
 
@@ -497,7 +519,7 @@ export default function AdminGuests() {
             hasPendingChanges={hasPendingChanges}
             loading={state.loading}
             onDiscard={handleDiscardPendingChanges}
-            onSave={handleSavePendingChanges}
+            onSave={handleRequestSavePendingChanges}
             saveLabel={adminContent.guests.actions.saveChanges}
             saving={spinner.loading}
             showText={!isMobileView}
@@ -862,20 +884,62 @@ function GuestTableActions({ loading, onCreate, rows, showText = true }) {
 
 function UnsavedGuestChangesDialog({
   changes,
+  mode = "navigate",
   onCancel,
   onConfirm,
+  onSave,
   onSaveAndExit,
+  saving = false,
 }) {
+  const isSaveMode = mode === "save";
+
   return (
     <UnsavedChangesDialog
+      actions={
+        isSaveMode
+          ? [
+              {
+                disabled: saving,
+                icon: <Save size={16} strokeWidth={1.8} />,
+                label: adminContent.guests.actions.saveChanges,
+                onClick: onSave,
+                tone: "primary",
+              },
+              {
+                disabled: saving,
+                icon: <X size={16} strokeWidth={1.8} />,
+                label: adminContent.guests.dialogs.keepEditing,
+                onClick: onCancel,
+                tone: "terciary",
+              },
+            ]
+          : [
+              {
+                icon: <Trash2 size={16} strokeWidth={1.8} />,
+                label: adminContent.guests.dialogs.exitWithoutSaving,
+                onClick: onConfirm,
+                tone: "danger",
+              },
+              {
+                icon: <X size={16} strokeWidth={1.8} />,
+                label: adminContent.guests.dialogs.keepEditing,
+                onClick: onCancel,
+                tone: "terciary",
+              },
+            ]
+      }
       changes={changes}
       labels={{
         eyebrow: adminContent.guests.dialogs.warningEyebrow,
         exitWithoutSaving: adminContent.guests.dialogs.exitWithoutSaving,
         keepEditing: adminContent.guests.dialogs.keepEditing,
         saveAndExit: adminContent.guests.dialogs.saveAndExit,
-        text: adminContent.guests.dialogs.unsavedText,
-        title: adminContent.guests.dialogs.unsavedTitle,
+        text: isSaveMode
+          ? "Se enviaran estos cambios a Apps Script."
+          : adminContent.guests.dialogs.unsavedText,
+        title: isSaveMode
+          ? adminContent.guests.actions.saveChanges
+          : adminContent.guests.dialogs.unsavedTitle,
       }}
       onCancel={onCancel}
       onConfirm={onConfirm}
@@ -1119,18 +1183,6 @@ function GroupEditor({
       : isCreation
         ? adminContent.guests.dialogs.groupCreateTitle
         : adminContent.guests.dialogs.groupEditorTitle;
-
-  useBeforeUnload(
-    useCallback(
-      (event) => {
-        if (!hasUnsavedChanges || saving) return;
-
-        event.preventDefault();
-        event.returnValue = "";
-      },
-      [hasUnsavedChanges, saving],
-    ),
-  );
 
   const handleRequestClose = () => {
     if (saving) return;

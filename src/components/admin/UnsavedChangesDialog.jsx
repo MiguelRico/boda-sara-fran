@@ -5,6 +5,7 @@ import IconButton from "../ui/IconButton";
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 
 export default function UnsavedChangesDialog({
+  actions,
   changes,
   labels,
   onCancel,
@@ -51,46 +52,69 @@ export default function UnsavedChangesDialog({
             </li>
           ))}
         </ul>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <IconButton
-            className="flex-1"
-            icon={<Trash2 size={16} strokeWidth={1.8} />}
-            label={labels.exitWithoutSaving}
-            onClick={onConfirm}
-            showText="always"
-            tone="danger"
-            type="button"
-          >
-            {labels.exitWithoutSaving}
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label={labels.saveAndExit}
-            onClick={onSaveAndExit}
-            showText="always"
-            tone="primary"
-            type="button"
-          >
-            {labels.saveAndExit}
-          </IconButton>
-          <IconButton
-            className="flex-1"
-            icon={<X size={16} strokeWidth={1.8} />}
-            label={labels.keepEditing}
-            onClick={onCancel}
-            showText="always"
-            tone="terciary"
-            type="button"
-          >
-            {labels.keepEditing}
-          </IconButton>
-        </div>
+        <DialogActions
+          actions={actions}
+          labels={labels}
+          onCancel={onCancel}
+          onConfirm={onConfirm}
+          onSaveAndExit={onSaveAndExit}
+        />
       </div>
     </div>
   );
 
   return createPortal(dialog, document.body);
+}
+
+function DialogActions({
+  actions,
+  labels,
+  onCancel,
+  onConfirm,
+  onSaveAndExit,
+}) {
+  const dialogActions =
+    actions ||
+    [
+      {
+        icon: <Trash2 size={16} strokeWidth={1.8} />,
+        label: labels.exitWithoutSaving,
+        onClick: onConfirm,
+        tone: "danger",
+      },
+      {
+        icon: <Save size={16} strokeWidth={1.8} />,
+        label: labels.saveAndExit,
+        onClick: onSaveAndExit,
+        tone: "primary",
+      },
+      {
+        icon: <X size={16} strokeWidth={1.8} />,
+        label: labels.keepEditing,
+        onClick: onCancel,
+        tone: "terciary",
+      },
+    ].filter((action) => action.label && action.onClick);
+
+  return (
+    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+      {dialogActions.map((action) => (
+        <IconButton
+          className="flex-1"
+          disabled={action.disabled}
+          icon={action.icon}
+          key={action.label}
+          label={action.label}
+          onClick={action.onClick}
+          showText="always"
+          tone={action.tone}
+          type="button"
+        >
+          {action.label}
+        </IconButton>
+      ))}
+    </div>
+  );
 }
 
 function getChangeTitle(change) {

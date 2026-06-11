@@ -8,7 +8,9 @@ import {
   Grid2X2,
   Armchair,
   Plus,
+  Save,
   Trash2,
+  X,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -122,8 +124,7 @@ export default function AdminTables() {
   const [pendingGuestsError, setPendingGuestsError] = useState("");
   const [selectedPendingGuestKey, setSelectedPendingGuestKey] = useState("");
   const [selectedTableKey, setSelectedTableKey] = useState("");
-  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
-    useState(false);
+  const [showSaveChangesDialog, setShowSaveChangesDialog] = useState(false);
   const [activeTab, setActiveTab] = useAdminActiveTab(
     ADMIN_ACTIVE_TAB_KEY,
     "tables",
@@ -247,12 +248,6 @@ export default function AdminTables() {
   );
 
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
-
-  useEffect(() => {
-    if (blocker.state === "blocked") {
-      setShowUnsavedChangesDialog(true);
-    }
-  }, [blocker.state]);
 
   const pendingGuestConfirmations = useMemo(() => {
     const groupSet = new Set(
@@ -714,19 +709,19 @@ export default function AdminTables() {
   };
 
   const handleCancelBlockedNavigation = () => {
-    setShowUnsavedChangesDialog(false);
+    setShowSaveChangesDialog(false);
     blocker.reset?.();
   };
 
   const handleConfirmBlockedNavigation = () => {
-    setShowUnsavedChangesDialog(false);
+    setShowSaveChangesDialog(false);
     blocker.proceed?.();
   };
 
   const handleSaveAndExitBlockedNavigation = async () => {
     const saved = await handleSavePendingChanges();
 
-    setShowUnsavedChangesDialog(false);
+    setShowSaveChangesDialog(false);
 
     if (saved) {
       blocker.proceed?.();
@@ -734,6 +729,20 @@ export default function AdminTables() {
     }
 
     blocker.reset?.();
+  };
+
+  const handleRequestSavePendingChanges = () => {
+    if (!hasPendingChanges || state.loading || spinner.loading) return;
+
+    setShowSaveChangesDialog(true);
+  };
+
+  const handleConfirmSavePendingChanges = async () => {
+    const saved = await handleSavePendingChanges();
+
+    if (saved) {
+      setShowSaveChangesDialog(false);
+    }
   };
 
   if (!isAuthenticated) {
@@ -744,8 +753,41 @@ export default function AdminTables() {
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
 
-      {showUnsavedChangesDialog && (
+      {(showSaveChangesDialog || blocker.state === "blocked") && (
         <UnsavedChangesDialog
+          actions={
+            showSaveChangesDialog
+              ? [
+                  {
+                    disabled: spinner.loading,
+                    icon: <Save size={16} strokeWidth={1.8} />,
+                    label: adminContent.tables.actions.saveChanges,
+                    onClick: handleConfirmSavePendingChanges,
+                    tone: "primary",
+                  },
+                  {
+                    disabled: spinner.loading,
+                    icon: <X size={16} strokeWidth={1.8} />,
+                    label: adminContent.tables.dialogs.keepEditing,
+                    onClick: () => setShowSaveChangesDialog(false),
+                    tone: "terciary",
+                  },
+                ]
+              : [
+                  {
+                    icon: <Trash2 size={16} strokeWidth={1.8} />,
+                    label: adminContent.tables.dialogs.exitWithoutSaving,
+                    onClick: handleConfirmBlockedNavigation,
+                    tone: "danger",
+                  },
+                  {
+                    icon: <X size={16} strokeWidth={1.8} />,
+                    label: adminContent.tables.dialogs.keepEditing,
+                    onClick: handleCancelBlockedNavigation,
+                    tone: "terciary",
+                  },
+                ]
+          }
           changes={pendingChanges}
           onCancel={handleCancelBlockedNavigation}
           onConfirm={handleConfirmBlockedNavigation}
@@ -755,8 +797,14 @@ export default function AdminTables() {
             exitWithoutSaving: adminContent.tables.dialogs.exitWithoutSaving,
             keepEditing: adminContent.tables.dialogs.keepEditing,
             saveAndExit: adminContent.tables.dialogs.saveAndExit,
-            text: adminContent.tables.dialogs.unsavedText,
-            title: adminContent.tables.dialogs.unsavedTitle,
+            text:
+              showSaveChangesDialog
+                ? "Se enviaran estos cambios a Apps Script."
+                : adminContent.tables.dialogs.unsavedText,
+            title:
+              showSaveChangesDialog
+                ? adminContent.tables.actions.saveChanges
+                : adminContent.tables.dialogs.unsavedTitle,
           }}
           titleId="unsaved-table-changes-title"
         />
@@ -782,7 +830,7 @@ export default function AdminTables() {
             hasPendingChanges={hasPendingChanges}
             loading={state.loading}
             onDiscard={handleDiscardPendingChanges}
-            onSave={handleSavePendingChanges}
+            onSave={handleRequestSavePendingChanges}
             saveLabel={adminContent.tables.actions.saveChanges}
             saving={spinner.loading}
             showText={!isMobileView}

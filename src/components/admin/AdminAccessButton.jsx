@@ -8,9 +8,12 @@ import {
 import { useNavigate } from "react-router-dom";
 
 import IconButton from "../ui/IconButton";
+import UnsavedChangesDialog from "./UnsavedChangesDialog";
 import { ADMIN_AUTH_EVENT, ADMIN_SESSION_KEY } from "../../constants/admin";
+import { adminContent } from "../../constants/adminContent";
 import {
   clearAdminDataStore,
+  getAdminPendingChangesSummary,
   hasAdminPendingChanges,
 } from "../../services/adminDataStore";
 
@@ -23,6 +26,7 @@ export default function AdminAccessButton() {
   const menuRef = useRef(null);
   const [isAuthenticated, setIsAuthenticated] = useState(getAdminAuthState);
   const [isOpen, setIsOpen] = useState(false);
+  const [logoutChanges, setLogoutChanges] = useState(null);
 
   useEffect(() => {
     const syncAuthState = () => {
@@ -71,22 +75,22 @@ export default function AdminAccessButton() {
     setIsOpen((current) => !current);
   };
 
-  const handleLogout = () => {
-    if (
-      hasAdminPendingChanges() &&
-      !window.confirm(
-        "Hay cambios sin guardar en memoria. Si cierras sesion se perderan.",
-      )
-    ) {
-      setIsOpen(false);
-      return;
-    }
-
+  const completeLogout = () => {
     clearAdminDataStore();
     window.sessionStorage.removeItem(ADMIN_SESSION_KEY);
     window.dispatchEvent(new Event(ADMIN_AUTH_EVENT));
+    setLogoutChanges(null);
     setIsOpen(false);
     navigate("/admin");
+  };
+
+  const handleLogout = () => {
+    if (hasAdminPendingChanges()) {
+      setLogoutChanges(getAdminPendingChangesSummary());
+      return;
+    }
+
+    completeLogout();
   };
 
   const handleNavigateAdmin = () => {
@@ -96,6 +100,32 @@ export default function AdminAccessButton() {
 
   return (
     <div className="fixed right-3 top-3 z-50 sm:right-5 sm:top-5" ref={menuRef}>
+      {logoutChanges && (
+        <UnsavedChangesDialog
+          actions={[
+            {
+              icon: <LogOut size={16} strokeWidth={1.8} />,
+              label: "Cerrar sesion sin guardar",
+              onClick: completeLogout,
+              tone: "danger",
+            },
+            {
+              icon: <ShieldCheck size={16} strokeWidth={1.8} />,
+              label: adminContent.tables.dialogs.keepEditing,
+              onClick: () => setLogoutChanges(null),
+              tone: "terciary",
+            },
+          ]}
+          changes={logoutChanges}
+          labels={{
+            eyebrow: adminContent.tables.dialogs.unsavedEyebrow,
+            text: "Tienes cambios pendientes en memoria. Si cierras sesion ahora, se perderan.",
+            title: adminContent.tables.dialogs.unsavedTitle,
+          }}
+          titleId="admin-logout-unsaved-changes-title"
+        />
+      )}
+
       <IconButton
         aria-expanded={isAuthenticated ? isOpen : undefined}
         aria-haspopup={isAuthenticated ? "menu" : undefined}
