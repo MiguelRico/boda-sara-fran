@@ -7,6 +7,7 @@ import {
   CircleDashed,
   Grid2X2,
   Armchair,
+  Plus,
   Trash2,
 } from "lucide-react";
 
@@ -16,7 +17,6 @@ import {
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
 import AdminTableSection from "../components/admin/AdminTableSection";
-import AdminEntityActions from "../components/admin/AdminEntityActions";
 import AdminEntityTabs from "../components/admin/AdminEntityTabs";
 import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
 import AdminPageShell from "../components/admin/AdminPageShell";
@@ -224,7 +224,6 @@ export default function AdminTables() {
   });
   const {
     effectiveSelectedId: effectiveSelectedTableKey,
-    selectedItem: selectedTable,
   } = useEffectiveSelection({
     getId: getTableKey,
     items: pagedTables,
@@ -800,17 +799,9 @@ export default function AdminTables() {
               <AdminTableSection
                 actions={
                   <TableTabActions
-                    hasPendingChanges={hasPendingChanges}
                     loading={state.loading}
                     onCreate={handleCreateTable}
-                    onDelete={() => handleRequestDeleteTable(selectedTable)}
-                    onDiscard={handleDiscardPendingChanges}
-                    onEdit={() => handleEditTable(selectedTable)}
-                    onSave={handleSavePendingChanges}
-                    saving={spinner.loading}
-                    selectedTable={selectedTable}
                     showText={!isMobileView}
-                    tables={tables}
                   />
                 }
                 contentRef={tablesStartRef}
@@ -844,6 +835,8 @@ export default function AdminTables() {
                 renderMeasurePage={(items) => (
                   <TableCardsPage
                     items={items}
+                    onDelete={handleRequestDeleteTable}
+                    onEdit={handleEditTable}
                     onSeatClick={() => {}}
                     onSelect={() => {}}
                     onUnassignSeat={() => {}}
@@ -853,6 +846,8 @@ export default function AdminTables() {
                 renderPage={(items) => (
                   <TableCardsPage
                     items={items}
+                    onDelete={handleRequestDeleteTable}
+                    onEdit={handleEditTable}
                     onSeatClick={handleSeatClick}
                     onSelect={(table) =>
                       setSelectedTableKey(getTableKey(table))
@@ -996,11 +991,6 @@ export default function AdminTables() {
           }
           onCancel={handleCloseTableForm}
           onChange={handleTableFormChange}
-          onDelete={
-            editingTable
-              ? () => handleRequestDeleteTable(editingTable)
-              : undefined
-          }
           onSubmit={handleTableSubmit}
         />
       )}
@@ -1311,37 +1301,27 @@ function getTableSummaryItems(stats) {
 }
 
 function TableTabActions({
-  hasPendingChanges,
   loading,
   onCreate,
-  onDelete,
-  onDiscard,
-  onEdit,
-  onSave,
-  saving,
-  selectedTable,
   showText = true,
-  tables,
 }) {
+  if (!onCreate) return null;
+
   return (
-    <AdminEntityActions
-      addLabel={adminContent.tables.actions.addTable}
-      deleteLabel={adminContent.tables.actions.deleteTable}
-      discardLabel={adminContent.tables.actions.discardChanges}
-      editLabel={adminContent.tables.actions.editTable}
-      hasItems={tables.length > 0}
-      hasPendingChanges={hasPendingChanges}
-      loading={loading}
-      onCreate={onCreate}
-      onDelete={onDelete}
-      onDiscard={onDiscard}
-      onEdit={onEdit}
-      onSave={onSave}
-      saveLabel={adminContent.tables.actions.saveChanges}
-      saving={saving}
-      selectedItem={selectedTable}
-      showText={showText}
-    />
+    <div className="grid w-full gap-3">
+      <IconButton
+        className="w-full"
+        disabled={loading}
+        icon={<Plus size={18} strokeWidth={2.4} />}
+        label={adminContent.tables.actions.addTable}
+        onClick={onCreate}
+        showText={showText ? "always" : undefined}
+        tone="primary"
+        type="button"
+      >
+        {showText ? adminContent.tables.actions.addTable : undefined}
+      </IconButton>
+    </div>
   );
 }
 
@@ -1434,6 +1414,8 @@ function PendingGuestAssignmentActions({
 
 function TableCardWithActions({
   index = 0,
+  onDelete,
+  onEdit,
   onSeatClick,
   onSelect,
   onUnassignSeat,
@@ -1452,6 +1434,8 @@ function TableCardWithActions({
     >
       <TableAnimatedInfoCard
         index={index}
+        onDelete={onDelete}
+        onEdit={onEdit}
         onSeatClick={onSeatClick}
         onUnassignSeat={onUnassignSeat}
         reveal={reveal}
@@ -1463,6 +1447,8 @@ function TableCardWithActions({
 
 function TableCardsPage({
   items,
+  onDelete,
+  onEdit,
   onSeatClick,
   onSelect,
   onUnassignSeat,
@@ -1477,6 +1463,8 @@ function TableCardsPage({
       renderCard={(table, index) => (
         <TableCardWithActions
           index={index}
+          onDelete={onDelete}
+          onEdit={onEdit}
           onSeatClick={onSeatClick}
           onSelect={onSelect}
           onUnassignSeat={onUnassignSeat}
@@ -1487,6 +1475,8 @@ function TableCardsPage({
       renderMobileCard={(table) => (
         <TableCardWithActions
           onSeatClick={onSeatClick}
+          onDelete={onDelete}
+          onEdit={onEdit}
           onSelect={onSelect}
           onUnassignSeat={onUnassignSeat}
           reveal={false}

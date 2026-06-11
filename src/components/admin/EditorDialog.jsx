@@ -7,7 +7,6 @@ import IconButton from "../ui/IconButton";
 
 export default function EditorDialog({
   children,
-  icon,
   onClose,
   title,
   titleId = "editor-dialog-title",
@@ -25,11 +24,6 @@ export default function EditorDialog({
       >
         <div className="mb-6 flex items-start justify-between gap-4">
           <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
-            {icon && (
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-xl">
-                {icon}
-              </span>
-            )}
             <h2
               className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]"
               id={titleId}

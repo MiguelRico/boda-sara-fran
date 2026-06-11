@@ -1002,6 +1002,7 @@ function AdminGuestConfirmationCard({
       onClick={() => onSelect(row)}
     >
       <Card
+        actionsPlacement="overlay"
         actions={
           <CardActionButtons
             deleteLabel={adminContent.guests.actions.delete}

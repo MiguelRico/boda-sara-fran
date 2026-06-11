@@ -26,19 +26,15 @@ export default function AdminTableSection({
   renderPage,
   sectionRef,
   skeletonConfig = {},
-  sourceItemsCount,
   title,
   totalPages,
   items = [],
 }) {
-  const sourceItemsTotal = sourceItemsCount ?? items.length;
   const hasResults = items.length > 0;
-  const hasFilterSlot =
-    loading && sourceItemsCount == null ? Boolean(filters) : sourceItemsTotal > 1;
+  const hasFilterSlot = Boolean(filters);
   const hasPagination =
     !loading &&
-    hasResults &&
-    items.length > 1 &&
+    (hasResults || hasFilterSlot) &&
     page &&
     pageSize &&
     totalPages > 1;

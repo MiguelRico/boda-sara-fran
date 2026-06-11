@@ -2,10 +2,7 @@ import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
-  BadgeEuro,
-  BriefcaseBusiness,
-  CalendarDays,
-  Euro,
+  Plus,
   Search,
 } from "lucide-react";
 
@@ -30,7 +27,6 @@ import {
   setAdminProviders,
 } from "../services/adminDataStore";
 import AdminTableSection from "../components/admin/AdminTableSection";
-import AdminEntityActions from "../components/admin/AdminEntityActions";
 import AdminEntityTabs from "../components/admin/AdminEntityTabs";
 import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
 import AdminEditorDialog from "../components/admin/AdminEditorDialog";
@@ -40,10 +36,7 @@ import {
   ServiceCardsPage,
 } from "../components/admin/providers/ProviderCards";
 import ProviderForm from "../components/admin/providers/ProviderForm";
-import {
-  AdminMetricGrid,
-  AdminMetricGridSkeleton,
-} from "../components/admin/AdminMetricGrid";
+import ProviderTotalsPanel from "../components/admin/providers/ProviderTotalsPanel";
 import AdminPageShell from "../components/admin/AdminPageShell";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
@@ -54,6 +47,7 @@ import {
 } from "../components/rsvp/FormPrimitives";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import DeleteDialog from "../components/ui/DeleteDialog";
+import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import useIsMobileView from "../hooks/useIsMobileView";
@@ -63,7 +57,6 @@ import useEffectiveSelection from "../hooks/useEffectiveSelection";
 import useAdminActiveTab from "../hooks/useAdminActiveTab";
 import useSpinner from "../hooks/useSpinner";
 import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
-import { formatCurrency } from "../utils/formatters";
 
 const desktopPageSize = 6;
 const mobilePageSize = 1;
@@ -87,6 +80,7 @@ export default function AdminProviders() {
   const [providers, setProviders] = useState([]);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
+  const [servicePaymentStatus, setServicePaymentStatus] = useState("");
   const [page, setPage] = useState(1);
   const [servicesPage, setServicesPage] = useState(1);
   const [selectedProviderId, setSelectedProviderId] = useState("");
@@ -165,8 +159,8 @@ export default function AdminProviders() {
     [selectedProvider],
   );
   const filteredServices = useMemo(
-    () => filterServices(services, { category, query }),
-    [category, query, services],
+    () => filterServices(services, { category, paymentStatus: servicePaymentStatus, query }),
+    [category, query, servicePaymentStatus, services],
   );
   const {
     currentPage: currentServicesPage,
@@ -189,15 +183,11 @@ export default function AdminProviders() {
   });
   const {
     effectiveSelectedId: effectiveSelectedServiceId,
-    selectedItem: selectedService,
   } = useEffectiveSelection({
     getId: getEntityId,
     items: pagedServices,
     selectedId: selectedServiceId,
   });
-  const selectedServiceProvider =
-    providers.find((provider) => provider.id === selectedService?.providerId) ||
-    selectedProvider;
   const hasPendingChanges =
     JSON.stringify(savedProviders) !== JSON.stringify(providers);
   const stats = useMemo(() => buildProviderStats(providers), [providers]);
@@ -287,12 +277,33 @@ export default function AdminProviders() {
       }),
     );
   };
-  const handleDeleteProvider = () => {
+  const handleDeleteTarget = () => {
     if (!deleteTarget) return;
 
-    applyProviders(
-      providers.filter((provider) => provider.id !== deleteTarget.id),
-    );
+    if (deleteTarget.type === "service") {
+      applyProviders(
+        providers.map((provider) =>
+          provider.id === deleteTarget.provider?.id
+            ? {
+                ...provider,
+                services: provider.services.filter(
+                  (service) => service.id !== deleteTarget.service?.id,
+                ),
+              }
+            : provider,
+        ),
+      );
+      setSelectedServiceId("");
+    } else {
+      applyProviders(
+        providers.filter(
+          (provider) => provider.id !== deleteTarget.provider?.id,
+        ),
+      );
+      setSelectedProviderId("");
+      setSelectedServiceId("");
+    }
+
     setDeleteTarget(null);
   };
   const handleCancelBlockedNavigation = () => {
@@ -408,7 +419,7 @@ export default function AdminProviders() {
         rootRef={providersRef}
       >
         <CinematicStaggeredRevealItem index={2} isVisible={providersInView}>
-          <ProvidersOverview loading={loadingProviders} stats={stats} />
+          <ProviderTotalsPanel loading={loadingProviders} stats={stats} />
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={providersInView}>
@@ -433,15 +444,9 @@ export default function AdminProviders() {
               <AdminTableSection
                 actions={
                   <ProviderTableActions
-                    hasPendingChanges={hasPendingChanges}
+                    loading={loadingProviders}
                     onCreate={handleCreateProvider}
-                    onDelete={() => setDeleteTarget(selectedProvider)}
-                    onDiscard={handleDiscardPendingChanges}
-                    onEdit={() => handleEditProvider(selectedProvider)}
-                    onSave={handleSavePendingChanges}
                     providers={providers}
-                    saving={spinner.loading}
-                    selectedProvider={selectedProvider}
                     showText={!isMobileView}
                   />
                 }
@@ -483,6 +488,10 @@ export default function AdminProviders() {
                   <ProviderCardsPage
                     emptyState={getProviderEmptyState(providers.length)}
                     items={items}
+                    onDelete={(provider) =>
+                      setDeleteTarget({ type: "provider", provider })
+                    }
+                    onEdit={handleEditProvider}
                     onSelect={() => {}}
                     selectedProviderId={effectiveSelectedProviderId}
                   />
@@ -491,6 +500,10 @@ export default function AdminProviders() {
                   <ProviderCardsPage
                     emptyState={getProviderEmptyState(providers.length)}
                     items={items}
+                    onDelete={(provider) =>
+                      setDeleteTarget({ type: "provider", provider })
+                    }
+                    onEdit={handleEditProvider}
                     onSelect={(provider) => {
                       setSelectedProviderId(provider.id);
                       setServicesPage(1);
@@ -514,22 +527,11 @@ export default function AdminProviders() {
             ) : (
               <AdminTableSection
                 actions={
-                  hasPendingChanges ||
-                  filteredServices.length ||
                   selectedProvider ? (
                     <ProviderTableActions
-                      hasPendingChanges={hasPendingChanges}
+                      loading={loadingProviders}
                       onCreate={selectedProvider ? handleCreateService : null}
-                      onDelete={() =>
-                        selectedService &&
-                        setDeleteTarget(selectedServiceProvider)
-                      }
-                      onDiscard={handleDiscardPendingChanges}
-                      onEdit={() => handleEditService(selectedService)}
-                      onSave={handleSavePendingChanges}
                       providers={filteredServices}
-                      saving={spinner.loading}
-                      selectedProvider={selectedService}
                       showText={!isMobileView}
                     />
                   ) : null
@@ -544,6 +546,10 @@ export default function AdminProviders() {
                 filters={
                   <ProviderFilters
                     category={category}
+                    onPaymentStatusChange={(value) => {
+                      setServicePaymentStatus(value);
+                      setServicesPage(1);
+                    }}
                     onCategoryChange={(value) => {
                       setCategory(value);
                       setPage(1);
@@ -554,7 +560,9 @@ export default function AdminProviders() {
                       setPage(1);
                       setServicesPage(1);
                     }}
+                    paymentStatus={servicePaymentStatus}
                     query={query}
+                    showPaymentStatus
                   />
                 }
                 getKey={(service) => service.id}
@@ -589,6 +597,16 @@ export default function AdminProviders() {
                       selectedProvider,
                     )}
                     items={items}
+                    onDelete={(service) =>
+                      setDeleteTarget({
+                        type: "service",
+                        provider: providers.find(
+                          (provider) => provider.id === service.providerId,
+                        ),
+                        service,
+                      })
+                    }
+                    onEdit={handleEditService}
                     onSelect={() => {}}
                     selectedServiceId={effectiveSelectedServiceId}
                   />
@@ -601,6 +619,16 @@ export default function AdminProviders() {
                       selectedProvider,
                     )}
                     items={items}
+                    onDelete={(service) =>
+                      setDeleteTarget({
+                        type: "service",
+                        provider: providers.find(
+                          (provider) => provider.id === service.providerId,
+                        ),
+                        service,
+                      })
+                    }
+                    onEdit={handleEditService}
                     onSelect={(service) => setSelectedServiceId(service.id)}
                     selectedServiceId={effectiveSelectedServiceId}
                   />
@@ -651,12 +679,22 @@ export default function AdminProviders() {
 
       {deleteTarget && (
         <DeleteDialog
-          message={adminContent.providers.dialogs.deleteMessage(
-            deleteTarget.name,
-          )}
+          message={
+            deleteTarget.type === "service"
+              ? adminContent.providers.dialogs.deleteServiceMessage(
+                  getDeleteTargetName(deleteTarget),
+                )
+              : adminContent.providers.dialogs.deleteMessage(
+                  getDeleteTargetName(deleteTarget),
+                )
+          }
           onCancel={() => setDeleteTarget(null)}
-          onConfirm={handleDeleteProvider}
-          title={adminContent.providers.dialogs.deleteTitle}
+          onConfirm={handleDeleteTarget}
+          title={
+            deleteTarget.type === "service"
+              ? adminContent.providers.dialogs.deleteServiceTitle
+              : adminContent.providers.dialogs.deleteTitle
+          }
         />
       )}
 
@@ -697,51 +735,6 @@ function UnsavedProviderChangesDialog({
   );
 }
 
-function ProvidersOverview({ loading, stats }) {
-  return (
-    <section className="premium-card mt-4 mb-5">
-      <p className="section-eyebrow mb-2">
-        {adminContent.providers.overview.eyebrow}
-      </p>
-      <h2 className="mb-5 font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-        {adminContent.providers.overview.title}
-      </h2>
-      {loading ? (
-        <AdminMetricGridSkeleton
-          className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
-          count={4}
-        />
-      ) : (
-        <AdminMetricGrid
-          className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
-          items={[
-            {
-              emoji: <BriefcaseBusiness size={22} strokeWidth={1.8} />,
-              label: adminContent.providers.overview.metrics.providers,
-              value: stats.providerCount,
-            },
-            {
-              emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
-              label: adminContent.providers.overview.metrics.services,
-              value: stats.serviceCount,
-            },
-            {
-              emoji: <Euro size={22} strokeWidth={1.8} />,
-              label: adminContent.providers.overview.metrics.budget,
-              value: formatCurrency(stats.totalBudget),
-            },
-            {
-              emoji: <CalendarDays size={22} strokeWidth={1.8} />,
-              label: adminContent.providers.overview.metrics.paid,
-              value: formatCurrency(stats.totalPaid),
-            },
-          ]}
-        />
-      )}
-    </section>
-  );
-}
-
 function getProviderEditorTitle({ mode, provider, providers, serviceId }) {
   if (mode === "service") {
     const existingService = providers
@@ -758,9 +751,20 @@ function getProviderEditorTitle({ mode, provider, providers, serviceId }) {
     : adminContent.providers.dialogs.createTitle;
 }
 
-function ProviderFilters({ category, onCategoryChange, onQueryChange, query }) {
+function ProviderFilters({
+  category,
+  onCategoryChange,
+  onPaymentStatusChange,
+  onQueryChange,
+  paymentStatus = "",
+  query,
+  showPaymentStatus = false,
+}) {
   const selectedCategory = PROVIDER_CATEGORIES.find(
     (item) => item.value === category,
+  );
+  const selectedPaymentStatus = adminContent.providers.filters.paymentStatuses.find(
+    (item) => item.value === paymentStatus,
   );
   const activeFilters = [
     query.trim()
@@ -773,6 +777,13 @@ function ProviderFilters({ category, onCategoryChange, onQueryChange, query }) {
           onRemove: () => onCategoryChange(""),
         }
       : null,
+    selectedPaymentStatus
+      ? {
+          key: "paymentStatus",
+          label: selectedPaymentStatus.label,
+          onRemove: () => onPaymentStatusChange?.(""),
+        }
+      : null,
   ].filter(Boolean);
 
   return (
@@ -780,7 +791,13 @@ function ProviderFilters({ category, onCategoryChange, onQueryChange, query }) {
       activeFilters={activeFilters}
       title={adminContent.providers.filters.eyebrow}
     >
-      <div className="grid gap-4 lg:grid-cols-[1fr_18rem] lg:items-end">
+      <div
+        className={`grid gap-4 ${
+          showPaymentStatus
+            ? "lg:grid-cols-[1fr_14rem_14rem]"
+            : "lg:grid-cols-[1fr_18rem]"
+        } lg:items-end`}
+      >
         <div>
           <Label>{adminContent.providers.filters.searchLabel}</Label>
           <label className="relative block">
@@ -816,57 +833,79 @@ function ProviderFilters({ category, onCategoryChange, onQueryChange, query }) {
             ))}
           </select>
         </div>
+
+        {showPaymentStatus && (
+          <div>
+            <Label>{adminContent.providers.filters.paymentStatusLabel}</Label>
+            <select
+              className={selectClassName}
+              onChange={(event) => onPaymentStatusChange?.(event.target.value)}
+              value={paymentStatus}
+            >
+              <option value="">
+                {adminContent.providers.filters.allPaymentStatuses}
+              </option>
+              {adminContent.providers.filters.paymentStatuses.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
     </CollapsiblePanel>
   );
 }
 
 function ProviderTableActions({
-  hasPendingChanges,
+  loading,
   onCreate,
-  onDelete,
-  onDiscard,
-  onEdit,
-  onSave,
-  providers,
-  saving,
-  selectedProvider,
   showText,
 }) {
+  if (!onCreate) return null;
+
   return (
-    <AdminEntityActions
-      addLabel={adminContent.providers.actions.add}
-      deleteLabel={adminContent.providers.actions.delete}
-      discardLabel={adminContent.providers.actions.discardChanges}
-      editLabel={adminContent.providers.actions.edit}
-      hasItems={providers.length > 0}
-      hasPendingChanges={hasPendingChanges}
-      onCreate={onCreate}
-      onDelete={onDelete}
-      onDiscard={onDiscard}
-      onEdit={onEdit}
-      onSave={onSave}
-      saveLabel={adminContent.providers.actions.saveChanges}
-      saving={saving}
-      selectedItem={selectedProvider}
-      showText={showText}
-    />
+    <div className="grid w-full gap-3">
+      <IconButton
+        className="w-full"
+        disabled={loading}
+        icon={<Plus size={18} strokeWidth={2.4} />}
+        label={adminContent.providers.actions.add}
+        onClick={onCreate}
+        showText={showText ? "always" : undefined}
+        tone="primary"
+        type="button"
+      >
+        {showText ? adminContent.providers.actions.add : undefined}
+      </IconButton>
+    </div>
   );
 }
 
 function buildProviderStats(providers) {
   return providers.reduce(
-    (stats, provider) => ({
-      providerCount: stats.providerCount + 1,
-      serviceCount: stats.serviceCount + provider.services.length,
-      totalBudget: stats.totalBudget + getProviderTotal(provider),
-      totalPaid: stats.totalPaid + getProviderPaidTotal(provider),
-    }),
+    (stats, provider) => {
+      const providerTotal = getProviderTotal(provider);
+      const providerPaid = getProviderPaidTotal(provider);
+      const paidServiceCount = provider.services.filter(isServicePaid).length;
+
+      return {
+        paidServiceCount: stats.paidServiceCount + paidServiceCount,
+        providerCount: stats.providerCount + 1,
+        serviceCount: stats.serviceCount + provider.services.length,
+        totalBudget: stats.totalBudget + providerTotal,
+        totalPaid: stats.totalPaid + providerPaid,
+        totalPending: stats.totalPending + Math.max(providerTotal - providerPaid, 0),
+      };
+    },
     {
+      paidServiceCount: 0,
       providerCount: 0,
       serviceCount: 0,
       totalBudget: 0,
       totalPaid: 0,
+      totalPending: 0,
     },
   );
 }
@@ -904,11 +943,15 @@ function getProviderServices(providers) {
   );
 }
 
-function filterServices(services, { category, query }) {
+function filterServices(services, { category, paymentStatus, query }) {
   const normalizedQuery = query.trim().toLowerCase();
 
   return services.filter((service) => {
     const matchesCategory = !category || service.category === category;
+    const matchesPaymentStatus =
+      !paymentStatus ||
+      (paymentStatus === "paid" && isServicePaid(service)) ||
+      (paymentStatus === "unpaid" && !isServicePaid(service));
     const searchableText = [
       service.name,
       service.providerName,
@@ -919,9 +962,29 @@ function filterServices(services, { category, query }) {
 
     return (
       matchesCategory &&
+      matchesPaymentStatus &&
       (!normalizedQuery || searchableText.includes(normalizedQuery))
     );
   });
+}
+
+function isServicePaid(service) {
+  const price = Number(service.price) || 0;
+  const paid = service.payments.reduce(
+    (total, payment) =>
+      total + (payment.paid ? Number(payment.amount) || 0 : 0),
+    0,
+  );
+
+  return price > 0 && paid >= price;
+}
+
+function getDeleteTargetName(deleteTarget) {
+  if (deleteTarget.type === "service") {
+    return deleteTarget.service?.name || "Servicio sin nombre";
+  }
+
+  return deleteTarget.provider?.name || "Proveedor sin nombre";
 }
 
 function getProviderEmptyState(sourceCount) {

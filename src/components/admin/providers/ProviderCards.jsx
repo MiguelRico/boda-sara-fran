@@ -32,6 +32,7 @@ import {
 import { getEmailHref, getPhoneHref } from "../../../utils/contactLinks";
 import { formatCurrency } from "../../../utils/formatters";
 import Card from "../Card";
+import CardActions from "../CardActions";
 import SelectableCardPage from "../SelectableCardPage";
 import Chip from "../../ui/Chip";
 
@@ -55,6 +56,8 @@ const PROVIDER_ICON_COMPONENTS = {
 export function ProviderCardsPage({
   emptyState,
   items,
+  onDelete,
+  onEdit,
   onSelect,
   selectedProviderId,
 }) {
@@ -66,6 +69,8 @@ export function ProviderCardsPage({
       items={items}
       renderCard={(provider) => (
         <ProviderCard
+          onDelete={onDelete}
+          onEdit={onEdit}
           onSelect={onSelect}
           provider={provider}
           selected={provider.id === selectedProviderId}
@@ -78,6 +83,8 @@ export function ProviderCardsPage({
 export function ServiceCardsPage({
   emptyState,
   items,
+  onDelete,
+  onEdit,
   onSelect,
   selectedServiceId,
 }) {
@@ -89,6 +96,8 @@ export function ServiceCardsPage({
       items={items}
       renderCard={(service) => (
         <ServiceCard
+          onDelete={onDelete}
+          onEdit={onEdit}
           onSelect={onSelect}
           selected={service.id === selectedServiceId}
           service={service}
@@ -98,7 +107,7 @@ export function ServiceCardsPage({
   );
 }
 
-function ProviderCard({ onSelect, provider, selected }) {
+function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
   const total = getProviderTotal(provider);
   const paid = getProviderPaidTotal(provider);
 
@@ -112,6 +121,17 @@ function ProviderCard({ onSelect, provider, selected }) {
       onClick={() => onSelect(provider)}
     >
       <Card
+        actionsPlacement="overlay"
+        actions={
+          <CardActions
+            className="grid shrink-0 grid-cols-2 gap-2 self-start"
+            item={provider}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            showText={false}
+            stopPropagation
+          />
+        }
         decorativeText={getProviderCategoryIcon(provider.category)}
         eyebrow={PROVIDER_CATEGORY_LABELS[provider.category]}
         title={provider.name || "Proveedor sin nombre"}
@@ -151,7 +171,7 @@ function ProviderCard({ onSelect, provider, selected }) {
   );
 }
 
-function ServiceCard({ onSelect, selected, service }) {
+function ServiceCard({ onDelete, onEdit, onSelect, selected, service }) {
   const paid = service.payments.reduce(
     (total, payment) =>
       total + (payment.paid ? Number(payment.amount) || 0 : 0),
@@ -168,6 +188,17 @@ function ServiceCard({ onSelect, selected, service }) {
       onClick={() => onSelect(service)}
     >
       <Card
+        actionsPlacement="overlay"
+        actions={
+          <CardActions
+            className="grid shrink-0 grid-cols-2 gap-2 self-start"
+            item={service}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            showText={false}
+            stopPropagation
+          />
+        }
         decorativeText={getProviderCategoryIcon(service.category)}
         eyebrow={service.providerName}
         title={service.name || "Servicio sin nombre"}

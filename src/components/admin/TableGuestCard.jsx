@@ -30,6 +30,10 @@ export default function TableGuestCard({
         {decorativeText}
       </div>
 
+      {actions && (
+        <div className="absolute right-5 top-4 z-20">{actions}</div>
+      )}
+
       <div
         className={`relative grid gap-5 ${
           children
@@ -38,26 +42,16 @@ export default function TableGuestCard({
         }`}
       >
         <div className="min-w-0">
-          <div
-            className={`flex gap-3 ${
-              actions ? "items-start justify-between" : "flex-col"
-            }`}
+          <p className={`section-eyebrow mb-2 pr-24 ${actions ? "mt-4" : ""}`}>
+            {eyebrow || guest.confirmationName || "Invitado"}
+          </p>
+          <h3
+            className="break-words font-serif text-3xl leading-none text-[var(--color-text)]"
+            ref={titleRef}
+            style={titleStyle}
           >
-            <div className="min-w-0 flex-1">
-              <p className="section-eyebrow mb-2">
-                {eyebrow || guest.confirmationName || "Invitado"}
-              </p>
-              <h3
-                className="break-words font-serif text-3xl leading-none text-[var(--color-text)]"
-                ref={titleRef}
-                style={titleStyle}
-              >
-                {guestName}
-              </h3>
-            </div>
-
-            {actions}
-          </div>
+            {guestName}
+          </h3>
 
           <div className="mt-4 text-sm text-[var(--color-muted)]">
             {hasSummaryChips && (

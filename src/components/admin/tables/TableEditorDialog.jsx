@@ -1,5 +1,3 @@
-import { Armchair } from "lucide-react";
-
 import AdminEditorDialog from "../AdminEditorDialog";
 import TableForm from "../TableForm";
 
@@ -9,14 +7,12 @@ export default function TableEditorDialog({
   form,
   onCancel,
   onChange,
-  onDelete,
   onSubmit,
   seatReductionWarning = [],
   title = "Crear mesa",
 }) {
   return (
     <AdminEditorDialog
-      icon={<Armchair size={22} strokeWidth={1.8} />}
       onClose={onCancel}
       title={title}
       titleId="table-editor-title"
@@ -27,7 +23,6 @@ export default function TableEditorDialog({
         form={form}
         onCancel={onCancel}
         onChange={onChange}
-        onDelete={onDelete}
         onSubmit={onSubmit}
         seatReductionWarning={seatReductionWarning}
       />

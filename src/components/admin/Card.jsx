@@ -1,5 +1,6 @@
 export default function Card({
   actions,
+  actionsPlacement = "inline",
   children,
   decorativeText,
   detail,
@@ -9,6 +10,7 @@ export default function Card({
   titleStyle,
 }) {
   const hasActions = Boolean(actions);
+  const hasInlineActions = hasActions && actionsPlacement !== "overlay";
   const hasChildren = Boolean(children);
 
   return (
@@ -27,11 +29,23 @@ export default function Card({
         </div>
       )}
 
+      {hasActions && actionsPlacement === "overlay" && (
+        <div className="absolute right-5 top-4 z-20 sm:right-6 sm:top-5">
+          {actions}
+        </div>
+      )}
+
       <div className="relative flex h-full flex-col">
         <div>
-          <p className="section-eyebrow mb-2">{eyebrow}</p>
+          <p
+            className={`section-eyebrow mb-2 ${hasActions ? "mt-4" : ""} ${
+              actionsPlacement === "overlay" ? "pr-24" : ""
+            }`}
+          >
+            {eyebrow}
+          </p>
           <div
-            className={`flex gap-3 ${hasActions ? "items-start justify-between" : "flex-col"}`}
+            className={`flex gap-3 ${hasInlineActions ? "items-start justify-between" : "flex-col"}`}
           >
             <div className="min-w-0 flex-1">
               <h3
@@ -48,11 +62,11 @@ export default function Card({
               )}
             </div>
 
-            {hasActions && actions}
+            {hasInlineActions && actions}
           </div>
         </div>
 
-        {hasChildren && <div className="mt-5 sm:mt-6">{children}</div>}
+        {hasChildren && <div>{children}</div>}
       </div>
     </article>
   );

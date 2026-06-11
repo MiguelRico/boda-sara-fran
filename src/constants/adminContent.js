@@ -274,6 +274,8 @@ export const adminContent = {
         services: "Servicios",
         budget: "Presupuesto",
         paid: "Pagado",
+        pending: "Pendiente",
+        paidServices: "Servicios pagados",
       },
     },
     list: {
@@ -308,6 +310,12 @@ export const adminContent = {
       searchPlaceholder: "Nombre, email, teléfono, servicio o categoría",
       categoryLabel: "Categoría",
       allCategories: "Todas",
+      paymentStatusLabel: "Pago",
+      allPaymentStatuses: "Todos",
+      paymentStatuses: [
+        { value: "paid", label: "Pagado" },
+        { value: "unpaid", label: "No pagado" },
+      ],
     },
     actions: {
       add: "Agregar proveedor",
@@ -326,6 +334,9 @@ export const adminContent = {
       deleteMessage: (name) =>
         `Se marcará para eliminar el proveedor ${name}. Podrás deshacerlo antes de guardar los cambios.`,
       problemTitle: "Ha ocurrido un problema",
+      deleteServiceTitle: "Eliminar servicio",
+      deleteServiceMessage: (name) =>
+        `Se marcará para eliminar el servicio ${name}. Podrás deshacerlo antes de guardar los cambios.`,
       loadError: "No se pudieron cargar los proveedores.",
       saveError: "No se pudieron guardar los proveedores.",
       unsavedText:

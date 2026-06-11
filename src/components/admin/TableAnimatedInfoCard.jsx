@@ -85,15 +85,17 @@ function TableInfoCard({
   return (
     <>
       <Card
+        actionsPlacement="overlay"
         actions={
           <CardActions
-            className="grid w-full shrink-0 grid-cols-2 gap-3 sm:w-auto sm:flex sm:items-center sm:justify-end sm:gap-2 sm:self-center"
+            className="grid shrink-0 grid-cols-2 gap-2"
             deleteLabel="Eliminar mesa"
             editLabel="Editar mesa"
             item={table}
             onDelete={onDelete}
             onEdit={onEdit}
             showText={false}
+            stopPropagation
           />
         }
         decorativeText={

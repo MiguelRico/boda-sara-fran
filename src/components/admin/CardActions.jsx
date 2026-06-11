@@ -11,6 +11,7 @@ export default function CardActions({
   onEdit,
   extraActions,
   showText = true,
+  stopPropagation = false,
 }) {
   if (!onEdit && !onDelete && !extraActions) return null;
 
@@ -21,7 +22,10 @@ export default function CardActions({
           className="w-full min-w-0 basis-0 !shrink !gap-1.5 !px-3"
           icon={<Trash2 size={16} strokeWidth={1.8} />}
           label={deleteLabel}
-          onClick={() => onDelete(item)}
+          onClick={(event) => {
+            if (stopPropagation) event.stopPropagation();
+            onDelete(item);
+          }}
           showText={showText ? "always" : undefined}
           tone="danger"
           type="button"
@@ -34,7 +38,10 @@ export default function CardActions({
           className="w-full min-w-0 basis-0 !shrink !gap-1.5 !px-3"
           icon={<Pencil size={16} strokeWidth={1.8} />}
           label={editLabel}
-          onClick={() => onEdit(item)}
+          onClick={(event) => {
+            if (stopPropagation) event.stopPropagation();
+            onEdit(item);
+          }}
           showText={showText ? "always" : undefined}
           tone="primary"
           type="button"
