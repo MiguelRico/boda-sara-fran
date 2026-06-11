@@ -1,17 +1,19 @@
-import { Save, Undo2, X } from "lucide-react";
+import { useState } from "react";
+import { Save, Trash2, Undo2, X } from "lucide-react";
 
 import IconButton from "../ui/IconButton";
 import UnsavedChangesDialog from "./UnsavedChangesDialog";
 import { adminContent } from "../../constants/adminContent";
-import { useState } from "react";
 
 export default function AdminPendingChangesActions({
   changes = [],
   discardLabel = "Deshacer cambios",
   dialogEyebrow = adminContent.tables.dialogs.unsavedEyebrow,
-  discardDialogText = "Se descartaran estos cambios en memoria.",
-  discardDialogTitle = "Deshacer cambios",
+  discardDialogText =
+    "Eliminar cambios limpiara todo cambio en memoria de admin.",
+  discardDialogTitle = "Eliminar cambios",
   hasPendingChanges,
+  keepEditingLabel = "Deshacer cambios",
   loading = false,
   onConfirmDiscard,
   onConfirmSave,
@@ -50,8 +52,8 @@ export default function AdminPendingChangesActions({
               ? [
                   {
                     disabled: saving,
-                    icon: <Undo2 size={16} strokeWidth={1.8} />,
-                    label: discardLabel,
+                    icon: <Trash2 size={16} strokeWidth={1.8} />,
+                    label: "Eliminar cambios",
                     onClick: handleDiscard,
                     tone: "danger",
                   },
@@ -65,7 +67,7 @@ export default function AdminPendingChangesActions({
                   {
                     disabled: saving,
                     icon: <X size={16} strokeWidth={1.8} />,
-                    label: adminContent.tables.dialogs.keepEditing,
+                    label: keepEditingLabel,
                     onClick: closeDialog,
                     tone: "terciary",
                   },
@@ -81,7 +83,7 @@ export default function AdminPendingChangesActions({
                   {
                     disabled: saving,
                     icon: <X size={16} strokeWidth={1.8} />,
-                    label: adminContent.tables.dialogs.keepEditing,
+                    label: keepEditingLabel,
                     onClick: closeDialog,
                     tone: "terciary",
                   },

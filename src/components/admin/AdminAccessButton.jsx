@@ -3,18 +3,26 @@ import {
   LayoutDashboard,
   LockKeyhole,
   LogOut,
+  Save,
   ShieldCheck,
+  Trash2,
+  X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import IconButton from "../ui/IconButton";
 import UnsavedChangesDialog from "./UnsavedChangesDialog";
-import { ADMIN_AUTH_EVENT, ADMIN_SESSION_KEY } from "../../constants/admin";
+import {
+  ADMIN_AUTH_EVENT,
+  ADMIN_PASSWORD,
+  ADMIN_SESSION_KEY,
+} from "../../constants/admin";
 import { adminContent } from "../../constants/adminContent";
 import {
   clearAdminDataStore,
   getAdminPendingChangesSummary,
   hasAdminPendingChanges,
+  saveAdminPendingChanges,
 } from "../../services/adminDataStore";
 
 function getAdminAuthState() {
@@ -27,6 +35,7 @@ export default function AdminAccessButton() {
   const [isAuthenticated, setIsAuthenticated] = useState(getAdminAuthState);
   const [isOpen, setIsOpen] = useState(false);
   const [logoutChanges, setLogoutChanges] = useState(null);
+  const [savingLogoutChanges, setSavingLogoutChanges] = useState(false);
 
   useEffect(() => {
     const syncAuthState = () => {
@@ -93,6 +102,17 @@ export default function AdminAccessButton() {
     completeLogout();
   };
 
+  const handleSaveAndLogout = async () => {
+    setSavingLogoutChanges(true);
+
+    try {
+      await saveAdminPendingChanges({ password: ADMIN_PASSWORD });
+      completeLogout();
+    } finally {
+      setSavingLogoutChanges(false);
+    }
+  };
+
   const handleNavigateAdmin = () => {
     setIsOpen(false);
     navigate("/admin");
@@ -104,14 +124,23 @@ export default function AdminAccessButton() {
         <UnsavedChangesDialog
           actions={[
             {
-              icon: <LogOut size={16} strokeWidth={1.8} />,
-              label: "Cerrar sesion sin guardar",
+              disabled: savingLogoutChanges,
+              icon: <Trash2 size={16} strokeWidth={1.8} />,
+              label: "Eliminar cambios",
               onClick: completeLogout,
               tone: "danger",
             },
             {
-              icon: <ShieldCheck size={16} strokeWidth={1.8} />,
-              label: adminContent.tables.dialogs.keepEditing,
+              disabled: savingLogoutChanges,
+              icon: <Save size={16} strokeWidth={1.8} />,
+              label: "Guardar cambios",
+              onClick: handleSaveAndLogout,
+              tone: "primary",
+            },
+            {
+              disabled: savingLogoutChanges,
+              icon: <X size={16} strokeWidth={1.8} />,
+              label: "Deshacer cambios",
               onClick: () => setLogoutChanges(null),
               tone: "terciary",
             },
@@ -119,8 +148,8 @@ export default function AdminAccessButton() {
           changes={logoutChanges}
           labels={{
             eyebrow: adminContent.tables.dialogs.unsavedEyebrow,
-            text: "Tienes cambios pendientes en memoria. Si cierras sesion ahora, se perderan.",
-            title: adminContent.tables.dialogs.unsavedTitle,
+            text: "Eliminar cambios limpiara todo cambio en memoria de admin. Guardar cambios los enviara a Apps Script antes de cerrar sesion.",
+            title: "Cambios pendientes",
           }}
           titleId="admin-logout-unsaved-changes-title"
         />

@@ -25,8 +25,11 @@ import {
 } from "../services/providersService";
 import { validateProvider } from "../validators/providerValidators";
 import {
+  discardAdminPendingChanges,
+  getAdminPendingChangesSummary,
   loadAdminDataOnce,
   markAdminDataSaved,
+  saveAdminPendingChanges,
   setAdminProviders,
 } from "../services/adminDataStore";
 import AdminTableSection from "../components/admin/AdminTableSection";
@@ -206,6 +209,7 @@ export default function AdminProviders() {
     () => buildPendingProviderChanges(savedProviders, providers),
     [providers, savedProviders],
   );
+  const adminPendingChanges = getAdminPendingChangesSummary();
   const stats = useMemo(() => buildProviderStats(providers), [providers]);
 
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
@@ -253,10 +257,36 @@ export default function AdminProviders() {
     }
   };
   const handleDiscardPendingChanges = () => {
-    setProviders(savedProviders);
-    setAdminProviders(savedProviders);
+    const snapshot = discardAdminPendingChanges();
+
+    setSavedProviders(snapshot.savedProviders);
+    setProviders(snapshot.providers);
     setEditingProvider(null);
     setDeleteTarget(null);
+  };
+  const handleSaveAllPendingChanges = async () => {
+    try {
+      spinner.show(adminContent.providers.spinner.save);
+
+      const snapshot = await saveAdminPendingChanges({
+        password: ADMIN_PASSWORD,
+      });
+
+      setSavedProviders(snapshot.savedProviders);
+      setProviders(snapshot.providers);
+      return true;
+    } catch (error) {
+      console.error(error);
+      setPopup({
+        message: adminContent.providers.dialogs.saveError,
+        open: true,
+        title: adminContent.providers.dialogs.problemTitle,
+        type: "error",
+      });
+      return false;
+    } finally {
+      spinner.hide();
+    }
   };
   const handleEditProvider = (provider) => {
     if (!provider) return;
@@ -447,11 +477,11 @@ export default function AdminProviders() {
 
         <CinematicStaggeredRevealItem index={3} isVisible={providersInView}>
           <AdminPendingChangesActions
-            changes={pendingChanges}
+            changes={adminPendingChanges}
             discardLabel={adminContent.providers.actions.discardChanges}
             hasPendingChanges={hasPendingChanges}
             onDiscard={handleDiscardPendingChanges}
-            onSave={handleSavePendingChanges}
+            onSave={handleSaveAllPendingChanges}
             saveLabel={adminContent.providers.actions.saveChanges}
             saving={spinner.loading}
             showText={!isMobileView}
