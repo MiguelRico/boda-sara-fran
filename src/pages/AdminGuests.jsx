@@ -1398,12 +1398,15 @@ function filterGuestItems(guests, query, filter) {
 
 function buildGuestStats(rows, guests) {
   return {
-    allergyCount: guests.filter(Guest.hasAllergies).length,
+    allergyCount: guests.filter(
+      (guest) => Guest.normalize(guest).allergies.length > 0,
+    ).length,
     commentsCount: guests.filter(Guest.hasComments).length,
     fishCount: guests.filter((guest) => guest.menu === "Pescado").length,
     groupCount: rows.length,
     guestCount: guests.length,
     meatCount: guests.filter((guest) => guest.menu === "Carne").length,
+    otherAllergyCount: guests.filter(Guest.hasOtherAllergies).length,
     outboundBusCount: guests.filter(
       (guest) => guest.outboundBus && guest.outboundBus !== "No",
     ).length,

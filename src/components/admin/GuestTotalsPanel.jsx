@@ -24,12 +24,12 @@ export default function GuestTotalsPanel({ loading, stats }) {
       </h2>
       {loading ? (
         <AdminMetricGridSkeleton
-          className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4 xl:grid-cols-8"
-          count={8}
+          className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-9"
+          count={9}
         />
       ) : (
         <AdminMetricGrid
-          className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4 xl:grid-cols-8"
+          className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-9"
           items={[
             {
               emoji: <MailCheck size={22} strokeWidth={1.8} />,
@@ -55,6 +55,11 @@ export default function GuestTotalsPanel({ loading, stats }) {
               emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
               label: metrics.allergies,
               value: stats.allergyCount,
+            },
+            {
+              emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
+              label: metrics.otherAllergies,
+              value: stats.otherAllergyCount,
             },
             {
               emoji: <MessageCircle size={22} strokeWidth={1.8} />,

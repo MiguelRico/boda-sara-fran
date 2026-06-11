@@ -30,6 +30,7 @@ export const adminContent = {
         meat: "Carne",
         fish: "Pescado",
         allergies: "Alergias",
+        otherAllergies: "Otras",
         comments: "Notas",
         outboundBus: "Ida",
         returnBus: "Vuelta",
