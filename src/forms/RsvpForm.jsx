@@ -3,8 +3,10 @@ import { useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
+  Beef,
   BusFront,
   Check,
+  Fish,
   Mail,
   MessageCircle,
   Pencil,
@@ -13,7 +15,6 @@ import {
   Trash2,
   UserPlus,
   UsersRound,
-  Utensils,
   MailCheck,
   X,
 } from "lucide-react";
@@ -27,11 +28,7 @@ import Chip from "../components/ui/Chip";
 import IconButton from "../components/ui/IconButton";
 import PaginatedContent from "../components/ui/PaginatedContent";
 import Pagination from "../components/ui/Pagination";
-import {
-  COMMON_ALLERGIES,
-  GUEST_MENU_OPTIONS,
-  MAX_GUESTS,
-} from "../constants/rsvp";
+import { GUEST_MENU_OPTIONS, MAX_GUESTS } from "../constants/rsvp";
 import { adminContent } from "../constants/adminContent";
 import { rsvpContent } from "../constants/rsvpContent";
 import { Guest } from "../models";
@@ -134,9 +131,6 @@ export default function RsvpForm({
         addIcon={addIcon}
         addText={addText}
         canAddGuests={canAddGuests}
-        cancelIcon={cancelIcon}
-        cancelText={cancelText}
-        cancelTo={cancelTo}
         contact={contact}
         currentGuestPage={currentGuestPage}
         deleteContextText={deleteContextText}
@@ -152,7 +146,6 @@ export default function RsvpForm({
         isMobileView={isMobileView}
         loading={loading}
         onAddGuest={handleAddGuest}
-        onCancel={onCancel}
         onContactChange={onContactChange}
         onGuestChange={onGuestChange}
         onGuestPageChange={handleGuestPageChange}
@@ -296,9 +289,6 @@ function MobilePublicRsvpFlow({
   addIcon,
   addText,
   canAddGuests,
-  cancelIcon,
-  cancelText,
-  cancelTo,
   contact,
   currentGuestPage,
   deleteContextText,
@@ -314,7 +304,6 @@ function MobilePublicRsvpFlow({
   isMobileView,
   loading,
   onAddGuest,
-  onCancel,
   onContactChange,
   onGuestChange,
   onGuestPageChange,
@@ -328,7 +317,7 @@ function MobilePublicRsvpFlow({
   totalGuestPages,
 }) {
   const reduceMotion = useReducedMotion();
-  const [step, setStep] = useState(flowMode === "edit" ? "guests" : "contact");
+  const [step, setStep] = useState(flowMode === "edit" ? "review" : "contact");
   const canRemove = guests.length > 1;
   const currentGuestIndex = currentGuestPage - 1;
   const currentGuest = guests[currentGuestIndex];
@@ -594,7 +583,7 @@ function ContactSummaryCard({ contact, guests, onEdit }) {
 
 function MobileActionsPanel({ children }) {
   return (
-    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+    <div className="mt-0 mb-0 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
       {children}
     </div>
   );
@@ -603,23 +592,7 @@ function MobileActionsPanel({ children }) {
 function getPublicGroupSummaryChips(contact, guests) {
   const normalizedGuests = Guest.normalizeList(guests, { ensureOne: false });
   const guestCount = normalizedGuests.length;
-  const allergyChips = COMMON_ALLERGIES.map((allergy) => {
-    const count = getGuestCountBy(normalizedGuests, (guest) =>
-      Guest.hasAllergy(guest, allergy),
-    );
-
-    if (!count) return null;
-
-    return {
-      icon: <AlertTriangle size={13} strokeWidth={1.8} />,
-      key: `allergy-${allergy}`,
-      value: `${allergy}: ${count}`,
-    };
-  }).filter(Boolean);
-  const otherAllergiesCount = getGuestCountBy(
-    normalizedGuests,
-    Guest.hasOtherAllergies,
-  );
+  const allergiesCount = getGuestCountBy(normalizedGuests, Guest.hasAllergies);
   const commentsCount = getGuestCountBy(normalizedGuests, Guest.hasComments);
   const outboundBusCount = getGuestCountBy(
     normalizedGuests,
@@ -661,18 +634,24 @@ function getPublicGroupSummaryChips(contact, guests) {
       if (!count) return null;
 
       return {
-        icon: <Utensils size={13} strokeWidth={1.8} />,
+        icon: getMenuIcon(menu),
         key: `menu-${menu}`,
         strong: true,
         value: `${menu}: ${count}`,
       };
     }).filter(Boolean),
-    ...allergyChips,
-    otherAllergiesCount
+    allergiesCount
       ? {
           icon: <AlertTriangle size={13} strokeWidth={1.8} />,
-          key: "other-allergies",
-          value: `Otras: ${otherAllergiesCount}`,
+          key: "allergies",
+          value: `Alergias: ${allergiesCount}`,
+        }
+      : null,
+    commentsCount
+      ? {
+          icon: <MessageCircle size={13} strokeWidth={1.8} />,
+          key: "comments",
+          value: `Notas: ${commentsCount}`,
         }
       : null,
     outboundBusCount
@@ -687,13 +666,6 @@ function getPublicGroupSummaryChips(contact, guests) {
           icon: <BusFront size={13} strokeWidth={1.8} />,
           key: "return-bus",
           value: `Vuelta: ${returnBusCount}`,
-        }
-      : null,
-    commentsCount
-      ? {
-          icon: <MessageCircle size={13} strokeWidth={1.8} />,
-          key: "comments",
-          value: `Notas: ${commentsCount}`,
         }
       : null,
   ].filter(Boolean);
@@ -727,6 +699,13 @@ function MobileRsvpReview({
           {submitText}
         </IconButton>
       </MobileActionsPanel>
+
+      <div className="relative mb-0 items-center justify-center text-center">
+        <p className="section-text">
+          Revisa tus datos de contacto e invitados antes de enviar la
+          confirmación
+        </p>
+      </div>
 
       <ContactSummaryCard
         contact={contact}
@@ -764,7 +743,8 @@ function MobileRsvpReview({
 function GuestSummaryCard({ guest, index }) {
   const normalizedGuest = Guest.normalize(guest);
   const fullName = Guest.getDisplayName(normalizedGuest, index);
-  const allergyText = Guest.getAllergyText(normalizedGuest);
+  const allergies = normalizedGuest.allergies;
+  const otherAllergies = normalizedGuest.otherAllergies.trim();
   const usesBus = Guest.usesBus(normalizedGuest);
   const comments = normalizedGuest.comments.trim();
 
@@ -778,15 +758,28 @@ function GuestSummaryCard({ guest, index }) {
       </h3>
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-        <Chip
-          icon={<Utensils size={13} strokeWidth={1.8} />}
-          strong
-          value={normalizedGuest.menu || "-"}
-        />
-        <Chip
-          icon={<AlertTriangle size={13} strokeWidth={1.8} />}
-          value={allergyText}
-        />
+        {normalizedGuest.menu && (
+          <Chip
+            icon={getMenuIcon(normalizedGuest.menu)}
+            strong
+            value={normalizedGuest.menu}
+          />
+        )}
+        {allergies.map((allergy) => (
+          <Chip
+            icon={<AlertTriangle size={13} strokeWidth={1.8} />}
+            key={allergy}
+            value={allergy}
+          />
+        ))}
+        {otherAllergies && (
+          <Chip
+            className="col-span-2"
+            icon={<AlertTriangle size={13} strokeWidth={1.8} />}
+            value={otherAllergies}
+            valueClassName="whitespace-normal break-words"
+          />
+        )}
         {usesBus && (
           <>
             <Chip
@@ -810,6 +803,22 @@ function GuestSummaryCard({ guest, index }) {
       </div>
     </div>
   );
+}
+
+function getMenuIcon(menu) {
+  const normalizedMenu = String(menu || "")
+    .trim()
+    .toLowerCase();
+
+  if (normalizedMenu === "pescado") {
+    return <Fish size={13} strokeWidth={1.8} />;
+  }
+
+  if (normalizedMenu === "carne") {
+    return <Beef size={13} strokeWidth={1.8} />;
+  }
+
+  return null;
 }
 
 function GuestPager({

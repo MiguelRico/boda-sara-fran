@@ -21,16 +21,17 @@ export default function StatusDialog({
   const navigate = useNavigate();
 
   useViewportScrollLock(open);
-  useCloseOnRouteAttempt(open, onClose);
+  useCloseOnRouteAttempt(open && !closeTo, onClose);
 
   if (!open) return null;
 
   const handleClose = () => {
-    onClose?.();
-
     if (closeTo) {
       navigate(closeTo);
+      return;
     }
+
+    onClose?.();
   };
 
   const dialog = (

@@ -222,13 +222,6 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
         method: isEdition ? "PUT" : "POST",
       });
 
-      setCurrentConfirmationName(null);
-      setContact({
-        email: "",
-        confirmationName: "",
-        phone: "",
-      });
-      setGuests(Guest.normalizeList());
       setErrors({});
 
       setPopup({
