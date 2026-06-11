@@ -5,6 +5,12 @@ export default function useUnsavedChangesNavigation(hasPendingChanges) {
   const [externalNavigation, setExternalNavigation] = useState(null);
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     if (!hasPendingChanges) return false;
+    if (
+      currentLocation.pathname.startsWith("/admin/") &&
+      nextLocation.pathname === "/admin"
+    ) {
+      return false;
+    }
 
     return (
       currentLocation.pathname !== nextLocation.pathname ||

@@ -115,7 +115,6 @@ export default function AdminGuests() {
   const [editingMode, setEditingMode] = useState("full");
   const [editingGuestIndex, setEditingGuestIndex] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [showSaveChangesDialog, setShowSaveChangesDialog] = useState(false);
   const [popup, setPopup] = useState(createInitialPopup);
   const [activeTab, setActiveTab] = useAdminActiveTab(
     ADMIN_GUESTS_ACTIVE_TAB_KEY,
@@ -464,20 +463,6 @@ export default function AdminGuests() {
     blocker.reset?.();
   };
 
-  const handleRequestSavePendingChanges = () => {
-    if (!hasPendingChanges || state.loading || spinner.loading) return;
-
-    setShowSaveChangesDialog(true);
-  };
-
-  const handleConfirmSavePendingChanges = async () => {
-    const saved = await handleSavePendingChanges();
-
-    if (saved) {
-      setShowSaveChangesDialog(false);
-    }
-  };
-
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
   }
@@ -486,17 +471,11 @@ export default function AdminGuests() {
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
 
-      {(blocker.state === "blocked" || showSaveChangesDialog) && (
+      {blocker.state === "blocked" && (
         <UnsavedGuestChangesDialog
           changes={pendingChanges}
-          mode={showSaveChangesDialog ? "save" : "navigate"}
-          onCancel={
-            showSaveChangesDialog
-              ? () => setShowSaveChangesDialog(false)
-              : handleCancelBlockedNavigation
-          }
+          onCancel={handleCancelBlockedNavigation}
           onConfirm={handleConfirmBlockedNavigation}
-          onSave={handleConfirmSavePendingChanges}
           onSaveAndExit={handleSaveAndExitBlockedNavigation}
           saving={spinner.loading}
         />
@@ -515,11 +494,12 @@ export default function AdminGuests() {
 
         <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
           <AdminPendingChangesActions
+            changes={pendingChanges}
             discardLabel={adminContent.guests.actions.discardChanges}
             hasPendingChanges={hasPendingChanges}
             loading={state.loading}
             onDiscard={handleDiscardPendingChanges}
-            onSave={handleRequestSavePendingChanges}
+            onSave={handleSavePendingChanges}
             saveLabel={adminContent.guests.actions.saveChanges}
             saving={spinner.loading}
             showText={!isMobileView}

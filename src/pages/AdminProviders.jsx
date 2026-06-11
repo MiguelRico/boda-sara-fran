@@ -93,7 +93,6 @@ export default function AdminProviders() {
   const [editingProviderMode, setEditingProviderMode] = useState("provider");
   const [editingServiceId, setEditingServiceId] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [showSaveChangesDialog, setShowSaveChangesDialog] = useState(false);
   const [errors, setErrors] = useState({});
   const [activeTab, setActiveTab] = useAdminActiveTab(
     ADMIN_PROVIDERS_ACTIVE_TAB_KEY,
@@ -345,18 +344,6 @@ export default function AdminProviders() {
 
     blocker.reset?.();
   };
-  const handleRequestSavePendingChanges = () => {
-    if (!hasPendingChanges || loadingProviders || spinner.loading) return;
-
-    setShowSaveChangesDialog(true);
-  };
-  const handleConfirmSavePendingChanges = async () => {
-    const saved = await handleSavePendingChanges();
-
-    if (saved) {
-      setShowSaveChangesDialog(false);
-    }
-  };
   const handleSubmitProvider = (event) => {
     event.preventDefault();
 
@@ -438,17 +425,11 @@ export default function AdminProviders() {
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
 
-      {(blocker.state === "blocked" || showSaveChangesDialog) && (
+      {blocker.state === "blocked" && (
         <UnsavedProviderChangesDialog
           changes={pendingChanges}
-          mode={showSaveChangesDialog ? "save" : "navigate"}
-          onCancel={
-            showSaveChangesDialog
-              ? () => setShowSaveChangesDialog(false)
-              : handleCancelBlockedNavigation
-          }
+          onCancel={handleCancelBlockedNavigation}
           onConfirm={handleConfirmBlockedNavigation}
-          onSave={handleConfirmSavePendingChanges}
           onSaveAndExit={handleSaveAndExitBlockedNavigation}
           saving={spinner.loading}
         />
@@ -466,10 +447,11 @@ export default function AdminProviders() {
 
         <CinematicStaggeredRevealItem index={3} isVisible={providersInView}>
           <AdminPendingChangesActions
+            changes={pendingChanges}
             discardLabel={adminContent.providers.actions.discardChanges}
             hasPendingChanges={hasPendingChanges}
             onDiscard={handleDiscardPendingChanges}
-            onSave={handleRequestSavePendingChanges}
+            onSave={handleSavePendingChanges}
             saveLabel={adminContent.providers.actions.saveChanges}
             saving={spinner.loading}
             showText={!isMobileView}

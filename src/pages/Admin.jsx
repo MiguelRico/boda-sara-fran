@@ -8,7 +8,6 @@ import {
   Home,
   LockKeyhole,
   LogIn,
-  Save,
   Trash2,
   X,
 } from "lucide-react";
@@ -230,8 +229,6 @@ function AdminDashboard() {
   const [hasPendingChanges, setHasPendingChanges] = useState(
     hasAdminPendingChanges,
   );
-  const [pendingChangesDialogMode, setPendingChangesDialogMode] =
-    useState(null);
   const [saving, setSaving] = useState(false);
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
   const refreshPendingChanges = () =>
@@ -248,22 +245,14 @@ function AdminDashboard() {
     try {
       await saveAdminPendingChanges({ password: ADMIN_PASSWORD });
       refreshPendingChanges();
-      setPendingChangesDialogMode(null);
     } finally {
       setSaving(false);
     }
   };
-  const handleRequestSave = () => {
-    if (!hasPendingChanges || saving) return;
-
-    setPendingChangesDialogMode("save");
-  };
   const handleCancelNavigation = () => {
-    setPendingChangesDialogMode(null);
     blocker.reset?.();
   };
   const handleConfirmNavigation = () => {
-    setPendingChangesDialogMode(null);
     blocker.proceed?.();
   };
 
@@ -274,67 +263,40 @@ function AdminDashboard() {
   }, []);
 
   const pendingChanges = getAdminPendingChangesSummary();
-  const activeDialogMode =
-    pendingChangesDialogMode ||
-    (blocker.state === "blocked" ? "navigate" : null);
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5">
-      {activeDialogMode && (
+      {blocker.state === "blocked" && (
         <UnsavedChangesDialog
-          actions={
-            activeDialogMode === "save"
-              ? [
-                  {
-                    disabled: saving,
-                    icon: <Save size={16} strokeWidth={1.8} />,
-                    label: "Guardar cambios",
-                    onClick: handleSave,
-                    tone: "primary",
-                  },
-                  {
-                    disabled: saving,
-                    icon: <X size={16} strokeWidth={1.8} />,
-                    label: adminContent.tables.dialogs.keepEditing,
-                    onClick: () => setPendingChangesDialogMode(null),
-                    tone: "terciary",
-                  },
-                ]
-              : [
-                  {
-                    icon: <Trash2 size={16} strokeWidth={1.8} />,
-                    label: adminContent.tables.dialogs.exitWithoutSaving,
-                    onClick: handleConfirmNavigation,
-                    tone: "danger",
-                  },
-                  {
-                    icon: <X size={16} strokeWidth={1.8} />,
-                    label: adminContent.tables.dialogs.keepEditing,
-                    onClick: handleCancelNavigation,
-                    tone: "terciary",
-                  },
-                ]
-          }
+          actions={[
+            {
+              icon: <Trash2 size={16} strokeWidth={1.8} />,
+              label: adminContent.tables.dialogs.exitWithoutSaving,
+              onClick: handleConfirmNavigation,
+              tone: "danger",
+            },
+            {
+              icon: <X size={16} strokeWidth={1.8} />,
+              label: adminContent.tables.dialogs.keepEditing,
+              onClick: handleCancelNavigation,
+              tone: "terciary",
+            },
+          ]}
           changes={pendingChanges}
           labels={{
             eyebrow: adminContent.tables.dialogs.unsavedEyebrow,
-            text:
-              activeDialogMode === "save"
-                ? "Se enviaran estos cambios a Apps Script."
-                : "Tienes cambios pendientes en memoria. Si sales ahora, se perderan.",
-            title:
-              activeDialogMode === "save"
-                ? "Guardar cambios"
-                : adminContent.tables.dialogs.unsavedTitle,
+            text: "Tienes cambios pendientes en memoria. Si sales ahora, se perderan.",
+            title: adminContent.tables.dialogs.unsavedTitle,
           }}
           titleId="admin-dashboard-pending-changes-title"
         />
       )}
 
       <AdminPendingChangesActions
+        changes={pendingChanges}
         hasPendingChanges={hasPendingChanges}
         onDiscard={handleDiscard}
-        onSave={handleRequestSave}
+        onSave={handleSave}
         saving={saving}
         showText="always"
       />
