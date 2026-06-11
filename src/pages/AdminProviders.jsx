@@ -78,8 +78,9 @@ export default function AdminProviders() {
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [savedProviders, setSavedProviders] = useState([]);
   const [providers, setProviders] = useState([]);
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("");
+  const [providerQuery, setProviderQuery] = useState("");
+  const [providerCategory, setProviderCategory] = useState("");
+  const [serviceQuery, setServiceQuery] = useState("");
   const [servicePaymentStatus, setServicePaymentStatus] = useState("");
   const [page, setPage] = useState(1);
   const [servicesPage, setServicesPage] = useState(1);
@@ -126,8 +127,12 @@ export default function AdminProviders() {
   }, []);
 
   const filteredProviders = useMemo(
-    () => filterProviders(providers, { category, query }),
-    [category, providers, query],
+    () =>
+      filterProviders(providers, {
+        category: providerCategory,
+        query: providerQuery,
+      }),
+    [providerCategory, providerQuery, providers],
   );
   const {
     currentPage,
@@ -159,8 +164,12 @@ export default function AdminProviders() {
     [selectedProvider],
   );
   const filteredServices = useMemo(
-    () => filterServices(services, { category, paymentStatus: servicePaymentStatus, query }),
-    [category, query, servicePaymentStatus, services],
+    () =>
+      filterServices(services, {
+        paymentStatus: servicePaymentStatus,
+        query: serviceQuery,
+      }),
+    [servicePaymentStatus, serviceQuery, services],
   );
   const {
     currentPage: currentServicesPage,
@@ -343,8 +352,8 @@ export default function AdminProviders() {
       setSelectedServiceId(editingServiceId);
       setServicesPage(1);
     } else {
-      setCategory("");
-      setQuery("");
+      setProviderCategory("");
+      setProviderQuery("");
       setSelectedServiceId("");
       setPage(1);
     }
@@ -454,18 +463,16 @@ export default function AdminProviders() {
                 eyebrow={adminContent.providers.list.eyebrow}
                 filters={
                   <ProviderFilters
-                    category={category}
+                    category={providerCategory}
                     onCategoryChange={(value) => {
-                      setCategory(value);
+                      setProviderCategory(value);
                       setPage(1);
-                      setServicesPage(1);
                     }}
                     onQueryChange={(value) => {
-                      setQuery(value);
+                      setProviderQuery(value);
                       setPage(1);
-                      setServicesPage(1);
                     }}
-                    query={query}
+                    query={providerQuery}
                   />
                 }
                 getKey={(provider) => provider.id}
@@ -545,23 +552,17 @@ export default function AdminProviders() {
                 eyebrow={adminContent.providers.services.eyebrow}
                 filters={
                   <ProviderFilters
-                    category={category}
                     onPaymentStatusChange={(value) => {
                       setServicePaymentStatus(value);
                       setServicesPage(1);
                     }}
-                    onCategoryChange={(value) => {
-                      setCategory(value);
-                      setPage(1);
-                      setServicesPage(1);
-                    }}
                     onQueryChange={(value) => {
-                      setQuery(value);
-                      setPage(1);
+                      setServiceQuery(value);
                       setServicesPage(1);
                     }}
                     paymentStatus={servicePaymentStatus}
-                    query={query}
+                    query={serviceQuery}
+                    showCategory={false}
                     showPaymentStatus
                   />
                 }
@@ -752,17 +753,18 @@ function getProviderEditorTitle({ mode, provider, providers, serviceId }) {
 }
 
 function ProviderFilters({
-  category,
+  category = "",
   onCategoryChange,
   onPaymentStatusChange,
   onQueryChange,
   paymentStatus = "",
   query,
+  showCategory = true,
   showPaymentStatus = false,
 }) {
-  const selectedCategory = PROVIDER_CATEGORIES.find(
-    (item) => item.value === category,
-  );
+  const selectedCategory = showCategory
+    ? PROVIDER_CATEGORIES.find((item) => item.value === category)
+    : null;
   const selectedPaymentStatus = adminContent.providers.filters.paymentStatuses.find(
     (item) => item.value === paymentStatus,
   );
@@ -774,7 +776,7 @@ function ProviderFilters({
       ? {
           key: "category",
           label: selectedCategory.label,
-          onRemove: () => onCategoryChange(""),
+          onRemove: () => onCategoryChange?.(""),
         }
       : null,
     selectedPaymentStatus
@@ -793,9 +795,11 @@ function ProviderFilters({
     >
       <div
         className={`grid gap-4 ${
-          showPaymentStatus
+          showCategory && showPaymentStatus
             ? "lg:grid-cols-[1fr_14rem_14rem]"
-            : "lg:grid-cols-[1fr_18rem]"
+            : showCategory || showPaymentStatus
+              ? "lg:grid-cols-[1fr_18rem]"
+              : "lg:grid-cols-1"
         } lg:items-end`}
       >
         <div>
@@ -816,23 +820,25 @@ function ProviderFilters({
           </label>
         </div>
 
-        <div>
-          <Label>{adminContent.providers.filters.categoryLabel}</Label>
-          <select
-            className={selectClassName}
-            onChange={(event) => onCategoryChange(event.target.value)}
-            value={category}
-          >
-            <option value="">
-              {adminContent.providers.filters.allCategories}
-            </option>
-            {PROVIDER_CATEGORIES.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
+        {showCategory && (
+          <div>
+            <Label>{adminContent.providers.filters.categoryLabel}</Label>
+            <select
+              className={selectClassName}
+              onChange={(event) => onCategoryChange?.(event.target.value)}
+              value={category}
+            >
+              <option value="">
+                {adminContent.providers.filters.allCategories}
               </option>
-            ))}
-          </select>
-        </div>
+              {PROVIDER_CATEGORIES.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {showPaymentStatus && (
           <div>
@@ -943,25 +949,17 @@ function getProviderServices(providers) {
   );
 }
 
-function filterServices(services, { category, paymentStatus, query }) {
+function filterServices(services, { paymentStatus, query }) {
   const normalizedQuery = query.trim().toLowerCase();
 
   return services.filter((service) => {
-    const matchesCategory = !category || service.category === category;
     const matchesPaymentStatus =
       !paymentStatus ||
       (paymentStatus === "paid" && isServicePaid(service)) ||
       (paymentStatus === "unpaid" && !isServicePaid(service));
-    const searchableText = [
-      service.name,
-      service.providerName,
-      PROVIDER_CATEGORY_LABELS[service.category],
-    ]
-      .join(" ")
-      .toLowerCase();
+    const searchableText = String(service.name || "").toLowerCase();
 
     return (
-      matchesCategory &&
       matchesPaymentStatus &&
       (!normalizedQuery || searchableText.includes(normalizedQuery))
     );

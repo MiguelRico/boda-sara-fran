@@ -1209,8 +1209,6 @@ function SeatAssignmentDialog({
               emptyTitle={getSeatAssignmentEmptyState(guests.length).title}
               guests={items}
               onSelect={() => {}}
-              rowEyebrow={seatLabel}
-              rowTitle={seatLabel}
               selectedGuestKey={effectiveSelectedGuestKey}
             />
           )}
@@ -1222,8 +1220,6 @@ function SeatAssignmentDialog({
               onSelect={(guest) =>
                 setSelectedGuestKey(getPendingGuestRowKey(guest))
               }
-              rowEyebrow={seatLabel}
-              rowTitle={seatLabel}
               selectedGuestKey={effectiveSelectedGuestKey}
             />
           )}

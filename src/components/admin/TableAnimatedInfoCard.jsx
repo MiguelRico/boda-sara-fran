@@ -270,7 +270,11 @@ function AssignmentModal({
 }
 
 function AssignedSeatCard({ onSelect, seat, selected }) {
-  const seatLabel = `Asiento ${seat.seat}`;
+  const guestGroup = String(seat.guest.confirmationName || "").trim();
+  const eyebrow = tableContent.card.seatEyebrow({
+    group: guestGroup,
+    seat: seat.seat,
+  });
 
   return (
     <div
@@ -283,9 +287,8 @@ function AssignedSeatCard({ onSelect, seat, selected }) {
     >
       <TableGuestCard
         decorativeText={seat.seat}
-        eyebrow={seatLabel}
+        eyebrow={eyebrow}
         guest={seat.guest}
-        title={seatLabel}
       />
     </div>
   );

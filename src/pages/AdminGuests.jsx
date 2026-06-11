@@ -103,8 +103,10 @@ export default function AdminGuests() {
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   const [state, setState] = useState(emptyState);
   const [savedConfirmations, setSavedConfirmations] = useState([]);
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [confirmationQuery, setConfirmationQuery] = useState("");
+  const [confirmationFilter, setConfirmationFilter] = useState("all");
+  const [guestQuery, setGuestQuery] = useState("");
+  const [guestFilter, setGuestFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [guestPage, setGuestPage] = useState(1);
   const [selectedRowId, setSelectedRowId] = useState("");
@@ -164,8 +166,13 @@ export default function AdminGuests() {
     [state.confirmations],
   );
   const visibleRows = useMemo(
-    () => Confirmation.filterAdminRows(rows, query, filter),
-    [filter, query, rows],
+    () =>
+      Confirmation.filterAdminRows(
+        rows,
+        confirmationQuery,
+        confirmationFilter,
+      ),
+    [confirmationFilter, confirmationQuery, rows],
   );
   const {
     currentPage,
@@ -206,8 +213,8 @@ export default function AdminGuests() {
     [allGuestItems, rows],
   );
   const visibleGuestItems = useMemo(
-    () => filterGuestItems(guestItems, query, filter),
-    [filter, guestItems, query],
+    () => filterGuestItems(guestItems, guestQuery, guestFilter),
+    [guestFilter, guestItems, guestQuery],
   );
   const {
     currentPage: currentGuestPage,
@@ -318,8 +325,8 @@ export default function AdminGuests() {
 
       setSelectedGuestId(selectedGuest?.rowId || "");
     } else {
-      setFilter("all");
-      setQuery("");
+      setConfirmationFilter("all");
+      setConfirmationQuery("");
       setPage(1);
       setSelectedGuestId("");
     }
@@ -417,8 +424,8 @@ export default function AdminGuests() {
     const restoredRows = Confirmation.toAdminRows(restoredConfirmations);
     const restoredVisibleRows = Confirmation.filterAdminRows(
       restoredRows,
-      query,
-      filter,
+      confirmationQuery,
+      confirmationFilter,
     );
     const restoredTotalPages = Math.max(
       Math.ceil(
@@ -429,7 +436,12 @@ export default function AdminGuests() {
     );
 
     setPage((current) => Math.min(current, restoredTotalPages));
-  }, [filter, isMobileView, query, savedConfirmations]);
+  }, [
+    confirmationFilter,
+    confirmationQuery,
+    isMobileView,
+    savedConfirmations,
+  ]);
 
   const handleCancelBlockedNavigation = () => {
     blocker.reset?.();
@@ -512,20 +524,18 @@ export default function AdminGuests() {
                 eyebrow={adminContent.guests.list.eyebrow}
                 filters={
                   <FiltersCard
-                    filter={filter}
+                    filter={confirmationFilter}
                     onFilterChange={(value) => {
                       cancelPageLoading();
-                      setFilter(value);
+                      setConfirmationFilter(value);
                       setPage(1);
-                      setGuestPage(1);
                     }}
                     onQueryChange={(value) => {
                       cancelPageLoading();
-                      setQuery(value);
+                      setConfirmationQuery(value);
                       setPage(1);
-                      setGuestPage(1);
                     }}
-                    query={query}
+                    query={confirmationQuery}
                   />
                 }
                 getKey={(row) => row.rowId}
@@ -613,20 +623,18 @@ export default function AdminGuests() {
                 eyebrow={adminContent.guests.guestList.eyebrow}
                 filters={
                   <FiltersCard
-                    filter={filter}
+                    filter={guestFilter}
                     onFilterChange={(value) => {
                       cancelPageLoading();
-                      setFilter(value);
-                      setPage(1);
+                      setGuestFilter(value);
                       setGuestPage(1);
                     }}
                     onQueryChange={(value) => {
                       cancelPageLoading();
-                      setQuery(value);
-                      setPage(1);
+                      setGuestQuery(value);
                       setGuestPage(1);
                     }}
-                    query={query}
+                    query={guestQuery}
                   />
                 }
                 getKey={(guest) => guest.rowId}

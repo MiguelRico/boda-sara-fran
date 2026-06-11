@@ -12,8 +12,6 @@ export default function PendingGuestsList({
   emptyTitle = adminContent.pendingGuests.emptyTitle,
   error = "",
   guests = [],
-  rowEyebrow,
-  rowTitle,
   onSelect,
   selectedGuestKey = "",
 }) {
@@ -35,8 +33,6 @@ export default function PendingGuestsList({
 
       <PendingGuestsPage
         guests={guests}
-        rowEyebrow={rowEyebrow}
-        rowTitle={rowTitle}
         onSelect={onSelect}
         selectedGuestKey={selectedGuestKey}
       />
@@ -111,21 +107,13 @@ export function PendingGuestsFilters({
   );
 }
 
-function PendingGuestsPage({
-  guests,
-  rowEyebrow,
-  rowTitle,
-  onSelect,
-  selectedGuestKey,
-}) {
+function PendingGuestsPage({ guests, onSelect, selectedGuestKey }) {
   return (
     <div className="space-y-3">
       {guests.map((guest) => (
         <GuestAssignmentRow
           guest={guest}
           key={getPendingGuestRowKey(guest)}
-          rowEyebrow={rowEyebrow}
-          rowTitle={rowTitle}
           onSelect={onSelect}
           selected={getPendingGuestRowKey(guest) === selectedGuestKey}
         />
@@ -134,13 +122,7 @@ function PendingGuestsPage({
   );
 }
 
-function GuestAssignmentRow({
-  guest,
-  rowEyebrow,
-  rowTitle,
-  onSelect,
-  selected,
-}) {
+function GuestAssignmentRow({ guest, onSelect, selected }) {
   return (
     <div
       className={`rounded-[2rem] transition ${
@@ -153,12 +135,9 @@ function GuestAssignmentRow({
       <TableGuestCard
         decorativeText="?"
         eyebrow={
-          rowEyebrow ||
-          guest.confirmationName ||
-          adminContent.pendingGuests.pendingEyebrow
+          guest.confirmationName || adminContent.pendingGuests.pendingEyebrow
         }
         guest={guest}
-        title={rowTitle}
       />
     </div>
   );
