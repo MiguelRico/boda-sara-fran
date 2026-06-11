@@ -1,3 +1,5 @@
+import { SkeletonBlock } from "../ui/TableSectionSkeleton";
+
 const DEFAULT_GRID_CLASS =
   "grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6";
 const DEFAULT_CARD_CLASS =
@@ -50,15 +52,15 @@ export function AdminMetricGridSkeleton({
     <div className={className}>
       {Array.from({ length: count }).map((_, index) => (
         <div
-          className="grid min-h-20 animate-pulse grid-rows-[auto_1fr] gap-2 rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-2.5 sm:min-h-24 sm:gap-3 sm:p-5"
+          className="grid min-h-20 grid-rows-[auto_1fr] gap-2 rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-2.5 sm:min-h-24 sm:gap-3 sm:p-5"
           key={index}
         >
-          <div className="mx-auto h-3 w-20 max-w-full rounded-full bg-[var(--color-border)]" />
+          <SkeletonBlock className="mx-auto h-3 w-20 max-w-full rounded-full" />
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2 sm:grid-cols-2">
             <div className="flex justify-start sm:justify-center">
-              <div className="h-8 w-8 rounded-full bg-[var(--color-border)] sm:h-10 sm:w-10" />
+              <SkeletonBlock className="h-8 w-8 rounded-full sm:h-10 sm:w-10" />
             </div>
-            <div className="mx-auto h-7 w-10 rounded-full bg-[var(--color-border)] sm:h-10 sm:w-16" />
+            <SkeletonBlock className="mx-auto h-7 w-10 rounded-full sm:h-10 sm:w-16" />
           </div>
         </div>
       ))}

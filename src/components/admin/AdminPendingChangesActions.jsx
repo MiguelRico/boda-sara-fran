@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Save, Undo2, X } from "lucide-react";
 
 import IconButton from "../ui/IconButton";
+import { SkeletonBlock } from "../ui/TableSectionSkeleton";
 import UnsavedChangesDialog from "./UnsavedChangesDialog";
 import { adminContent } from "../../constants/adminContent";
 
@@ -42,6 +43,21 @@ export default function AdminPendingChangesActions({
       closeDialog();
     }
   };
+
+  if (loading) {
+    return (
+      <section className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+        <div
+          className={`grid w-full gap-3 ${
+            showSave ? "grid-cols-2" : "grid-cols-1"
+          }`}
+        >
+          <SkeletonBlock className="h-11 rounded-full" />
+          {showSave && <SkeletonBlock className="h-11 rounded-full" />}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>

@@ -16,6 +16,7 @@ import {
   AdminMetricGrid,
   AdminMetricGridSkeleton,
 } from "../components/admin/AdminMetricGrid";
+import { SkeletonBlock } from "../components/ui/TableSectionSkeleton";
 import TableTotalsPanel from "../components/admin/TableTotalsPanel";
 import ProviderTotalsPanel from "../components/admin/providers/ProviderTotalsPanel";
 import CinematicPage from "../components/cinematic/CinematicPage";
@@ -205,10 +206,13 @@ function StatsGuestTotalsPanel({ chartStats, loading, stats }) {
         {content.title}
       </h2>
       {loading ? (
-        <AdminMetricGridSkeleton
-          className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-9"
-          count={9}
-        />
+        <>
+          <AdminMetricGridSkeleton
+            className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-9"
+            count={9}
+          />
+          <StatsChartsSkeleton />
+        </>
       ) : (
         <>
           <AdminMetricGrid
@@ -285,6 +289,40 @@ function StatsGuestTotalsPanel({ chartStats, loading, stats }) {
         </>
       )}
     </section>
+  );
+}
+
+function StatsChartsSkeleton() {
+  return (
+    <div className="mt-3 grid gap-2">
+      {Array.from({ length: 2 }).map((_, panelIndex) => (
+        <div
+          className="rounded-[1rem] border border-[var(--color-border)] bg-white/35 p-2.5"
+          key={panelIndex}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <SkeletonBlock className="h-5 w-32 rounded-full" />
+            <SkeletonBlock className="h-5 w-9 rounded-full" />
+          </div>
+          <div className="mt-2 grid gap-1.5">
+            {Array.from({ length: panelIndex === 0 ? 3 : 2 }).map(
+              (_, rowIndex) => (
+                <div
+                  className="rounded-lg border border-[var(--color-border)] bg-white/45 p-1.5"
+                  key={rowIndex}
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <SkeletonBlock className="h-3 w-20 rounded-full" />
+                    <SkeletonBlock className="h-3 w-10 rounded-full" />
+                  </div>
+                  <SkeletonBlock className="h-1.5 rounded-full" />
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

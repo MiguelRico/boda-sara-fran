@@ -3,7 +3,6 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   Euro,
-  FolderOpen,
   ReceiptText,
   HandCoins,
   Coins,
@@ -27,17 +26,22 @@ export default function ProviderTotalsPanel({ loading, stats }) {
       </h2>
       {loading ? (
         <AdminMetricGridSkeleton
-          className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-9"
-          count={9}
+          className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8"
+          count={8}
         />
       ) : (
         <AdminMetricGrid
-          className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-9"
+          className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8"
           items={[
             {
               emoji: <BriefcaseBusiness size={22} strokeWidth={1.8} />,
               label: metrics.providers,
               value: stats.providerCount,
+            },
+            {
+              emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
+              label: metrics.services,
+              value: stats.serviceCount,
             },
             {
               emoji: <Euro size={22} strokeWidth={1.8} />,
@@ -53,11 +57,6 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               emoji: <ReceiptEuro size={22} strokeWidth={1.8} />,
               label: metrics.pending,
               value: formatCurrency(stats.totalPending),
-            },
-            {
-              emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
-              label: metrics.services,
-              value: stats.serviceCount,
             },
             {
               emoji: <Coins size={22} strokeWidth={1.8} />,
