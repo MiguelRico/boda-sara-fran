@@ -11,6 +11,30 @@ export const adminContent = {
     loading: "Cargando datos...",
     error: "La contraseña no es correcta.",
   },
+  stats: {
+    header: {
+      eyebrow: "Panel privado",
+      title: "Resumen",
+      text: "Seguimiento de respuestas recibidas y datos operativos",
+    },
+    confirmations: {
+      eyebrow: "Resumen",
+      title: "Resumen",
+      charts: {
+        allergies: "Alergias",
+        transport: "Transporte",
+        transportTitle: "Autobús",
+        outbound: "Ida",
+        return: "Vuelta",
+      },
+    },
+    dialogs: {
+      warningEyebrow: "Aviso",
+      problemTitle: "Ha ocurrido un problema",
+      loadError:
+        "No se pudieron cargar las estadísticas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
+    },
+  },
   guests: {
     tabs: [
       { id: "confirmations", label: "Confirmaciones" },
