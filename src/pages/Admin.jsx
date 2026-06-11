@@ -2,6 +2,7 @@ import { useInView } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Armchair,
+  Bell,
   ChartColumn,
   ClipboardCheck,
   ReceiptText,
@@ -45,21 +46,22 @@ import useIsMobileView from "../hooks/useIsMobileView";
 import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
 
 const adminCardIcons = {
-  Invitados: ClipboardCheck,
-  Resumen: ChartColumn,
-  Mesas: Armchair,
-  Proveedores: ReceiptText,
+  armchair: Armchair,
+  bell: Bell,
+  "chart-column": ChartColumn,
+  "clipboard-check": ClipboardCheck,
+  "receipt-text": ReceiptText,
 };
 
 const getAdminCard = (card) => {
-  const Icon = adminCardIcons[card.title];
+  const Icon = adminCardIcons[card.icon];
 
   if (!Icon) return card;
 
   return {
     ...card,
     backgroundIcon: <Icon size={72} strokeWidth={1.5} />,
-    emoji: <Icon size={22} strokeWidth={1.8} />,
+    icon: <Icon size={22} strokeWidth={1.8} />,
   };
 };
 

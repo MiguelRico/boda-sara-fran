@@ -219,47 +219,47 @@ function StatsGuestTotalsPanel({ chartStats, loading, stats }) {
             className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-9"
             items={[
               {
-                emoji: <MailCheck size={22} strokeWidth={1.8} />,
+                icon: <MailCheck size={22} strokeWidth={1.8} />,
                 label: metrics.confirmations,
                 value: stats.groupCount,
               },
               {
-                emoji: <UsersRound size={22} strokeWidth={1.8} />,
+                icon: <UsersRound size={22} strokeWidth={1.8} />,
                 label: metrics.guests,
                 value: stats.guestCount,
               },
               {
-                emoji: <Beef size={22} strokeWidth={1.8} />,
+                icon: <Beef size={22} strokeWidth={1.8} />,
                 label: metrics.meat,
                 value: stats.meatCount,
               },
               {
-                emoji: <Fish size={22} strokeWidth={1.8} />,
+                icon: <Fish size={22} strokeWidth={1.8} />,
                 label: metrics.fish,
                 value: stats.fishCount,
               },
               {
-                emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
+                icon: <AlertTriangle size={22} strokeWidth={1.8} />,
                 label: metrics.allergies,
                 value: stats.allergyCount,
               },
               {
-                emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
+                icon: <AlertTriangle size={22} strokeWidth={1.8} />,
                 label: metrics.otherAllergies,
                 value: stats.otherAllergyCount,
               },
               {
-                emoji: <MessageCircle size={22} strokeWidth={1.8} />,
+                icon: <MessageCircle size={22} strokeWidth={1.8} />,
                 label: metrics.comments,
                 value: stats.commentsCount,
               },
               {
-                emoji: <BusFront size={22} strokeWidth={1.8} />,
+                icon: <BusFront size={22} strokeWidth={1.8} />,
                 label: metrics.outboundBus,
                 value: stats.outboundBusCount,
               },
               {
-                emoji: <BusFront size={22} strokeWidth={1.8} />,
+                icon: <BusFront size={22} strokeWidth={1.8} />,
                 label: metrics.returnBus,
                 value: stats.returnBusCount,
               },

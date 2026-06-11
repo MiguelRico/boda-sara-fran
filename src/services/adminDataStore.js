@@ -1,6 +1,7 @@
 import { ADMIN_PASSWORD } from "../constants/admin";
-import { Table } from "../models";
+import { AdminNotification, Table } from "../models";
 import { findAllConfirmations } from "../api/confirmationsApi";
+import { findAllNotifications } from "../api/notificationsApi";
 import { findAllProviders } from "../api/providersApi";
 import { findAllTables } from "../api/tablesApi";
 import {
@@ -8,6 +9,7 @@ import {
   deleteAdminConfirmation,
 } from "../api/confirmationsApi";
 import { saveAdminProviders } from "../api/providersApi";
+import { saveAdminNotifications } from "../api/notificationsApi";
 import { saveAdminTables } from "../api/tablesApi";
 import { mapAdminConfirmations } from "../mappers/confirmationMapper";
 import { mapAdminProviders } from "../mappers/providerMapper";
@@ -17,8 +19,10 @@ const emptySnapshot = {
   confirmations: [],
   loaded: false,
   loadingPromise: null,
+  notifications: [],
   providers: [],
   savedConfirmations: [],
+  savedNotifications: [],
   savedProviders: [],
   savedTables: [],
   tables: [],
@@ -34,8 +38,10 @@ export const clearAdminDataStore = () => {
   store.confirmations = [];
   store.loaded = false;
   store.loadingPromise = null;
+  store.notifications = [];
   store.providers = [];
   store.savedConfirmations = [];
+  store.savedNotifications = [];
   store.savedProviders = [];
   store.savedTables = [];
   store.tables = [];
@@ -55,13 +61,26 @@ export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
       console.error("Error al cargar proveedores:", error);
       return { providers: [] };
     }),
+    findAllNotifications({ password }).catch((error) => {
+      console.error("Error al cargar notificaciones:", error);
+      return { notifications: [] };
+    }),
   ])
-    .then(([confirmationsResponse, tablesResponse, providersResponse]) => {
+    .then(
+      ([
+        confirmationsResponse,
+        tablesResponse,
+        providersResponse,
+        notificationsResponse,
+      ]) => {
       store.confirmations = mapAdminConfirmations(confirmationsResponse);
       store.tables = Table.normalizeList(
         mapAdminTables(tablesResponse?.tables || []),
       );
       store.providers = mapAdminProviders(providersResponse?.providers || []);
+      store.notifications = AdminNotification.normalizeList(
+        notificationsResponse?.notifications || notificationsResponse || [],
+      );
       markAdminDataSaved();
       store.loaded = true;
 
@@ -76,8 +95,10 @@ export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
 
 export const getAdminDataSnapshot = () => ({
   confirmations: store.confirmations,
+  notifications: store.notifications,
   providers: store.providers,
   savedConfirmations: store.savedConfirmations,
+  savedNotifications: store.savedNotifications,
   savedProviders: store.savedProviders,
   savedTables: store.savedTables,
   tables: store.tables,
@@ -86,7 +107,8 @@ export const getAdminDataSnapshot = () => ({
 export const hasAdminPendingChanges = () =>
   getStableJson(store.confirmations) !== getStableJson(store.savedConfirmations) ||
   getStableJson(store.tables) !== getStableJson(store.savedTables) ||
-  getStableJson(store.providers) !== getStableJson(store.savedProviders);
+  getStableJson(store.providers) !== getStableJson(store.savedProviders) ||
+  getStableJson(store.notifications) !== getStableJson(store.savedNotifications);
 
 export const getAdminPendingChangesSummary = () => [
   ...buildEntityChanges({
@@ -118,14 +140,38 @@ export const getAdminPendingChangesSummary = () => [
       `Proveedor modificado: ${item.name || "sin nombre"}`,
     savedItems: store.savedProviders,
   }),
+  ...buildEntityChanges({
+    createdLabel: (item) => `Notificacion creada: ${item.title || "sin título"}`,
+    currentItems: store.notifications,
+    deletedLabel: (item) =>
+      `Notificacion eliminada: ${item.title || "sin título"}`,
+    getKey: (item) => item.id,
+    modifiedLabel: (item) =>
+      `Notificacion modificada: ${item.title || "sin título"}`,
+    savedItems: store.savedNotifications,
+  }),
 ];
+
+export const getAdminNotificationChangesSummary = () =>
+  buildEntityChanges({
+    createdLabel: (item) => `Notificacion creada: ${item.title || "sin título"}`,
+    currentItems: store.notifications,
+    deletedLabel: (item) =>
+      `Notificacion eliminada: ${item.title || "sin título"}`,
+    getKey: (item) => item.id,
+    modifiedLabel: (item) =>
+      `Notificacion modificada: ${item.title || "sin título"}`,
+    savedItems: store.savedNotifications,
+  });
 
 export const markAdminDataSaved = ({
   confirmations = store.confirmations,
+  notifications = store.notifications,
   providers = store.providers,
   tables = store.tables,
 } = {}) => {
   store.savedConfirmations = mapAdminConfirmations(confirmations);
+  store.savedNotifications = AdminNotification.normalizeList(notifications);
   store.savedProviders = mapAdminProviders(providers);
   store.savedTables = Table.normalizeList(tables);
 
@@ -134,10 +180,21 @@ export const markAdminDataSaved = ({
 
 export const discardAdminPendingChanges = () => {
   store.confirmations = mapAdminConfirmations(store.savedConfirmations);
+  store.notifications = AdminNotification.normalizeList(
+    store.savedNotifications,
+  );
   store.providers = mapAdminProviders(store.savedProviders);
   store.tables = Table.normalizeList(store.savedTables);
 
   return getAdminDataSnapshot();
+};
+
+export const discardAdminNotificationChanges = () => {
+  store.notifications = AdminNotification.normalizeList(
+    store.savedNotifications,
+  );
+
+  return store.notifications;
 };
 
 export const saveAdminPendingChanges = async ({
@@ -188,6 +245,7 @@ export const saveAdminPendingChanges = async ({
 
   await Promise.all([
     ...confirmationRequests,
+    saveAdminNotifications({ password, notifications: store.notifications }),
     saveAdminTables({ password, tables: store.tables }),
     saveAdminProviders({ password, providers: store.providers }),
   ]);
@@ -237,6 +295,46 @@ export const setAdminProviders = (providers) => {
   store.providers = mapAdminProviders(providers);
 
   return store.providers;
+};
+
+export const setAdminNotifications = (notifications) => {
+  store.notifications = AdminNotification.normalizeList(notifications);
+
+  return store.notifications;
+};
+
+export const upsertAdminNotification = (notification) => {
+  const normalizedNotification = AdminNotification.normalize(notification);
+  const existingIndex = store.notifications.findIndex(
+    (item) => item.id === normalizedNotification.id,
+  );
+
+  if (existingIndex === -1) {
+    store.notifications = AdminNotification.normalizeList([
+      ...store.notifications,
+      normalizedNotification,
+    ]);
+  } else {
+    store.notifications = AdminNotification.normalizeList(
+      store.notifications.map((item, index) =>
+        index === existingIndex ? normalizedNotification : item,
+      ),
+    );
+  }
+
+  return store.notifications;
+};
+
+export const markAdminNotificationRead = (notificationId) => {
+  store.notifications = AdminNotification.normalizeList(
+    store.notifications.map((notification) =>
+      notification.id === notificationId
+        ? { ...notification, read: true }
+        : notification,
+    ),
+  );
+
+  return store.notifications;
 };
 
 function buildEntityChanges({

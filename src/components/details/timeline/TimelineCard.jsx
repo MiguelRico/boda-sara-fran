@@ -1,6 +1,22 @@
+import {
+  GlassWater,
+  HeartHandshake,
+  PartyPopper,
+  Utensils,
+} from "lucide-react";
+
 import RevealOnView from "../../ui/RevealOnView";
 
+const timelineIcons = {
+  "glass-water": GlassWater,
+  "heart-handshake": HeartHandshake,
+  "party-popper": PartyPopper,
+  utensils: Utensils,
+};
+
 export default function TimelineCard({ event, index, isLast }) {
+  const Icon = timelineIcons[event.icon] || HeartHandshake;
+
   return (
     <RevealOnView
       as="article"
@@ -49,7 +65,7 @@ export default function TimelineCard({ event, index, isLast }) {
               {event.title}
             </h3>
             <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/70 text-lg">
-              {event.emoji}
+              <Icon size={18} strokeWidth={1.8} />
             </span>
           </div>
 

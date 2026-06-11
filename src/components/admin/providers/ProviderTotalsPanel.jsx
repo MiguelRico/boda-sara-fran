@@ -34,42 +34,42 @@ export default function ProviderTotalsPanel({ loading, stats }) {
           className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8"
           items={[
             {
-              emoji: <BriefcaseBusiness size={22} strokeWidth={1.8} />,
+              icon: <BriefcaseBusiness size={22} strokeWidth={1.8} />,
               label: metrics.providers,
               value: stats.providerCount,
             },
             {
-              emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
+              icon: <BadgeEuro size={22} strokeWidth={1.8} />,
               label: metrics.services,
               value: stats.serviceCount,
             },
             {
-              emoji: <Euro size={22} strokeWidth={1.8} />,
+              icon: <Euro size={22} strokeWidth={1.8} />,
               label: metrics.budget,
               value: formatCurrency(stats.totalBudget),
             },
             {
-              emoji: <HandCoins size={22} strokeWidth={1.8} />,
+              icon: <HandCoins size={22} strokeWidth={1.8} />,
               label: metrics.paid,
               value: formatCurrency(stats.totalPaid),
             },
             {
-              emoji: <ReceiptEuro size={22} strokeWidth={1.8} />,
+              icon: <ReceiptEuro size={22} strokeWidth={1.8} />,
               label: metrics.pending,
               value: formatCurrency(stats.totalPending),
             },
             {
-              emoji: <Coins size={22} strokeWidth={1.8} />,
+              icon: <Coins size={22} strokeWidth={1.8} />,
               label: metrics.nextPayments,
               value: stats.nextPaymentCount,
             },
             {
-              emoji: <CalendarDays size={22} strokeWidth={1.8} />,
+              icon: <CalendarDays size={22} strokeWidth={1.8} />,
               label: metrics.nextPaymentDate,
               value: formatDate(stats.nextPaymentDate),
             },
             {
-              emoji: <ReceiptText size={22} strokeWidth={1.8} />,
+              icon: <ReceiptText size={22} strokeWidth={1.8} />,
               label: metrics.nextPaymentAmount,
               value: formatCurrency(stats.nextPaymentAmount),
             },

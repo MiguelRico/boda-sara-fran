@@ -7,20 +7,20 @@ import HeroSection from "../components/home/HeroSection";
 import { siteContent } from "../constants/siteContent";
 
 const homeCardIcons = {
-  Ceremonia: HeartHandshake,
-  Transporte: BusFront,
-  Celebración: Sparkles,
+  "bus-front": BusFront,
+  "heart-handshake": HeartHandshake,
+  sparkles: Sparkles,
 };
 
 const getHomeCard = (card) => {
-  const Icon = homeCardIcons[card.title];
+  const Icon = homeCardIcons[card.icon];
 
   if (!Icon) return card;
 
   return {
     ...card,
     backgroundIcon: <Icon size={72} strokeWidth={1.5} />,
-    emoji: <Icon size={22} strokeWidth={1.8} />,
+    icon: <Icon size={22} strokeWidth={1.8} />,
   };
 };
 

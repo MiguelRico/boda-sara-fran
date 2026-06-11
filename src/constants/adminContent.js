@@ -404,6 +404,55 @@ export const adminContent = {
       save: "Guardando proveedores...",
     },
   },
+  notifications: {
+    header: {
+      eyebrow: "Panel privado",
+      title: "Notificaciones",
+      text: "Avisos internos, pagos y confirmaciones pendientes de revisar.",
+    },
+    access: {
+      empty: "No hay notificaciones pendientes.",
+      label: "Abrir notificaciones",
+      shortLabel: "Avisos",
+      viewAll: "Ver notificaciones",
+    },
+    form: {
+      eyebrow: "Crear",
+      title: "Nueva notificación",
+      save: "Crear notificación",
+      fields: {
+        date: "Fecha",
+        detail: "Detalle",
+        title: "Título",
+        type: "Tipo",
+      },
+      placeholders: {
+        detail: "Detalle opcional",
+        title: "Ej: Pago pendiente del fotógrafo",
+      },
+    },
+    list: {
+      eyebrow: "Listado",
+      title: "Notificaciones",
+      emptyTitle: "Sin notificaciones",
+      emptyText: "Crea una notificación para verla en este listado.",
+    },
+    actions: {
+      discardChanges: "Deshacer cambios",
+      markRead: "Marcar como leída",
+    },
+    dialogs: {
+      discardTitle: "Deshacer cambios de notificaciones",
+      discardText:
+        "Se desharán los cambios pendientes de notificaciones.",
+      loadError: "No se pudieron cargar las notificaciones.",
+      problemTitle: "Ha ocurrido un problema",
+      unsavedTitle: "Cambios pendientes",
+      unsavedText:
+        "Tienes cambios pendientes en notificaciones. Si sales ahora, no se guardarán.",
+      warningEyebrow: "Aviso",
+    },
+  },
   pendingGuests: {
     filtersEyebrow: "Filtros",
     title: "Invitados pendientes",

@@ -181,6 +181,14 @@ export const findAllProviders = async ({ password } = {}) => {
   });
 };
 
+export const findAllNotifications = async ({ password } = {}) => {
+  return await requestJsonp({
+    entity: "notifications",
+    method: "GET",
+    password,
+  });
+};
+
 export const savePublicConfirmation = async (payload, { method = "POST" } = {}) => {
   const confirmation = encodeConfirmationPayload(payload);
 
@@ -261,6 +269,20 @@ export const saveAdminProviders = async ({ password, providers }) => {
   return {
     success: true,
     providers,
+  };
+};
+
+export const saveAdminNotifications = async ({ notifications, password }) => {
+  await sendToRsvpApi({
+    entity: "notifications",
+    method: "PUT",
+    notifications,
+    password,
+  });
+
+  return {
+    success: true,
+    notifications,
   };
 };
 

@@ -19,7 +19,7 @@ export const siteContent = {
         description:
           "Una ceremonia al aire libre rodeados de naturaleza, música y una puesta de sol inolvidable.",
         to: "/details#ceremony",
-        emoji: "💍",
+        icon: "heart-handshake",
       },
       {
         title: "Transporte",
@@ -27,7 +27,7 @@ export const siteContent = {
         description:
           "Consulta los horarios de ida y vuelta para disfrutar sin preocuparte por el desplazamiento.",
         to: "/details#transport",
-        emoji: "🚌",
+        icon: "bus-front",
       },
       {
         title: "Celebración",
@@ -35,7 +35,7 @@ export const siteContent = {
         description:
           "Después de la ceremonia nos espera una noche especial para brindar, cenar y bailar juntos.",
         to: "/details#timeline",
-        emoji: "✨",
+        icon: "sparkles",
       },
     ],
     cta: {
@@ -192,28 +192,28 @@ export const siteContent = {
           title: "Ceremonia",
           description:
             "Celebraremos el momento más especial del día en un entorno natural y cuidado.",
-          emoji: "💍",
+          icon: "heart-handshake",
         },
         {
           time: "20:00",
           title: "Cóctel",
           description:
             "Primer brindis para encontrarnos y empezar a disfrutar de la celebración.",
-          emoji: "🥂",
+          icon: "glass-water",
         },
         {
           time: "22:00",
           title: "Cena",
           description:
             "Pensada para compartir, disfrutar y celebrar con las personas que queremos.",
-          emoji: "🍽️",
+          icon: "utensils",
         },
         {
           time: "00:00",
           title: "Fiesta",
           description:
             "La noche continuará con música, baile y muchas sorpresas.",
-          emoji: "🎉",
+          icon: "party-popper",
         },
       ],
     },
@@ -226,7 +226,7 @@ export const siteContent = {
         description:
           "Consultar totales, asistencia, alergias y horarios de autobús.",
         to: "/admin/stats",
-        emoji: "📊",
+        icon: "chart-column",
       },
       {
         title: "Invitados",
@@ -234,7 +234,7 @@ export const siteContent = {
         description:
           "Gestionar confirmaciones, datos de contacto, alergias y transporte.",
         to: "/admin/guests",
-        emoji: "📋",
+        icon: "clipboard-check",
       },
       {
         title: "Mesas",
@@ -242,7 +242,7 @@ export const siteContent = {
         description:
           "Consultar la distribución de mesas, asientos e invitados asignados.",
         to: "/admin/tables",
-        emoji: "🪑",
+        icon: "armchair",
       },
       {
         title: "Proveedores",
@@ -250,7 +250,15 @@ export const siteContent = {
         description:
           "Organizar proveedores, servicios contratados y plazos de pago.",
         to: "/admin/providers",
-        emoji: "🧾",
+        icon: "receipt-text",
+      },
+      {
+        title: "Notificaciones",
+        subtitle: "Avisos internos",
+        description:
+          "Crear avisos, pagos y confirmaciones pendientes de revisar.",
+        to: "/admin/notifications",
+        icon: "bell",
       },
     ],
   },

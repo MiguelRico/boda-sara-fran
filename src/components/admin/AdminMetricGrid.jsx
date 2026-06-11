@@ -23,7 +23,7 @@ export function AdminMetricGrid({
             <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2 sm:grid-cols-2">
               <div className="flex justify-start sm:justify-center">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)] sm:h-10 sm:w-10">
-                  {item.emoji}
+                  {item.icon}
                 </div>
               </div>
               <div className="min-w-0 text-center">
