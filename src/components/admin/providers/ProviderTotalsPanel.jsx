@@ -6,14 +6,14 @@ import {
   Euro,
   FolderOpen,
   ReceiptText,
+  HandCoins,
+  Coins,
+  ReceiptEuro,
 } from "lucide-react";
 
 import { adminContent } from "../../../constants/adminContent";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
-import {
-  AdminMetricGrid,
-  AdminMetricGridSkeleton,
-} from "../AdminMetricGrid";
+import { AdminMetricGrid, AdminMetricGridSkeleton } from "../AdminMetricGrid";
 
 export default function ProviderTotalsPanel({ loading, stats }) {
   const metrics = adminContent.providers.overview.metrics;
@@ -46,27 +46,22 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               value: stats.serviceCount,
             },
             {
-              emoji: <FolderOpen size={22} strokeWidth={1.8} />,
-              label: metrics.categories,
-              value: stats.categoryCount,
-            },
-            {
               emoji: <Euro size={22} strokeWidth={1.8} />,
               label: metrics.budget,
               value: formatCurrency(stats.totalBudget),
             },
             {
-              emoji: <CalendarDays size={22} strokeWidth={1.8} />,
+              emoji: <HandCoins size={22} strokeWidth={1.8} />,
               label: metrics.paid,
               value: formatCurrency(stats.totalPaid),
             },
             {
-              emoji: <CircleDashed size={22} strokeWidth={1.8} />,
+              emoji: <ReceiptText size={22} strokeWidth={1.8} />,
               label: metrics.pending,
               value: formatCurrency(stats.totalPending),
             },
             {
-              emoji: <ReceiptText size={22} strokeWidth={1.8} />,
+              emoji: <Coins size={22} strokeWidth={1.8} />,
               label: metrics.nextPayments,
               value: stats.nextPaymentCount,
             },
@@ -76,7 +71,7 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               value: formatDate(stats.nextPaymentDate),
             },
             {
-              emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
+              emoji: <ReceiptEuro size={22} strokeWidth={1.8} />,
               label: metrics.nextPaymentAmount,
               value: formatCurrency(stats.nextPaymentAmount),
             },
