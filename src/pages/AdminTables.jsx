@@ -3,24 +3,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
   Check,
-  CircleCheckBig,
-  CircleDashed,
   Grid2X2,
-  Armchair,
   Plus,
   Trash2,
   X,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
-import {
-  AdminMetricGrid,
-  AdminMetricGridSkeleton,
-} from "../components/admin/AdminMetricGrid";
 import AdminTableSection from "../components/admin/AdminTableSection";
 import AdminEntityTabs from "../components/admin/AdminEntityTabs";
 import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
 import AdminPageShell from "../components/admin/AdminPageShell";
+import TableTotalsPanel from "../components/admin/TableTotalsPanel";
 import SelectableCardPage from "../components/admin/SelectableCardPage";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
 import TableEditorDialog from "../components/admin/tables/TableEditorDialog";
@@ -87,8 +81,6 @@ const emptyState = {
   loading: true,
   error: "",
 };
-const TABLE_METRIC_GRID_CLASS =
-  "grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4";
 export default function AdminTables() {
   const spinner = useSpinner();
   const tablesRef = useRef(null);
@@ -815,7 +807,7 @@ export default function AdminTables() {
         rootRef={tablesRef}
       >
         <CinematicStaggeredRevealItem index={2} isVisible={tablesInView}>
-          <TablesOverview loading={state.loading} stats={tableStats} />
+          <TableTotalsPanel loading={state.loading} stats={tableStats} />
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={tablesInView}>
@@ -1287,55 +1279,6 @@ function SeatAssignmentDialog({
       )}
     </>
   );
-}
-
-function TablesOverview({ loading, stats }) {
-  return (
-    <section className="premium-card mt-4 mb-5">
-      <p className="section-eyebrow mb-2">
-        {adminContent.tables.overview.eyebrow}
-      </p>
-      <h2 className="mb-5 font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-        {adminContent.tables.overview.title}
-      </h2>
-      {loading ? (
-        <AdminMetricGridSkeleton
-          count={4}
-          className={TABLE_METRIC_GRID_CLASS}
-        />
-      ) : (
-        <AdminMetricGrid
-          className={TABLE_METRIC_GRID_CLASS}
-          items={getTableSummaryItems(stats)}
-        />
-      )}
-    </section>
-  );
-}
-
-function getTableSummaryItems(stats) {
-  return [
-    {
-      label: adminContent.tables.overview.metrics.tableCount,
-      value: stats.totalTables,
-      emoji: <Grid2X2 size={22} strokeWidth={1.8} />,
-    },
-    {
-      label: adminContent.tables.overview.metrics.seatCount,
-      value: stats.totalSeats,
-      emoji: <Armchair size={22} strokeWidth={1.8} />,
-    },
-    {
-      label: adminContent.tables.overview.metrics.assignedSeats,
-      value: stats.assignedSeats,
-      emoji: <CircleCheckBig size={22} strokeWidth={1.8} />,
-    },
-    {
-      label: adminContent.tables.overview.metrics.pendingSeats,
-      value: stats.pendingSeats,
-      emoji: <CircleDashed size={22} strokeWidth={1.8} />,
-    },
-  ];
 }
 
 function TableTabActions({

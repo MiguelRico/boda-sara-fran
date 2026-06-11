@@ -3,18 +3,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
   BusFront,
-  ClipboardCheck,
-  MessageCircle,
   Salad,
-  UsersRound,
-  MailCheck,
 } from "lucide-react";
 
 import { ADMIN_SESSION_KEY } from "../constants/admin";
-import {
-  AdminMetricGrid,
-  AdminMetricGridSkeleton,
-} from "../components/admin/AdminMetricGrid";
+import { AdminMetricGridSkeleton } from "../components/admin/AdminMetricGrid";
+import GuestTotalsPanel from "../components/admin/GuestTotalsPanel";
+import TableTotalsPanel from "../components/admin/TableTotalsPanel";
+import ProviderTotalsPanel from "../components/admin/providers/ProviderTotalsPanel";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
@@ -22,8 +18,10 @@ import HeaderSection from "../components/ui/HeaderSection";
 import StatusDialog from "../components/ui/StatusDialog";
 import Chip from "../components/ui/Chip";
 import { COMMON_ALLERGIES } from "../constants/rsvp";
-import { Confirmation } from "../models";
+import { Confirmation, Guest } from "../models";
 import { loadAdminDataOnce } from "../services/adminDataStore";
+import { buildTables, buildTableStats } from "../services/tablesService";
+import { buildProviderStats } from "../services/providersService";
 import useIsMobileView from "../hooks/useIsMobileView";
 
 const ADMIN_OUTBOUND_BUS_OPTIONS = [
@@ -55,12 +53,10 @@ const TRANSPORT_DONUT_COLORS = ["#344531", "#6f8b6b", "#bccdb5"];
 const emptyState = {
   confirmations: [],
   loading: true,
+  providers: [],
+  tables: [],
   error: "",
 };
-const CONFIRMATIONS_METRIC_GRID_CLASS =
-  "grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6";
-const CONFIRMATIONS_METRIC_CARD_CLASS =
-  "rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 sm:p-5";
 
 export default function AdminStats() {
   const statsRef = useRef(null);
@@ -84,6 +80,8 @@ export default function AdminStats() {
       setState({
         confirmations: response.confirmations,
         loading: false,
+        providers: response.providers,
+        tables: response.tables,
         error: "",
       });
     } catch (error) {
@@ -92,6 +90,8 @@ export default function AdminStats() {
       setState({
         confirmations: [],
         loading: false,
+        providers: [],
+        tables: [],
         error:
           "No se pudieron cargar las estadísticas. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
       });
@@ -117,6 +117,24 @@ export default function AdminStats() {
       }),
     [state.confirmations],
   );
+  const guestStats = useMemo(() => {
+    const rows = Confirmation.toAdminRows(state.confirmations);
+    const guests = getGuestItems(state.confirmations);
+
+    return buildGuestStats(rows, guests);
+  }, [state.confirmations]);
+  const tableStats = useMemo(() => {
+    const tables = buildTables({
+      confirmations: state.confirmations,
+      manualTables: state.tables,
+    });
+
+    return buildTableStats(tables);
+  }, [state.confirmations, state.tables]);
+  const providerStats = useMemo(
+    () => buildProviderStats(state.providers),
+    [state.providers],
+  );
 
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
@@ -141,10 +159,14 @@ export default function AdminStats() {
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={2} isVisible={statsInView}>
-            <StatsOverview
-              loading={state.loading}
-              stats={stats}
-            />
+            <div className="grid gap-5">
+              <GuestTotalsPanel loading={state.loading} stats={guestStats} />
+              <TableTotalsPanel loading={state.loading} stats={tableStats} />
+              <ProviderTotalsPanel
+                loading={state.loading}
+                stats={providerStats}
+              />
+            </div>
           </CinematicStaggeredRevealItem>
 
           <CinematicStaggeredRevealItem index={3} isVisible={statsInView}>
@@ -182,50 +204,6 @@ export default function AdminStats() {
       />
     </CinematicPage>
   );
-}
-
-function StatsOverview({ loading, stats }) {
-  return (
-    <div className="mb-4">
-      <section className="premium-card">
-        <CardHeader
-          backgroundIcon={<ClipboardCheck size={74} strokeWidth={1.5} />}
-          icon={<ClipboardCheck size={22} strokeWidth={1.8} />}
-          title="Confirmaciones"
-        />
-
-        {loading ? (
-          <AdminMetricGridSkeleton />
-        ) : (
-          <AdminMetricGrid
-            cardClassName={CONFIRMATIONS_METRIC_CARD_CLASS}
-            className={CONFIRMATIONS_METRIC_GRID_CLASS}
-            items={getSummaryItems(stats)}
-          />
-        )}
-      </section>
-    </div>
-  );
-}
-
-function getSummaryItems(stats) {
-  return [
-    {
-      label: "Recibidas",
-      value: stats.totalGroups,
-      emoji: <MailCheck size={22} strokeWidth={1.8} />,
-    },
-    {
-      label: "Personas",
-      value: stats.totalGuests,
-      emoji: <UsersRound size={22} strokeWidth={1.8} />,
-    },
-    {
-      label: "Notas",
-      value: `${stats.guestsWithComments}`,
-      emoji: <MessageCircle size={22} strokeWidth={1.8} />,
-    },
-  ];
 }
 
 function DonutStatsCard({
@@ -349,6 +327,37 @@ function TransportGroup({ items, title }) {
       </div>
     </div>
   );
+}
+
+function getGuestItems(confirmations) {
+  return Confirmation.normalizeList(confirmations).flatMap((group) =>
+    Guest.normalizeList(group.guests, { ensureOne: false }).map((guest) => ({
+      ...guest,
+      email: group.email,
+      confirmationName: group.confirmationName,
+      phone: group.phone,
+    })),
+  );
+}
+
+function buildGuestStats(rows, guests) {
+  return {
+    allergyCount: guests.filter(
+      (guest) => Guest.normalize(guest).allergies.length > 0,
+    ).length,
+    commentsCount: guests.filter(Guest.hasComments).length,
+    fishCount: guests.filter((guest) => guest.menu === "Pescado").length,
+    groupCount: rows.length,
+    guestCount: guests.length,
+    meatCount: guests.filter((guest) => guest.menu === "Carne").length,
+    otherAllergyCount: guests.filter(Guest.hasOtherAllergies).length,
+    outboundBusCount: guests.filter(
+      (guest) => guest.outboundBus && guest.outboundBus !== "No",
+    ).length,
+    returnBusCount: guests.filter(
+      (guest) => guest.returnBus && guest.returnBus !== "No",
+    ).length,
+  };
 }
 
 function CardHeader({ backgroundIcon, compact = false, icon, title }) {

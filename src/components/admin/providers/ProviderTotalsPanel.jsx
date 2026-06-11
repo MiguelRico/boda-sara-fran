@@ -2,7 +2,6 @@ import {
   BadgeEuro,
   BriefcaseBusiness,
   CalendarDays,
-  CircleDashed,
   Euro,
   FolderOpen,
   ReceiptText,
@@ -44,6 +43,11 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
               label: metrics.services,
               value: stats.serviceCount,
+            },
+            {
+              emoji: <FolderOpen size={22} strokeWidth={1.8} />,
+              label: metrics.categories,
+              value: stats.categoryCount,
             },
             {
               emoji: <Euro size={22} strokeWidth={1.8} />,

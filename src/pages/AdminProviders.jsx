@@ -16,13 +16,10 @@ import {
   PROVIDER_CATEGORY_LABELS,
 } from "../constants/providers";
 import {
+  buildProviderStats,
   createEmptyProvider,
   createEmptyService,
-  getActiveProviderCategories,
-  getNextPaymentInfoFromServices,
-  getProviderPaidTotal,
-  getProviderPendingTotal,
-  getProviderTotal,
+  isServicePaid,
   normalizeProviders,
   persistProviders,
 } from "../services/providersService";
@@ -979,44 +976,6 @@ function ProviderTableActions({
   );
 }
 
-function buildProviderStats(providers) {
-  const baseStats = providers.reduce(
-    (stats, provider) => {
-      const providerTotal = getProviderTotal(provider);
-      const providerPaid = getProviderPaidTotal(provider);
-      const paidServiceCount = provider.services.filter(isServicePaid).length;
-
-      return {
-        paidServiceCount: stats.paidServiceCount + paidServiceCount,
-        providerCount: stats.providerCount + 1,
-        serviceCount: stats.serviceCount + provider.services.length,
-        totalBudget: stats.totalBudget + providerTotal,
-        totalPaid: stats.totalPaid + providerPaid,
-        totalPending: stats.totalPending + getProviderPendingTotal(provider),
-      };
-    },
-    {
-      paidServiceCount: 0,
-      providerCount: 0,
-      serviceCount: 0,
-      totalBudget: 0,
-      totalPaid: 0,
-      totalPending: 0,
-    },
-  );
-  const nextPayment = getNextPaymentInfoFromServices(
-    getProviderServices(providers),
-  );
-
-  return {
-    ...baseStats,
-    categoryCount: getActiveProviderCategories(providers),
-    nextPaymentAmount: nextPayment.amount,
-    nextPaymentCount: nextPayment.count,
-    nextPaymentDate: nextPayment.date,
-  };
-}
-
 function filterProviders(providers, { category, query }) {
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -1065,17 +1024,6 @@ function filterServices(services, { paymentStatus, query }) {
       (!normalizedQuery || searchableText.includes(normalizedQuery))
     );
   });
-}
-
-function isServicePaid(service) {
-  const price = Number(service.price) || 0;
-  const paid = service.payments.reduce(
-    (total, payment) =>
-      total + (payment.paid ? Number(payment.amount) || 0 : 0),
-    0,
-  );
-
-  return price > 0 && paid >= price;
 }
 
 function getDeleteTargetName(deleteTarget) {

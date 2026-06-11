@@ -79,6 +79,52 @@ export function getProviderNextPaymentInfo(provider) {
   return getNextPaymentInfoFromServices(Provider.normalize(provider).services);
 }
 
+export function buildProviderStats(providers) {
+  const normalizedProviders = normalizeProviders(providers);
+  const baseStats = normalizedProviders.reduce(
+    (stats, provider) => {
+      const providerTotal = getProviderTotal(provider);
+      const providerPaid = getProviderPaidTotal(provider);
+      const paidServiceCount = provider.services.filter(isServicePaid).length;
+
+      return {
+        paidServiceCount: stats.paidServiceCount + paidServiceCount,
+        providerCount: stats.providerCount + 1,
+        serviceCount: stats.serviceCount + provider.services.length,
+        totalBudget: stats.totalBudget + providerTotal,
+        totalPaid: stats.totalPaid + providerPaid,
+        totalPending: stats.totalPending + getProviderPendingTotal(provider),
+      };
+    },
+    {
+      paidServiceCount: 0,
+      providerCount: 0,
+      serviceCount: 0,
+      totalBudget: 0,
+      totalPaid: 0,
+      totalPending: 0,
+    },
+  );
+  const nextPayment = getNextPaymentInfoFromServices(
+    normalizedProviders.flatMap((provider) => provider.services),
+  );
+
+  return {
+    ...baseStats,
+    categoryCount: getActiveProviderCategories(normalizedProviders),
+    nextPaymentAmount: nextPayment.amount,
+    nextPaymentCount: nextPayment.count,
+    nextPaymentDate: nextPayment.date,
+  };
+}
+
+export function isServicePaid(service) {
+  const price = Number(service?.price) || 0;
+  const paid = getServicePaidTotal(service);
+
+  return price > 0 && paid >= price;
+}
+
 export const loadProviders = async ({ password } = {}) => {
   const response = await findAllProviders({ password });
 
