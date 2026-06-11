@@ -18,8 +18,8 @@ export const adminContent = {
       text: "Seguimiento de respuestas recibidas y datos operativos",
     },
     confirmations: {
-      eyebrow: "Resumen",
-      title: "Resumen",
+      eyebrow: "Confirmaciones",
+      title: "Confirmaciones",
       charts: {
         allergies: "Alergias",
         transport: "Transporte",
@@ -27,6 +27,14 @@ export const adminContent = {
         outbound: "Ida",
         return: "Vuelta",
       },
+    },
+    providers: {
+      eyebrow: "Proveedores",
+      title: "Proveedores",
+    },
+    tables: {
+      eyebrow: "Mesas y asientos",
+      title: "Mesas y asientos",
     },
     dialogs: {
       warningEyebrow: "Aviso",
@@ -248,8 +256,8 @@ export const adminContent = {
       warningEyebrow: "Aviso",
     },
     overview: {
-      eyebrow: "Resumen",
-      title: "Resumen",
+      eyebrow: "Mesas y asientos",
+      title: "Mesas y asientos",
       metrics: {
         tableCount: "Mesas",
         tables: "Mesas",
@@ -291,8 +299,8 @@ export const adminContent = {
       text: "Gestión de proveedores, servicios contratados y plazos de pago.",
     },
     overview: {
-      eyebrow: "Resumen",
-      title: "Resumen",
+      eyebrow: "Proveedores",
+      title: "Proveedores",
       metrics: {
         providers: "Proveedores",
         services: "Servicios",
