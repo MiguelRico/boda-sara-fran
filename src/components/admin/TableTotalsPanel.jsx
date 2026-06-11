@@ -1,17 +1,14 @@
 import { Armchair, CircleCheckBig, CircleDashed, Grid2X2 } from "lucide-react";
 
 import { adminContent } from "../../constants/adminContent";
-import {
-  AdminMetricGrid,
-  AdminMetricGridSkeleton,
-} from "./AdminMetricGrid";
+import { AdminMetricGrid, AdminMetricGridSkeleton } from "./AdminMetricGrid";
 
 const TABLE_METRIC_GRID_CLASS =
   "grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3";
 
 export default function TableTotalsPanel({ loading, stats }) {
   return (
-    <section className="premium-card mt-4 mb-5">
+    <section className="premium-card">
       <p className="section-eyebrow mb-2">
         {adminContent.tables.overview.eyebrow}
       </p>

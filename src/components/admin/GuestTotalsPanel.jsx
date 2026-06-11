@@ -15,7 +15,7 @@ export default function GuestTotalsPanel({ loading, stats }) {
   const metrics = adminContent.guests.overview.metrics;
 
   return (
-    <section className="premium-card mt-4 mb-5">
+    <section className="premium-card">
       <p className="section-eyebrow mb-2">
         {adminContent.guests.overview.eyebrow}
       </p>

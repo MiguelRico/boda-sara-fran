@@ -1,10 +1,7 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import {
-  BusFront,
-  Salad,
-} from "lucide-react";
+import { BusFront, Salad } from "lucide-react";
 
 import { ADMIN_SESSION_KEY } from "../constants/admin";
 import { AdminMetricGridSkeleton } from "../components/admin/AdminMetricGrid";
@@ -171,7 +168,7 @@ export default function AdminStats() {
 
           <CinematicStaggeredRevealItem index={3} isVisible={statsInView}>
             {!state.loading ? (
-              <div className="grid gap-5 lg:grid-cols-2">
+              <div className="grid gap-5 lg:grid-cols-2 mt-4">
                 <DonutStatsCard
                   chartSize="sm"
                   compact
@@ -652,4 +649,3 @@ function ChartLegend({
     </div>
   );
 }
-

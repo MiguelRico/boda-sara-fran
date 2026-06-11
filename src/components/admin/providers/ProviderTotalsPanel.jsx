@@ -18,7 +18,7 @@ export default function ProviderTotalsPanel({ loading, stats }) {
   const metrics = adminContent.providers.overview.metrics;
 
   return (
-    <section className="premium-card mt-4 mb-5">
+    <section className="premium-card">
       <p className="section-eyebrow mb-2">
         {adminContent.providers.overview.eyebrow}
       </p>
@@ -40,16 +40,6 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               value: stats.providerCount,
             },
             {
-              emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
-              label: metrics.services,
-              value: stats.serviceCount,
-            },
-            {
-              emoji: <FolderOpen size={22} strokeWidth={1.8} />,
-              label: metrics.categories,
-              value: stats.categoryCount,
-            },
-            {
               emoji: <Euro size={22} strokeWidth={1.8} />,
               label: metrics.budget,
               value: formatCurrency(stats.totalBudget),
@@ -60,9 +50,14 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               value: formatCurrency(stats.totalPaid),
             },
             {
-              emoji: <ReceiptText size={22} strokeWidth={1.8} />,
+              emoji: <ReceiptEuro size={22} strokeWidth={1.8} />,
               label: metrics.pending,
               value: formatCurrency(stats.totalPending),
+            },
+            {
+              emoji: <BadgeEuro size={22} strokeWidth={1.8} />,
+              label: metrics.services,
+              value: stats.serviceCount,
             },
             {
               emoji: <Coins size={22} strokeWidth={1.8} />,
@@ -75,7 +70,7 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               value: formatDate(stats.nextPaymentDate),
             },
             {
-              emoji: <ReceiptEuro size={22} strokeWidth={1.8} />,
+              emoji: <ReceiptText size={22} strokeWidth={1.8} />,
               label: metrics.nextPaymentAmount,
               value: formatCurrency(stats.nextPaymentAmount),
             },

@@ -99,7 +99,7 @@ export default function AdminPendingChangesActions({
         />
       )}
 
-      <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+      <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4 mt-4">
         <div className="grid w-full grid-cols-2 gap-3">
           <IconButton
             className="w-full"
