@@ -55,12 +55,6 @@ export default function AdminTableSection({
 
         {!loading && (count || actions) && (
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {count && (
-              <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-                {count}
-              </p>
-            )}
-
             {actions && (
               <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
                 {actions}

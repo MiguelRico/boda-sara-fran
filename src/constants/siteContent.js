@@ -221,20 +221,20 @@ export const siteContent = {
   admin: {
     cards: [
       {
-        title: "Invitados",
-        subtitle: "Gestiona la lista",
-        description:
-          "Gestionar confirmaciones, datos de contacto, alergias y transporte.",
-        to: "/admin/guests",
-        emoji: "📋",
-      },
-      {
         title: "Resumen",
         subtitle: "Todo en un vistazo",
         description:
           "Consultar totales, asistencia, alergias y horarios de autobús.",
         to: "/admin/stats",
         emoji: "📊",
+      },
+      {
+        title: "Invitados",
+        subtitle: "Gestiona la lista",
+        description:
+          "Gestionar confirmaciones, datos de contacto, alergias y transporte.",
+        to: "/admin/guests",
+        emoji: "📋",
       },
       {
         title: "Mesas",
