@@ -30,11 +30,8 @@ import {
   saveAdminConfirmation,
 } from "../api/confirmationsApi";
 import {
-  discardAdminPendingChanges,
-  getAdminPendingChangesSummary,
   loadAdminDataOnce,
   markAdminDataSaved,
-  saveAdminPendingChanges,
   setAdminConfirmations,
 } from "../services/adminDataStore";
 import {
@@ -254,7 +251,6 @@ export default function AdminGuests() {
     [savedConfirmations, state.confirmations],
   );
   const hasPendingChanges = pendingChanges.length > 0;
-  const adminPendingChanges = getAdminPendingChangesSummary();
 
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
 
@@ -415,15 +411,13 @@ export default function AdminGuests() {
   };
 
   const handleDiscardPendingChanges = useCallback(() => {
-    const snapshot = discardAdminPendingChanges();
-    const restoredConfirmations = snapshot.confirmations;
+    const restoredConfirmations = setAdminConfirmations(savedConfirmations);
 
     setState({
       confirmations: restoredConfirmations,
       loading: false,
       error: "",
     });
-    setSavedConfirmations(snapshot.savedConfirmations);
     setEditingGroup(null);
     setDeleteTarget(null);
 
@@ -442,7 +436,12 @@ export default function AdminGuests() {
     );
 
     setPage((current) => Math.min(current, restoredTotalPages));
-  }, [confirmationFilter, confirmationQuery, isMobileView]);
+  }, [
+    confirmationFilter,
+    confirmationQuery,
+    isMobileView,
+    savedConfirmations,
+  ]);
 
   const handleCancelBlockedNavigation = () => {
     blocker.reset?.();
@@ -462,42 +461,6 @@ export default function AdminGuests() {
     }
 
     blocker.reset?.();
-  };
-
-  const handleSaveAllPendingChanges = async () => {
-    try {
-      spinner.show(adminContent.guests.spinner.saveChanges);
-
-      const snapshot = await saveAdminPendingChanges({
-        password: ADMIN_PASSWORD,
-      });
-
-      setSavedConfirmations(snapshot.savedConfirmations);
-      setState({
-        confirmations: snapshot.confirmations,
-        loading: false,
-        error: "",
-      });
-      setPopup(
-        createAdminPopup({
-          message: adminContent.guests.dialogs.updatedMessage,
-          title: adminContent.guests.dialogs.updatedTitle,
-        }),
-      );
-      return true;
-    } catch (error) {
-      console.error(error);
-      setPopup(
-        createAdminPopup({
-          message: adminContent.guests.dialogs.saveError,
-          title: adminContent.guests.dialogs.problemTitle,
-          type: "error",
-        }),
-      );
-      return false;
-    } finally {
-      spinner.hide();
-    }
   };
 
   if (!isAuthenticated) {
@@ -531,14 +494,16 @@ export default function AdminGuests() {
 
         <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
           <AdminPendingChangesActions
-            changes={adminPendingChanges}
+            changes={pendingChanges}
             discardLabel={adminContent.guests.actions.discardChanges}
+            discardDialogText="Se desharan los cambios pendientes de confirmaciones e invitados."
+            discardDialogTitle="Deshacer cambios de invitados"
             hasPendingChanges={hasPendingChanges}
             loading={state.loading}
             onDiscard={handleDiscardPendingChanges}
-            onSave={handleSaveAllPendingChanges}
             saveLabel={adminContent.guests.actions.saveChanges}
             saving={spinner.loading}
+            showSave={false}
             showText={!isMobileView}
           />
         </CinematicStaggeredRevealItem>

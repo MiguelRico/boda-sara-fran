@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save, Trash2, Undo2, X } from "lucide-react";
+import { Save, Undo2, X } from "lucide-react";
 
 import IconButton from "../ui/IconButton";
 import UnsavedChangesDialog from "./UnsavedChangesDialog";
@@ -9,8 +9,8 @@ export default function AdminPendingChangesActions({
   changes = [],
   discardLabel = "Deshacer cambios",
   dialogEyebrow = adminContent.tables.dialogs.unsavedEyebrow,
-  discardDialogText = "Eliminar cambios limpiara todo cambio en memoria de admin.",
-  discardDialogTitle = "Eliminar cambios",
+  discardDialogText = "Se desharan los cambios pendientes.",
+  discardDialogTitle = "Deshacer cambios",
   hasPendingChanges,
   keepEditingLabel = "Seguir editando",
   loading = false,
@@ -22,6 +22,7 @@ export default function AdminPendingChangesActions({
   saveDialogText = "Se enviaran estos cambios a Apps Script.",
   saveDialogTitle = "Guardar cambios",
   saving = false,
+  showSave = true,
   showText = true,
 }) {
   const [dialogMode, setDialogMode] = useState(null);
@@ -51,17 +52,10 @@ export default function AdminPendingChangesActions({
               ? [
                   {
                     disabled: saving,
-                    icon: <Trash2 size={16} strokeWidth={1.8} />,
-                    label: "Eliminar cambios",
+                    icon: <Undo2 size={16} strokeWidth={1.8} />,
+                    label: discardLabel,
                     onClick: handleDiscard,
-                    tone: "danger",
-                  },
-                  {
-                    disabled: saving,
-                    icon: <Save size={16} strokeWidth={1.8} />,
-                    label: saveLabel,
-                    onClick: handleSave,
-                    tone: "primary",
+                    tone: "secondary",
                   },
                   {
                     disabled: saving,
@@ -72,6 +66,13 @@ export default function AdminPendingChangesActions({
                   },
                 ]
               : [
+                  {
+                    disabled: saving,
+                    icon: <Undo2 size={16} strokeWidth={1.8} />,
+                    label: discardLabel,
+                    onClick: handleDiscard,
+                    tone: "secondary",
+                  },
                   {
                     disabled: saving,
                     icon: <Save size={16} strokeWidth={1.8} />,
@@ -100,7 +101,11 @@ export default function AdminPendingChangesActions({
       )}
 
       <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4 mt-4">
-        <div className="grid w-full grid-cols-2 gap-3">
+        <div
+          className={`grid w-full gap-3 ${
+            showSave ? "grid-cols-2" : "grid-cols-1"
+          }`}
+        >
           <IconButton
             className="w-full"
             disabled={isDisabled}
@@ -114,18 +119,20 @@ export default function AdminPendingChangesActions({
             {showText ? discardLabel : undefined}
           </IconButton>
 
-          <IconButton
-            className="w-full"
-            disabled={isDisabled}
-            icon={<Save size={16} strokeWidth={1.8} />}
-            label={saveLabel}
-            onClick={() => setDialogMode("save")}
-            showText={showText ? "always" : undefined}
-            tone="primary"
-            type="button"
-          >
-            {showText ? saveLabel : undefined}
-          </IconButton>
+          {showSave && (
+            <IconButton
+              className="w-full"
+              disabled={isDisabled}
+              icon={<Save size={16} strokeWidth={1.8} />}
+              label={saveLabel}
+              onClick={() => setDialogMode("save")}
+              showText={showText ? "always" : undefined}
+              tone="primary"
+              type="button"
+            >
+              {showText ? saveLabel : undefined}
+            </IconButton>
+          )}
         </div>
       </section>
     </>

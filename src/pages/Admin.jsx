@@ -294,9 +294,13 @@ function AdminDashboard() {
 
       <AdminPendingChangesActions
         changes={pendingChanges}
+        discardDialogText="Se desharan los cambios pendientes de invitados, mesas y proveedores."
+        discardDialogTitle="Deshacer cambios de admin"
         hasPendingChanges={hasPendingChanges}
         onDiscard={handleDiscard}
         onSave={handleSave}
+        saveDialogText="Puedes deshacer todos los cambios pendientes, guardarlos en Apps Script o seguir editando."
+        saveDialogTitle="Guardar cambios de admin"
         saving={saving}
         showText="always"
       />

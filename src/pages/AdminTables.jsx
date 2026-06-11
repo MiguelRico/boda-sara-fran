@@ -47,11 +47,8 @@ import {
 import { validateTableForm } from "../validators/tableValidators";
 import { saveAdminConfirmation } from "../api/confirmationsApi";
 import {
-  discardAdminPendingChanges,
-  getAdminPendingChangesSummary,
   loadAdminDataOnce,
   markAdminDataSaved,
-  saveAdminPendingChanges,
   setAdminConfirmations,
   setAdminTables,
 } from "../services/adminDataStore";
@@ -234,7 +231,6 @@ export default function AdminTables() {
     [manualTables, savedSnapshot, state.confirmations],
   );
   const hasPendingChanges = pendingChanges.length > 0;
-  const adminPendingChanges = getAdminPendingChangesSummary();
   const changedConfirmations = useMemo(
     () =>
       getChangedConfirmations(savedSnapshot.confirmations, state.confirmations),
@@ -480,15 +476,12 @@ export default function AdminTables() {
   };
 
   const handleDiscardPendingChanges = useCallback(() => {
-    const snapshot = discardAdminPendingChanges();
-    const restoredManualTables = snapshot.tables;
-    const restoredConfirmations = snapshot.confirmations;
+    const restoredManualTables = savedSnapshot.manualTables;
+    const restoredConfirmations = savedSnapshot.confirmations;
 
     setManualTables(restoredManualTables);
-    setSavedSnapshot({
-      confirmations: snapshot.savedConfirmations,
-      manualTables: snapshot.savedTables,
-    });
+    setAdminTables(restoredManualTables);
+    setAdminConfirmations(restoredConfirmations);
     setState((prev) => ({
       ...prev,
       confirmations: restoredConfirmations,
@@ -509,7 +502,11 @@ export default function AdminTables() {
     );
 
     setPage((current) => Math.min(current, restoredTotalPages));
-  }, [pageSize]);
+  }, [
+    pageSize,
+    savedSnapshot.confirmations,
+    savedSnapshot.manualTables,
+  ]);
 
   const handleAssignGuestToTable = useCallback(
     async ({
@@ -709,38 +706,6 @@ export default function AdminTables() {
     blocker.reset?.();
   };
 
-  const handleSaveAllPendingChanges = async () => {
-    try {
-      spinner.show(adminContent.tables.spinner.save);
-
-      const snapshot = await saveAdminPendingChanges({
-        password: ADMIN_PASSWORD,
-      });
-
-      setManualTables(snapshot.tables);
-      setSavedSnapshot({
-        confirmations: snapshot.savedConfirmations,
-        manualTables: snapshot.savedTables,
-      });
-      setState((prev) => ({
-        ...prev,
-        confirmations: snapshot.confirmations,
-        loading: false,
-        error: "",
-      }));
-      return true;
-    } catch (error) {
-      console.error("Error al guardar cambios de admin:", error);
-      setState((prev) => ({
-        ...prev,
-        error: error.message || adminContent.tables.errors.save,
-      }));
-      return false;
-    } finally {
-      spinner.hide();
-    }
-  };
-
   const handleConfirmBlockedNavigation = () => {
     blocker.proceed?.();
   };
@@ -812,14 +777,16 @@ export default function AdminTables() {
 
         <CinematicStaggeredRevealItem index={3} isVisible={tablesInView}>
           <AdminPendingChangesActions
-            changes={adminPendingChanges}
+            changes={pendingChanges}
             discardLabel={adminContent.tables.actions.discardChanges}
+            discardDialogText="Se desharan los cambios pendientes de mesas y asignaciones."
+            discardDialogTitle="Deshacer cambios de mesas"
             hasPendingChanges={hasPendingChanges}
             loading={state.loading}
             onDiscard={handleDiscardPendingChanges}
-            onSave={handleSaveAllPendingChanges}
             saveLabel={adminContent.tables.actions.saveChanges}
             saving={spinner.loading}
+            showSave={false}
             showText={!isMobileView}
           />
         </CinematicStaggeredRevealItem>
