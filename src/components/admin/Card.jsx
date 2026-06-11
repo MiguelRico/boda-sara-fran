@@ -31,7 +31,7 @@ export default function Card({
         <div>
           <p className="section-eyebrow mb-2">{eyebrow}</p>
           <div
-            className={`flex flex-col gap-3 ${hasActions ? "sm:flex-row sm:items-center sm:justify-between" : ""}`}
+            className={`flex gap-3 ${hasActions ? "items-start justify-between" : "flex-col"}`}
           >
             <div className="min-w-0 flex-1">
               <h3

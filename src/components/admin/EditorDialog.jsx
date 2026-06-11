@@ -31,7 +31,7 @@ export default function EditorDialog({
               </span>
             )}
             <h2
-              className="font-serif text-4xl leading-none text-[var(--color-accent-dark)]"
+              className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]"
               id={titleId}
             >
               {title}

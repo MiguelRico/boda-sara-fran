@@ -1,19 +1,9 @@
-import {
-  AlertTriangle,
-  Beef,
-  Fish,
-  Mail,
-  MessageCircle,
-  Phone,
-  Utensils,
-} from "lucide-react";
-
 import { Guest } from "../../models";
-import { rsvpContent } from "../../constants/rsvpContent";
-import { getEmailHref, getPhoneHref } from "../../utils/contactLinks";
+import { getGuestSummaryChips } from "../../utils/rsvpSummaryChips";
 import Chip from "../ui/Chip";
 
 export default function TableGuestCard({
+  actions,
   children,
   chips = [],
   decorativeText = "?",
@@ -48,16 +38,26 @@ export default function TableGuestCard({
         }`}
       >
         <div className="min-w-0">
-          <p className="section-eyebrow mb-2">
-            {eyebrow || guest.confirmationName || "Invitado"}
-          </p>
-          <h3
-            className="break-words font-serif text-3xl leading-none text-[var(--color-text)]"
-            ref={titleRef}
-            style={titleStyle}
+          <div
+            className={`flex gap-3 ${
+              actions ? "items-start justify-between" : "flex-col"
+            }`}
           >
-            {guestName}
-          </h3>
+            <div className="min-w-0 flex-1">
+              <p className="section-eyebrow mb-2">
+                {eyebrow || guest.confirmationName || "Invitado"}
+              </p>
+              <h3
+                className="break-words font-serif text-3xl leading-none text-[var(--color-text)]"
+                ref={titleRef}
+                style={titleStyle}
+              >
+                {guestName}
+              </h3>
+            </div>
+
+            {actions}
+          </div>
 
           <div className="mt-4 text-sm text-[var(--color-muted)]">
             {hasSummaryChips && (
@@ -88,92 +88,23 @@ export default function TableGuestCard({
 }
 
 export function GuestDetailChips({ className = "", guest = {} }) {
-  const normalizedGuest = Guest.normalize(guest);
-  const guestEmail = String(guest.email || "").trim();
-  const guestPhone = String(guest.phone || "").trim();
-  const guestMenu = String(guest.menu || "").trim();
-  const allergies = normalizedGuest.allergies;
-  const otherAllergies = String(normalizedGuest.otherAllergies || "").trim();
-  const comments = String(normalizedGuest.comments || "").trim();
-  const hasDetailChips =
-    guestEmail ||
-    guestPhone ||
-    guestMenu ||
-    allergies.length > 0 ||
-    otherAllergies ||
-    comments;
+  const chips = getGuestSummaryChips(guest);
 
-  if (!hasDetailChips) return null;
+  if (!chips.length) return null;
 
   return (
     <div className={`grid grid-cols-2 gap-2 text-xs ${className}`}>
-      {guestEmail && (
+      {chips.map((chip) => (
         <Chip
-          className="col-span-2 w-full"
-          href={getEmailHref(guestEmail)}
-          icon={<Mail size={13} strokeWidth={1.8} />}
-          tone="secondary"
-          value={guestEmail}
-        />
-      )}
-      {guestPhone && (
-        <Chip
-          className="w-full"
-          href={getPhoneHref(guestPhone)}
-          icon={<Phone size={13} strokeWidth={1.8} />}
-          tone="secondary"
-          value={guestPhone}
-        />
-      )}
-      {guestMenu && (
-        <Chip
-          className="w-full"
-          icon={
-            <TableGuestMenuIcon menu={guestMenu} size={13} strokeWidth={1.8} />
-          }
-          strong
-          value={guestMenu}
-        />
-      )}
-      {allergies.map((allergy) => (
-        <Chip
-          className="w-full"
-          icon={<AlertTriangle size={13} strokeWidth={1.8} />}
-          key={allergy}
-          value={allergy}
+          className={chip.className}
+          icon={chip.icon}
+          key={chip.key}
+          strong={chip.strong}
+          value={chip.value}
+          valueClassName={chip.valueClassName}
         />
       ))}
-      {otherAllergies && (
-        <Chip
-          className="col-span-2 w-full items-start"
-          icon={<AlertTriangle size={13} strokeWidth={1.8} />}
-          value={`${rsvpContent.guest.chipLabels.otherAllergies}: ${otherAllergies}`}
-          valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
-        />
-      )}
-      {comments && (
-        <Chip
-          className="col-span-2 w-full items-start"
-          icon={<MessageCircle size={13} strokeWidth={1.8} />}
-          value={`${rsvpContent.guest.chipLabels.notes}: ${comments}`}
-          valueClassName="min-w-0 whitespace-normal break-words leading-relaxed"
-        />
-      )}
     </div>
   );
-}
-
-function TableGuestMenuIcon({ menu, ...props }) {
-  const normalizedMenu = String(menu || "")
-    .trim()
-    .toLowerCase();
-  const Icon =
-    normalizedMenu === "pescado"
-      ? Fish
-      : normalizedMenu === "carne"
-        ? Beef
-        : Utensils;
-
-  return <Icon {...props} />;
 }
 

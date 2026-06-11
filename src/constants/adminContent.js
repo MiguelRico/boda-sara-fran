@@ -27,8 +27,12 @@ export const adminContent = {
       metrics: {
         confirmations: "Recibidas",
         guests: "Invitados",
+        meat: "Carne",
+        fish: "Pescado",
         allergies: "Alergias",
-        bus: "Bus",
+        comments: "Notas",
+        outboundBus: "Ida",
+        returnBus: "Vuelta",
       },
     },
     filters: {
@@ -109,6 +113,9 @@ export const adminContent = {
       deleteTitle: "Eliminar confirmación",
       deleteMessage: (label) =>
         `Se marcará para eliminar la confirmación asociada a ${label}. Podrás deshacerlo antes de guardar los cambios.`,
+      guestDeleteTitle: "Eliminar invitado",
+      guestDeleteMessage: (label) =>
+        `Se marcará para eliminar a ${label}. Podrás deshacerlo antes de guardar los cambios.`,
       loadError:
         "No se pudieron cargar los invitados. Revisa que el endpoint admin devuelva el listado de confirmaciones.",
       saveError:

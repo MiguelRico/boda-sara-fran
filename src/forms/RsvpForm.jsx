@@ -1,20 +1,12 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import {
-  AlertTriangle,
   ArrowLeft,
-  Beef,
-  BusFront,
   Check,
-  Fish,
-  Mail,
-  MessageCircle,
   Pencil,
-  Phone,
   Save,
   Trash2,
   UserPlus,
-  UsersRound,
   MailCheck,
   X,
 } from "lucide-react";
@@ -28,11 +20,14 @@ import Chip from "../components/ui/Chip";
 import IconButton from "../components/ui/IconButton";
 import PaginatedContent from "../components/ui/PaginatedContent";
 import Pagination from "../components/ui/Pagination";
-import { GUEST_MENU_OPTIONS, MAX_GUESTS } from "../constants/rsvp";
+import { MAX_GUESTS } from "../constants/rsvp";
 import { adminContent } from "../constants/adminContent";
 import { rsvpContent } from "../constants/rsvpContent";
 import { Guest } from "../models";
-import { getEmailHref, getPhoneHref } from "../utils/contactLinks";
+import {
+  getGroupSummaryChips,
+  getGuestSummaryChips,
+} from "../utils/rsvpSummaryChips";
 import useIsMobileView from "../hooks/useIsMobileView";
 
 const defaultRenderItem = (_index, children) => children;
@@ -164,6 +159,22 @@ export default function RsvpForm({
   return (
     <>
       <form className="mt-4 space-y-6" noValidate onSubmit={handleSubmit}>
+        {variant === "admin" && (
+          <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+            <IconButton
+              className="w-full"
+              disabled={loading}
+              icon={submitIcon}
+              label={submitText}
+              showText="always"
+              tone="primary"
+              type="submit"
+            >
+              {submitText}
+            </IconButton>
+          </div>
+        )}
+
         {showContactDetails &&
           renderItem(
             1,
@@ -196,30 +207,12 @@ export default function RsvpForm({
               onGuestChange={onGuestChange}
               onGuestPageChange={handleGuestPageChange}
               onRemoveGuest={handleRemoveGuest}
-              submitIcon={submitIcon}
-              submitText={submitText}
               totalGuestPages={totalGuestPages}
               variant={variant}
             />,
           )}
 
         {formError && <FieldError>{formError}</FieldError>}
-
-        {variant === "admin" && !showGuestList && (
-          <div className="grid w-full grid-cols-1 gap-3">
-            <IconButton
-              className="w-full"
-              disabled={loading}
-              icon={submitIcon}
-              label={submitText}
-              showText="always"
-              tone="primary"
-              type="submit"
-            >
-              {submitText}
-            </IconButton>
-          </div>
-        )}
 
         {variant !== "admin" &&
           renderItem(
@@ -543,7 +536,7 @@ function MobilePublicRsvpFlow({
 }
 
 function ContactSummaryCard({ contact, guests, onEdit }) {
-  const chips = getPublicGroupSummaryChips(contact, guests);
+  const chips = getGroupSummaryChips(contact, guests);
 
   return (
     <FormCard>
@@ -587,92 +580,6 @@ function MobileActionsPanel({ children }) {
       {children}
     </div>
   );
-}
-
-function getPublicGroupSummaryChips(contact, guests) {
-  const normalizedGuests = Guest.normalizeList(guests, { ensureOne: false });
-  const guestCount = normalizedGuests.length;
-  const allergiesCount = getGuestCountBy(normalizedGuests, Guest.hasAllergies);
-  const commentsCount = getGuestCountBy(normalizedGuests, Guest.hasComments);
-  const outboundBusCount = getGuestCountBy(
-    normalizedGuests,
-    (guest) => guest.outboundBus && guest.outboundBus !== "No",
-  );
-  const returnBusCount = getGuestCountBy(
-    normalizedGuests,
-    (guest) => guest.returnBus && guest.returnBus !== "No",
-  );
-
-  return [
-    {
-      className: "col-span-2",
-      href: getEmailHref(contact.email),
-      icon: <Mail size={13} strokeWidth={1.8} />,
-      key: "email",
-      tone: "secondary",
-      value: contact.email || "-",
-    },
-    {
-      href: getPhoneHref(contact.phone),
-      icon: <Phone size={13} strokeWidth={1.8} />,
-      key: "phone",
-      tone: "secondary",
-      value: contact.phone || "-",
-    },
-    {
-      icon: <UsersRound size={13} strokeWidth={1.8} />,
-      key: "guests",
-      strong: true,
-      value: `${guestCount} ${guestCount === 1 ? "invitado" : "invitados"}`,
-    },
-    ...GUEST_MENU_OPTIONS.map((menu) => {
-      const count = getGuestCountBy(
-        normalizedGuests,
-        (guest) => guest.menu === menu,
-      );
-
-      if (!count) return null;
-
-      return {
-        icon: getMenuIcon(menu),
-        key: `menu-${menu}`,
-        strong: true,
-        value: `${menu}: ${count}`,
-      };
-    }).filter(Boolean),
-    allergiesCount
-      ? {
-          icon: <AlertTriangle size={13} strokeWidth={1.8} />,
-          key: "allergies",
-          value: `Alergias: ${allergiesCount}`,
-        }
-      : null,
-    commentsCount
-      ? {
-          icon: <MessageCircle size={13} strokeWidth={1.8} />,
-          key: "comments",
-          value: `Notas: ${commentsCount}`,
-        }
-      : null,
-    outboundBusCount
-      ? {
-          icon: <BusFront size={13} strokeWidth={1.8} />,
-          key: "outbound-bus",
-          value: `Ida: ${outboundBusCount}`,
-        }
-      : null,
-    returnBusCount
-      ? {
-          icon: <BusFront size={13} strokeWidth={1.8} />,
-          key: "return-bus",
-          value: `Vuelta: ${returnBusCount}`,
-        }
-      : null,
-  ].filter(Boolean);
-}
-
-function getGuestCountBy(guests, predicate) {
-  return guests.filter(predicate).length;
 }
 
 function MobileRsvpReview({
@@ -743,10 +650,7 @@ function MobileRsvpReview({
 function GuestSummaryCard({ guest, index }) {
   const normalizedGuest = Guest.normalize(guest);
   const fullName = Guest.getDisplayName(normalizedGuest, index);
-  const allergies = normalizedGuest.allergies;
-  const otherAllergies = normalizedGuest.otherAllergies.trim();
-  const usesBus = Guest.usesBus(normalizedGuest);
-  const comments = normalizedGuest.comments.trim();
+  const chips = getGuestSummaryChips(normalizedGuest);
 
   return (
     <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4">
@@ -758,67 +662,19 @@ function GuestSummaryCard({ guest, index }) {
       </h3>
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-        {normalizedGuest.menu && (
+        {chips.map((chip) => (
           <Chip
-            icon={getMenuIcon(normalizedGuest.menu)}
-            strong
-            value={normalizedGuest.menu}
-          />
-        )}
-        {allergies.map((allergy) => (
-          <Chip
-            icon={<AlertTriangle size={13} strokeWidth={1.8} />}
-            key={allergy}
-            value={allergy}
+            className={chip.className}
+            icon={chip.icon}
+            key={chip.key}
+            strong={chip.strong}
+            value={chip.value}
+            valueClassName={chip.valueClassName}
           />
         ))}
-        {otherAllergies && (
-          <Chip
-            className="col-span-2"
-            icon={<AlertTriangle size={13} strokeWidth={1.8} />}
-            value={otherAllergies}
-            valueClassName="whitespace-normal break-words"
-          />
-        )}
-        {usesBus && (
-          <>
-            <Chip
-              icon={<BusFront size={13} strokeWidth={1.8} />}
-              value={`Ida: ${normalizedGuest.outboundBus || "No"}`}
-            />
-            <Chip
-              icon={<BusFront size={13} strokeWidth={1.8} />}
-              value={`Vuelta: ${normalizedGuest.returnBus || "No"}`}
-            />
-          </>
-        )}
-        {comments && (
-          <Chip
-            className="col-span-2"
-            icon={<MessageCircle size={13} strokeWidth={1.8} />}
-            value={comments}
-            valueClassName="whitespace-normal break-words"
-          />
-        )}
       </div>
     </div>
   );
-}
-
-function getMenuIcon(menu) {
-  const normalizedMenu = String(menu || "")
-    .trim()
-    .toLowerCase();
-
-  if (normalizedMenu === "pescado") {
-    return <Fish size={13} strokeWidth={1.8} />;
-  }
-
-  if (normalizedMenu === "carne") {
-    return <Beef size={13} strokeWidth={1.8} />;
-  }
-
-  return null;
 }
 
 function GuestPager({
@@ -838,8 +694,6 @@ function GuestPager({
   onGuestChange,
   onGuestPageChange,
   onRemoveGuest,
-  submitIcon,
-  submitText,
   totalGuestPages,
   variant,
 }) {
@@ -877,42 +731,35 @@ function GuestPager({
   );
 
   if (isAdmin) {
+    const actionItems = [
+      removeButton,
+      canAddGuests && guests.length < MAX_GUESTS ? (
+        <IconButton
+          className="w-full"
+          disabled={loading || hasInvalidGuest}
+          icon={<UserPlus size={16} strokeWidth={1.8} />}
+          key="add"
+          label={addText}
+          onClick={onAddGuest}
+          tone="secondary"
+        >
+          {addText}
+        </IconButton>
+      ) : null,
+    ].filter(Boolean);
+
     return (
       <AdminTableSection
         actions={
-          <div
-            className={
-              canRemove
-                ? "grid w-full grid-cols-3 gap-3 sm:grid-cols-3"
-                : "grid w-full grid-cols-2 gap-2 sm:grid-cols-2"
-            }
-          >
-            {removeButton}
-
-            {canAddGuests && guests.length < MAX_GUESTS && (
-              <IconButton
-                className="w-full"
-                disabled={loading || hasInvalidGuest}
-                icon={<UserPlus size={16} strokeWidth={1.8} />}
-                label={addText}
-                onClick={onAddGuest}
-                tone="secondary"
-              >
-                {addText}
-              </IconButton>
-            )}
-
-            <IconButton
-              className="w-full"
-              disabled={loading}
-              icon={submitIcon}
-              label={submitText}
-              tone="primary"
-              type="submit"
+          actionItems.length ? (
+            <div
+              className={`grid w-full gap-3 ${
+                actionItems.length > 1 ? "grid-cols-2" : "grid-cols-1"
+              }`}
             >
-              {submitText}
-            </IconButton>
-          </div>
+              {actionItems}
+            </div>
+          ) : null
         }
         eyebrow={adminContent.guests.editor.guestListEyebrow}
         getKey={(_guest, { index }) => index}

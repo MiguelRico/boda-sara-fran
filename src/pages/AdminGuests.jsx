@@ -2,17 +2,11 @@ import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useBeforeUnload } from "react-router-dom";
 import {
-  AlertTriangle,
-  Beef,
-  BusFront,
-  Fish,
-  Mail,
-  MessageCircle,
-  Phone,
+  Pencil,
+  Plus,
   Search,
-  Utensils,
+  Trash2,
   UsersRound,
-  MailCheck,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -22,7 +16,6 @@ import IconButton from "../components/ui/IconButton";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
-import AdminEntityActions from "../components/admin/AdminEntityActions";
 import AdminEntityTabs from "../components/admin/AdminEntityTabs";
 import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
 import AdminPageShell from "../components/admin/AdminPageShell";
@@ -31,19 +24,12 @@ import Card from "../components/admin/Card";
 import SelectableCardPage from "../components/admin/SelectableCardPage";
 import AdminTableSection from "../components/admin/AdminTableSection";
 import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
-import {
-  AdminMetricGrid,
-  AdminMetricGridSkeleton,
-} from "../components/admin/AdminMetricGrid";
+import GuestTotalsPanel from "../components/admin/GuestTotalsPanel";
 import TableGuestCard from "../components/admin/TableGuestCard";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import Chip from "../components/ui/Chip";
 import RsvpForm from "../forms/RsvpForm";
-import {
-  COMMON_ALLERGIES,
-  GUEST_MENU_OPTIONS,
-  MAX_GUESTS,
-} from "../constants/rsvp";
+import { MAX_GUESTS } from "../constants/rsvp";
 import { Confirmation, Guest } from "../models";
 import {
   deleteAdminConfirmation,
@@ -69,7 +55,7 @@ import {
   createDraftGroup,
   normalizeAdminGroupBeforeSave,
 } from "../utils/drafts";
-import { getEmailHref, getPhoneHref } from "../utils/contactLinks";
+import { getGroupSummaryChips } from "../utils/rsvpSummaryChips";
 import { adminContent } from "../constants/adminContent";
 import { normalizeAdminConfirmations } from "../utils/rsvpGroups";
 import { validateRsvpContact, validateRsvpForm } from "../utils/rsvpValidation";
@@ -353,12 +339,26 @@ export default function AdminGuests() {
     );
   };
 
-  const handleDeleteGroup = () => {
+  const handleDeleteTarget = () => {
     if (!deleteTarget) return;
 
-    applyConfirmations(
-      removeConfirmationFromList(state.confirmations, deleteTarget),
-    );
+    if (deleteTarget.type === "guest") {
+      applyConfirmations(
+        removeGuestFromConfirmationList(
+          state.confirmations,
+          deleteTarget.group,
+          deleteTarget.guestIndex,
+        ),
+      );
+      setSelectedGuestId("");
+    } else {
+      applyConfirmations(
+        removeConfirmationFromList(state.confirmations, deleteTarget.group),
+      );
+      setSelectedRowId("");
+      setSelectedGuestId("");
+    }
+
     setDeleteTarget(null);
     setPopup(
       createAdminPopup({
@@ -482,7 +482,7 @@ export default function AdminGuests() {
         rootRef={guestsRef}
       >
         <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
-          <GuestsOverview loading={state.loading} stats={guestStats} />
+          <GuestTotalsPanel loading={state.loading} stats={guestStats} />
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>
@@ -508,16 +508,9 @@ export default function AdminGuests() {
               <AdminTableSection
                 actions={
                   <GuestTableActions
-                    hasPendingChanges={hasPendingChanges}
                     loading={state.loading}
                     onCreate={() => openGroupEditor(undefined, "group")}
-                    onDelete={() => setDeleteTarget(selectedRow.group)}
-                    onDiscard={handleDiscardPendingChanges}
-                    onEdit={() => openGroupEditor(selectedRow.group, "group")}
-                    onSave={handleSavePendingChanges}
                     rows={rows}
-                    saving={spinner.loading}
-                    selectedGroup={selectedRow?.group}
                     showText={!isMobileView}
                   />
                 }
@@ -560,6 +553,10 @@ export default function AdminGuests() {
                   <AdminGuestPage
                     emptyState={getGroupEmptyState(rows.length)}
                     items={items}
+                    onDeleteGroup={(row) =>
+                      setDeleteTarget({ type: "group", group: row.group })
+                    }
+                    onEditGroup={(row) => openGroupEditor(row.group, "group")}
                     onSelect={() => {}}
                     selectedRowId={effectiveSelectedRowId}
                   />
@@ -568,6 +565,10 @@ export default function AdminGuests() {
                   <AdminGuestPage
                     emptyState={getGroupEmptyState(rows.length)}
                     items={items}
+                    onDeleteGroup={(row) =>
+                      setDeleteTarget({ type: "group", group: row.group })
+                    }
+                    onEditGroup={(row) => openGroupEditor(row.group, "group")}
                     onSelect={(row) => {
                       setSelectedRowId(row.rowId);
                       setGuestPage(1);
@@ -592,28 +593,15 @@ export default function AdminGuests() {
             ) : (
               <AdminTableSection
                 actions={
-                  hasPendingChanges ||
-                  visibleGuestItems.length ||
                   selectedGuestGroup ? (
                     <GuestTableActions
-                      hasPendingChanges={hasPendingChanges}
                       loading={state.loading}
                       onCreate={
                         selectedGuestGroup
                           ? () => openNewGuestEditor(selectedGuestGroup)
                           : null
                       }
-                      onDelete={() =>
-                        selectedGuestItem && openGuestEditor(selectedGuestItem)
-                      }
-                      onDiscard={handleDiscardPendingChanges}
-                      onEdit={() =>
-                        selectedGuestItem && openGuestEditor(selectedGuestItem)
-                      }
-                      onSave={handleSavePendingChanges}
                       rows={visibleGuestItems}
-                      saving={spinner.loading}
-                      selectedGroup={selectedGuestGroup}
                       showText={!isMobileView}
                     />
                   ) : null
@@ -676,6 +664,15 @@ export default function AdminGuests() {
                       selectedGuestGroup,
                     )}
                     items={items}
+                    onDelete={(guest) =>
+                      setDeleteTarget({
+                        type: "guest",
+                        group: guest.group,
+                        guest,
+                        guestIndex: guest.guestIndex,
+                      })
+                    }
+                    onEdit={openGuestEditor}
                     onSelect={() => {}}
                     selectedGuestId={effectiveSelectedGuestId}
                   />
@@ -688,6 +685,15 @@ export default function AdminGuests() {
                       selectedGuestGroup,
                     )}
                     items={items}
+                    onDelete={(guest) =>
+                      setDeleteTarget({
+                        type: "guest",
+                        group: guest.group,
+                        guest,
+                        guestIndex: guest.guestIndex,
+                      })
+                    }
+                    onEdit={openGuestEditor}
                     onSelect={(guest) => setSelectedGuestId(guest.rowId)}
                     selectedGuestId={effectiveSelectedGuestId}
                   />
@@ -724,12 +730,22 @@ export default function AdminGuests() {
 
       {deleteTarget && (
         <DeleteDialog
-          message={adminContent.guests.dialogs.deleteMessage(
-            deleteTarget.confirmationName || deleteTarget.email,
-          )}
+          message={
+            deleteTarget.type === "guest"
+              ? adminContent.guests.dialogs.guestDeleteMessage(
+                  getDeleteTargetLabel(deleteTarget),
+                )
+              : adminContent.guests.dialogs.deleteMessage(
+                  getDeleteTargetLabel(deleteTarget),
+                )
+          }
           onCancel={() => setDeleteTarget(null)}
-          onConfirm={handleDeleteGroup}
-          title={adminContent.guests.dialogs.deleteTitle}
+          onConfirm={handleDeleteTarget}
+          title={
+            deleteTarget.type === "guest"
+              ? adminContent.guests.dialogs.guestDeleteTitle
+              : adminContent.guests.dialogs.deleteTitle
+          }
         />
       )}
 
@@ -753,53 +769,6 @@ export default function AdminGuests() {
         type="error"
       />
     </CinematicPage>
-  );
-}
-
-function GuestsOverview({ loading, stats }) {
-  const metrics = adminContent.guests.overview.metrics;
-
-  return (
-    <section className="premium-card mt-4 mb-5">
-      <p className="section-eyebrow mb-2">
-        {adminContent.guests.overview.eyebrow}
-      </p>
-      <h2 className="mb-5 font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-        {adminContent.guests.overview.title}
-      </h2>
-      {loading ? (
-        <AdminMetricGridSkeleton
-          className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
-          count={4}
-        />
-      ) : (
-        <AdminMetricGrid
-          className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4"
-          items={[
-            {
-              emoji: <MailCheck size={22} strokeWidth={1.8} />,
-              label: metrics.confirmations,
-              value: stats.groupCount,
-            },
-            {
-              emoji: <UsersRound size={22} strokeWidth={1.8} />,
-              label: metrics.guests,
-              value: stats.guestCount,
-            },
-            {
-              emoji: <AlertTriangle size={22} strokeWidth={1.8} />,
-              label: metrics.allergies,
-              value: stats.allergyCount,
-            },
-            {
-              emoji: <BusFront size={22} strokeWidth={1.8} />,
-              label: metrics.bus,
-              value: stats.busCount,
-            },
-          ]}
-        />
-      )}
-    </section>
   );
 }
 
@@ -867,37 +836,30 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
 }
 
 function GuestTableActions({
-  hasPendingChanges,
   loading,
   onCreate,
-  onDelete,
-  onDiscard,
-  onEdit,
-  onSave,
   rows,
-  saving,
-  selectedGroup,
   showText = true,
 }) {
+  void rows;
+
+  if (!onCreate) return null;
+
   return (
-    <AdminEntityActions
-      addLabel={adminContent.guests.actions.create}
-      deleteLabel={adminContent.guests.actions.delete}
-      discardLabel={adminContent.guests.actions.discardChanges}
-      editLabel={adminContent.guests.actions.edit}
-      hasItems={rows.length > 0}
-      hasPendingChanges={hasPendingChanges}
-      loading={loading}
-      onCreate={onCreate}
-      onDelete={onDelete}
-      onDiscard={onDiscard}
-      onEdit={onEdit}
-      onSave={onSave}
-      saveLabel={adminContent.guests.actions.saveChanges}
-      saving={saving}
-      selectedItem={selectedGroup}
-      showText={showText}
-    />
+    <div className="grid w-full gap-3">
+      <IconButton
+        className="w-full"
+        disabled={loading}
+        icon={<Plus size={18} strokeWidth={2.4} />}
+        label={adminContent.guests.actions.create}
+        onClick={onCreate}
+        showText={showText ? "always" : undefined}
+        tone="primary"
+        type="button"
+      >
+        {showText ? adminContent.guests.actions.create : undefined}
+      </IconButton>
+    </div>
   );
 }
 
@@ -926,7 +888,14 @@ function UnsavedGuestChangesDialog({
   );
 }
 
-function GuestItemsPage({ emptyState, items, onSelect, selectedGuestId }) {
+function GuestItemsPage({
+  emptyState,
+  items,
+  onDelete,
+  onEdit,
+  onSelect,
+  selectedGuestId,
+}) {
   return (
     <SelectableCardPage
       emptyIcon={UsersRound}
@@ -939,6 +908,8 @@ function GuestItemsPage({ emptyState, items, onSelect, selectedGuestId }) {
       renderCard={(guest) => (
         <GuestItemCard
           guestItem={guest}
+          onDelete={onDelete}
+          onEdit={onEdit}
           onSelect={onSelect}
           selected={guest.rowId === selectedGuestId}
         />
@@ -947,7 +918,7 @@ function GuestItemsPage({ emptyState, items, onSelect, selectedGuestId }) {
   );
 }
 
-function GuestItemCard({ guestItem, onSelect, selected }) {
+function GuestItemCard({ guestItem, onDelete, onEdit, onSelect, selected }) {
   return (
     <div
       className={`h-full rounded-[2rem] transition ${
@@ -958,6 +929,20 @@ function GuestItemCard({ guestItem, onSelect, selected }) {
       onClick={() => onSelect(guestItem)}
     >
       <TableGuestCard
+        actions={
+          <CardActionButtons
+            deleteLabel={adminContent.guests.actions.delete}
+            editLabel={adminContent.guests.actions.edit}
+            onDelete={(event) => {
+              event.stopPropagation();
+              onDelete?.(guestItem);
+            }}
+            onEdit={(event) => {
+              event.stopPropagation();
+              onEdit?.(guestItem);
+            }}
+          />
+        }
         decorativeText={guestItem.guestIndex + 1}
         eyebrow={guestItem.confirmationName}
         guest={guestItem}
@@ -969,7 +954,8 @@ function GuestItemCard({ guestItem, onSelect, selected }) {
 function AdminGuestPage({
   emptyState,
   items,
-  onEditGuests,
+  onDeleteGroup,
+  onEditGroup,
   onSelect,
   selectedRowId,
 }) {
@@ -984,7 +970,8 @@ function AdminGuestPage({
       items={items}
       renderCard={(row) => (
         <AdminGuestConfirmationCard
-          onEditGuests={onEditGuests}
+          onDeleteGroup={onDeleteGroup}
+          onEditGroup={onEditGroup}
           onSelect={onSelect}
           row={row}
           selected={row.rowId === selectedRowId}
@@ -995,14 +982,15 @@ function AdminGuestPage({
 }
 
 function AdminGuestConfirmationCard({
-  onEditGuests,
+  onDeleteGroup,
+  onEditGroup,
   onSelect,
   row,
   selected,
   titleRef,
   titleStyle,
 }) {
-  const chips = getGroupSummaryChips(row);
+  const chips = getGroupSummaryChips(row, row.guests);
 
   return (
     <div
@@ -1013,20 +1001,21 @@ function AdminGuestConfirmationCard({
       }`}
       onClick={() => onSelect(row)}
     >
-      {onEditGuests && (
-        <IconButton
-          className="absolute right-4 top-4 z-10 h-10 w-10 !px-0"
-          icon={<UsersRound size={16} strokeWidth={1.8} />}
-          label={adminContent.guests.actions.editGuests}
-          onClick={(event) => {
-            event.stopPropagation();
-            onEditGuests(row.group);
-          }}
-          tone="secondary"
-          type="button"
-        />
-      )}
       <Card
+        actions={
+          <CardActionButtons
+            deleteLabel={adminContent.guests.actions.delete}
+            editLabel={adminContent.guests.actions.edit}
+            onDelete={(event) => {
+              event.stopPropagation();
+              onDeleteGroup?.(row);
+            }}
+            onEdit={(event) => {
+              event.stopPropagation();
+              onEditGroup?.(row);
+            }}
+          />
+        }
         decorativeText={row.groupSize}
         eyebrow={`${row.groupSize} ${
           row.groupSize === 1 ? "persona" : "personas"
@@ -1054,112 +1043,27 @@ function AdminGuestConfirmationCard({
   );
 }
 
-function getGroupSummaryChips(row) {
-  const guests = Guest.normalizeList(row.guests, { ensureOne: false });
-  const allergyChips = COMMON_ALLERGIES.map((allergy) => {
-    const count = getGuestCountBy(guests, (guest) =>
-      Guest.hasAllergy(guest, allergy),
-    );
-
-    if (!count) return null;
-
-    return {
-      key: `allergy-${allergy}`,
-      icon: <AlertTriangle size={13} strokeWidth={1.8} />,
-      value: `${allergy}: ${count}`,
-    };
-  }).filter(Boolean);
-  const otherAllergiesCount = getGuestCountBy(guests, Guest.hasOtherAllergies);
-  const commentsCount = getGuestCountBy(guests, Guest.hasComments);
-
-  return [
-    {
-      className: "col-span-2",
-      href: getEmailHref(row.email),
-      icon: <Mail size={13} strokeWidth={1.8} />,
-      key: "email",
-      tone: "secondary",
-      value: row.email || "-",
-    },
-    {
-      href: getPhoneHref(row.phone),
-      icon: <Phone size={13} strokeWidth={1.8} />,
-      key: "phone",
-      tone: "secondary",
-      value: row.phone || "-",
-    },
-    ...GUEST_MENU_OPTIONS.map((menu) => {
-      const count = getGuestCountBy(guests, (guest) => guest.menu === menu);
-
-      if (!count) return null;
-
-      return {
-        icon: <GroupMenuIcon menu={menu} size={13} strokeWidth={1.8} />,
-        key: `menu-${menu}`,
-        strong: true,
-        value: `${menu}: ${count}`,
-      };
-    }).filter(Boolean),
-    ...allergyChips,
-    otherAllergiesCount
-      ? {
-          icon: <AlertTriangle size={13} strokeWidth={1.8} />,
-          key: "other-allergies",
-          value: `Otras: ${otherAllergiesCount}`,
-        }
-      : null,
-    getGuestCountBy(
-      guests,
-      (guest) => guest.outboundBus && guest.outboundBus !== "No",
-    )
-      ? {
-          icon: <BusFront size={13} strokeWidth={1.8} />,
-          key: "outbound-bus",
-          value: `Ida: ${getGuestCountBy(
-            guests,
-            (guest) => guest.outboundBus && guest.outboundBus !== "No",
-          )}`,
-        }
-      : null,
-    getGuestCountBy(
-      guests,
-      (guest) => guest.returnBus && guest.returnBus !== "No",
-    )
-      ? {
-          icon: <BusFront size={13} strokeWidth={1.8} />,
-          key: "return-bus",
-          value: `Vuelta: ${getGuestCountBy(
-            guests,
-            (guest) => guest.returnBus && guest.returnBus !== "No",
-          )}`,
-        }
-      : null,
-    commentsCount
-      ? {
-          icon: <MessageCircle size={13} strokeWidth={1.8} />,
-          key: "comments",
-          value: `Notas: ${commentsCount}`,
-        }
-      : null,
-  ].filter(Boolean);
-}
-
-function getGuestCountBy(guests, predicate) {
-  return guests.filter(predicate).length;
-}
-
-function GroupMenuIcon({ menu, ...props }) {
-  const normalizedMenu = String(menu || "")
-    .trim()
-    .toLowerCase();
-  const Icon =
-    normalizedMenu === "pescado"
-      ? Fish
-      : normalizedMenu === "carne"
-        ? Beef
-        : Utensils;
-
-  return <Icon {...props} />;
+function CardActionButtons({ deleteLabel, editLabel, onDelete, onEdit }) {
+  return (
+    <div className="grid shrink-0 grid-cols-2 gap-2 self-start">
+      <IconButton
+        className="h-10 w-10 !px-0"
+        icon={<Trash2 size={16} strokeWidth={1.8} />}
+        label={deleteLabel}
+        onClick={onDelete}
+        tone="danger"
+        type="button"
+      />
+      <IconButton
+        className="h-10 w-10 !px-0"
+        icon={<Pencil size={16} strokeWidth={1.8} />}
+        label={editLabel}
+        onClick={onEdit}
+        tone="primary"
+        type="button"
+      />
+    </div>
+  );
 }
 
 function GroupEditor({
@@ -1395,6 +1299,28 @@ function findAdminRowForGroup(confirmations, group) {
   );
 }
 
+function removeGuestFromConfirmationList(confirmations, group, guestIndex) {
+  const targetKey = getConfirmationKey(group);
+
+  return Confirmation.normalizeList(confirmations).map((confirmation) =>
+    getConfirmationKey(confirmation) === targetKey
+      ? Confirmation.withRemovedGuest(confirmation, guestIndex)
+      : confirmation,
+  );
+}
+
+function getDeleteTargetLabel(deleteTarget) {
+  if (deleteTarget.type === "guest") {
+    return Guest.getFullName(deleteTarget.guest, "este invitado");
+  }
+
+  return (
+    deleteTarget.group?.confirmationName ||
+    deleteTarget.group?.email ||
+    "esta confirmación"
+  );
+}
+
 function mergeSingleGuestIntoGroup(group, editedGuest, guestIndex) {
   const normalizedGroup = Confirmation.normalize(group);
   const normalizedGuestIndex = Number(guestIndex);
@@ -1473,9 +1399,17 @@ function filterGuestItems(guests, query, filter) {
 function buildGuestStats(rows, guests) {
   return {
     allergyCount: guests.filter(Guest.hasAllergies).length,
-    busCount: guests.filter(Guest.usesBus).length,
+    commentsCount: guests.filter(Guest.hasComments).length,
+    fishCount: guests.filter((guest) => guest.menu === "Pescado").length,
     groupCount: rows.length,
     guestCount: guests.length,
+    meatCount: guests.filter((guest) => guest.menu === "Carne").length,
+    outboundBusCount: guests.filter(
+      (guest) => guest.outboundBus && guest.outboundBus !== "No",
+    ).length,
+    returnBusCount: guests.filter(
+      (guest) => guest.returnBus && guest.returnBus !== "No",
+    ).length,
   };
 }
 
