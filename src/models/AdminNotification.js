@@ -1,5 +1,5 @@
 const DEFAULT_TYPE = "Aviso";
-const CONFIRMATION_TYPE = "Confirmación";
+export const CONFIRMATION_TYPE = "Confirmación";
 const VALID_TYPES = new Set([
   "Aviso",
   "Pago",

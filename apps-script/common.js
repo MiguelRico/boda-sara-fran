@@ -542,10 +542,7 @@ function createConfirmationNotification(confirmation, guests, action) {
   ].filter(Boolean);
 
   appendNotification({
-    title:
-      action === "updated"
-        ? `Confirmacion actualizada: ${confirmation.confirmationName}`
-        : `Confirmacion recibida: ${confirmation.confirmationName}`,
+    title: getConfirmationNotificationTitle(confirmation, action),
     detail: contactParts.join(" | "),
     date: normalizeNotificationDate(),
     type: "Confirmación",
@@ -553,20 +550,48 @@ function createConfirmationNotification(confirmation, guests, action) {
   });
 }
 
-function createServiceNotification(provider, service) {
-  const detailParts = [
-    provider.name ? `Proveedor: ${provider.name}` : "",
-    service.price ? `Importe: ${service.price}` : "",
-    service.paymentCount ? `Plazos: ${service.paymentCount}` : "",
-  ].filter(Boolean);
+function getConfirmationNotificationTitle(confirmation, action) {
+  const name = confirmation.confirmationName || "Sin nombre";
 
-  appendNotification({
-    title: `Nuevo servicio: ${service.name || "Sin nombre"}`,
-    detail: detailParts.join(" | "),
-    date: normalizeNotificationDate(),
-    type: "Pago",
-    read: false,
+  if (action === "deleted") return `Confirmacion eliminada: ${name}`;
+  if (action === "updated") return `Confirmacion actualizada: ${name}`;
+
+  return `Confirmacion recibida: ${name}`;
+}
+
+function createServicePaymentNotifications(provider, service, action) {
+  const payments = (Array.isArray(service.payments) ? service.payments : [])
+    .slice(0, Math.max(Number(service.paymentCount) || 1, 1))
+    .filter((payment) => String(payment.date || payment.fechaPrevista || "").trim());
+
+  payments.forEach((payment, index) => {
+    const paymentDate = String(payment.date || payment.fechaPrevista || "").trim();
+    const amount = payment.amount || payment.importe || "";
+    const detailParts = [
+      provider.name ? `Proveedor: ${provider.name}` : "",
+      service.name ? `Servicio: ${service.name}` : "",
+      amount ? `Importe: ${amount}` : "",
+      `Plazo: ${index + 1}`,
+      action ? `Accion: ${getServiceActionLabel(action)}` : "",
+    ].filter(Boolean);
+
+    appendNotification({
+      title: `${getServiceActionLabel(action)}: ${
+        service.name || "Servicio sin nombre"
+      }`,
+      detail: detailParts.join(" | "),
+      date: paymentDate,
+      type: "Pago",
+      read: false,
+    });
   });
+}
+
+function getServiceActionLabel(action) {
+  if (action === "deleted") return "Servicio eliminado";
+  if (action === "updated") return "Servicio actualizado";
+
+  return "Servicio creado";
 }
 
 function validateUniqueConfirmationContact(confirmation) {

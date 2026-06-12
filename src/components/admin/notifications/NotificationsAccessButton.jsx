@@ -11,6 +11,7 @@ import {
 import { updateAdminNotificationRead } from "../../../api/notificationsApi";
 import { adminContent } from "../../../constants/adminContent";
 import { AdminNotification } from "../../../models";
+import { CONFIRMATION_TYPE } from "../../../models/AdminNotification";
 import {
   getAdminDataSnapshot,
   loadAdminDataOnce,
@@ -28,8 +29,8 @@ export default function NotificationsAccessButton() {
   const [isAuthenticated, setIsAuthenticated] = useState(getAdminAuthState);
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const unreadNotifications = notifications.filter((item) => !item.read);
-  const unreadCount = unreadNotifications.length;
+  const visibleNotifications = notifications.filter(isVisibleNotification);
+  const unreadCount = visibleNotifications.length;
 
   const refreshNotifications = () => {
     setNotifications(
@@ -128,9 +129,9 @@ export default function NotificationsAccessButton() {
           role="menu"
         >
           <div className="max-h-[70vh] overflow-y-auto p-1">
-            {unreadNotifications.length ? (
+            {visibleNotifications.length ? (
               <div className="grid gap-2">
-                {unreadNotifications.map((notification) => (
+                {visibleNotifications.map((notification) => (
                   <div
                     className="rounded-[1rem] border border-[var(--color-border)] bg-white/60 p-3"
                     key={notification.id}
@@ -197,4 +198,39 @@ export default function NotificationsAccessButton() {
       )}
     </div>
   );
+}
+
+function isVisibleNotification(notification) {
+  if (notification.read) return false;
+  if (notification.type === CONFIRMATION_TYPE) return true;
+
+  return isOneWeekOrLessAway(notification.date);
+}
+
+function isOneWeekOrLessAway(value) {
+  const notificationDate = parseDateOnly(value);
+
+  if (!notificationDate) return false;
+
+  const today = new Date();
+  const todayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  const limitDate = new Date(todayStart);
+
+  limitDate.setDate(limitDate.getDate() + 7);
+
+  return notificationDate <= limitDate;
+}
+
+function parseDateOnly(value) {
+  const [year, month, day] = String(value || "")
+    .split("-")
+    .map(Number);
+
+  if (!year || !month || !day) return null;
+
+  return new Date(year, month - 1, day);
 }

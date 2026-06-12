@@ -2,7 +2,6 @@ import {
   Bell,
   BellOff,
   CalendarDays,
-  Check,
   CircleAlert,
   CreditCard,
   MailCheck,
@@ -14,11 +13,12 @@ import SelectableCardPage from "../SelectableCardPage";
 import Chip from "../../ui/Chip";
 import IconButton from "../../ui/IconButton";
 import { formatDate } from "../../../utils/formatters";
+import { CONFIRMATION_TYPE } from "../../../models/AdminNotification";
 
 const typeIcons = {
   Aviso: CircleAlert,
   Pago: CreditCard,
-  Confirmación: MailCheck,
+  [CONFIRMATION_TYPE]: MailCheck,
 };
 
 export default function NotificationCards({

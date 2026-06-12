@@ -178,8 +178,8 @@ function saveProviders(data) {
   const providerRows = [];
   const serviceRows = [];
   const paymentRows = [];
-  const existingServiceIds = getExistingProviderServiceIds();
-  const createdServices = [];
+  const previousServices = getExistingProviderServiceSnapshots();
+  const currentServices = new Map();
 
   providers.forEach((provider) => {
     const providerId = String(provider.providerId || provider.id || "").trim();
@@ -205,22 +205,36 @@ function saveProviders(data) {
 
       if (!serviceId) return;
 
-      if (!existingServiceIds.has(serviceId)) {
-        createdServices.push({
-          provider,
-          service: {
-            ...service,
-            paymentCount: Math.min(
-              Math.max(Number(service.paymentCount) || 1, 1),
-              3,
-            ),
-          },
-        });
-      }
-
       const paymentCount = Math.min(
         Math.max(Number(service.paymentCount) || 1, 1),
         3,
+      );
+      const servicePayments = (Array.isArray(service.payments)
+        ? service.payments
+        : []
+      )
+        .slice(0, paymentCount)
+        .map((payment, index) => ({
+          amount: payment.amount || "",
+          createdAt: payment.createdAt || "",
+          date: payment.date || "",
+          notes: payment.notes || "",
+          paid: Boolean(payment.paid),
+          paymentId: payment.paymentId || payment.id || `${serviceId}-payment-${index + 1}`,
+        }));
+
+      currentServices.set(
+        serviceId,
+        buildProviderServiceSnapshot({
+          provider,
+          providerId,
+          service: {
+            ...service,
+            paymentCount,
+            payments: servicePayments,
+          },
+          serviceId,
+        }),
       );
 
       serviceRows.push([
@@ -235,22 +249,20 @@ function saveProviders(data) {
         now,
       ]);
 
-      (Array.isArray(service.payments) ? service.payments : [])
-        .slice(0, paymentCount)
-        .forEach((payment, index) => {
-          paymentRows.push([
-            payment.paymentId || payment.id || `${serviceId}-payment-${index + 1}`,
-            serviceId,
-            index + 1,
-            payment.amount || "",
-            payment.date || "",
-            payment.paid ? payment.date || "" : "",
-            Boolean(payment.paid),
-            payment.notes || "",
-            getProviderTimestamp(payment.createdAt, now),
-            now,
-          ]);
-        });
+      servicePayments.forEach((payment, index) => {
+        paymentRows.push([
+          payment.paymentId,
+          serviceId,
+          index + 1,
+          payment.amount || "",
+          payment.date || "",
+          payment.paid ? payment.date || "" : "",
+          Boolean(payment.paid),
+          payment.notes || "",
+          getProviderTimestamp(payment.createdAt, now),
+          now,
+        ]);
+      });
     });
   });
 
@@ -270,9 +282,11 @@ function saveProviders(data) {
     paymentsSheet.getRange(2, 1, paymentRows.length, PROVIDER_PAYMENTS_HEADERS.length).setValues(paymentRows);
   }
 
-  createdServices.forEach(({ provider, service }) => {
-    createServiceNotification(provider, service);
-  });
+  getProviderServiceNotificationChanges(previousServices, currentServices).forEach(
+    ({ action, provider, service }) => {
+      createServicePaymentNotifications(provider, service, action);
+    },
+  );
 
   return jsonResponse({
     success: true,
@@ -364,16 +378,130 @@ function confirmationExists(confirmationId) {
   return false;
 }
 
-function getExistingProviderServiceIds() {
-  const rows = getProviderServicesSheet().getDataRange().getDisplayValues();
-  const ids = new Set();
+function getExistingProviderServiceSnapshots() {
+  const providerRows = getProvidersSheet().getDataRange().getDisplayValues();
+  const serviceRows = getProviderServicesSheet().getDataRange().getDisplayValues();
+  const paymentRows = getProviderPaymentsSheet().getDataRange().getDisplayValues();
+  const providersById = {};
+  const servicesById = new Map();
 
-  for (let i = 1; i < rows.length; i++) {
-    const serviceId = String(rows[i][PROVIDER_SERVICES_COLUMNS.serviceId] || "").trim();
+  for (let i = 1; i < providerRows.length; i++) {
+    const row = providerRows[i];
+    const providerId = String(row[PROVIDERS_COLUMNS.providerId] || "").trim();
 
-    if (serviceId) ids.add(serviceId);
+    if (!providerId) continue;
+
+    providersById[providerId] = {
+      id: providerId,
+      name: row[PROVIDERS_COLUMNS.nombre] || "",
+    };
   }
 
-  return ids;
+  for (let i = 1; i < serviceRows.length; i++) {
+    const row = serviceRows[i];
+    const serviceId = String(row[PROVIDER_SERVICES_COLUMNS.serviceId] || "").trim();
+    const providerId = String(row[PROVIDER_SERVICES_COLUMNS.providerId] || "").trim();
+
+    if (!serviceId) continue;
+
+    servicesById.set(
+      serviceId,
+      buildProviderServiceSnapshot({
+        provider: providersById[providerId] || { id: providerId, name: "" },
+        providerId,
+        service: {
+          name: row[PROVIDER_SERVICES_COLUMNS.nombre] || "",
+          paymentCount: Math.min(
+            Math.max(Number(row[PROVIDER_SERVICES_COLUMNS.numeroPlazos]) || 1, 1),
+            3,
+          ),
+          payments: [],
+          price: row[PROVIDER_SERVICES_COLUMNS.precio] || "",
+        },
+        serviceId,
+      }),
+    );
+  }
+
+  for (let i = 1; i < paymentRows.length; i++) {
+    const row = paymentRows[i];
+    const serviceId = String(row[PROVIDER_PAYMENTS_COLUMNS.serviceId] || "").trim();
+    const snapshot = servicesById.get(serviceId);
+
+    if (!snapshot) continue;
+
+    snapshot.service.payments.push({
+      amount: row[PROVIDER_PAYMENTS_COLUMNS.importe] || "",
+      date: row[PROVIDER_PAYMENTS_COLUMNS.fechaPrevista] || "",
+      paid: isTruthySheetValue(row[PROVIDER_PAYMENTS_COLUMNS.pagado]),
+      paymentId: row[PROVIDER_PAYMENTS_COLUMNS.paymentId] || "",
+    });
+  }
+
+  return servicesById;
+}
+
+function buildProviderServiceSnapshot({ provider, providerId, service, serviceId }) {
+  return {
+    provider: {
+      id: providerId || provider.providerId || provider.id || "",
+      name: provider.name || "",
+    },
+    service: {
+      id: serviceId,
+      name: service.name || "",
+      paymentCount: Math.min(Math.max(Number(service.paymentCount) || 1, 1), 3),
+      payments: (Array.isArray(service.payments) ? service.payments : []).map(
+        (payment) => ({
+          amount: payment.amount || "",
+          date: payment.date || "",
+          paid: Boolean(payment.paid),
+          paymentId: payment.paymentId || payment.id || "",
+        }),
+      ),
+      price: service.price || "",
+    },
+  };
+}
+
+function getProviderServiceNotificationChanges(previousServices, currentServices) {
+  const changes = [];
+
+  currentServices.forEach((currentSnapshot, serviceId) => {
+    const previousSnapshot = previousServices.get(serviceId);
+
+    if (!previousSnapshot) {
+      changes.push({ action: "created", ...currentSnapshot });
+      return;
+    }
+
+    if (
+      getProviderServiceComparable(previousSnapshot.service) !==
+      getProviderServiceComparable(currentSnapshot.service)
+    ) {
+      changes.push({ action: "updated", ...currentSnapshot });
+    }
+  });
+
+  previousServices.forEach((previousSnapshot, serviceId) => {
+    if (!currentServices.has(serviceId)) {
+      changes.push({ action: "deleted", ...previousSnapshot });
+    }
+  });
+
+  return changes;
+}
+
+function getProviderServiceComparable(service) {
+  return JSON.stringify({
+    name: service.name || "",
+    paymentCount: service.paymentCount || 1,
+    payments: (service.payments || []).map((payment) => ({
+      amount: String(payment.amount || ""),
+      date: String(payment.date || ""),
+      paid: Boolean(payment.paid),
+    })),
+    price: String(service.price || ""),
+  });
 }
 
