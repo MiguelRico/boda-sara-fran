@@ -74,6 +74,12 @@ export default function AdminNotifications() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState(createEmptyForm);
   const [errors, setErrors] = useState({});
+  const [statusPopup, setStatusPopup] = useState({
+    message: "",
+    open: false,
+    title: "",
+    type: "success",
+  });
   const [hasPendingChanges, setHasPendingChanges] = useState(
     hasAdminPendingChanges,
   );
@@ -203,6 +209,12 @@ export default function AdminNotifications() {
     const nextNotifications = upsertAdminNotification(form);
     syncNotifications(nextNotifications);
     closeEditor();
+    setStatusPopup({
+      message: adminContent.notifications.dialogs.pendingMessage,
+      open: true,
+      title: adminContent.notifications.dialogs.pendingTitle,
+      type: "success",
+    });
   };
 
   const handleToggleRead = (notification) => {
@@ -407,6 +419,16 @@ export default function AdminNotifications() {
         open={Boolean(state.error)}
         title={adminContent.notifications.dialogs.problemTitle}
         type="error"
+      />
+      <StatusDialog
+        eyebrow={adminContent.notifications.dialogs.warningEyebrow}
+        message={statusPopup.message}
+        onClose={() =>
+          setStatusPopup((current) => ({ ...current, open: false }))
+        }
+        open={statusPopup.open}
+        title={statusPopup.title}
+        type={statusPopup.type}
       />
     </CinematicPage>
   );

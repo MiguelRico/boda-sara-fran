@@ -478,6 +478,9 @@ export const adminContent = {
       discardText: "Se desharán los cambios pendientes de notificaciones.",
       editTitle: "Editar notificación",
       loadError: "No se pudieron cargar las notificaciones.",
+      pendingTitle: "Cambios pendientes",
+      pendingMessage:
+        "Los cambios se han aplicado en memoria. Usa Guardar cambios en /admin para enviarlos.",
       problemTitle: "Ha ocurrido un problema",
       unsavedTitle: "Cambios pendientes",
       unsavedText:

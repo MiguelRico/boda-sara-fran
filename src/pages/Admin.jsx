@@ -268,6 +268,8 @@ function AdminDashboard() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5">
+      {saving && <Spinner text={adminContent.guests.spinner.saveChanges} />}
+
       {blocker.state === "blocked" && (
         <UnsavedChangesDialog
           actions={[

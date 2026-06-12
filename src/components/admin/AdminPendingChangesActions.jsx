@@ -71,7 +71,7 @@ export default function AdminPendingChangesActions({
                     icon: <Undo2 size={16} strokeWidth={1.8} />,
                     label: discardLabel,
                     onClick: handleDiscard,
-                    tone: "secondary",
+                    tone: "danger",
                   },
                   {
                     disabled: saving,
@@ -87,7 +87,7 @@ export default function AdminPendingChangesActions({
                     icon: <Undo2 size={16} strokeWidth={1.8} />,
                     label: discardLabel,
                     onClick: handleDiscard,
-                    tone: "secondary",
+                    tone: "danger",
                   },
                   {
                     disabled: saving,
