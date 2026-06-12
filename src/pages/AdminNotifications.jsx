@@ -13,6 +13,7 @@ import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import NotificationCards from "../components/admin/notifications/NotificationCards";
 import NotificationForm from "../components/admin/notifications/NotificationForm";
+import NotificationTotalsPanel from "../components/admin/notifications/NotificationTotalsPanel";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import IconButton from "../components/ui/IconButton";
@@ -34,6 +35,7 @@ import {
   setAdminNotificationRead,
   upsertAdminNotification,
 } from "../services/adminDataStore";
+import { buildNotificationStats } from "../services/notificationsService";
 import useIsMobileView from "../hooks/useIsMobileView";
 import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
 
@@ -76,6 +78,10 @@ export default function AdminNotifications() {
   );
   const pendingChanges = getAdminNotificationChangesSummary();
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
+  const notificationStats = useMemo(
+    () => buildNotificationStats(state.notifications),
+    [state.notifications],
+  );
   const filteredNotifications = useMemo(
     () =>
       state.notifications.filter((notification) =>
@@ -232,6 +238,16 @@ export default function AdminNotifications() {
           index={2}
           isVisible={notificationsInView}
         >
+          <NotificationTotalsPanel
+            loading={state.loading}
+            stats={notificationStats}
+          />
+        </CinematicStaggeredRevealItem>
+
+        <CinematicStaggeredRevealItem
+          index={3}
+          isVisible={notificationsInView}
+        >
           <AdminPendingChangesActions
             changes={pendingChanges}
             discardLabel={adminContent.notifications.actions.discardChanges}
@@ -246,7 +262,7 @@ export default function AdminNotifications() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem
-          index={3}
+          index={4}
           isVisible={notificationsInView}
         >
           <AdminTableSection

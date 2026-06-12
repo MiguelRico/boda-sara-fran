@@ -19,6 +19,7 @@ import {
 import { SkeletonBlock } from "../components/ui/TableSectionSkeleton";
 import TableTotalsPanel from "../components/admin/TableTotalsPanel";
 import ProviderTotalsPanel from "../components/admin/providers/ProviderTotalsPanel";
+import NotificationTotalsPanel from "../components/admin/notifications/NotificationTotalsPanel";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
@@ -31,6 +32,7 @@ import { Confirmation, Guest } from "../models";
 import { loadAdminDataOnce } from "../services/adminDataStore";
 import { buildTables, buildTableStats } from "../services/tablesService";
 import { buildProviderStats } from "../services/providersService";
+import { buildNotificationStats } from "../services/notificationsService";
 import useIsMobileView from "../hooks/useIsMobileView";
 
 const ADMIN_OUTBOUND_BUS_OPTIONS = [
@@ -62,6 +64,7 @@ const TRANSPORT_BAR_COLORS = ["#344531", "#6f8b6b", "#bccdb5"];
 const emptyState = {
   confirmations: [],
   loading: true,
+  notifications: [],
   providers: [],
   tables: [],
   error: "",
@@ -89,6 +92,7 @@ export default function AdminStats() {
       setState({
         confirmations: response.confirmations,
         loading: false,
+        notifications: response.notifications,
         providers: response.providers,
         tables: response.tables,
         error: "",
@@ -99,6 +103,7 @@ export default function AdminStats() {
       setState({
         confirmations: [],
         loading: false,
+        notifications: [],
         providers: [],
         tables: [],
         error: adminContent.stats.dialogs.loadError,
@@ -143,6 +148,10 @@ export default function AdminStats() {
     () => buildProviderStats(state.providers),
     [state.providers],
   );
+  const notificationStats = useMemo(
+    () => buildNotificationStats(state.notifications),
+    [state.notifications],
+  );
 
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
@@ -177,6 +186,10 @@ export default function AdminStats() {
               <ProviderTotalsPanel
                 loading={state.loading}
                 stats={providerStats}
+              />
+              <NotificationTotalsPanel
+                loading={state.loading}
+                stats={notificationStats}
               />
             </div>
           </CinematicStaggeredRevealItem>

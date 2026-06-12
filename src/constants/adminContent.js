@@ -416,6 +416,18 @@ export const adminContent = {
       shortLabel: "Avisos",
       viewAll: "Ver notificaciones",
     },
+    overview: {
+      eyebrow: "Notificaciones",
+      title: "Notificaciones",
+      metrics: {
+        total: "Total",
+        read: "Leídas",
+        unread: "No leídas",
+        warning: "Avisos",
+        payment: "Pagos",
+        confirmation: "Confirmaciones",
+      },
+    },
     form: {
       eyebrow: "Crear",
       title: "Notificación",
