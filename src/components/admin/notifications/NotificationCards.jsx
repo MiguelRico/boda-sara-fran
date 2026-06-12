@@ -86,21 +86,28 @@ function NotificationCard({ notification, onDelete, onEdit, onToggleRead }) {
       }
       actionsPlacement="overlay"
       decorativeText={<TypeIcon size={72} strokeWidth={1.5} />}
-      detail={notification.detail}
       eyebrow={notification.type}
       title={notification.title || "Notificación sin título"}
     >
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-        <Chip
-          icon={<CalendarDays size={13} strokeWidth={1.8} />}
-          value={formatDate(notification.date)}
-        />
         <Chip
           icon={<ReadIcon size={13} strokeWidth={1.8} />}
           strong={!notification.read}
           tone={notification.read ? "secondary" : "primary"}
           value={notification.read ? "Leída" : "No vista"}
         />
+        <Chip
+          icon={<CalendarDays size={13} strokeWidth={1.8} />}
+          value={formatDate(notification.date)}
+        />
+        {notification.detail && (
+          <Chip
+            className="col-span-2"
+            icon={<CircleAlert size={13} strokeWidth={1.8} />}
+            value={notification.detail}
+            valueClassName="whitespace-normal break-words leading-snug"
+          />
+        )}
       </div>
     </Card>
   );

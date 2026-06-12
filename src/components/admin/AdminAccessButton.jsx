@@ -20,6 +20,7 @@ import {
 import { adminContent } from "../../constants/adminContent";
 import {
   clearAdminDataStore,
+  discardAdminPendingChanges,
   getAdminPendingChangesSummary,
   hasAdminPendingChanges,
   saveAdminPendingChanges,
@@ -93,6 +94,11 @@ export default function AdminAccessButton() {
     navigate("/admin");
   };
 
+  const handleDiscardAndLogout = () => {
+    discardAdminPendingChanges();
+    completeLogout();
+  };
+
   const handleLogout = () => {
     if (hasAdminPendingChanges()) {
       setLogoutChanges(getAdminPendingChangesSummary());
@@ -127,7 +133,7 @@ export default function AdminAccessButton() {
               disabled: savingLogoutChanges,
               icon: <Trash2 size={16} strokeWidth={1.8} />,
               label: "Eliminar cambios",
-              onClick: completeLogout,
+              onClick: handleDiscardAndLogout,
               tone: "danger",
             },
             {
@@ -141,7 +147,7 @@ export default function AdminAccessButton() {
               disabled: savingLogoutChanges,
               icon: <X size={16} strokeWidth={1.8} />,
               label: "Deshacer cambios",
-              onClick: () => setLogoutChanges(null),
+              onClick: handleDiscardAndLogout,
               tone: "terciary",
             },
           ]}

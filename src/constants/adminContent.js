@@ -431,6 +431,14 @@ export const adminContent = {
         title: "Ej: Pago pendiente del fotógrafo",
       },
     },
+    filters: {
+      eyebrow: "Filtros",
+      searchLabel: "Búsqueda",
+      searchPlaceholder: "Título, detalle, tipo o fecha",
+      typeLabel: "Tipo",
+      allTypes: "Todos",
+      readLabel: "Estado",
+    },
     list: {
       eyebrow: "Listado",
       title: "Notificaciones",

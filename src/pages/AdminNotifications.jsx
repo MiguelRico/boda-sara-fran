@@ -1,7 +1,7 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Search, Trash2, X } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import AdminEditorDialog from "../components/admin/AdminEditorDialog";
@@ -14,8 +14,14 @@ import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStagg
 import NotificationCards from "../components/admin/notifications/NotificationCards";
 import NotificationForm from "../components/admin/notifications/NotificationForm";
 import DeleteDialog from "../components/ui/DeleteDialog";
+import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
+import {
+  inputClassName,
+  Label,
+  selectClassName,
+} from "../components/rsvp/FormPrimitives";
 import { adminContent } from "../constants/adminContent";
 import { AdminNotification } from "../models";
 import {
@@ -34,6 +40,11 @@ import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
 const createEmptyForm = () => AdminNotification.create();
 const DESKTOP_PAGE_SIZE = 6;
 const MOBILE_PAGE_SIZE = 4;
+const READ_FILTERS = [
+  { value: "", label: "Todas" },
+  { value: "unread", label: "No vistas" },
+  { value: "read", label: "Leídas" },
+];
 
 export default function AdminNotifications() {
   const notificationsRef = useRef(null);
@@ -53,6 +64,9 @@ export default function AdminNotifications() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [pageDirection, setPageDirection] = useState(1);
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [readFilter, setReadFilter] = useState("");
   const [editingNotification, setEditingNotification] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState(createEmptyForm);
@@ -62,9 +76,20 @@ export default function AdminNotifications() {
   );
   const pendingChanges = getAdminNotificationChangesSummary();
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
+  const filteredNotifications = useMemo(
+    () =>
+      state.notifications.filter((notification) =>
+        matchesNotificationFilters(notification, {
+          query,
+          readFilter,
+          typeFilter,
+        }),
+      ),
+    [query, readFilter, state.notifications, typeFilter],
+  );
   const totalPages = Math.max(
     1,
-    Math.ceil(state.notifications.length / pageSize),
+    Math.ceil(filteredNotifications.length / pageSize),
   );
   const effectiveCurrentPage = Math.min(currentPage, totalPages);
 
@@ -232,11 +257,31 @@ export default function AdminNotifications() {
                 showText={!isMobileView}
               />
             }
+            actionsFullWidth
             contentRef={tableStartRef}
             eyebrow={adminContent.notifications.list.eyebrow}
+            filters={
+              <NotificationFilters
+                onQueryChange={(value) => {
+                  setQuery(value);
+                  setCurrentPage(1);
+                }}
+                onReadFilterChange={(value) => {
+                  setReadFilter(value);
+                  setCurrentPage(1);
+                }}
+                onTypeFilterChange={(value) => {
+                  setTypeFilter(value);
+                  setCurrentPage(1);
+                }}
+                query={query}
+                readFilter={readFilter}
+                typeFilter={typeFilter}
+              />
+            }
             getKey={(notification) => notification.id}
             isMobileView={isMobileView}
-            items={state.notifications}
+            items={filteredNotifications}
             loading={state.loading}
             mobilePageLabel={adminContent.notifications.list.mobilePageLabel}
             onNextPage={() => handlePageChange(effectiveCurrentPage + 1)}
@@ -271,6 +316,7 @@ export default function AdminNotifications() {
                 itemClassName: "min-h-40",
                 lines: 2,
               },
+              filters: true,
             }}
             title={adminContent.notifications.list.title}
             totalPages={state.loading ? undefined : totalPages}
@@ -350,6 +396,7 @@ export default function AdminNotifications() {
 function NotificationTableActions({ loading, onCreate, showText = true }) {
   return (
     <IconButton
+      className="w-full"
       disabled={loading}
       icon={<Plus size={16} strokeWidth={1.8} />}
       onClick={onCreate}
@@ -360,4 +407,123 @@ function NotificationTableActions({ loading, onCreate, showText = true }) {
       {showText ? adminContent.notifications.actions.create : undefined}
     </IconButton>
   );
+}
+
+function NotificationFilters({
+  onQueryChange,
+  onReadFilterChange,
+  onTypeFilterChange,
+  query,
+  readFilter,
+  typeFilter,
+}) {
+  const content = adminContent.notifications.filters;
+  const selectedType = AdminNotification.types.find(
+    (type) => type === typeFilter,
+  );
+  const selectedReadFilter = READ_FILTERS.find(
+    (filter) => filter.value === readFilter,
+  );
+  const activeFilters = [
+    query.trim()
+      ? {
+          key: "query",
+          label: query.trim(),
+          onRemove: () => onQueryChange(""),
+        }
+      : null,
+    selectedType
+      ? {
+          key: "type",
+          label: selectedType,
+          onRemove: () => onTypeFilterChange(""),
+        }
+      : null,
+    readFilter && selectedReadFilter
+      ? {
+          key: "read",
+          label: selectedReadFilter.label,
+          onRemove: () => onReadFilterChange(""),
+        }
+      : null,
+  ].filter(Boolean);
+
+  return (
+    <CollapsiblePanel activeFilters={activeFilters} title={content.eyebrow}>
+      <div className="grid gap-4 lg:grid-cols-[1fr_12rem_12rem] lg:items-end">
+        <div>
+          <Label>{content.searchLabel}</Label>
+          <label className="relative block">
+            <Search
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
+              size={18}
+              strokeWidth={1.8}
+            />
+            <input
+              className={`${inputClassName} pl-12`}
+              onChange={(event) => onQueryChange(event.target.value)}
+              placeholder={content.searchPlaceholder}
+              type="search"
+              value={query}
+            />
+          </label>
+        </div>
+
+        <div>
+          <Label>{content.typeLabel}</Label>
+          <select
+            className={selectClassName}
+            onChange={(event) => onTypeFilterChange(event.target.value)}
+            value={typeFilter}
+          >
+            <option value="">{content.allTypes}</option>
+            {AdminNotification.types.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <Label>{content.readLabel}</Label>
+          <select
+            className={selectClassName}
+            onChange={(event) => onReadFilterChange(event.target.value)}
+            value={readFilter}
+          >
+            {READ_FILTERS.map((filter) => (
+              <option key={filter.value || "all"} value={filter.value}>
+                {filter.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </CollapsiblePanel>
+  );
+}
+
+function matchesNotificationFilters(
+  notification,
+  { query, readFilter, typeFilter },
+) {
+  const normalizedQuery = query.trim().toLowerCase();
+  const matchesQuery =
+    !normalizedQuery ||
+    [
+      notification.title,
+      notification.detail,
+      notification.type,
+      notification.date,
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedQuery);
+  const matchesType = !typeFilter || notification.type === typeFilter;
+  const matchesRead =
+    !readFilter ||
+    (readFilter === "read" ? notification.read : !notification.read);
+
+  return matchesQuery && matchesType && matchesRead;
 }
