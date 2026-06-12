@@ -45,7 +45,7 @@ const DESKTOP_PAGE_SIZE = 6;
 const MOBILE_PAGE_SIZE = 4;
 const READ_FILTERS = [
   { value: "", label: "Todas" },
-  { value: "unread", label: "No vistas" },
+  { value: "unread", label: "No leídas" },
   { value: "read", label: "Leídas" },
 ];
 
@@ -245,20 +245,14 @@ export default function AdminNotifications() {
         isVisible={notificationsInView}
         rootRef={notificationsRef}
       >
-        <CinematicStaggeredRevealItem
-          index={2}
-          isVisible={notificationsInView}
-        >
+        <CinematicStaggeredRevealItem index={2} isVisible={notificationsInView}>
           <NotificationTotalsPanel
             loading={state.loading}
             stats={notificationStats}
           />
         </CinematicStaggeredRevealItem>
 
-        <CinematicStaggeredRevealItem
-          index={3}
-          isVisible={notificationsInView}
-        >
+        <CinematicStaggeredRevealItem index={3} isVisible={notificationsInView}>
           <AdminPendingChangesActions
             changes={pendingChanges}
             discardLabel={adminContent.notifications.actions.discardChanges}
@@ -272,11 +266,9 @@ export default function AdminNotifications() {
           />
         </CinematicStaggeredRevealItem>
 
-        <CinematicStaggeredRevealItem
-          index={4}
-          isVisible={notificationsInView}
-        >
+        <CinematicStaggeredRevealItem index={4} isVisible={notificationsInView}>
           <AdminTableSection
+            className="pt-0 mt-4"
             actions={
               <NotificationTableActions
                 loading={state.loading}

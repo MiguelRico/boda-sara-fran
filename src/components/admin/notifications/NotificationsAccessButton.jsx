@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, Check, Inbox } from "lucide-react";
+import { Bell, BellOff, Inbox } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import IconButton from "../../ui/IconButton";
-import { ADMIN_AUTH_EVENT, ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../../../constants/admin";
+import {
+  ADMIN_AUTH_EVENT,
+  ADMIN_PASSWORD,
+  ADMIN_SESSION_KEY,
+} from "../../../constants/admin";
 import { updateAdminNotificationRead } from "../../../api/notificationsApi";
 import { adminContent } from "../../../constants/adminContent";
 import { AdminNotification } from "../../../models";
@@ -50,7 +54,9 @@ export default function NotificationsAccessButton() {
   useEffect(() => {
     if (!isAuthenticated) return undefined;
 
-    loadAdminDataOnce({ password: ADMIN_PASSWORD }).finally(refreshNotifications);
+    loadAdminDataOnce({ password: ADMIN_PASSWORD }).finally(
+      refreshNotifications,
+    );
     const intervalId = window.setInterval(refreshNotifications, 500);
 
     return () => window.clearInterval(intervalId);
@@ -148,7 +154,7 @@ export default function NotificationsAccessButton() {
                       </div>
 
                       <IconButton
-                        icon={<Check size={15} strokeWidth={1.8} />}
+                        icon={<Bell size={15} strokeWidth={1.8} />}
                         label={adminContent.notifications.actions.markRead}
                         onClick={() => handleMarkRead(notification.id)}
                         tone="primary"
@@ -174,7 +180,7 @@ export default function NotificationsAccessButton() {
 
           <IconButton
             className="mt-2 w-full justify-start border-transparent bg-transparent shadow-none hover:bg-[var(--color-bg-soft)]"
-            icon={<Bell size={16} strokeWidth={1.8} />}
+            icon={<BellOff size={16} strokeWidth={1.8} />}
             label={adminContent.notifications.access.viewAll}
             onClick={() => {
               setIsOpen(false);

@@ -31,7 +31,7 @@ export default function NotificationCards({
 }) {
   return (
     <SelectableCardPage
-      emptyIcon={Bell}
+      emptyIcon={BellOff}
       emptyState={{ text: emptyText, title: emptyTitle }}
       getKey={(notification) => notification.id}
       items={notifications}
@@ -50,7 +50,9 @@ export default function NotificationCards({
 function NotificationCard({ notification, onDelete, onEdit, onToggleRead }) {
   const TypeIcon = typeIcons[notification.type] || Bell;
   const ReadIcon = notification.read ? Bell : BellOff;
-  const readLabel = notification.read ? "Marcar como no leída" : "Marcar como leída";
+  const readLabel = notification.read
+    ? "Marcar como no leída"
+    : "Marcar como leída";
 
   return (
     <Card
@@ -62,9 +64,9 @@ function NotificationCard({ notification, onDelete, onEdit, onToggleRead }) {
               className="w-full min-w-0 basis-0 !shrink !gap-1.5 !px-3"
               icon={
                 notification.read ? (
-                  <Bell size={16} strokeWidth={1.8} />
+                  <BellOff size={16} strokeWidth={1.8} />
                 ) : (
-                  <Check size={16} strokeWidth={1.8} />
+                  <Bell size={16} strokeWidth={1.8} />
                 )
               }
               label={readLabel}
@@ -94,7 +96,7 @@ function NotificationCard({ notification, onDelete, onEdit, onToggleRead }) {
           icon={<ReadIcon size={13} strokeWidth={1.8} />}
           strong={!notification.read}
           tone={notification.read ? "secondary" : "primary"}
-          value={notification.read ? "Leída" : "No vista"}
+          value={notification.read ? "Leída" : "No leída"}
         />
         <Chip
           icon={<CalendarDays size={13} strokeWidth={1.8} />}

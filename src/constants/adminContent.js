@@ -36,6 +36,10 @@ export const adminContent = {
       eyebrow: "Mesas y asientos",
       title: "Mesas y asientos",
     },
+    notifications: {
+      eyebrow: "Notificaciones",
+      title: "Notificaciones",
+    },
     dialogs: {
       warningEyebrow: "Aviso",
       problemTitle: "Ha ocurrido un problema",
@@ -54,8 +58,8 @@ export const adminContent = {
       text: "Gestión de confirmaciones, datos de contacto, alergias y transporte",
     },
     overview: {
-      eyebrow: "Resumen",
-      title: "Resumen",
+      eyebrow: "Confirmaciones",
+      title: "Confirmaciones",
       metrics: {
         confirmations: "Recibidas",
         guests: "Invitados",
@@ -425,7 +429,7 @@ export const adminContent = {
         unread: "No leídas",
         warning: "Avisos",
         payment: "Pagos",
-        confirmation: "Confirmaciones",
+        confirmation: "Cambios",
       },
     },
     form: {
@@ -452,8 +456,8 @@ export const adminContent = {
       readLabel: "Estado",
     },
     list: {
-      eyebrow: "Listado",
-      title: "Notificaciones",
+      eyebrow: "Gestión de notificaciones",
+      title: "Gestión de notificaciones",
       pageLabel: "Notificaciones",
       mobilePageLabel: "Notificaciones",
       emptyTitle: "Sin notificaciones",
@@ -471,8 +475,7 @@ export const adminContent = {
         `Se marcará para eliminar la notificación ${title}. Podrás deshacerlo antes de guardar los cambios.`,
       deleteTitle: "Eliminar notificación",
       discardTitle: "Deshacer cambios de notificaciones",
-      discardText:
-        "Se desharán los cambios pendientes de notificaciones.",
+      discardText: "Se desharán los cambios pendientes de notificaciones.",
       editTitle: "Editar notificación",
       loadError: "No se pudieron cargar las notificaciones.",
       problemTitle: "Ha ocurrido un problema",
