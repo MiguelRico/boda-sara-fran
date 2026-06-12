@@ -1,6 +1,7 @@
 import { Bell, BellOff, CircleAlert, CreditCard, MailCheck } from "lucide-react";
 
 import { adminContent } from "../../../constants/adminContent";
+import { GUESTS_TYPE } from "../../../models/AdminNotification";
 import { AdminMetricGrid, AdminMetricGridSkeleton } from "../AdminMetricGrid";
 
 const NOTIFICATION_METRIC_GRID_CLASS =
@@ -54,7 +55,7 @@ export default function NotificationTotalsPanel({ loading, stats }) {
             {
               icon: <MailCheck size={22} strokeWidth={1.8} />,
               label: metrics.confirmation,
-              value: stats.typeCounts.Confirmación || 0,
+              value: stats.typeCounts[GUESTS_TYPE] || 0,
             },
           ]}
         />

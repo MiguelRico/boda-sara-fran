@@ -429,7 +429,7 @@ export const adminContent = {
         unread: "No leídas",
         warning: "Avisos",
         payment: "Pagos",
-        confirmation: "Cambios",
+        confirmation: "Invitados",
       },
     },
     form: {

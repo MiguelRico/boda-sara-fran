@@ -1,12 +1,13 @@
 const DEFAULT_TYPE = "Aviso";
-export const CONFIRMATION_TYPE = "Confirmación";
-const VALID_TYPES = new Set([
-  "Aviso",
-  "Pago",
-  CONFIRMATION_TYPE,
+export const GUESTS_TYPE = "Invitados";
+export const CONFIRMATION_TYPE = GUESTS_TYPE;
+const LEGACY_CONFIRMATION_TYPES = new Set([
+  "Confirmación",
   "Confirmacion",
   "ConfirmaciÃ³n",
+  "ConfirmaciÃƒÂ³n",
 ]);
+const VALID_TYPES = new Set(["Aviso", "Pago", GUESTS_TYPE]);
 
 const normalizeString = (value) => String(value || "").trim();
 
@@ -29,15 +30,15 @@ const createStableId = (input = {}) => {
 function normalizeNotificationType(value) {
   const type = normalizeString(value) || DEFAULT_TYPE;
 
-  if (type === "Confirmacion" || type === "ConfirmaciÃ³n") {
-    return CONFIRMATION_TYPE;
+  if (LEGACY_CONFIRMATION_TYPES.has(type)) {
+    return GUESTS_TYPE;
   }
 
   return VALID_TYPES.has(type) ? type : DEFAULT_TYPE;
 }
 
 export class AdminNotification {
-  static types = ["Aviso", "Pago", CONFIRMATION_TYPE];
+  static types = ["Aviso", "Pago", GUESTS_TYPE];
 
   static create(overrides = {}) {
     return this.normalize({

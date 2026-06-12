@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, BellOff, Inbox } from "lucide-react";
+import { Bell, Inbox } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import IconButton from "../../ui/IconButton";
@@ -12,12 +12,12 @@ import { updateAdminNotificationRead } from "../../../api/notificationsApi";
 import { adminContent } from "../../../constants/adminContent";
 import { AdminNotification } from "../../../models";
 import { CONFIRMATION_TYPE } from "../../../models/AdminNotification";
+import { NotificationChips } from "./NotificationCards";
 import {
   getAdminDataSnapshot,
   loadAdminDataOnce,
   markAdminNotificationRead,
 } from "../../../services/adminDataStore";
-import { formatDate } from "../../../utils/formatters";
 
 function getAdminAuthState() {
   return window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
@@ -144,14 +144,10 @@ export default function NotificationsAccessButton() {
                         <h3 className="break-words font-serif text-xl leading-none text-[var(--color-accent-dark)]">
                           {notification.title}
                         </h3>
-                        {notification.detail && (
-                          <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-[var(--color-muted)]">
-                            {notification.detail}
-                          </p>
-                        )}
-                        <p className="mt-2 text-xs text-[var(--color-muted)]">
-                          {formatDate(notification.date)}
-                        </p>
+                        <NotificationChips
+                          className="mt-3"
+                          notification={notification}
+                        />
                       </div>
 
                       <IconButton
@@ -181,7 +177,7 @@ export default function NotificationsAccessButton() {
 
           <IconButton
             className="mt-2 w-full justify-start border-transparent bg-transparent shadow-none hover:bg-[var(--color-bg-soft)]"
-            icon={<BellOff size={16} strokeWidth={1.8} />}
+            icon={<Bell size={16} strokeWidth={1.8} />}
             label={adminContent.notifications.access.viewAll}
             onClick={() => {
               setIsOpen(false);

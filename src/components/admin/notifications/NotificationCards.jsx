@@ -49,7 +49,6 @@ export default function NotificationCards({
 
 function NotificationCard({ notification, onDelete, onEdit, onToggleRead }) {
   const TypeIcon = typeIcons[notification.type] || Bell;
-  const ReadIcon = notification.read ? Bell : BellOff;
   const readLabel = notification.read
     ? "Marcar como no leída"
     : "Marcar como leída";
@@ -75,7 +74,7 @@ function NotificationCard({ notification, onDelete, onEdit, onToggleRead }) {
                 onToggleRead?.(notification);
               }}
               showText={false}
-              tone={notification.read ? "terciary" : "secondary"}
+              tone={notification.read ? "terciary" : "primary"}
               type="button"
             />
           }
@@ -91,26 +90,34 @@ function NotificationCard({ notification, onDelete, onEdit, onToggleRead }) {
       eyebrow={notification.type}
       title={notification.title || "Notificación sin título"}
     >
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-        <Chip
-          icon={<ReadIcon size={13} strokeWidth={1.8} />}
-          strong={!notification.read}
-          tone={notification.read ? "secondary" : "primary"}
-          value={notification.read ? "Leída" : "No leída"}
-        />
-        <Chip
-          icon={<CalendarDays size={13} strokeWidth={1.8} />}
-          value={formatDate(notification.date)}
-        />
-        {notification.detail && (
-          <Chip
-            className="col-span-2"
-            icon={<CircleAlert size={13} strokeWidth={1.8} />}
-            value={notification.detail}
-            valueClassName="whitespace-normal break-words leading-snug"
-          />
-        )}
-      </div>
+      <NotificationChips notification={notification} />
     </Card>
+  );
+}
+
+export function NotificationChips({ className = "mt-4", notification }) {
+  const ReadIcon = notification.read ? Bell : BellOff;
+
+  return (
+    <div className={`${className} grid grid-cols-2 gap-2 text-xs`}>
+      <Chip
+        icon={<ReadIcon size={13} strokeWidth={1.8} />}
+        strong={!notification.read}
+        tone={notification.read ? "secondary" : "primary"}
+        value={notification.read ? "Leída" : "No leída"}
+      />
+      <Chip
+        icon={<CalendarDays size={13} strokeWidth={1.8} />}
+        value={formatDate(notification.date)}
+      />
+      {notification.detail && (
+        <Chip
+          className="col-span-2"
+          icon={<CircleAlert size={13} strokeWidth={1.8} />}
+          value={notification.detail}
+          valueClassName="whitespace-normal break-words leading-snug"
+        />
+      )}
+    </div>
   );
 }

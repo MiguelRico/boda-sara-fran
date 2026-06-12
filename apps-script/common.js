@@ -477,11 +477,10 @@ function buildConfirmationRow(data) {
 function normalizeNotificationType(value) {
   const type = String(value || "").trim();
 
-  return type === "Pago" || type === "Confirmación" || type === "Confirmacion"
-    ? type === "Confirmacion"
-      ? "Confirmación"
-      : type
-    : "Aviso";
+  if (type === "Pago" || type === "Invitados") return type;
+  if (type === "Confirmación" || type === "Confirmacion") return "Invitados";
+
+  return "Aviso";
 }
 
 function normalizeNotificationDate(value) {
@@ -545,7 +544,7 @@ function createConfirmationNotification(confirmation, guests, action) {
     title: getConfirmationNotificationTitle(confirmation, action),
     detail: contactParts.join(" | "),
     date: normalizeNotificationDate(),
-    type: "Confirmación",
+    type: "Invitados",
     read: false,
   });
 }
