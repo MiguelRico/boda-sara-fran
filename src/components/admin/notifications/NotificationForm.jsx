@@ -3,6 +3,7 @@ import { Save } from "lucide-react";
 import IconButton from "../../ui/IconButton";
 import {
   FieldError,
+  FormCard,
   inputClassName,
   Label,
   selectClassName,
@@ -19,14 +20,27 @@ export default function NotificationForm({
   const content = adminContent.notifications.form;
 
   return (
-    <section className="premium-card">
-      <p className="section-eyebrow mb-2">{content.eyebrow}</p>
-      <h2 className="mb-5 font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-        {content.title}
-      </h2>
+    <form className="mt-4 space-y-5" onSubmit={onSubmit}>
+      <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+        <IconButton
+          className="w-full"
+          icon={<Save size={16} strokeWidth={1.8} />}
+          label={content.save}
+          showText="always"
+          tone="primary"
+          type="submit"
+        >
+          {content.save}
+        </IconButton>
+      </div>
 
-      <form className="grid gap-4" onSubmit={onSubmit}>
-        <div className="grid gap-4 md:grid-cols-[1fr_12rem_12rem]">
+      <FormCard>
+        <p className="section-eyebrow mb-2">{content.eyebrow}</p>
+        <h2 className="mb-5 font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
+          {content.title}
+        </h2>
+
+        <div className="grid gap-5 md:grid-cols-[1fr_12rem_12rem]">
           <div>
             <Label>{content.fields.title}</Label>
             <input
@@ -65,7 +79,7 @@ export default function NotificationForm({
           </div>
         </div>
 
-        <div>
+        <div className="mt-5">
           <Label>{content.fields.detail}</Label>
           <textarea
             className={`${inputClassName} min-h-28 resize-y`}
@@ -74,17 +88,7 @@ export default function NotificationForm({
             value={form.detail}
           />
         </div>
-
-        <IconButton
-          className="w-full"
-          icon={<Save size={16} strokeWidth={1.8} />}
-          showText="always"
-          tone="primary"
-          type="submit"
-        >
-          {content.save}
-        </IconButton>
-      </form>
-    </section>
+      </FormCard>
+    </form>
   );
 }

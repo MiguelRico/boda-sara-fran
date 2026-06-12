@@ -418,8 +418,8 @@ export const adminContent = {
     },
     form: {
       eyebrow: "Crear",
-      title: "Nueva notificación",
-      save: "Crear notificación",
+      title: "Notificación",
+      save: "Guardar notificación",
       fields: {
         date: "Fecha",
         detail: "Detalle",
@@ -434,17 +434,26 @@ export const adminContent = {
     list: {
       eyebrow: "Listado",
       title: "Notificaciones",
+      pageLabel: "Notificaciones",
+      mobilePageLabel: "Notificaciones",
       emptyTitle: "Sin notificaciones",
       emptyText: "Crea una notificación para verla en este listado.",
     },
     actions: {
+      create: "Agregar",
+      delete: "Eliminar",
       discardChanges: "Deshacer cambios",
       markRead: "Marcar como leída",
     },
     dialogs: {
+      createTitle: "Crear notificación",
+      deleteMessage: (title) =>
+        `Se marcará para eliminar la notificación ${title}. Podrás deshacerlo antes de guardar los cambios.`,
+      deleteTitle: "Eliminar notificación",
       discardTitle: "Deshacer cambios de notificaciones",
       discardText:
         "Se desharán los cambios pendientes de notificaciones.",
+      editTitle: "Editar notificación",
       loadError: "No se pudieron cargar las notificaciones.",
       problemTitle: "Ha ocurrido un problema",
       unsavedTitle: "Cambios pendientes",

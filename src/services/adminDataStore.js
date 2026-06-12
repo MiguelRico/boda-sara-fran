@@ -337,6 +337,26 @@ export const markAdminNotificationRead = (notificationId) => {
   return store.notifications;
 };
 
+export const setAdminNotificationRead = (notificationId, read) => {
+  store.notifications = AdminNotification.normalizeList(
+    store.notifications.map((notification) =>
+      notification.id === notificationId
+        ? { ...notification, read: Boolean(read) }
+        : notification,
+    ),
+  );
+
+  return store.notifications;
+};
+
+export const removeAdminNotification = (notificationId) => {
+  store.notifications = AdminNotification.normalizeList(
+    store.notifications.filter((notification) => notification.id !== notificationId),
+  );
+
+  return store.notifications;
+};
+
 function buildEntityChanges({
   createdLabel,
   currentItems,

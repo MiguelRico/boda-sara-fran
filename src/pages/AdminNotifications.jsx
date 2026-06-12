@@ -1,18 +1,21 @@
 import { useInView } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Bell, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import AdminEditorDialog from "../components/admin/AdminEditorDialog";
 import AdminPageShell from "../components/admin/AdminPageShell";
 import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
+import AdminTableSection from "../components/admin/AdminTableSection";
 import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import NotificationCards from "../components/admin/notifications/NotificationCards";
 import NotificationForm from "../components/admin/notifications/NotificationForm";
+import DeleteDialog from "../components/ui/DeleteDialog";
+import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
-import { TableCardsSkeleton } from "../components/ui/TableSectionSkeleton";
 import { adminContent } from "../constants/adminContent";
 import { AdminNotification } from "../models";
 import {
@@ -21,16 +24,20 @@ import {
   getAdminNotificationChangesSummary,
   hasAdminPendingChanges,
   loadAdminDataOnce,
-  markAdminNotificationRead,
+  removeAdminNotification,
+  setAdminNotificationRead,
   upsertAdminNotification,
 } from "../services/adminDataStore";
 import useIsMobileView from "../hooks/useIsMobileView";
 import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
 
 const createEmptyForm = () => AdminNotification.create();
+const DESKTOP_PAGE_SIZE = 6;
+const MOBILE_PAGE_SIZE = 4;
 
 export default function AdminNotifications() {
   const notificationsRef = useRef(null);
+  const tableStartRef = useRef(null);
   const notificationsInView = useInView(notificationsRef, {
     once: true,
     amount: 0.12,
@@ -38,11 +45,16 @@ export default function AdminNotifications() {
   const isAuthenticated =
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   const isMobileView = useIsMobileView();
+  const pageSize = isMobileView ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
   const [state, setState] = useState({
     error: "",
     loading: true,
     notifications: [],
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageDirection, setPageDirection] = useState(1);
+  const [editingNotification, setEditingNotification] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState(createEmptyForm);
   const [errors, setErrors] = useState({});
   const [hasPendingChanges, setHasPendingChanges] = useState(
@@ -50,6 +62,19 @@ export default function AdminNotifications() {
   );
   const pendingChanges = getAdminNotificationChangesSummary();
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(state.notifications.length / pageSize),
+  );
+  const effectiveCurrentPage = Math.min(currentPage, totalPages);
+
+  const emptyState = useMemo(
+    () => ({
+      text: adminContent.notifications.list.emptyText,
+      title: adminContent.notifications.list.emptyTitle,
+    }),
+    [],
+  );
 
   const refreshPendingChanges = () =>
     setHasPendingChanges(hasAdminPendingChanges());
@@ -99,12 +124,43 @@ export default function AdminNotifications() {
     return <Navigate to="/admin" replace />;
   }
 
+  const handlePageChange = (nextPage, target = tableStartRef.current) => {
+    if (
+      nextPage < 1 ||
+      nextPage > totalPages ||
+      nextPage === effectiveCurrentPage
+    ) {
+      return;
+    }
+
+    setPageDirection(nextPage > effectiveCurrentPage ? 1 : -1);
+    setCurrentPage(nextPage);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const handleFormChange = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: "" }));
   };
 
-  const handleCreateNotification = (event) => {
+  const openCreateEditor = () => {
+    setErrors({});
+    setForm(createEmptyForm());
+    setEditingNotification({ mode: "create" });
+  };
+
+  const openEditEditor = (notification) => {
+    setErrors({});
+    setForm(AdminNotification.normalize(notification));
+    setEditingNotification({ mode: "edit", notification });
+  };
+
+  const closeEditor = () => {
+    setEditingNotification(null);
+    setErrors({});
+  };
+
+  const handleSaveNotification = (event) => {
     event.preventDefault();
 
     const validationErrors = AdminNotification.validate(form);
@@ -114,12 +170,23 @@ export default function AdminNotifications() {
 
     const nextNotifications = upsertAdminNotification(form);
     syncNotifications(nextNotifications);
-    setForm(createEmptyForm());
+    closeEditor();
   };
 
-  const handleMarkRead = (notificationId) => {
-    const nextNotifications = markAdminNotificationRead(notificationId);
+  const handleToggleRead = (notification) => {
+    const nextNotifications = setAdminNotificationRead(
+      notification.id,
+      !notification.read,
+    );
     syncNotifications(nextNotifications);
+  };
+
+  const handleDeleteNotification = () => {
+    if (!deleteTarget) return;
+
+    const nextNotifications = removeAdminNotification(deleteTarget.id);
+    syncNotifications(nextNotifications);
+    setDeleteTarget(null);
   };
 
   const handleDiscard = () => {
@@ -157,51 +224,90 @@ export default function AdminNotifications() {
           index={3}
           isVisible={notificationsInView}
         >
+          <AdminTableSection
+            actions={
+              <NotificationTableActions
+                loading={state.loading}
+                onCreate={openCreateEditor}
+                showText={!isMobileView}
+              />
+            }
+            contentRef={tableStartRef}
+            eyebrow={adminContent.notifications.list.eyebrow}
+            getKey={(notification) => notification.id}
+            isMobileView={isMobileView}
+            items={state.notifications}
+            loading={state.loading}
+            mobilePageLabel={adminContent.notifications.list.mobilePageLabel}
+            onNextPage={() => handlePageChange(effectiveCurrentPage + 1)}
+            onPrevPage={() => handlePageChange(effectiveCurrentPage - 1)}
+            page={state.loading ? undefined : effectiveCurrentPage}
+            pageDirection={pageDirection}
+            pageLabel={adminContent.notifications.list.pageLabel}
+            pageSize={state.loading ? undefined : pageSize}
+            renderMeasurePage={(items) => (
+              <NotificationCards
+                emptyText={emptyState.text}
+                emptyTitle={emptyState.title}
+                notifications={items}
+                onDelete={() => {}}
+                onEdit={() => {}}
+                onToggleRead={() => {}}
+              />
+            )}
+            renderPage={(items) => (
+              <NotificationCards
+                emptyText={emptyState.text}
+                emptyTitle={emptyState.title}
+                notifications={items}
+                onDelete={setDeleteTarget}
+                onEdit={openEditEditor}
+                onToggleRead={handleToggleRead}
+              />
+            )}
+            skeletonConfig={{
+              content: {
+                columnsClassName: "lg:grid-cols-2",
+                itemClassName: "min-h-40",
+                lines: 2,
+              },
+            }}
+            title={adminContent.notifications.list.title}
+            totalPages={state.loading ? undefined : totalPages}
+          />
+        </CinematicStaggeredRevealItem>
+      </AdminPageShell>
+
+      {editingNotification && (
+        <AdminEditorDialog
+          onClose={closeEditor}
+          title={
+            editingNotification.mode === "create"
+              ? adminContent.notifications.dialogs.createTitle
+              : adminContent.notifications.dialogs.editTitle
+          }
+          titleId="notification-editor-title"
+        >
           <NotificationForm
             errors={errors}
             form={form}
             onChange={handleFormChange}
-            onSubmit={handleCreateNotification}
+            onSubmit={handleSaveNotification}
           />
-        </CinematicStaggeredRevealItem>
+        </AdminEditorDialog>
+      )}
 
-        <CinematicStaggeredRevealItem
-          index={4}
-          isVisible={notificationsInView}
-        >
-          <section className="premium-card">
-            <div className="mb-5 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
-                <Bell size={18} strokeWidth={1.8} />
-              </div>
-              <div>
-                <p className="section-eyebrow mb-2">
-                  {adminContent.notifications.list.eyebrow}
-                </p>
-                <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-                  {adminContent.notifications.list.title}
-                </h2>
-              </div>
-            </div>
-
-            {state.loading ? (
-              <TableCardsSkeleton
-                columnsClassName="lg:grid-cols-2"
-                count={4}
-                itemClassName="min-h-40"
-                lines={2}
-              />
-            ) : (
-              <NotificationCards
-                emptyText={adminContent.notifications.list.emptyText}
-                emptyTitle={adminContent.notifications.list.emptyTitle}
-                notifications={state.notifications}
-                onMarkRead={handleMarkRead}
-              />
-            )}
-          </section>
-        </CinematicStaggeredRevealItem>
-      </AdminPageShell>
+      {deleteTarget && (
+        <DeleteDialog
+          confirmText={adminContent.notifications.actions.delete}
+          message={adminContent.notifications.dialogs.deleteMessage(
+            deleteTarget.title || "esta notificación",
+          )}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={handleDeleteNotification}
+          title={adminContent.notifications.dialogs.deleteTitle}
+        />
+      )}
 
       {blocker.state === "blocked" && (
         <UnsavedChangesDialog
@@ -238,5 +344,20 @@ export default function AdminNotifications() {
         type="error"
       />
     </CinematicPage>
+  );
+}
+
+function NotificationTableActions({ loading, onCreate, showText = true }) {
+  return (
+    <IconButton
+      disabled={loading}
+      icon={<Plus size={16} strokeWidth={1.8} />}
+      onClick={onCreate}
+      showText={showText ? "always" : undefined}
+      tone="primary"
+      type="button"
+    >
+      {showText ? adminContent.notifications.actions.create : undefined}
+    </IconButton>
   );
 }

@@ -37,7 +37,11 @@ export class AdminNotification {
   static normalizeList(items = []) {
     return (Array.isArray(items) ? items : [])
       .map((item) => this.normalize(item))
-      .sort((left, right) => String(right.date).localeCompare(String(left.date)));
+      .sort((left, right) => {
+        if (left.read !== right.read) return left.read ? 1 : -1;
+
+        return String(right.date).localeCompare(String(left.date));
+      });
   }
 
   static validate(input = {}) {
