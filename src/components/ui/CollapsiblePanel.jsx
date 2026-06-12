@@ -21,8 +21,8 @@ export default function CollapsiblePanel({
 
   return (
     <div
-      className={`border border-[var(--color-border-strong)] bg-[var(--color-bg)]/70 ${
-        compact ? "rounded-[1rem] p-2.5" : "rounded-[2rem] p-5"
+      className={`border border-[var(--color-border)] bg-white/35 ${
+        compact ? "rounded-[1rem] p-2" : "rounded-[1.25rem] p-3"
       } ${className}`}
     >
       <div>
@@ -36,7 +36,7 @@ export default function CollapsiblePanel({
               {activeFilters.map((filter) => (
                 <button
                   aria-label={`Quitar filtro ${filter.label}`}
-                  className="grid min-w-0 max-w-full grid-cols-[11px_minmax(0,1fr)_11px] items-center gap-1 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-accent)] px-2 py-1 text-[0.65rem] font-medium text-white shadow-[var(--shadow-button)] transition hover:bg-[var(--color-accent)]/75"
+                  className="grid min-w-0 max-w-full grid-cols-[11px_minmax(0,1fr)_11px] items-center gap-1 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-accent)] px-2 py-0.5 text-[0.62rem] font-medium text-white shadow-[var(--shadow-button)] transition hover:bg-[var(--color-accent)]/75"
                   key={filter.key || filter.label}
                   onClick={filter.onRemove}
                   type="button"
@@ -52,7 +52,7 @@ export default function CollapsiblePanel({
           ) : (
             <h3
               className={`font-serif text-[var(--color-accent-dark)] ${
-                compact ? "text-xl leading-none" : "text-2xl"
+                compact ? "text-lg leading-none" : "text-xl leading-none"
               }`}
             >
               {title}
@@ -70,8 +70,8 @@ export default function CollapsiblePanel({
             <div
               className={`peer rounded-full bg-[var(--color-border-strong)] transition after:absolute after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--color-accent-dark)] ${
                 compact
-                  ? "h-5 w-9 after:left-[2px] after:top-[2px] after:h-4 after:w-4 peer-checked:after:translate-x-4"
-                  : "h-6 w-11 after:left-[2px] after:top-[2px] after:h-5 after:w-5 peer-checked:after:translate-x-full"
+                  ? "h-[1.125rem] w-8 after:left-[2px] after:top-[2px] after:h-3.5 after:w-3.5 peer-checked:after:translate-x-4"
+                  : "h-5 w-9 after:left-[2px] after:top-[2px] after:h-4 after:w-4 peer-checked:after:translate-x-4"
               }`}
             />
           </label>
@@ -92,7 +92,7 @@ export default function CollapsiblePanel({
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            <div className={compact ? "mt-2" : "mt-4"}>{children}</div>
+            <div className={compact ? "mt-2" : "mt-3"}>{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
