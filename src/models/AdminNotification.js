@@ -5,6 +5,19 @@ const normalizeString = (value) => String(value || "").trim();
 
 const createId = () =>
   `notification:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
+const createStableId = (input = {}) => {
+  const explicitId = normalizeString(input.id);
+
+  if (explicitId) return explicitId;
+
+  const stableParts = [input.date, input.type, input.title, input.detail]
+    .map((part) => normalizeString(part).trim().toLowerCase())
+    .filter(Boolean);
+
+  return stableParts.length
+    ? `notification:${stableParts.join(":")}`
+    : createId();
+};
 
 export class AdminNotification {
   static types = Array.from(VALID_TYPES);
@@ -25,7 +38,7 @@ export class AdminNotification {
     const type = normalizeString(input.type) || DEFAULT_TYPE;
 
     return {
-      id: normalizeString(input.id) || createId(),
+      id: createStableId(input),
       title: normalizeString(input.title),
       detail: normalizeString(input.detail),
       date: normalizeString(input.date),

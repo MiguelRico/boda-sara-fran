@@ -4,12 +4,27 @@ import { ProviderPayment } from "./ProviderPayment";
 const normalizeString = (value) => (value == null ? "" : String(value));
 const createId = () =>
   `provider-service-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const createStableId = (overrides = {}) => {
+  const explicitId = normalizeString(overrides.id || overrides.serviceId).trim();
+
+  if (explicitId) return explicitId;
+
+  const stableParts = [overrides.name, overrides.price]
+    .map((part) => normalizeString(part).trim().toLowerCase())
+    .filter(Boolean);
+
+  return stableParts.length
+    ? `provider-service:${stableParts.join(":")}`
+    : createId();
+};
 
 export const ProviderService = {
   create(overrides = {}) {
+    const id = createStableId(overrides);
+
     return {
-      id: overrides.id || createId(),
-      serviceId: overrides.serviceId || overrides.id || "",
+      id,
+      serviceId: overrides.serviceId || overrides.id || id,
       name: normalizeString(overrides.name),
       paymentCount: Math.min(
         Math.max(Number(overrides.paymentCount) || 1, 1),

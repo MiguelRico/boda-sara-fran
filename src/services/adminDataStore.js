@@ -33,6 +33,7 @@ const store = { ...emptySnapshot };
 const getConfirmationKey = (group = {}) =>
   group.confirmationId || group.id || `draft:${group.email || ""}:${group.phone || ""}`;
 const getStableJson = (value) => JSON.stringify(value);
+const cloneData = (value) => JSON.parse(JSON.stringify(value));
 
 export const clearAdminDataStore = () => {
   store.confirmations = [];
@@ -94,14 +95,14 @@ export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
 };
 
 export const getAdminDataSnapshot = () => ({
-  confirmations: store.confirmations,
-  notifications: store.notifications,
-  providers: store.providers,
-  savedConfirmations: store.savedConfirmations,
-  savedNotifications: store.savedNotifications,
-  savedProviders: store.savedProviders,
-  savedTables: store.savedTables,
-  tables: store.tables,
+  confirmations: cloneData(store.confirmations),
+  notifications: cloneData(store.notifications),
+  providers: cloneData(store.providers),
+  savedConfirmations: cloneData(store.savedConfirmations),
+  savedNotifications: cloneData(store.savedNotifications),
+  savedProviders: cloneData(store.savedProviders),
+  savedTables: cloneData(store.savedTables),
+  tables: cloneData(store.tables),
 });
 
 export const hasAdminPendingChanges = () =>
