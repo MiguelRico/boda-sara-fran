@@ -10,6 +10,7 @@ import {
 
 import { adminContent } from "../../constants/adminContent";
 import { AdminMetricGrid, AdminMetricGridSkeleton } from "./AdminMetricGrid";
+import VerticalBarChart from "./VerticalBarChart";
 import CollapsiblePanel from "../ui/CollapsiblePanel";
 import { SkeletonBlock } from "../ui/TableSectionSkeleton";
 
@@ -27,7 +28,11 @@ const BAR_COLORS = [
 
 const TRANSPORT_BAR_COLORS = ["#344531", "#6f8b6b", "#bccdb5"];
 
-export default function GuestTotalsPanel({ chartStats = null, loading, stats }) {
+export default function GuestTotalsPanel({
+  chartStats = null,
+  loading,
+  stats,
+}) {
   const metrics = adminContent.guests.overview.metrics;
   const showCharts = Boolean(chartStats);
 
@@ -176,7 +181,7 @@ function BarStatsCard({ emptyText, items }) {
     );
   }
 
-  return <BarChart items={items} />;
+  return <VerticalBarChart items={items} />;
 }
 
 function TransportCard({ stats }) {
@@ -188,7 +193,10 @@ function TransportCard({ stats }) {
         items={stats.outboundBusStats || []}
         title={content.outbound}
       />
-      <TransportGroup items={stats.returnBusStats || []} title={content.return} />
+      <TransportGroup
+        items={stats.returnBusStats || []}
+        title={content.return}
+      />
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
 } from "../components/admin/AdminMetricGrid";
 import { SkeletonBlock } from "../components/ui/TableSectionSkeleton";
 import TableTotalsPanel from "../components/admin/TableTotalsPanel";
+import VerticalBarChart from "../components/admin/VerticalBarChart";
 import ProviderTotalsPanel from "../components/admin/providers/ProviderTotalsPanel";
 import NotificationTotalsPanel from "../components/admin/notifications/NotificationTotalsPanel";
 import CinematicPage from "../components/cinematic/CinematicPage";
@@ -348,7 +349,7 @@ function BarStatsCard({ emptyText, items }) {
     );
   }
 
-  return <BarChart items={items} />;
+  return <VerticalBarChart items={items} />;
 }
 
 function TransportCard({ stats }) {
@@ -425,7 +426,7 @@ function BarChart({ colors = BAR_COLORS, compact = false, items }) {
                 {item.label}
               </span>
               <span className="shrink-0 font-medium text-[var(--color-accent-dark)]">
-                {item.value} / {total}
+                {item.value}
               </span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-[var(--color-border)]">
