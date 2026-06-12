@@ -47,6 +47,13 @@ function routeGet(e) {
     return listProviders(e);
   }
 
+  if (entity === "notifications") {
+    const authError = validateAdmin(e);
+    if (authError) return authError;
+
+    return listNotifications(e);
+  }
+
   return jsonResponse(
     {
       success: false,
@@ -307,6 +314,28 @@ function listProviders(e) {
     {
       success: true,
       providers,
+    },
+    e,
+  );
+}
+
+function listNotifications(e) {
+  const sheet = getNotificationsSheet();
+  const rows = sheet.getDataRange().getDisplayValues();
+  const notifications = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const notification = buildNotificationFromRow(rows[i]);
+
+    if (!notification.id && !notification.title) continue;
+
+    notifications.push(notification);
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      notifications,
     },
     e,
   );

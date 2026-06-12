@@ -36,12 +36,15 @@ export default function CollapsiblePanel({
               {activeFilters.map((filter) => (
                 <button
                   aria-label={`Quitar filtro ${filter.label}`}
-                  className="inline-flex min-w-0 max-w-full items-center justify-center gap-1 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-accent)] px-2 py-1 text-[0.65rem] font-medium text-white shadow-[var(--shadow-button)] transition hover:bg-[var(--color-accent)]/75"
+                  className="grid min-w-0 max-w-full grid-cols-[11px_minmax(0,1fr)_11px] items-center gap-1 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-accent)] px-2 py-1 text-[0.65rem] font-medium text-white shadow-[var(--shadow-button)] transition hover:bg-[var(--color-accent)]/75"
                   key={filter.key || filter.label}
                   onClick={filter.onRemove}
                   type="button"
                 >
-                  <span className="min-w-0 truncate">{filter.label}</span>
+                  <span aria-hidden="true" />
+                  <span className="min-w-0 truncate text-center">
+                    {filter.label}
+                  </span>
                   <X className="shrink-0" size={11} strokeWidth={2.2} />
                 </button>
               ))}

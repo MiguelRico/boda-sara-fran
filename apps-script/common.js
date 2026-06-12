@@ -214,6 +214,28 @@ const PROVIDER_PAYMENTS_COLUMNS = {
   updatedAt: 9,
 };
 
+const NOTIFICATIONS_HEADERS = [
+  "notificationId",
+  "title",
+  "detail",
+  "date",
+  "type",
+  "read",
+  "createdAt",
+  "updatedAt",
+];
+
+const NOTIFICATIONS_COLUMNS = {
+  notificationId: 0,
+  title: 1,
+  detail: 2,
+  date: 3,
+  type: 4,
+  read: 5,
+  createdAt: 6,
+  updatedAt: 7,
+};
+
 function ensureHeader(sheet, headers) {
   const currentHeaders = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
   const needsHeader = headers.some((header, index) => currentHeaders[index] !== header);
@@ -254,6 +276,10 @@ function getProviderPaymentsSheet() {
     PROVIDER_PAYMENTS_SHEET_NAME,
     PROVIDER_PAYMENTS_HEADERS,
   );
+}
+
+function getNotificationsSheet() {
+  return getOrCreateSheet(NOTIFICATIONS_SHEET_NAME, NOTIFICATIONS_HEADERS);
 }
 
 function jsonResponse(obj, e) {
@@ -344,6 +370,10 @@ function validateAdmin(e) {
   }
 
   return null;
+}
+
+function isAdminPayload(data) {
+  return String(data.password || "").trim() === ADMIN_PASSWORD;
 }
 
 function normalizeAllergies(allergies) {
@@ -442,6 +472,132 @@ function buildConfirmationRow(data) {
     data.createdAt || now,
     now,
   ];
+}
+
+function normalizeNotificationType(value) {
+  const type = String(value || "").trim();
+
+  return type === "Pago" || type === "Confirmación" || type === "Confirmacion"
+    ? type === "Confirmacion"
+      ? "Confirmación"
+      : type
+    : "Aviso";
+}
+
+function normalizeNotificationDate(value) {
+  const text = String(value || "").trim();
+
+  if (text) return text;
+
+  return new Date().toISOString().slice(0, 10);
+}
+
+function buildNotificationFromRow(row) {
+  const notificationId = row[NOTIFICATIONS_COLUMNS.notificationId] || "";
+
+  return {
+    id: notificationId,
+    notificationId,
+    title: row[NOTIFICATIONS_COLUMNS.title] || "",
+    detail: row[NOTIFICATIONS_COLUMNS.detail] || "",
+    date: normalizeNotificationDate(row[NOTIFICATIONS_COLUMNS.date]),
+    type: normalizeNotificationType(row[NOTIFICATIONS_COLUMNS.type]),
+    read: isTruthySheetValue(row[NOTIFICATIONS_COLUMNS.read]),
+  };
+}
+
+function buildNotificationRow(notification) {
+  const now = getCurrentTimestamp();
+  const notificationId =
+    String(notification.notificationId || notification.id || "").trim() ||
+    createEntityId("notification");
+
+  return [
+    notificationId,
+    String(notification.title || "").trim(),
+    String(notification.detail || "").trim(),
+    normalizeNotificationDate(notification.date),
+    normalizeNotificationType(notification.type),
+    Boolean(notification.read),
+    notification.createdAt || now,
+    now,
+  ];
+}
+
+function appendNotification(notification) {
+  const sheet = getNotificationsSheet();
+
+  sheet.appendRow(buildNotificationRow(notification));
+}
+
+function createConfirmationNotification(confirmation, guests, action) {
+  const guestNames = (guests || [])
+    .map((guest) => `${guest.name || ""} ${guest.lastname || ""}`.trim())
+    .filter(Boolean)
+    .join(", ");
+  const contactParts = [
+    confirmation.email ? `Email: ${confirmation.email}` : "",
+    confirmation.phone ? `Telefono: ${confirmation.phone}` : "",
+    guestNames ? `Invitados: ${guestNames}` : "",
+  ].filter(Boolean);
+
+  appendNotification({
+    title:
+      action === "updated"
+        ? `Confirmacion actualizada: ${confirmation.confirmationName}`
+        : `Confirmacion recibida: ${confirmation.confirmationName}`,
+    detail: contactParts.join(" | "),
+    date: normalizeNotificationDate(),
+    type: "Confirmación",
+    read: false,
+  });
+}
+
+function createServiceNotification(provider, service) {
+  const detailParts = [
+    provider.name ? `Proveedor: ${provider.name}` : "",
+    service.price ? `Importe: ${service.price}` : "",
+    service.paymentCount ? `Plazos: ${service.paymentCount}` : "",
+  ].filter(Boolean);
+
+  appendNotification({
+    title: `Nuevo servicio: ${service.name || "Sin nombre"}`,
+    detail: detailParts.join(" | "),
+    date: normalizeNotificationDate(),
+    type: "Pago",
+    read: false,
+  });
+}
+
+function validateUniqueConfirmationContact(confirmation) {
+  const rows = getConfirmationsSheet().getDataRange().getDisplayValues();
+  const confirmationId = String(confirmation.confirmationId || "")
+    .trim()
+    .toLowerCase();
+  const email = String(confirmation.email || "").trim().toLowerCase();
+  const phone = normalizePhoneSearch(confirmation.phone);
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const rowConfirmationId = String(row[CONFIRMATIONS_COLUMNS.confirmationId] || "")
+      .trim()
+      .toLowerCase();
+
+    if (confirmationId && rowConfirmationId === confirmationId) continue;
+
+    const rowEmail = String(row[CONFIRMATIONS_COLUMNS.email] || "")
+      .trim()
+      .toLowerCase();
+    const rowPhone = normalizePhoneSearch(row[CONFIRMATIONS_COLUMNS.phone]);
+
+    if (email && rowEmail === email) {
+      throw new Error("Duplicated confirmation email");
+    }
+
+    if (phone && rowPhone === phone) {
+      throw new Error("Duplicated confirmation phone");
+    }
+  }
 }
 
 function buildGuestFromRow(row, confirmation, assignmentContext) {

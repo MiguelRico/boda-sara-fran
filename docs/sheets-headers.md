@@ -100,3 +100,15 @@ paymentId,serviceId,numeroPlazo,importe,fechaPrevista,fechaPago,pagado,notas,cre
 - `pagado`: texto booleano recomendado `TRUE`/`FALSE`.
 - `createdAt`, `updatedAt`: texto ISO 8601.
 
+## Notificaciones
+
+```csv
+notificationId,title,detail,date,type,read,createdAt,updatedAt
+```
+
+- `notificationId`: texto, ID estable de la notificacion.
+- `detail`: texto opcional con el detalle de la notificacion.
+- `date`: texto en formato `YYYY-MM-DD`.
+- `type`: texto, `Aviso`, `Pago` o `Confirmación`.
+- `read`: texto booleano recomendado `TRUE`/`FALSE`.
+- `createdAt`, `updatedAt`: texto ISO 8601.

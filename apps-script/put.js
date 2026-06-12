@@ -14,6 +14,10 @@ function routePut(data) {
     return saveProviders(data);
   }
 
+  if (entity === "notifications") {
+    return saveNotifications(data);
+  }
+
   throw new Error("Resource not supported");
 }
 
@@ -30,6 +34,11 @@ function saveConfirmation(data) {
   if (!confirmation.confirmationId) {
     confirmation.confirmationId = createEntityId("confirmation");
   }
+
+  validateUniqueConfirmationContact(confirmation);
+
+  const isAdmin = isAdminPayload(data);
+  const isExistingConfirmation = confirmationExists(confirmation.confirmationId);
 
   deleteConfirmationRow(confirmationsSheet, confirmation);
   deleteGuestRows(guestsSheet, confirmation);
@@ -51,18 +60,25 @@ function saveConfirmation(data) {
   });
   appendAssignmentRowsForGuests(assignmentsSheet, confirmation, guestsWithIds);
 
-  sendConfirmationEmail(
-    confirmation.email,
-    confirmation.confirmationName,
-    guestsWithIds,
-    confirmation.confirmationId,
-  );
-  sendAdminNotification(
-    confirmation.confirmationName,
-    confirmation.email,
-    confirmation.phone,
-    guestsWithIds,
-  );
+  if (!isAdmin) {
+    sendConfirmationEmail(
+      confirmation.email,
+      confirmation.confirmationName,
+      guestsWithIds,
+      confirmation.confirmationId,
+    );
+    sendAdminNotification(
+      confirmation.confirmationName,
+      confirmation.email,
+      confirmation.phone,
+      guestsWithIds,
+    );
+    createConfirmationNotification(
+      confirmation,
+      guestsWithIds,
+      isExistingConfirmation ? "updated" : "created",
+    );
+  }
 
   return jsonResponse({
     success: true,
@@ -158,6 +174,8 @@ function saveProviders(data) {
   const providerRows = [];
   const serviceRows = [];
   const paymentRows = [];
+  const existingServiceIds = getExistingProviderServiceIds();
+  const createdServices = [];
 
   providers.forEach((provider) => {
     const providerId = String(provider.providerId || provider.id || "").trim();
@@ -182,6 +200,19 @@ function saveProviders(data) {
       const serviceId = String(service.serviceId || service.id || "").trim();
 
       if (!serviceId) return;
+
+      if (!existingServiceIds.has(serviceId)) {
+        createdServices.push({
+          provider,
+          service: {
+            ...service,
+            paymentCount: Math.min(
+              Math.max(Number(service.paymentCount) || 1, 1),
+              3,
+            ),
+          },
+        });
+      }
 
       const paymentCount = Math.min(
         Math.max(Number(service.paymentCount) || 1, 1),
@@ -235,11 +266,72 @@ function saveProviders(data) {
     paymentsSheet.getRange(2, 1, paymentRows.length, PROVIDER_PAYMENTS_HEADERS.length).setValues(paymentRows);
   }
 
+  createdServices.forEach(({ provider, service }) => {
+    createServiceNotification(provider, service);
+  });
+
   return jsonResponse({
     success: true,
     providers: providerRows.length,
     services: serviceRows.length,
     payments: paymentRows.length,
   });
+}
+
+function saveNotifications(data) {
+  if (data.password !== ADMIN_PASSWORD) {
+    throw new Error("Unauthorized");
+  }
+
+  const sheet = getNotificationsSheet();
+  const notifications = Array.isArray(data.notifications)
+    ? data.notifications
+    : [];
+  const rows = notifications.map(buildNotificationRow);
+
+  deleteDataRows(sheet);
+
+  if (rows.length) {
+    sheet
+      .getRange(2, 1, rows.length, NOTIFICATIONS_HEADERS.length)
+      .setValues(rows);
+  }
+
+  return jsonResponse({
+    success: true,
+    notifications: rows.length,
+  });
+}
+
+function confirmationExists(confirmationId) {
+  const rows = getConfirmationsSheet().getDataRange().getDisplayValues();
+  const normalizedConfirmationId = String(confirmationId || "")
+    .trim()
+    .toLowerCase();
+
+  if (!normalizedConfirmationId) return false;
+
+  for (let i = 1; i < rows.length; i++) {
+    const rowConfirmationId = String(rows[i][CONFIRMATIONS_COLUMNS.confirmationId] || "")
+      .trim()
+      .toLowerCase();
+
+    if (rowConfirmationId === normalizedConfirmationId) return true;
+  }
+
+  return false;
+}
+
+function getExistingProviderServiceIds() {
+  const rows = getProviderServicesSheet().getDataRange().getDisplayValues();
+  const ids = new Set();
+
+  for (let i = 1; i < rows.length; i++) {
+    const serviceId = String(rows[i][PROVIDER_SERVICES_COLUMNS.serviceId] || "").trim();
+
+    if (serviceId) ids.add(serviceId);
+  }
+
+  return ids;
 }
 

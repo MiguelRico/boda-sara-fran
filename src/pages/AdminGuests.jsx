@@ -320,6 +320,11 @@ export default function AdminGuests() {
     );
   };
 
+  const validateUniqueGroupContact = useCallback(
+    (group) => getDuplicateContactErrors(group, state.confirmations),
+    [state.confirmations],
+  );
+
   const handleSaveGroup = async (group) => {
     const isCreation = !editingGroup?.confirmationName;
     const groupToSave = normalizeAdminGroupBeforeSave(group, { isCreation });
@@ -754,6 +759,7 @@ export default function AdminGuests() {
           guestIndex={editingGuestIndex}
           onClose={() => setEditingGroup(null)}
           onSave={handleSaveGroup}
+          validateUniqueContact={validateUniqueGroupContact}
         />
       )}
 
@@ -1141,6 +1147,7 @@ function GroupEditor({
   mode = "full",
   onClose,
   onSave,
+  validateUniqueContact = () => ({}),
 }) {
   const isSingleGuestMode = mode === "guest";
   const initialDraft = useMemo(
@@ -1246,9 +1253,14 @@ function GroupEditor({
           contact: groupToSave,
           guests: groupToSave.guests,
         });
+    const duplicateErrors = validateUniqueContact(groupToSave);
+    const allValidationErrors = {
+      ...validationErrors,
+      ...duplicateErrors,
+    };
 
-    if (Object.keys(validationErrors).length) {
-      setErrors(validationErrors);
+    if (Object.keys(allValidationErrors).length) {
+      setErrors(allValidationErrors);
       setValidationPopupOpen(true);
       return;
     }
@@ -1545,6 +1557,39 @@ function getConfirmationKey(group) {
     normalizedGroup.id ||
     `draft:${normalizedGroup.email || ""}:${normalizedGroup.phone || ""}`
   );
+}
+
+function getDuplicateContactErrors(group, confirmations) {
+  const normalizedGroup = Confirmation.normalize(group);
+  const targetKey = getConfirmationKey(normalizedGroup);
+  const email = normalizedGroup.email.trim().toLowerCase();
+  const phone = normalizePhoneForComparison(normalizedGroup.phone);
+  const errors = {};
+
+  Confirmation.normalizeList(confirmations).some((confirmation) => {
+    if (getConfirmationKey(confirmation) === targetKey) return false;
+
+    const duplicatedEmail =
+      email && confirmation.email.trim().toLowerCase() === email;
+    const duplicatedPhone =
+      phone && normalizePhoneForComparison(confirmation.phone) === phone;
+
+    if (duplicatedEmail) {
+      errors.email = "Ya existe una confirmacion con este email.";
+    }
+
+    if (duplicatedPhone) {
+      errors.phone = "Ya existe una confirmacion con este telefono.";
+    }
+
+    return duplicatedEmail || duplicatedPhone;
+  });
+
+  return errors;
+}
+
+function normalizePhoneForComparison(value) {
+  return String(value || "").replace(/\D/g, "");
 }
 
 function removeConfirmationFromList(confirmations, target) {

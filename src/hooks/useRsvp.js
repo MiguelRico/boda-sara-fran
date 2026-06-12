@@ -43,6 +43,9 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const [currentConfirmationName, setCurrentConfirmationName] = useState(
     () => navigationGroup?.confirmationName || null,
   );
+  const [currentConfirmationId, setCurrentConfirmationId] = useState(
+    () => navigationGroup?.confirmationId || navigationGroup?.id || "",
+  );
   const [contact, setContact] = useState(() => ({
     email: navigationGroup?.email || "",
     confirmationName: navigationGroup?.confirmationName || "",
@@ -68,6 +71,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const loadFoundGroup = useCallback((response) => {
     const confirmation = Confirmation.normalize(response);
 
+    setCurrentConfirmationId(confirmation.confirmationId || confirmation.id || "");
     setCurrentConfirmationName(confirmation.confirmationName);
     setContact({
       email: confirmation.email,
@@ -188,6 +192,47 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     return !hasValidationErrors(validationErrors);
   };
 
+  const validateUniqueContact = async () => {
+    const normalizedEmail = contact.email.trim();
+    const normalizedPhone = contact.phone.trim();
+    const [emailResponse, phoneResponse] = await Promise.all([
+      normalizedEmail ? findConfirmationByEmail(normalizedEmail) : null,
+      normalizedPhone ? findConfirmationByPhone(normalizedPhone) : null,
+    ]);
+    const currentId = String(currentConfirmationId || "").trim();
+    const duplicatedEmail =
+      emailResponse?.found &&
+      String(emailResponse.confirmationId || emailResponse.id || "").trim() !==
+        currentId;
+    const duplicatedPhone =
+      phoneResponse?.found &&
+      String(phoneResponse.confirmationId || phoneResponse.id || "").trim() !==
+        currentId;
+
+    if (!duplicatedEmail && !duplicatedPhone) return true;
+
+    setErrors((current) => ({
+      ...current,
+      email: duplicatedEmail
+        ? "Ya existe una confirmacion con este email."
+        : current.email,
+      phone: duplicatedPhone
+        ? "Ya existe una confirmacion con este telefono."
+        : current.phone,
+    }));
+    setPopup({
+      closeText: "Cerrar",
+      closeTo: null,
+      open: true,
+      type: "error",
+      title: "Contacto duplicado",
+      message:
+        "Ya existe una confirmacion con ese email o telefono. Usa otro contacto o modifica la confirmacion existente.",
+    });
+
+    return false;
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -211,12 +256,18 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
       const payload = {
         ...Confirmation.normalize({
           ...contact,
+          confirmationId: currentConfirmationId,
+          id: currentConfirmationId,
           confirmationName: currentConfirmationName || contact.confirmationName,
           guests,
         }),
       };
 
       show("Enviando confirmación...");
+
+      const hasUniqueContact = await validateUniqueContact();
+
+      if (!hasUniqueContact) return;
 
       await savePublicConfirmation(payload, {
         method: isEdition ? "PUT" : "POST",
