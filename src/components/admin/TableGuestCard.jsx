@@ -22,8 +22,8 @@ export default function TableGuestCard({
         group relative overflow-hidden rounded-[2rem]
         border border-[var(--color-border-strong)] bg-white/55 p-5
         shadow-[0_24px_70px_rgba(77,56,40,0.08)] backdrop-blur-sm
-        transition-all duration-700 hover:-translate-y-1
-        hover:border-[var(--color-border)] hover:bg-white/80
+        transition-all duration-700 md:hover:-translate-y-1
+        md:hover:border-[var(--color-border)] md:hover:bg-white/80
       "
     >
       <div className="pointer-events-none absolute right-5 top-5 text-5xl opacity-[0.08] transition-all duration-700 group-hover:scale-110 group-hover:opacity-[0.12]">

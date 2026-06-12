@@ -493,7 +493,7 @@ function SeatDot({ onClick, seat, style }) {
         absolute z-10 flex h-5 w-5 items-center justify-center rounded-full
         border text-[0.58rem] font-semibold shadow-[0_8px_18px_rgba(77,56,40,0.12)]
         [--round-seat-offset:5.15rem] sm:[--round-seat-offset:5.65rem]
-        ${onClick ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2" : ""}
+        ${onClick ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] md:focus:ring-offset-2" : ""}
         ${
           seat.guest
             ? "border-[var(--color-accent-dark)] bg-[var(--color-accent-dark)] text-white"
