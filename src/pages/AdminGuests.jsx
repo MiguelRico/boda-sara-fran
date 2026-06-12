@@ -23,7 +23,7 @@ import TableGuestCard from "../components/admin/TableGuestCard";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import Chip from "../components/ui/Chip";
 import RsvpForm from "../forms/RsvpForm";
-import { MAX_GUESTS } from "../constants/rsvp";
+import { COMMON_ALLERGIES, MAX_GUESTS } from "../constants/rsvp";
 import { Confirmation, Guest } from "../models";
 import {
   deleteAdminConfirmation,
@@ -59,6 +59,16 @@ const mobilePageSize = 1;
 const filters = adminContent.guests.filters.options;
 const ADMIN_GUESTS_ACTIVE_TAB_KEY = "adminGuestsActiveTab";
 const getRowId = (item) => item.rowId;
+const ADMIN_OUTBOUND_BUS_OPTIONS = [
+  { value: "No", label: "No" },
+  { value: "18:00", label: "18:00" },
+  { value: "18:20", label: "18:20" },
+];
+const ADMIN_RETURN_BUS_OPTIONS = [
+  { value: "No", label: "No" },
+  { value: "3:00", label: "3:00" },
+  { value: "6:00", label: "6:00" },
+];
 
 const emptyState = {
   confirmations: [],
@@ -211,6 +221,15 @@ export default function AdminGuests() {
   const guestStats = useMemo(
     () => buildGuestStats(rows, allGuestItems),
     [allGuestItems, rows],
+  );
+  const guestChartStats = useMemo(
+    () =>
+      Confirmation.buildStats(state.confirmations, {
+        allergies: COMMON_ALLERGIES,
+        outboundBusOptions: ADMIN_OUTBOUND_BUS_OPTIONS,
+        returnBusOptions: ADMIN_RETURN_BUS_OPTIONS,
+      }),
+    [state.confirmations],
   );
   const visibleGuestItems = useMemo(
     () => filterGuestItems(guestItems, guestQuery, guestFilter),
@@ -489,7 +508,11 @@ export default function AdminGuests() {
         rootRef={guestsRef}
       >
         <CinematicStaggeredRevealItem index={2} isVisible={guestsInView}>
-          <GuestTotalsPanel loading={state.loading} stats={guestStats} />
+          <GuestTotalsPanel
+            chartStats={guestChartStats}
+            loading={state.loading}
+            stats={guestStats}
+          />
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={guestsInView}>

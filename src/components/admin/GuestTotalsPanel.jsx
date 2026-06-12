@@ -10,9 +10,26 @@ import {
 
 import { adminContent } from "../../constants/adminContent";
 import { AdminMetricGrid, AdminMetricGridSkeleton } from "./AdminMetricGrid";
+import CollapsiblePanel from "../ui/CollapsiblePanel";
+import { SkeletonBlock } from "../ui/TableSectionSkeleton";
 
-export default function GuestTotalsPanel({ loading, stats }) {
+const BAR_COLORS = [
+  "#344531",
+  "#556b52",
+  "#6f8b6b",
+  "#879d7e",
+  "#bccdb5",
+  "#c7d4bf",
+  "#9caf88",
+  "#71816d",
+  "#dfe8d7",
+];
+
+const TRANSPORT_BAR_COLORS = ["#344531", "#6f8b6b", "#bccdb5"];
+
+export default function GuestTotalsPanel({ chartStats = null, loading, stats }) {
   const metrics = adminContent.guests.overview.metrics;
+  const showCharts = Boolean(chartStats);
 
   return (
     <section className="premium-card">
@@ -23,62 +40,203 @@ export default function GuestTotalsPanel({ loading, stats }) {
         {adminContent.guests.overview.title}
       </h2>
       {loading ? (
-        <AdminMetricGridSkeleton
-          className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-9"
-          count={9}
-        />
+        <>
+          <AdminMetricGridSkeleton
+            className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-9"
+            count={9}
+          />
+          {showCharts ? <GuestChartsSkeleton /> : null}
+        </>
       ) : (
-        <AdminMetricGrid
-          className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-9"
-          items={[
-            {
-              icon: <MailCheck size={22} strokeWidth={1.8} />,
-              label: metrics.confirmations,
-              value: stats.groupCount,
-            },
-            {
-              icon: <UsersRound size={22} strokeWidth={1.8} />,
-              label: metrics.guests,
-              value: stats.guestCount,
-            },
-            {
-              icon: <Beef size={22} strokeWidth={1.8} />,
-              label: metrics.meat,
-              value: stats.meatCount,
-            },
-            {
-              icon: <Fish size={22} strokeWidth={1.8} />,
-              label: metrics.fish,
-              value: stats.fishCount,
-            },
-            {
-              icon: <AlertTriangle size={22} strokeWidth={1.8} />,
-              label: metrics.allergies,
-              value: stats.allergyCount,
-            },
-            {
-              icon: <AlertTriangle size={22} strokeWidth={1.8} />,
-              label: metrics.otherAllergies,
-              value: stats.otherAllergyCount,
-            },
-            {
-              icon: <MessageCircle size={22} strokeWidth={1.8} />,
-              label: metrics.comments,
-              value: stats.commentsCount,
-            },
-            {
-              icon: <BusFront size={22} strokeWidth={1.8} />,
-              label: metrics.outboundBus,
-              value: stats.outboundBusCount,
-            },
-            {
-              icon: <BusFront size={22} strokeWidth={1.8} />,
-              label: metrics.returnBus,
-              value: stats.returnBusCount,
-            },
-          ]}
-        />
+        <>
+          <AdminMetricGrid
+            className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-9"
+            items={[
+              {
+                icon: <MailCheck size={22} strokeWidth={1.8} />,
+                label: metrics.confirmations,
+                value: stats.groupCount,
+              },
+              {
+                icon: <UsersRound size={22} strokeWidth={1.8} />,
+                label: metrics.guests,
+                value: stats.guestCount,
+              },
+              {
+                icon: <Beef size={22} strokeWidth={1.8} />,
+                label: metrics.meat,
+                value: stats.meatCount,
+              },
+              {
+                icon: <Fish size={22} strokeWidth={1.8} />,
+                label: metrics.fish,
+                value: stats.fishCount,
+              },
+              {
+                icon: <AlertTriangle size={22} strokeWidth={1.8} />,
+                label: metrics.allergies,
+                value: stats.allergyCount,
+              },
+              {
+                icon: <AlertTriangle size={22} strokeWidth={1.8} />,
+                label: metrics.otherAllergies,
+                value: stats.otherAllergyCount,
+              },
+              {
+                icon: <MessageCircle size={22} strokeWidth={1.8} />,
+                label: metrics.comments,
+                value: stats.commentsCount,
+              },
+              {
+                icon: <BusFront size={22} strokeWidth={1.8} />,
+                label: metrics.outboundBus,
+                value: stats.outboundBusCount,
+              },
+              {
+                icon: <BusFront size={22} strokeWidth={1.8} />,
+                label: metrics.returnBus,
+                value: stats.returnBusCount,
+              },
+            ]}
+          />
+          {showCharts ? <GuestCharts chartStats={chartStats} /> : null}
+        </>
       )}
     </section>
+  );
+}
+
+function GuestCharts({ chartStats }) {
+  const content = adminContent.stats.confirmations.charts;
+
+  return (
+    <div className="mt-3 grid gap-2">
+      <CollapsiblePanel
+        className="border-[var(--color-border)] bg-white/35"
+        compact
+        title={content.allergies}
+      >
+        <BarStatsCard
+          emptyText="Sin alergias registradas"
+          items={chartStats.allergiesByType || []}
+        />
+      </CollapsiblePanel>
+
+      <CollapsiblePanel
+        className="border-[var(--color-border)] bg-white/35"
+        compact
+        title={content.transport}
+      >
+        <TransportCard stats={chartStats} />
+      </CollapsiblePanel>
+    </div>
+  );
+}
+
+function GuestChartsSkeleton() {
+  return (
+    <div className="mt-3 grid gap-2">
+      {Array.from({ length: 2 }).map((_, panelIndex) => (
+        <div
+          className="rounded-[1rem] border border-[var(--color-border)] bg-white/35 p-2.5"
+          key={panelIndex}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <SkeletonBlock className="h-5 w-32 rounded-full" />
+            <SkeletonBlock className="h-5 w-9 rounded-full" />
+          </div>
+          <div className="mt-2 grid gap-1.5">
+            {Array.from({ length: panelIndex === 0 ? 3 : 2 }).map(
+              (_, rowIndex) => (
+                <div
+                  className="rounded-lg border border-[var(--color-border)] bg-white/45 p-1.5"
+                  key={rowIndex}
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <SkeletonBlock className="h-3 w-20 rounded-full" />
+                    <SkeletonBlock className="h-3 w-10 rounded-full" />
+                  </div>
+                  <SkeletonBlock className="h-1.5 rounded-full" />
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BarStatsCard({ emptyText, items }) {
+  if (!items.length) {
+    return (
+      <p className="rounded-xl border border-[var(--color-border)] bg-white/45 p-3 text-xs text-[var(--color-muted)]">
+        {emptyText}
+      </p>
+    );
+  }
+
+  return <BarChart items={items} />;
+}
+
+function TransportCard({ stats }) {
+  const content = adminContent.stats.confirmations.charts;
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <TransportGroup
+        items={stats.outboundBusStats || []}
+        title={content.outbound}
+      />
+      <TransportGroup items={stats.returnBusStats || []} title={content.return} />
+    </div>
+  );
+}
+
+function TransportGroup({ items, title }) {
+  return (
+    <div className="min-w-0 rounded-xl border border-[var(--color-border)] bg-white/35 p-2">
+      <p className="mb-2 truncate text-[0.65rem] font-medium uppercase tracking-[0.08em] text-[var(--color-accent-dark)]">
+        {title}
+      </p>
+      <BarChart colors={TRANSPORT_BAR_COLORS} compact items={items} />
+    </div>
+  );
+}
+
+function BarChart({ colors = BAR_COLORS, compact = false, items }) {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+
+  return (
+    <div className={`grid ${compact ? "gap-1.5" : "gap-2"}`}>
+      {items.map((item, index) => {
+        const color = colors[index % colors.length];
+        const width = total ? Math.max((item.value / total) * 100, 3) : 0;
+
+        return (
+          <div
+            className={`rounded-lg border border-[var(--color-border)] bg-white/45 ${
+              compact ? "p-1.5" : "p-2"
+            }`}
+            key={item.label}
+          >
+            <div className="mb-1 flex items-center justify-between gap-2 text-[0.68rem] leading-tight">
+              <span className="min-w-0 truncate text-[var(--color-muted)]">
+                {item.label}
+              </span>
+              <span className="shrink-0 font-medium text-[var(--color-accent-dark)]">
+                {item.value} / {total}
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-[var(--color-border)]">
+              <span
+                className="block h-full rounded-full"
+                style={{ backgroundColor: color, width: `${width}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
