@@ -8,6 +8,7 @@ import {
   RETURN_BUS_OPTIONS,
 } from "../../constants/rsvp";
 import { rsvpContent } from "../../constants/rsvpContent";
+import { isMenuModuleEnabled } from "../../config/features";
 import {
   FieldError,
   FormCard,
@@ -85,41 +86,43 @@ export default function GuestCard({
         </div>
       </div>
 
-      <div className="mt-4">
-        <Label>{rsvpContent.guest.fields.menu.label}</Label>
+      {isMenuModuleEnabled && (
+        <div className="mt-4">
+          <Label>{rsvpContent.guest.fields.menu.label}</Label>
 
-        <div className="form-choice-group grid grid-cols-2 gap-3">
-          {GUEST_MENU_OPTIONS.map((menuOption) => {
-            const checked = guest.menu === menuOption;
+          <div className="form-choice-group grid grid-cols-2 gap-3">
+            {GUEST_MENU_OPTIONS.map((menuOption) => {
+              const checked = guest.menu === menuOption;
 
-            return (
-              <label
-                key={menuOption}
-                className={`
-                  flex cursor-pointer items-center justify-center rounded-2xl border px-4 py-3 text-sm transition-all duration-300
-                  ${
-                    checked
-                      ? "border-[var(--color-border-strong)] bg-[var(--color-accent-dark)] text-white"
-                      : "border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 text-[var(--color-text)] hover:border-[var(--color-border-hover)] hover:bg-white"
-                  }
-                `}
-              >
-                <input
-                  checked={checked}
-                  className="hidden"
-                  name={`guest_menu_${index}`}
-                  onChange={() => onGuestChange(index, "menu", menuOption)}
-                  type="radio"
-                />
+              return (
+                <label
+                  key={menuOption}
+                  className={`
+                    flex cursor-pointer items-center justify-center rounded-2xl border px-4 py-3 text-sm transition-all duration-300
+                    ${
+                      checked
+                        ? "border-[var(--color-border-strong)] bg-[var(--color-accent-dark)] text-white"
+                        : "border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 text-[var(--color-text)] hover:border-[var(--color-border-hover)] hover:bg-white"
+                    }
+                  `}
+                >
+                  <input
+                    checked={checked}
+                    className="hidden"
+                    name={`guest_menu_${index}`}
+                    onChange={() => onGuestChange(index, "menu", menuOption)}
+                    type="radio"
+                  />
 
-                {menuOption}
-              </label>
-            );
-          })}
+                  {menuOption}
+                </label>
+              );
+            })}
+          </div>
+
+          <FieldError>{menuError}</FieldError>
         </div>
-
-        <FieldError>{menuError}</FieldError>
-      </div>
+      )}
 
       <div className="mt-4">
         <Label>{rsvpContent.guest.fields.comments.label}</Label>

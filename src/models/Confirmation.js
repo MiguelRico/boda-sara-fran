@@ -1,5 +1,6 @@
 import { Guest } from "./Guest";
 import { rsvpContent } from "../constants/rsvpContent";
+import { isMenuModuleEnabled } from "../config/features";
 
 const CONFIRMATION_DEFAULTS = {
   confirmationId: "",
@@ -243,8 +244,11 @@ export const Confirmation = {
       (guest) => !Guest.isValid(guest),
     );
 
-    if (invalidGuest)
-      return "Todos los invitados necesitan nombre, apellidos y seleccionar un menú.";
+    if (invalidGuest) {
+      return isMenuModuleEnabled
+        ? "Todos los invitados necesitan nombre, apellidos y seleccionar un menú."
+        : "Todos los invitados necesitan nombre y apellidos.";
+    }
 
     return "";
   },

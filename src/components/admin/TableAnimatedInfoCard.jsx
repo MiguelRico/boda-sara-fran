@@ -14,6 +14,7 @@ import { Guest, Table } from "../../models";
 import { getTableGroupOption, TABLE_SHAPES } from "../../constants/tables";
 import { adminContent } from "../../constants/adminContent";
 import { tableContent } from "../../constants/tableContent";
+import { isMenuModuleEnabled } from "../../config/features";
 import usePagedData from "../../hooks/usePagedData";
 import usePageTransition from "../../hooks/usePageTransition";
 import IconButton from "../ui/IconButton";
@@ -430,16 +431,22 @@ function getTableLegendSummary(table) {
   const assignedGuests = Table.getAssignedGuests(table);
 
   return [
-    {
-      icon: <Fish size={14} strokeWidth={1.8} />,
-      label: tableContent.card.legend.fish,
-      value: assignedGuests.filter((guest) => guest.menu === "Pescado").length,
-    },
-    {
-      icon: <Beef size={14} strokeWidth={1.8} />,
-      label: tableContent.card.legend.meat,
-      value: assignedGuests.filter((guest) => guest.menu === "Carne").length,
-    },
+    ...(isMenuModuleEnabled
+      ? [
+          {
+            icon: <Fish size={14} strokeWidth={1.8} />,
+            label: tableContent.card.legend.fish,
+            value: assignedGuests.filter((guest) => guest.menu === "Pescado")
+              .length,
+          },
+          {
+            icon: <Beef size={14} strokeWidth={1.8} />,
+            label: tableContent.card.legend.meat,
+            value: assignedGuests.filter((guest) => guest.menu === "Carne")
+              .length,
+          },
+        ]
+      : []),
     {
       icon: <AlertTriangle size={14} strokeWidth={1.8} />,
       label: tableContent.card.legend.allergies,

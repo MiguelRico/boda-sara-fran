@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { GUEST_MENU_OPTIONS } from "../constants/rsvp";
+import { isMenuModuleEnabled } from "../config/features";
 import { Guest } from "../models";
 import { getEmailHref, getPhoneHref } from "./contactLinks";
 
@@ -52,21 +53,23 @@ export function getGroupSummaryChips(contact, guests) {
       strong: true,
       value: `${guestCount} ${guestCount === 1 ? "invitado" : "invitados"}`,
     },
-    ...GUEST_MENU_OPTIONS.map((menu) => {
-      const count = getGuestCountBy(
-        normalizedGuests,
-        (guest) => guest.menu === menu,
-      );
+    ...(isMenuModuleEnabled
+      ? GUEST_MENU_OPTIONS.map((menu) => {
+          const count = getGuestCountBy(
+            normalizedGuests,
+            (guest) => guest.menu === menu,
+          );
 
-      if (!count) return null;
+          if (!count) return null;
 
-      return {
-        icon: getMenuIcon(menu),
-        key: `menu-${menu}`,
-        strong: true,
-        value: `${menu}: ${count}`,
-      };
-    }).filter(Boolean),
+          return {
+            icon: getMenuIcon(menu),
+            key: `menu-${menu}`,
+            strong: true,
+            value: `${menu}: ${count}`,
+          };
+        }).filter(Boolean)
+      : []),
     allergiesCount
       ? {
           icon: <AlertTriangle size={iconSize} strokeWidth={iconStrokeWidth} />,
@@ -106,7 +109,7 @@ export function getGuestSummaryChips(guest) {
   const comments = normalizedGuest.comments.trim();
 
   return [
-    normalizedGuest.menu
+    isMenuModuleEnabled && normalizedGuest.menu
       ? {
           icon: getMenuIcon(normalizedGuest.menu),
           key: "menu",

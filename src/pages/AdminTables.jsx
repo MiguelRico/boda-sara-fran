@@ -63,6 +63,7 @@ import { getTableRenderKey } from "../utils/renderKeys";
 import { adminContent } from "../constants/adminContent";
 import { tableContent } from "../constants/tableContent";
 import { rsvpContent } from "../constants/rsvpContent";
+import { isMenuModuleEnabled } from "../config/features";
 
 const ADMIN_ACTIVE_TAB_KEY = "admin-tables-active-tab";
 const SECTION_TABS = adminContent.tables.tabs;
@@ -263,6 +264,7 @@ export default function AdminTables() {
       }
 
       if (
+        isMenuModuleEnabled &&
         pendingGuestsFilters.menu &&
         guest.menu !== pendingGuestsFilters.menu
       ) {
@@ -1076,7 +1078,7 @@ function SeatAssignmentDialog({
       return false;
     }
 
-    if (filters.menu && guest.menu !== filters.menu) {
+    if (isMenuModuleEnabled && filters.menu && guest.menu !== filters.menu) {
       return false;
     }
 

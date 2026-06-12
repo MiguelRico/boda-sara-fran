@@ -1,5 +1,6 @@
 import { GUEST_MENU_OPTIONS } from "../constants/rsvp";
 import { rsvpContent } from "../constants/rsvpContent";
+import { isMenuModuleEnabled } from "../config/features";
 
 const GUEST_DEFAULTS = {
   confirmationId: "",
@@ -120,7 +121,8 @@ export const Guest = {
   getAssignmentText(guest) {
     const normalizedGuest = Guest.normalize(guest);
     const values = [
-      normalizedGuest.menu &&
+      isMenuModuleEnabled &&
+        normalizedGuest.menu &&
         rsvpContent.guest.assignment.menu(normalizedGuest.menu),
       normalizedGuest.table &&
         rsvpContent.guest.assignment.table(normalizedGuest.table),
@@ -193,7 +195,7 @@ export const Guest = {
     return Boolean(
       normalizedGuest.name.trim() &&
       normalizedGuest.lastname.trim() &&
-      normalizedGuest.menu &&
+      (!isMenuModuleEnabled || normalizedGuest.menu) &&
       normalizedGuest.comments.length <= 300,
     );
   },
@@ -211,7 +213,7 @@ export const Guest = {
         rsvpContent.validation.requiredLastname;
     }
 
-    if (!normalizedGuest.menu) {
+    if (isMenuModuleEnabled && !normalizedGuest.menu) {
       errors[`guest_menu_${index}`] = rsvpContent.validation.requiredMenu;
     }
 

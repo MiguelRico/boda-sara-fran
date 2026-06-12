@@ -1,6 +1,7 @@
 import { AlertCircle } from "lucide-react";
 
 import { adminContent } from "../../constants/adminContent";
+import { isMenuModuleEnabled } from "../../config/features";
 import { Guest } from "../../models";
 import CollapsiblePanel from "../ui/CollapsiblePanel";
 import TableGuestCard from "./TableGuestCard";
@@ -54,7 +55,7 @@ export function PendingGuestsFilters({
           onRemove: () => onFilterChange("group", ""),
         }
       : null,
-    filters.menu
+    isMenuModuleEnabled && filters.menu
       ? {
           key: "menu",
           label: filters.menu,
@@ -68,7 +69,9 @@ export function PendingGuestsFilters({
       activeFilters={activeFilters}
       title={adminContent.pendingGuests.filtersEyebrow}
     >
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div
+        className={`grid gap-4 ${isMenuModuleEnabled ? "sm:grid-cols-2" : ""}`}
+      >
         <div>
           <Label>{adminContent.pendingGuests.confirmationLabel}</Label>
           <select
@@ -87,21 +90,23 @@ export function PendingGuestsFilters({
           </select>
         </div>
 
-        <div>
-          <Label>{adminContent.pendingGuests.menuLabel}</Label>
-          <select
-            value={filters.menu}
-            onChange={(event) => onFilterChange("menu", event.target.value)}
-            className={selectClassName}
-          >
-            <option value="">{adminContent.pendingGuests.allMenus}</option>
-            {availableMenus.map((menu) => (
-              <option key={menu} value={menu}>
-                {menu}
-              </option>
-            ))}
-          </select>
-        </div>
+        {isMenuModuleEnabled && (
+          <div>
+            <Label>{adminContent.pendingGuests.menuLabel}</Label>
+            <select
+              value={filters.menu}
+              onChange={(event) => onFilterChange("menu", event.target.value)}
+              className={selectClassName}
+            >
+              <option value="">{adminContent.pendingGuests.allMenus}</option>
+              {availableMenus.map((menu) => (
+                <option key={menu} value={menu}>
+                  {menu}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
     </CollapsiblePanel>
   );

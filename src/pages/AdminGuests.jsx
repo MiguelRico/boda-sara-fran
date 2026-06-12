@@ -24,6 +24,7 @@ import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import Chip from "../components/ui/Chip";
 import RsvpForm from "../forms/RsvpForm";
 import { COMMON_ALLERGIES, MAX_GUESTS } from "../constants/rsvp";
+import { isMenuModuleEnabled } from "../config/features";
 import { Confirmation, Guest } from "../models";
 import {
   deleteAdminConfirmation,
@@ -1445,7 +1446,7 @@ function filterGuestItems(guests, query, filter) {
       guest.phone,
       guest.confirmationName,
       Guest.getFullName(guest),
-      guest.menu,
+      isMenuModuleEnabled ? guest.menu : "",
     ]
       .join(" ")
       .toLowerCase()
