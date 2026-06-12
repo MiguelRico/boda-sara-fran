@@ -125,7 +125,7 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
     <div
       className={`h-full rounded-[2rem] transition ${
         selected
-          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
+          ? "ring-2 ring-[var(--color-accent-dark)] md:ring-offset-2 md:ring-offset-[var(--color-bg)]"
           : "ring-0"
       }`}
       onClick={() => onSelect(provider)}
@@ -213,7 +213,7 @@ function ServiceCard({ onDelete, onEdit, onSelect, selected, service }) {
     <div
       className={`h-full rounded-[2rem] transition ${
         selected
-          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
+          ? "ring-2 ring-[var(--color-accent-dark)] md:ring-offset-2 md:ring-offset-[var(--color-bg)]"
           : "ring-0"
       }`}
       onClick={() => onSelect(service)}

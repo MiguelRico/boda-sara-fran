@@ -47,7 +47,7 @@ export default function AdminTableSection({
   const contentSkeletonConfig = skeletonConfig.content || {};
 
   return (
-    <section className={`premium-card ${className}`} ref={sectionRef}>
+    <section className={`premium-card pt-4 ${className}`} ref={sectionRef}>
       <div className="mb-4">
         <p className="section-eyebrow mb-2">{eyebrow}</p>
         <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">

@@ -1375,7 +1375,7 @@ function TableCardWithActions({
     <div
       className={`grid gap-3 rounded-[2rem] transition ${
         selected
-          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
+          ? "ring-2 ring-[var(--color-accent-dark)] md:ring-offset-2 md:ring-offset-[var(--color-bg)]"
           : "ring-0"
       }`}
       onClick={() => onSelect(table)}

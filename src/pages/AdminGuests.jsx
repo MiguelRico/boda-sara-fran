@@ -966,7 +966,7 @@ function GuestItemCard({ guestItem, onDelete, onEdit, onSelect, selected }) {
     <div
       className={`h-full rounded-[2rem] transition ${
         selected
-          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
+          ? "ring-2 ring-[var(--color-accent-dark)] md:ring-offset-2 md:ring-offset-[var(--color-bg)]"
           : "ring-0"
       }`}
       onClick={() => onSelect(guestItem)}
@@ -1039,7 +1039,7 @@ function AdminGuestConfirmationCard({
     <div
       className={`relative h-full rounded-[2rem] transition ${
         selected
-          ? "ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]"
+          ? "ring-2 ring-[var(--color-accent-dark)] md:ring-offset-2 md:ring-offset-[var(--color-bg)]"
           : "ring-0"
       }`}
       onClick={() => onSelect(row)}
