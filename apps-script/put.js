@@ -18,6 +18,10 @@ function routePut(data) {
     return saveNotifications(data);
   }
 
+  if (entity === "notificationRead") {
+    return updateNotificationRead(data);
+  }
+
   throw new Error("Resource not supported");
 }
 
@@ -301,6 +305,44 @@ function saveNotifications(data) {
     success: true,
     notifications: rows.length,
   });
+}
+
+function updateNotificationRead(data) {
+  if (data.password !== ADMIN_PASSWORD) {
+    throw new Error("Unauthorized");
+  }
+
+  const notificationId = String(data.notificationId || data.id || "").trim();
+  const sheet = getNotificationsSheet();
+  const rows = sheet.getDataRange().getDisplayValues();
+  const read = Boolean(data.read);
+
+  if (!notificationId) {
+    throw new Error("Missing notificationId");
+  }
+
+  for (let i = 1; i < rows.length; i++) {
+    const rowNotificationId = String(
+      rows[i][NOTIFICATIONS_COLUMNS.notificationId] || "",
+    ).trim();
+
+    if (rowNotificationId !== notificationId) continue;
+
+    sheet
+      .getRange(i + 1, NOTIFICATIONS_COLUMNS.read + 1)
+      .setValue(read);
+    sheet
+      .getRange(i + 1, NOTIFICATIONS_COLUMNS.updatedAt + 1)
+      .setValue(getCurrentTimestamp());
+
+    return jsonResponse({
+      success: true,
+      notificationId,
+      read,
+    });
+  }
+
+  throw new Error("Notification not found");
 }
 
 function confirmationExists(confirmationId) {

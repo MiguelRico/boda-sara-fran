@@ -25,6 +25,7 @@ import {
 } from "../components/rsvp/FormPrimitives";
 import { adminContent } from "../constants/adminContent";
 import { AdminNotification } from "../models";
+import { updateAdminNotificationRead } from "../api/notificationsApi";
 import {
   discardAdminNotificationChanges,
   getAdminDataSnapshot,
@@ -205,11 +206,21 @@ export default function AdminNotifications() {
   };
 
   const handleToggleRead = (notification) => {
+    const nextRead = !notification.read;
     const nextNotifications = setAdminNotificationRead(
       notification.id,
-      !notification.read,
+      nextRead,
+      { markSaved: true },
     );
+
     syncNotifications(nextNotifications);
+    void updateAdminNotificationRead({
+      notificationId: notification.id,
+      password: ADMIN_PASSWORD,
+      read: nextRead,
+    }).catch((error) => {
+      console.error("Error actualizando notificacion en segundo plano:", error);
+    });
   };
 
   const handleDeleteNotification = () => {

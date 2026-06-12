@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import IconButton from "../../ui/IconButton";
 import { ADMIN_AUTH_EVENT, ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../../../constants/admin";
+import { updateAdminNotificationRead } from "../../../api/notificationsApi";
 import { adminContent } from "../../../constants/adminContent";
 import { AdminNotification } from "../../../models";
 import {
@@ -82,8 +83,15 @@ export default function NotificationsAccessButton() {
   if (!isAuthenticated) return null;
 
   const handleMarkRead = (notificationId) => {
-    markAdminNotificationRead(notificationId);
+    markAdminNotificationRead(notificationId, { markSaved: true });
     refreshNotifications();
+    void updateAdminNotificationRead({
+      notificationId,
+      password: ADMIN_PASSWORD,
+      read: true,
+    }).catch((error) => {
+      console.error("Error actualizando notificacion en segundo plano:", error);
+    });
   };
 
   return (

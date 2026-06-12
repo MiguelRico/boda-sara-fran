@@ -326,26 +326,29 @@ export const upsertAdminNotification = (notification) => {
   return store.notifications;
 };
 
-export const markAdminNotificationRead = (notificationId) => {
-  store.notifications = AdminNotification.normalizeList(
-    store.notifications.map((notification) =>
-      notification.id === notificationId
-        ? { ...notification, read: true }
-        : notification,
-    ),
-  );
-
-  return store.notifications;
+export const markAdminNotificationRead = (notificationId, options = {}) => {
+  return setAdminNotificationRead(notificationId, true, options);
 };
 
-export const setAdminNotificationRead = (notificationId, read) => {
+export const setAdminNotificationRead = (
+  notificationId,
+  read,
+  { markSaved = false } = {},
+) => {
+  const updateNotification = (notification) =>
+    notification.id === notificationId
+      ? { ...notification, read: Boolean(read) }
+      : notification;
+
   store.notifications = AdminNotification.normalizeList(
-    store.notifications.map((notification) =>
-      notification.id === notificationId
-        ? { ...notification, read: Boolean(read) }
-        : notification,
-    ),
+    store.notifications.map(updateNotification),
   );
+
+  if (markSaved) {
+    store.savedNotifications = AdminNotification.normalizeList(
+      store.savedNotifications.map(updateNotification),
+    );
+  }
 
   return store.notifications;
 };

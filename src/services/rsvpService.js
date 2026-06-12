@@ -286,3 +286,23 @@ export const saveAdminNotifications = async ({ notifications, password }) => {
   };
 };
 
+export const updateAdminNotificationRead = async ({
+  notificationId,
+  password,
+  read,
+}) => {
+  await sendToRsvpApi({
+    entity: "notificationRead",
+    method: "PUT",
+    notificationId,
+    password,
+    read,
+  });
+
+  return {
+    notificationId,
+    read: Boolean(read),
+    success: true,
+  };
+};
+
