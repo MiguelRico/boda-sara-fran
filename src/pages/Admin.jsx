@@ -5,6 +5,7 @@ import {
   Bell,
   ChartColumn,
   ClipboardCheck,
+  ListTodo,
   ReceiptText,
   Home,
   LockKeyhole,
@@ -50,6 +51,7 @@ const adminCardIcons = {
   bell: Bell,
   "chart-column": ChartColumn,
   "clipboard-check": ClipboardCheck,
+  "list-todo": ListTodo,
   "receipt-text": ReceiptText,
 };
 

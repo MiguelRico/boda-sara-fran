@@ -260,6 +260,14 @@ export const siteContent = {
         to: "/admin/notifications",
         icon: "bell",
       },
+      {
+        title: "Tareas",
+        subtitle: "Checklist de boda",
+        description:
+          "Organizar preparativos por categoria, prioridad, responsable y fecha.",
+        to: "/admin/tasks",
+        icon: "list-todo",
+      },
     ],
   },
 };

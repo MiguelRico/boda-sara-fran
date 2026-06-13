@@ -54,6 +54,13 @@ function routeGet(e) {
     return listNotifications(e);
   }
 
+  if (entity === "tasks") {
+    const authError = validateAdmin(e);
+    if (authError) return authError;
+
+    return listTasks(e);
+  }
+
   return jsonResponse(
     {
       success: false,
@@ -336,6 +343,28 @@ function listNotifications(e) {
     {
       success: true,
       notifications,
+    },
+    e,
+  );
+}
+
+function listTasks(e) {
+  const sheet = getTasksSheet();
+  const rows = sheet.getDataRange().getDisplayValues();
+  const tasks = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const task = buildTaskFromRow(rows[i]);
+
+    if (!task.id && !task.title) continue;
+
+    tasks.push(task);
+  }
+
+  return jsonResponse(
+    {
+      success: true,
+      tasks,
     },
     e,
   );

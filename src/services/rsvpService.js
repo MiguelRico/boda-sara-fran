@@ -189,6 +189,14 @@ export const findAllNotifications = async ({ password } = {}) => {
   });
 };
 
+export const findAllTasks = async ({ password } = {}) => {
+  return await requestJsonp({
+    entity: "tasks",
+    method: "GET",
+    password,
+  });
+};
+
 export const savePublicConfirmation = async (payload, { method = "POST" } = {}) => {
   const confirmation = encodeConfirmationPayload(payload);
 
@@ -283,6 +291,20 @@ export const saveAdminNotifications = async ({ notifications, password }) => {
   return {
     success: true,
     notifications,
+  };
+};
+
+export const saveAdminTasks = async ({ password, tasks }) => {
+  await sendToRsvpApi({
+    entity: "tasks",
+    method: "PUT",
+    password,
+    tasks,
+  });
+
+  return {
+    success: true,
+    tasks,
   };
 };
 

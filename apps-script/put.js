@@ -18,6 +18,10 @@ function routePut(data) {
     return saveNotifications(data);
   }
 
+  if (entity === "tasks") {
+    return saveTasks(data);
+  }
+
   if (entity === "notificationRead") {
     return updateNotificationRead(data);
   }
@@ -318,6 +322,29 @@ function saveNotifications(data) {
   return jsonResponse({
     success: true,
     notifications: rows.length,
+  });
+}
+
+function saveTasks(data) {
+  if (data.password !== ADMIN_PASSWORD) {
+    throw new Error("Unauthorized");
+  }
+
+  const sheet = getTasksSheet();
+  const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+  const rows = tasks.map(buildTaskRow);
+
+  deleteDataRows(sheet);
+
+  if (rows.length) {
+    sheet
+      .getRange(2, 1, rows.length, TASKS_HEADERS.length)
+      .setValues(rows);
+  }
+
+  return jsonResponse({
+    success: true,
+    tasks: rows.length,
   });
 }
 

@@ -12,6 +12,7 @@ import AdminGuests from "../pages/AdminGuests";
 import AdminTables from "../pages/AdminTables";
 import AdminProviders from "../pages/AdminProviders";
 import AdminNotifications from "../pages/AdminNotifications";
+import AdminTasks from "../pages/AdminTasks";
 
 export const router = createBrowserRouter([
   {
@@ -61,6 +62,10 @@ export const router = createBrowserRouter([
       {
         path: "admin/notifications",
         element: <AdminNotifications />,
+      },
+      {
+        path: "admin/tasks",
+        element: <AdminTasks />,
       },
     ],
   },

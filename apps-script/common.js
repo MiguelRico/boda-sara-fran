@@ -236,6 +236,77 @@ const NOTIFICATIONS_COLUMNS = {
   updatedAt: 7,
 };
 
+const TASKS_HEADERS = [
+  "taskId",
+  "title",
+  "description",
+  "category",
+  "maxDate",
+  "priority",
+  "responsible",
+  "status",
+  "createdAt",
+  "updatedAt",
+];
+
+const TASKS_COLUMNS = {
+  taskId: 0,
+  title: 1,
+  description: 2,
+  category: 3,
+  maxDate: 4,
+  priority: 5,
+  responsible: 6,
+  status: 7,
+  createdAt: 8,
+  updatedAt: 9,
+};
+
+const DEFAULT_TASKS = [
+  ["Elegir lugar ceremonia", "ceremonia", "2026-02-15", "alta", "Sara"],
+  ["Reservar lugar ceremonia", "ceremonia", "2026-03-01", "alta", "Fran"],
+  ["Confirmar horario ceremonia", "ceremonia", "2026-07-15", "media", "Sara"],
+  ["Confirmar oficiante ceremonia", "ceremonia", "2026-07-15", "alta", "Fran"],
+  ["Preparar lecturas", "ceremonia", "2026-08-01", "media", "Sara"],
+  ["Preparar votos", "ceremonia", "2026-08-10", "media", "Fran"],
+  ["Elegir musica ceremonia", "ceremonia", "2026-07-25", "media", "Sara"],
+  ["Confirmar decoracion ceremonia", "ceremonia", "2026-08-01", "media", "Fran"],
+  ["Comprar traje novio", "novios", "2026-05-15", "alta", "Fran"],
+  ["Comprar traje novia", "novios", "2026-04-15", "alta", "Sara"],
+  ["Prueba vestido novia", "novios", "2026-06-15", "alta", "Sara"],
+  ["Ajustes vestido novia", "novios", "2026-07-20", "media", "Sara"],
+  ["Comprar zapatos novia", "novios", "2026-07-01", "media", "Sara"],
+  ["Comprar complementos novia", "novios", "2026-07-15", "baja", "Sara"],
+  ["Comprar alianzas", "novios", "2026-06-01", "alta", "Fran"],
+  ["Recoger alianzas", "novios", "2026-08-01", "alta", "Fran"],
+  ["Definir listado de fotos", "fotografia", "2026-07-20", "media", "Sara"],
+  ["Confirmar horario de llegada", "fotografia", "2026-08-05", "media", "Fran"],
+  ["Confirmar postboda", "video", "2026-08-05", "baja", "Fran"],
+  ["Confirmar alergias", "banquete", "2026-08-01", "alta", "Sara"],
+  ["Confirmar vegetarianos", "banquete", "2026-08-01", "alta", "Sara"],
+  ["Confirmar total de asistentes", "banquete", "2026-08-05", "alta", "Fran"],
+  ["Enviar invitaciones", "invitados", "2026-04-01", "alta", "Sara"],
+  ["Entregar invitaciones", "invitados", "2026-05-01", "media", "Fran"],
+  ["Recordatorio confirmaciones", "invitados", "2026-07-15", "media", "Sara"],
+  ["Confirmar numero final", "invitados", "2026-08-05", "alta", "Fran"],
+  ["Confirmar plazas", "transporte", "2026-08-01", "media", "Sara"],
+  ["Confirmar total de autobuses", "transporte", "2026-08-05", "media", "Fran"],
+  ["Crear mesas", "mesas", "2026-07-25", "alta", "Sara"],
+  ["Asignar familiares", "mesas", "2026-08-05", "media", "Sara"],
+  ["Asignar amigos", "mesas", "2026-08-05", "media", "Fran"],
+  ["Revisar incompatibilidades", "mesas", "2026-08-10", "alta", "Sara"],
+  ["Imprimir seating plan", "mesas", "2026-08-18", "media", "Fran"],
+  ["Crear lista de canciones", "fiesta", "2026-07-20", "baja", "Sara"],
+  ["Preparar primer baile", "fiesta", "2026-08-01", "media", "Fran"],
+  ["Confirmar iluminacion", "fiesta", "2026-08-05", "media", "Fran"],
+  ["Confirmar barra libre", "fiesta", "2026-08-05", "alta", "Sara"],
+  ["Confirmar flores", "decoracion", "2026-07-20", "media", "Sara"],
+  ["Confirmar centros de mesa", "decoracion", "2026-07-25", "media", "Fran"],
+  ["Pago fotografo", "pagos", "2026-08-10", "alta", "Fran"],
+  ["Pago floristeria", "pagos", "2026-08-10", "alta", "Sara"],
+  ["Pago final proveedores", "pagos", "2026-08-15", "alta", "Fran"],
+];
+
 function ensureHeader(sheet, headers) {
   const currentHeaders = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
   const needsHeader = headers.some((header, index) => currentHeaders[index] !== header);
@@ -280,6 +351,14 @@ function getProviderPaymentsSheet() {
 
 function getNotificationsSheet() {
   return getOrCreateSheet(NOTIFICATIONS_SHEET_NAME, NOTIFICATIONS_HEADERS);
+}
+
+function getTasksSheet() {
+  const sheet = getOrCreateSheet(TASKS_SHEET_NAME, TASKS_HEADERS);
+
+  seedDefaultTasksIfEmpty(sheet);
+
+  return sheet;
 }
 
 function jsonResponse(obj, e) {
@@ -521,6 +600,100 @@ function buildNotificationRow(notification) {
     notification.createdAt || now,
     now,
   ];
+}
+
+function normalizeTaskCategory(value) {
+  const category = String(value || "").trim().toLowerCase();
+  const validCategories = [
+    "ceremonia",
+    "novios",
+    "fotografia",
+    "video",
+    "banquete",
+    "invitados",
+    "transporte",
+    "mesas",
+    "fiesta",
+    "decoracion",
+    "pagos",
+  ];
+
+  return validCategories.indexOf(category) >= 0 ? category : "ceremonia";
+}
+
+function normalizeTaskPriority(value) {
+  const priority = String(value || "").trim().toLowerCase();
+
+  if (priority === "alta" || priority === "media" || priority === "baja") {
+    return priority;
+  }
+
+  return "media";
+}
+
+function normalizeTaskStatus(value) {
+  const status = String(value || "").trim().toLowerCase();
+
+  if (status === "completed" || status === "completa") return "completed";
+
+  return "pending";
+}
+
+function buildTaskFromRow(row) {
+  const taskId = row[TASKS_COLUMNS.taskId] || "";
+
+  return {
+    id: taskId,
+    taskId,
+    title: row[TASKS_COLUMNS.title] || "",
+    description: row[TASKS_COLUMNS.description] || "",
+    category: normalizeTaskCategory(row[TASKS_COLUMNS.category]),
+    maxDate: row[TASKS_COLUMNS.maxDate] || "",
+    priority: normalizeTaskPriority(row[TASKS_COLUMNS.priority]),
+    responsible: row[TASKS_COLUMNS.responsible] || "",
+    status: normalizeTaskStatus(row[TASKS_COLUMNS.status]),
+  };
+}
+
+function buildTaskRow(task) {
+  const now = getCurrentTimestamp();
+  const taskId =
+    String(task.taskId || task.id || "").trim() || createEntityId("task");
+
+  return [
+    taskId,
+    String(task.title || "").trim(),
+    String(task.description || "").trim(),
+    normalizeTaskCategory(task.category),
+    String(task.maxDate || "").trim(),
+    normalizeTaskPriority(task.priority),
+    String(task.responsible || "").trim(),
+    normalizeTaskStatus(task.status),
+    task.createdAt || now,
+    now,
+  ];
+}
+
+function seedDefaultTasksIfEmpty(sheet) {
+  if (sheet.getLastRow() > 1) return;
+
+  const now = getCurrentTimestamp();
+  const rows = DEFAULT_TASKS.map((task, index) => [
+    `task_seed_${index + 1}`,
+    task[0],
+    "",
+    task[1],
+    task[2],
+    task[3],
+    task[4],
+    "pending",
+    now,
+    now,
+  ]);
+
+  if (rows.length) {
+    sheet.getRange(2, 1, rows.length, TASKS_HEADERS.length).setValues(rows);
+  }
 }
 
 function appendNotification(notification) {

@@ -8,6 +8,7 @@ const PROVIDERS_SHEET_NAME = "Proveedores";
 const PROVIDER_SERVICES_SHEET_NAME = "Servicios";
 const PROVIDER_PAYMENTS_SHEET_NAME = "PagosServicios";
 const NOTIFICATIONS_SHEET_NAME = "Notificaciones";
+const TASKS_SHEET_NAME = "Tareas";
 const SPREADSHEET_ID = "1bNNIgd7F-tsmKtKu_vChwIJP8DabGOW1wXWlzPvxRdM";
 const ADMIN_PASSWORD = "sara-fran-admin";
 const ADMIN_EMAIL = "miguel.rico.vazquez@gmail.com";
