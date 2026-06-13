@@ -12,7 +12,7 @@ export default function TaskCategoryPanel({
   onToggleStatus,
   tasks,
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const summary = getCategorySummary(tasks);
 
   return (

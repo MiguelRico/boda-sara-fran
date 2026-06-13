@@ -312,6 +312,7 @@ export const adminContent = {
         budget: "Presupuesto",
         paid: "Pagado",
         pending: "Pendiente",
+        paymentStatus: "Pagado / pendiente",
         nextService: "Próximo servicio",
         nextPayments: "Próximos",
         nextPaymentDate: "Fecha",
