@@ -27,7 +27,7 @@ export default function TaskTotalsPanel({ loading, stats }) {
         {adminContent.tasks.overview.title}
       </h2>
       {loading ? (
-        <AdminMetricGridSkeleton className={TASK_METRIC_GRID_CLASS} count={8} />
+        <AdminMetricGridSkeleton className={TASK_METRIC_GRID_CLASS} count={9} />
       ) : (
         <AdminMetricGrid
           className={TASK_METRIC_GRID_CLASS}
@@ -70,7 +70,7 @@ export default function TaskTotalsPanel({ loading, stats }) {
                 TASK_CATEGORY_LABELS[stats.nextTaskCategory] ||
                 stats.nextTaskCategory ||
                 "-",
-              wrapperClassName: "col-span-2",
+              wrapperClassName: "col-span-3",
             },
           ]}
         />

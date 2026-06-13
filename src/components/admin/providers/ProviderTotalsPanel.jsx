@@ -3,9 +3,7 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   Euro,
-  ReceiptText,
   HandCoins,
-  Coins,
   ReceiptEuro,
 } from "lucide-react";
 
@@ -59,23 +57,26 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               value: stats.serviceCount,
             },
             {
-              icon: <Coins size={22} strokeWidth={1.8} />,
-              label: metrics.nextPayments,
-              value: stats.nextPaymentCount,
-            },
-            {
+              detail: [
+                formatDate(stats.nextPaymentDate),
+                formatCurrency(stats.nextPaymentAmount),
+              ].join(" · "),
               icon: <CalendarDays size={22} strokeWidth={1.8} />,
-              label: metrics.nextPaymentDate,
-              value: formatDate(stats.nextPaymentDate),
-            },
-            {
-              icon: <ReceiptText size={22} strokeWidth={1.8} />,
-              label: metrics.nextPaymentAmount,
-              value: formatCurrency(stats.nextPaymentAmount),
+              label: metrics.nextService,
+              value: getNextServiceLabel(stats),
+              wrapperClassName: "col-span-2 lg:col-span-3",
             },
           ]}
         />
       )}
     </section>
   );
+}
+
+function getNextServiceLabel(stats) {
+  if (!stats.nextPaymentServiceName) return "-";
+
+  if (!stats.nextPaymentProviderName) return stats.nextPaymentServiceName;
+
+  return `${stats.nextPaymentServiceName} · ${stats.nextPaymentProviderName}`;
 }

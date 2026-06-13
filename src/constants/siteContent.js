@@ -221,12 +221,28 @@ export const siteContent = {
   admin: {
     cards: [
       {
+        title: "Tareas",
+        subtitle: "Checklist de boda",
+        description:
+          "Organizar preparativos por categoria, prioridad, responsable y fecha.",
+        to: "/admin/tasks",
+        icon: "list-todo",
+      },
+      {
         title: "Resumen",
         subtitle: "Todo en un vistazo",
         description:
           "Consultar totales, asistencia, alergias y horarios de autobús.",
         to: "/admin/stats",
         icon: "chart-column",
+      },
+      {
+        title: "Notificaciones",
+        subtitle: "Avisos internos",
+        description:
+          "Crear avisos, pagos y confirmaciones pendientes de revisar.",
+        to: "/admin/notifications",
+        icon: "bell",
       },
       {
         title: "Invitados",
@@ -251,22 +267,6 @@ export const siteContent = {
           "Organizar proveedores, servicios contratados y plazos de pago.",
         to: "/admin/providers",
         icon: "receipt-text",
-      },
-      {
-        title: "Notificaciones",
-        subtitle: "Avisos internos",
-        description:
-          "Crear avisos, pagos y confirmaciones pendientes de revisar.",
-        to: "/admin/notifications",
-        icon: "bell",
-      },
-      {
-        title: "Tareas",
-        subtitle: "Checklist de boda",
-        description:
-          "Organizar preparativos por categoria, prioridad, responsable y fecha.",
-        to: "/admin/tasks",
-        icon: "list-todo",
       },
     ],
   },

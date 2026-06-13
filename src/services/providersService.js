@@ -48,6 +48,8 @@ export function getNextPaymentInfoFromServices(services) {
         amount: Number(payment.amount) || 0,
         date: String(payment.date || "").trim(),
         paid: payment.paid,
+        providerName: service.providerName || "",
+        serviceName: service.name || "",
       })),
     )
     .filter((payment) => !payment.paid && payment.date);
@@ -57,6 +59,8 @@ export function getNextPaymentInfoFromServices(services) {
       amount: 0,
       count: 0,
       date: "",
+      providerName: "",
+      serviceName: "",
     };
   }
 
@@ -72,6 +76,8 @@ export function getNextPaymentInfoFromServices(services) {
     amount: nextPayments.reduce((total, payment) => total + payment.amount, 0),
     count: nextPayments.length,
     date: nextDate,
+    providerName: nextPayments[0]?.providerName || "",
+    serviceName: nextPayments[0]?.serviceName || "",
   };
 }
 
@@ -106,7 +112,12 @@ export function buildProviderStats(providers) {
     },
   );
   const nextPayment = getNextPaymentInfoFromServices(
-    normalizedProviders.flatMap((provider) => provider.services),
+    normalizedProviders.flatMap((provider) =>
+      provider.services.map((service) => ({
+        ...service,
+        providerName: provider.name,
+      })),
+    ),
   );
 
   return {
@@ -115,6 +126,8 @@ export function buildProviderStats(providers) {
     nextPaymentAmount: nextPayment.amount,
     nextPaymentCount: nextPayment.count,
     nextPaymentDate: nextPayment.date,
+    nextPaymentProviderName: nextPayment.providerName,
+    nextPaymentServiceName: nextPayment.serviceName,
   };
 }
 
