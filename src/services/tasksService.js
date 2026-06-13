@@ -1,4 +1,5 @@
 import { findAllTasks, saveAdminTasks } from "../api/tasksApi";
+import { TASK_CATEGORIES } from "../constants/tasks";
 import { Task } from "../models";
 
 export const createEmptyTask = Task.create;
@@ -19,12 +20,31 @@ export function buildTaskStats(tasks) {
   const nextTask = [...pendingTasks]
     .filter((task) => task.maxDate)
     .sort((left, right) => left.maxDate.localeCompare(right.maxDate))[0];
+  const priorityCounts = normalizedTasks.reduce(
+    (counts, task) => ({
+      ...counts,
+      [task.priority]: (counts[task.priority] || 0) + 1,
+    }),
+    {
+      alta: 0,
+      baja: 0,
+      media: 0,
+    },
+  );
+  const categoryCounts = TASK_CATEGORIES.map((category) => ({
+    ...category,
+    count: normalizedTasks.filter((task) => task.category === category.value)
+      .length,
+  }));
 
   return {
+    categoryCounts,
     completedCount: completedTasks.length,
     highPriorityPendingCount: highPriorityPending.length,
+    nextTaskCategory: nextTask?.category || "",
     nextTaskDate: nextTask?.maxDate || "",
     pendingCount: pendingTasks.length,
+    priorityCounts,
     totalCount: normalizedTasks.length,
   };
 }
