@@ -59,12 +59,12 @@ export const siteContent = {
       {
         name: "Sara",
         phone: "616642844",
-        email: "asd",
+        email: "sarusalonso@gmail.com",
       },
       {
         name: "Fran",
         phone: "695537560",
-        email: "asd",
+        email: "fcojaviertoscano@outlook.esS",
       },
     ],
   },

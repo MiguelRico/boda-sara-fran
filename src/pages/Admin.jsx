@@ -10,8 +10,6 @@ import {
   Home,
   LockKeyhole,
   LogIn,
-  Trash2,
-  X,
 } from "lucide-react";
 
 import {
@@ -19,8 +17,6 @@ import {
   ADMIN_PASSWORD,
   ADMIN_SESSION_KEY,
 } from "../constants/admin";
-import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
-import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
 import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
@@ -36,15 +32,8 @@ import {
 } from "../components/rsvp/FormPrimitives";
 import { siteContent } from "../constants/siteContent";
 import { adminContent } from "../constants/adminContent";
-import {
-  discardAdminPendingChanges,
-  getAdminPendingChangesSummary,
-  hasAdminPendingChanges,
-  loadAdminDataOnce,
-  saveAdminPendingChanges,
-} from "../services/adminDataStore";
+import { loadAdminDataOnce } from "../services/adminDataStore";
 import useIsMobileView from "../hooks/useIsMobileView";
-import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
 
 const adminCardIcons = {
   armchair: Armchair,
@@ -230,87 +219,8 @@ function AdminLogin({
 }
 
 function AdminDashboard() {
-  const [hasPendingChanges, setHasPendingChanges] = useState(
-    hasAdminPendingChanges,
-  );
-  const [saving, setSaving] = useState(false);
-  const blocker = useUnsavedChangesNavigation(hasPendingChanges);
-  const refreshPendingChanges = () =>
-    setHasPendingChanges(hasAdminPendingChanges());
-  const handleDiscard = () => {
-    discardAdminPendingChanges();
-    refreshPendingChanges();
-  };
-  const handleSave = async () => {
-    if (!hasPendingChanges || saving) return;
-
-    setSaving(true);
-
-    try {
-      await saveAdminPendingChanges({ password: ADMIN_PASSWORD });
-      refreshPendingChanges();
-    } finally {
-      setSaving(false);
-    }
-  };
-  const handleCancelNavigation = () => {
-    blocker.reset?.();
-  };
-  const handleConfirmNavigation = () => {
-    blocker.proceed?.();
-  };
-
-  useEffect(() => {
-    const intervalId = window.setInterval(refreshPendingChanges, 500);
-
-    return () => window.clearInterval(intervalId);
-  }, []);
-
-  const pendingChanges = getAdminPendingChangesSummary();
-
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5">
-      {saving && <Spinner text={adminContent.guests.spinner.saveChanges} />}
-
-      {blocker.state === "blocked" && (
-        <UnsavedChangesDialog
-          actions={[
-            {
-              icon: <Trash2 size={16} strokeWidth={1.8} />,
-              label: adminContent.tables.dialogs.exitWithoutSaving,
-              onClick: handleConfirmNavigation,
-              tone: "danger",
-            },
-            {
-              icon: <X size={16} strokeWidth={1.8} />,
-              label: adminContent.tables.dialogs.keepEditing,
-              onClick: handleCancelNavigation,
-              tone: "terciary",
-            },
-          ]}
-          changes={pendingChanges}
-          labels={{
-            eyebrow: adminContent.tables.dialogs.unsavedEyebrow,
-            text: "Tienes cambios pendientes en memoria. Si sales ahora, se perderan.",
-            title: adminContent.tables.dialogs.unsavedTitle,
-          }}
-          titleId="admin-dashboard-pending-changes-title"
-        />
-      )}
-
-      <AdminPendingChangesActions
-        changes={pendingChanges}
-        discardDialogText="Se desharan los cambios pendientes de invitados, mesas y proveedores."
-        discardDialogTitle="Deshacer cambios de admin"
-        hasPendingChanges={hasPendingChanges}
-        onDiscard={handleDiscard}
-        onSave={handleSave}
-        saveDialogText="Puedes deshacer todos los cambios pendientes, guardarlos en Apps Script o seguir editando."
-        saveDialogTitle="Guardar cambios de admin"
-        saving={saving}
-        showText="always"
-      />
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {siteContent.admin.cards.map((card, index) => (
           <AnimatedInfoCard

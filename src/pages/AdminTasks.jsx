@@ -1,7 +1,7 @@
 import { useInView } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Plus, Search, Trash2, X } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import { adminContent } from "../constants/adminContent";
@@ -14,11 +14,13 @@ import {
   buildTaskStats,
   createEmptyTask,
   normalizeTasks,
+  persistTasks,
   validateTask,
 } from "../services/tasksService";
 import {
   getAdminTaskChangesSummary,
   loadAdminDataOnce,
+  markAdminDataSaved,
   setAdminTasks,
 } from "../services/adminDataStore";
 import AdminEditorDialog from "../components/admin/AdminEditorDialog";
@@ -34,6 +36,7 @@ import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStagg
 import DeleteDialog from "../components/ui/DeleteDialog";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import IconButton from "../components/ui/IconButton";
+import Spinner from "../components/ui/Spinner";
 import StatusDialog from "../components/ui/StatusDialog";
 import {
   inputClassName,
@@ -41,11 +44,13 @@ import {
   selectClassName,
 } from "../components/rsvp/FormPrimitives";
 import useIsMobileView from "../hooks/useIsMobileView";
+import useSpinner from "../hooks/useSpinner";
 import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
 
 const getTaskKey = (task) => task.id;
 
 export default function AdminTasks() {
+  const spinner = useSpinner();
   const tasksRef = useRef(null);
   const tasksInView = useInView(tasksRef, {
     once: true,
@@ -210,9 +215,59 @@ export default function AdminTasks() {
     setEditingTask(null);
     setDeleteTarget(null);
   };
+  const handleSavePendingChanges = async () => {
+    if (!hasPendingChanges) return true;
+
+    try {
+      spinner.show(adminContent.tasks.spinner.save);
+      const normalizedTasks = await persistTasks({
+        password: ADMIN_PASSWORD,
+        tasks,
+      });
+
+      setAdminTasks(normalizedTasks);
+      markAdminDataSaved({ tasks: normalizedTasks });
+      setSavedTasks(normalizedTasks);
+      setTasks(normalizedTasks);
+      setPopup({
+        message: adminContent.tasks.dialogs.savedMessage,
+        open: true,
+        title: adminContent.tasks.dialogs.savedTitle,
+        type: "success",
+      });
+      return true;
+    } catch (error) {
+      console.error(error);
+      setPopup({
+        message: adminContent.tasks.dialogs.saveError,
+        open: true,
+        title: adminContent.tasks.dialogs.problemTitle,
+        type: "error",
+      });
+      return false;
+    } finally {
+      spinner.hide();
+    }
+  };
+  const handleConfirmBlockedNavigation = () => {
+    handleDiscard();
+    blocker.proceed?.();
+  };
+  const handleSaveAndExitBlockedNavigation = async () => {
+    const saved = await handleSavePendingChanges();
+
+    if (saved) {
+      blocker.proceed?.();
+      return;
+    }
+
+    blocker.reset?.();
+  };
 
   return (
     <CinematicPage>
+      {spinner.loading && <Spinner text={spinner.text} />}
+
       <AdminPageShell
         header={adminContent.tasks.header}
         innerClassName="max-w-7xl py-6"
@@ -233,7 +288,9 @@ export default function AdminTasks() {
             hasPendingChanges={hasPendingChanges}
             loading={loading}
             onDiscard={handleDiscard}
-            showSave={false}
+            onSave={handleSavePendingChanges}
+            saveLabel={adminContent.tasks.actions.saveChanges}
+            saving={spinner.loading}
             showText={!isMobileView}
           />
         </CinematicStaggeredRevealItem>
@@ -328,26 +385,18 @@ export default function AdminTasks() {
 
       {blocker.state === "blocked" && (
         <UnsavedChangesDialog
-          actions={[
-            {
-              icon: <Trash2 size={16} strokeWidth={1.8} />,
-              label: adminContent.tables.dialogs.exitWithoutSaving,
-              onClick: () => blocker.proceed?.(),
-              tone: "danger",
-            },
-            {
-              icon: <X size={16} strokeWidth={1.8} />,
-              label: adminContent.tables.dialogs.keepEditing,
-              onClick: () => blocker.reset?.(),
-              tone: "terciary",
-            },
-          ]}
           changes={pendingChanges}
           labels={{
             eyebrow: adminContent.tasks.dialogs.warningEyebrow,
+            exitWithoutSaving: adminContent.tables.dialogs.exitWithoutSaving,
+            keepEditing: adminContent.tables.dialogs.keepEditing,
+            saveAndExit: adminContent.tables.dialogs.saveAndExit,
             text: adminContent.tasks.dialogs.unsavedText,
             title: adminContent.tasks.dialogs.unsavedTitle,
           }}
+          onCancel={() => blocker.reset?.()}
+          onConfirm={handleConfirmBlockedNavigation}
+          onSaveAndExit={handleSaveAndExitBlockedNavigation}
           titleId="admin-tasks-unsaved-changes-title"
         />
       )}

@@ -1,7 +1,7 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Plus, Search, Trash2, X } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
 import AdminEditorDialog from "../components/admin/AdminEditorDialog";
@@ -25,13 +25,16 @@ import {
 } from "../components/rsvp/FormPrimitives";
 import { adminContent } from "../constants/adminContent";
 import { AdminNotification } from "../models";
-import { updateAdminNotificationRead } from "../api/notificationsApi";
+import {
+  saveAdminNotifications,
+  updateAdminNotificationRead,
+} from "../api/notificationsApi";
 import {
   discardAdminNotificationChanges,
   getAdminDataSnapshot,
   getAdminNotificationChangesSummary,
-  hasAdminPendingChanges,
   loadAdminDataOnce,
+  markAdminDataSaved,
   removeAdminNotification,
   setAdminNotificationRead,
   upsertAdminNotification,
@@ -80,10 +83,9 @@ export default function AdminNotifications() {
     title: "",
     type: "success",
   });
-  const [hasPendingChanges, setHasPendingChanges] = useState(
-    hasAdminPendingChanges,
-  );
+  const [saving, setSaving] = useState(false);
   const pendingChanges = getAdminNotificationChangesSummary();
+  const hasPendingChanges = pendingChanges.length > 0;
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
   const notificationStats = useMemo(
     () => buildNotificationStats(state.notifications),
@@ -114,8 +116,6 @@ export default function AdminNotifications() {
     [],
   );
 
-  const refreshPendingChanges = () =>
-    setHasPendingChanges(hasAdminPendingChanges());
   const syncNotifications = useCallback((notifications) => {
     const normalizedNotifications =
       AdminNotification.normalizeList(notifications);
@@ -125,7 +125,6 @@ export default function AdminNotifications() {
       loading: false,
       notifications: normalizedNotifications,
     }));
-    refreshPendingChanges();
   }, []);
 
   useEffect(() => {
@@ -152,7 +151,6 @@ export default function AdminNotifications() {
         ...current,
         notifications: AdminNotification.normalizeList(snapshot.notifications),
       }));
-      refreshPendingChanges();
     }, 500);
 
     return () => window.clearInterval(intervalId);
@@ -247,6 +245,56 @@ export default function AdminNotifications() {
     const nextNotifications = discardAdminNotificationChanges();
     syncNotifications(nextNotifications);
   };
+  const handleSavePendingChanges = async () => {
+    if (!pendingChanges.length || saving) return true;
+
+    setSaving(true);
+
+    try {
+      const normalizedNotifications = AdminNotification.normalizeList(
+        state.notifications,
+      );
+
+      await saveAdminNotifications({
+        notifications: normalizedNotifications,
+        password: ADMIN_PASSWORD,
+      });
+      markAdminDataSaved({ notifications: normalizedNotifications });
+      syncNotifications(normalizedNotifications);
+      setStatusPopup({
+        message: adminContent.notifications.dialogs.savedMessage,
+        open: true,
+        title: adminContent.notifications.dialogs.savedTitle,
+        type: "success",
+      });
+      return true;
+    } catch (error) {
+      console.error(error);
+      setStatusPopup({
+        message: adminContent.notifications.dialogs.saveError,
+        open: true,
+        title: adminContent.notifications.dialogs.problemTitle,
+        type: "error",
+      });
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+  const handleConfirmBlockedNavigation = () => {
+    handleDiscard();
+    blocker.proceed?.();
+  };
+  const handleSaveAndExitBlockedNavigation = async () => {
+    const saved = await handleSavePendingChanges();
+
+    if (saved) {
+      blocker.proceed?.();
+      return;
+    }
+
+    blocker.reset?.();
+  };
 
   return (
     <CinematicPage>
@@ -273,7 +321,9 @@ export default function AdminNotifications() {
             hasPendingChanges={pendingChanges.length > 0}
             loading={state.loading}
             onDiscard={handleDiscard}
-            showSave={false}
+            onSave={handleSavePendingChanges}
+            saveLabel={adminContent.notifications.actions.saveChanges}
+            saving={saving}
             showText={!isMobileView}
           />
         </CinematicStaggeredRevealItem>
@@ -388,26 +438,18 @@ export default function AdminNotifications() {
 
       {blocker.state === "blocked" && (
         <UnsavedChangesDialog
-          actions={[
-            {
-              icon: <Trash2 size={16} strokeWidth={1.8} />,
-              label: adminContent.tables.dialogs.exitWithoutSaving,
-              onClick: () => blocker.proceed?.(),
-              tone: "danger",
-            },
-            {
-              icon: <X size={16} strokeWidth={1.8} />,
-              label: adminContent.tables.dialogs.keepEditing,
-              onClick: () => blocker.reset?.(),
-              tone: "terciary",
-            },
-          ]}
           changes={pendingChanges}
           labels={{
             eyebrow: adminContent.notifications.dialogs.warningEyebrow,
+            exitWithoutSaving: adminContent.tables.dialogs.exitWithoutSaving,
+            keepEditing: adminContent.tables.dialogs.keepEditing,
+            saveAndExit: adminContent.tables.dialogs.saveAndExit,
             text: adminContent.notifications.dialogs.unsavedText,
             title: adminContent.notifications.dialogs.unsavedTitle,
           }}
+          onCancel={() => blocker.reset?.()}
+          onConfirm={handleConfirmBlockedNavigation}
+          onSaveAndExit={handleSaveAndExitBlockedNavigation}
           titleId="admin-notifications-unsaved-changes-title"
         />
       )}

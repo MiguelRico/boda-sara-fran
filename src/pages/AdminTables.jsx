@@ -6,7 +6,6 @@ import {
   Grid2X2,
   Plus,
   Trash2,
-  X,
 } from "lucide-react";
 
 import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
@@ -709,6 +708,7 @@ export default function AdminTables() {
   };
 
   const handleConfirmBlockedNavigation = () => {
+    handleDiscardPendingChanges();
     blocker.proceed?.();
   };
 
@@ -733,20 +733,6 @@ export default function AdminTables() {
 
       {blocker.state === "blocked" && (
         <UnsavedChangesDialog
-          actions={[
-            {
-              icon: <Trash2 size={16} strokeWidth={1.8} />,
-              label: adminContent.tables.dialogs.exitWithoutSaving,
-              onClick: handleConfirmBlockedNavigation,
-              tone: "danger",
-            },
-            {
-              icon: <X size={16} strokeWidth={1.8} />,
-              label: adminContent.tables.dialogs.keepEditing,
-              onClick: handleCancelBlockedNavigation,
-              tone: "terciary",
-            },
-          ]}
           changes={pendingChanges}
           onCancel={handleCancelBlockedNavigation}
           onConfirm={handleConfirmBlockedNavigation}
@@ -786,9 +772,9 @@ export default function AdminTables() {
             hasPendingChanges={hasPendingChanges}
             loading={state.loading}
             onDiscard={handleDiscardPendingChanges}
+            onSave={handleSavePendingChanges}
             saveLabel={adminContent.tables.actions.saveChanges}
             saving={spinner.loading}
-            showSave={false}
             showText={!isMobileView}
           />
         </CinematicStaggeredRevealItem>

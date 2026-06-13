@@ -4,6 +4,7 @@ import {
   Circle,
   ClipboardList,
   Flag,
+  Siren,
   UserRound,
 } from "lucide-react";
 
@@ -11,18 +12,14 @@ import Card from "../Card";
 import CardActions from "../CardActions";
 import Chip from "../../ui/Chip";
 import IconButton from "../../ui/IconButton";
-import {
-  TASK_CATEGORY_LABELS,
-  TASK_PRIORITY_LABELS,
-  TASK_STATUS_LABELS,
-} from "../../../constants/tasks";
+import { TASK_PRIORITY_LABELS } from "../../../constants/tasks";
 import { adminContent } from "../../../constants/adminContent";
 import { formatDate } from "../../../utils/formatters";
 
-const priorityTone = {
-  alta: "danger",
-  media: "primary",
-  baja: "secondary",
+const priorityIcons = {
+  alta: Siren,
+  media: Flag,
+  baja: Flag,
 };
 
 export default function TaskCards({
@@ -68,6 +65,7 @@ export default function TaskCards({
 
 function TaskCard({ onDelete, onEdit, onToggleStatus, task }) {
   const completed = task.status === "completed";
+  const PriorityIcon = priorityIcons[task.priority] || Flag;
 
   return (
     <Card
@@ -103,29 +101,15 @@ function TaskCard({ onDelete, onEdit, onToggleStatus, task }) {
       }
       actionsPlacement="overlay"
       decorativeText={<ClipboardList size={72} strokeWidth={1.5} />}
-      detail={task.description}
-      eyebrow={TASK_CATEGORY_LABELS[task.category] || task.category}
+      eyebrow={
+        <span className={getPriorityClassName(task.priority)}>
+          <PriorityIcon size={13} strokeWidth={2} />
+          {TASK_PRIORITY_LABELS[task.priority] || task.priority}
+        </span>
+      }
       title={task.title || "Tarea sin titulo"}
     >
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-        <Chip
-          icon={<Flag size={13} strokeWidth={1.8} />}
-          strong={task.priority === "alta"}
-          tone={priorityTone[task.priority]}
-          value={TASK_PRIORITY_LABELS[task.priority] || task.priority}
-        />
-        <Chip
-          icon={
-            completed ? (
-              <CheckCircle2 size={13} strokeWidth={1.8} />
-            ) : (
-              <Circle size={13} strokeWidth={1.8} />
-            )
-          }
-          strong={!completed}
-          tone={completed ? "secondary" : "primary"}
-          value={TASK_STATUS_LABELS[task.status] || task.status}
-        />
         <Chip
           icon={<CalendarDays size={13} strokeWidth={1.8} />}
           value={formatDate(task.maxDate)}
@@ -134,7 +118,30 @@ function TaskCard({ onDelete, onEdit, onToggleStatus, task }) {
           icon={<UserRound size={13} strokeWidth={1.8} />}
           value={task.responsible || "-"}
         />
+        {task.description && (
+          <Chip
+            className="col-span-2"
+            icon={<ClipboardList size={13} strokeWidth={1.8} />}
+            value={task.description}
+            valueClassName="whitespace-normal break-words leading-snug"
+          />
+        )}
       </div>
     </Card>
   );
+}
+
+function getPriorityClassName(priority) {
+  const baseClassName =
+    "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[0.68rem] font-semibold leading-none";
+
+  if (priority === "alta") {
+    return `${baseClassName} border-rose-200 bg-rose-100 text-rose-700`;
+  }
+
+  if (priority === "media") {
+    return `${baseClassName} border-amber-200 bg-amber-100 text-amber-700`;
+  }
+
+  return `${baseClassName} border-emerald-200 bg-emerald-100 text-emerald-700`;
 }

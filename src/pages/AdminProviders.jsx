@@ -332,6 +332,7 @@ export default function AdminProviders() {
     blocker.reset?.();
   };
   const handleConfirmBlockedNavigation = () => {
+    handleDiscardPendingChanges();
     blocker.proceed?.();
   };
   const handleSaveAndExitBlockedNavigation = async () => {
@@ -453,9 +454,9 @@ export default function AdminProviders() {
             discardDialogTitle="Deshacer cambios de proveedores"
             hasPendingChanges={hasPendingChanges}
             onDiscard={handleDiscardPendingChanges}
+            onSave={handleSavePendingChanges}
             saveLabel={adminContent.providers.actions.saveChanges}
             saving={spinner.loading}
-            showSave={false}
             showText={!isMobileView}
           />
         </CinematicStaggeredRevealItem>
@@ -765,6 +766,13 @@ function UnsavedProviderChangesDialog({
                 label: adminContent.tables.dialogs.exitWithoutSaving,
                 onClick: onConfirm,
                 tone: "danger",
+              },
+              {
+                disabled: saving,
+                icon: <Save size={16} strokeWidth={1.8} />,
+                label: adminContent.tables.dialogs.saveAndExit,
+                onClick: onSaveAndExit,
+                tone: "primary",
               },
               {
                 icon: <X size={16} strokeWidth={1.8} />,

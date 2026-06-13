@@ -468,6 +468,7 @@ export const adminContent = {
       delete: "Eliminar",
       discardChanges: "Deshacer cambios",
       markRead: "Marcar como leída",
+      saveChanges: "Guardar cambios",
     },
     dialogs: {
       createTitle: "Crear notificación",
@@ -482,6 +483,9 @@ export const adminContent = {
       pendingMessage:
         "Los cambios se han aplicado en memoria. Usa Guardar cambios en /admin para enviarlos.",
       problemTitle: "Ha ocurrido un problema",
+      savedTitle: "Cambios guardados",
+      savedMessage: "Las notificaciones se han guardado correctamente.",
+      saveError: "No se pudieron guardar las notificaciones.",
       unsavedTitle: "Cambios pendientes",
       unsavedText:
         "Tienes cambios pendientes en notificaciones. Si sales ahora, no se guardarán.",
@@ -549,6 +553,9 @@ export const adminContent = {
       pendingMessage:
         "Los cambios se han aplicado en memoria. Usa Guardar cambios en /admin para enviarlos.",
       problemTitle: "Ha ocurrido un problema",
+      savedTitle: "Cambios guardados",
+      savedMessage: "Las tareas se han guardado correctamente.",
+      saveError: "No se pudieron guardar las tareas.",
       unsavedTitle: "Cambios pendientes",
       unsavedText:
         "Tienes cambios pendientes en tareas. Si sales ahora, no se guardaran.",
@@ -570,6 +577,9 @@ export const adminContent = {
         description: "Detalle opcional de la tarea",
         title: "Ej: Confirmar horario ceremonia",
       },
+    },
+    spinner: {
+      save: "Guardando tareas...",
     },
   },
   pendingGuests: {

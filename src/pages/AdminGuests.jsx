@@ -530,9 +530,9 @@ export default function AdminGuests() {
             hasPendingChanges={hasPendingChanges}
             loading={state.loading}
             onDiscard={handleDiscardPendingChanges}
+            onSave={handleSavePendingChanges}
             saveLabel={adminContent.guests.actions.saveChanges}
             saving={spinner.loading}
-            showSave={false}
             showText={!isMobileView}
           />
         </CinematicStaggeredRevealItem>
@@ -931,6 +931,13 @@ function UnsavedGuestChangesDialog({
                 label: adminContent.guests.dialogs.exitWithoutSaving,
                 onClick: onConfirm,
                 tone: "danger",
+              },
+              {
+                disabled: saving,
+                icon: <Save size={16} strokeWidth={1.8} />,
+                label: adminContent.guests.dialogs.saveAndExit,
+                onClick: onSaveAndExit,
+                tone: "primary",
               },
               {
                 icon: <X size={16} strokeWidth={1.8} />,
