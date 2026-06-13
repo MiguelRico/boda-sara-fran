@@ -39,11 +39,6 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               value: stats.providerCount,
             },
             {
-              icon: <BadgeEuro size={22} strokeWidth={1.8} />,
-              label: metrics.services,
-              value: stats.serviceCount,
-            },
-            {
               icon: <Euro size={22} strokeWidth={1.8} />,
               label: metrics.budget,
               value: formatCurrency(stats.totalBudget),
@@ -57,6 +52,11 @@ export default function ProviderTotalsPanel({ loading, stats }) {
               icon: <ReceiptEuro size={22} strokeWidth={1.8} />,
               label: metrics.pending,
               value: formatCurrency(stats.totalPending),
+            },
+            {
+              icon: <BadgeEuro size={22} strokeWidth={1.8} />,
+              label: metrics.services,
+              value: stats.serviceCount,
             },
             {
               icon: <Coins size={22} strokeWidth={1.8} />,

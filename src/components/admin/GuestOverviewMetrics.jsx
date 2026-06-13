@@ -66,11 +66,11 @@ function getGuestMetricItems(metrics, stats) {
       label: metrics.allergies,
       value: stats.allergyCount,
     },
-    {
+    /* {
       icon: <AlertTriangle size={22} strokeWidth={1.8} />,
       label: metrics.otherAllergies,
       value: stats.otherAllergyCount,
-    },
+    }, */
     {
       icon: <MessageCircle size={22} strokeWidth={1.8} />,
       label: metrics.comments,

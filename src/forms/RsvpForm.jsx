@@ -576,7 +576,7 @@ function ContactSummaryCard({ contact, guests, onEdit }) {
 
 function MobileActionsPanel({ children }) {
   return (
-    <div className="mt-0 mb-0 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+    <div className="mt-0 mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
       {children}
     </div>
   );
