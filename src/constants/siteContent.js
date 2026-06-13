@@ -64,7 +64,7 @@ export const siteContent = {
       {
         name: "Fran",
         phone: "695537560",
-        email: "fcojaviertoscano@outlook.esS",
+        email: "fcojaviertoscano@outlook.es",
       },
     ],
   },
