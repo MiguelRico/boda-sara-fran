@@ -1038,18 +1038,16 @@ function SeatAssignmentDialog({
     : seat.guest
       ? Guest.getFullName(seat.guest, "Invitado")
       : "";
+  const currentGuestKey = currentGuest ? getPendingGuestRowKey(currentGuest) : "";
   const canRemoveGuest = Boolean(currentGuest);
-  const [selectedGuestKey, setSelectedGuestKey] = useState(
-    currentGuest ? getPendingGuestRowKey(currentGuest) : "",
-  );
+  const [selectedGuestKey, setSelectedGuestKey] = useState("");
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const assignableGuests = guests.filter((guest) => {
-    if (!guest.table || !guest.seat) return true;
+    if (currentGuest) {
+      return getPendingGuestRowKey(guest) !== currentGuestKey;
+    }
 
-    return (
-      currentGuest &&
-      getPendingGuestRowKey(guest) === getPendingGuestRowKey(currentGuest)
-    );
+    return !guest.table || !guest.seat;
   });
   const availableConfirmations = Array.from(
     new Set(

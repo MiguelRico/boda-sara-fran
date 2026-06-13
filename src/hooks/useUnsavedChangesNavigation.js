@@ -5,9 +5,6 @@ export default function useUnsavedChangesNavigation(hasPendingChanges) {
   const [externalNavigation, setExternalNavigation] = useState(null);
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     if (!hasPendingChanges) return false;
-    if (isAdminPath(currentLocation.pathname) && isAdminPath(nextLocation.pathname)) {
-      return false;
-    }
 
     return (
       currentLocation.pathname !== nextLocation.pathname ||
@@ -51,6 +48,21 @@ export default function useUnsavedChangesNavigation(hasPendingChanges) {
     return () => document.removeEventListener("click", handleClick, true);
   }, [hasPendingChanges]);
 
+  useEffect(() => {
+    if (!hasPendingChanges) return undefined;
+
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasPendingChanges]);
+
   const proceed = () => {
     if (externalNavigation) {
       const { href, target } = externalNavigation;
@@ -84,8 +96,4 @@ export default function useUnsavedChangesNavigation(hasPendingChanges) {
     reset,
     state: externalNavigation ? "blocked" : blocker.state,
   };
-}
-
-function isAdminPath(pathname) {
-  return pathname === "/admin" || pathname.startsWith("/admin/");
 }
