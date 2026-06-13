@@ -3,10 +3,8 @@ import {
   CheckCircle2,
   Circle,
   Flag,
-  Folder,
   ListTodo,
   Siren,
-  Tag,
 } from "lucide-react";
 
 import { adminContent } from "../../../constants/adminContent";
@@ -29,7 +27,7 @@ export default function TaskTotalsPanel({ loading, stats }) {
         {adminContent.tasks.overview.title}
       </h2>
       {loading ? (
-        <AdminMetricGridSkeleton className={TASK_METRIC_GRID_CLASS} count={19} />
+        <AdminMetricGridSkeleton className={TASK_METRIC_GRID_CLASS} count={8} />
       ) : (
         <AdminMetricGrid
           className={TASK_METRIC_GRID_CLASS}
@@ -64,23 +62,15 @@ export default function TaskTotalsPanel({ loading, stats }) {
               label: metrics.lowPriority,
               value: stats.priorityCounts.baja,
             },
-            ...stats.categoryCounts.map((category) => ({
-              icon: <Folder size={22} strokeWidth={1.8} />,
-              label: category.label,
-              value: category.count,
-            })),
             {
-              icon: <Tag size={22} strokeWidth={1.8} />,
-              label: metrics.nextCategory,
+              detail: formatDate(stats.nextTaskDate),
+              icon: <CalendarDays size={22} strokeWidth={1.8} />,
+              label: metrics.nextTask,
               value:
                 TASK_CATEGORY_LABELS[stats.nextTaskCategory] ||
                 stats.nextTaskCategory ||
                 "-",
-            },
-            {
-              icon: <CalendarDays size={22} strokeWidth={1.8} />,
-              label: metrics.nextDate,
-              value: formatDate(stats.nextTaskDate),
+              wrapperClassName: "col-span-2",
             },
           ]}
         />

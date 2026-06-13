@@ -13,7 +13,10 @@ export function AdminMetricGrid({
   return (
     <div className={className}>
       {items.map((item) => (
-        <div className="min-w-0" key={item.label}>
+        <div
+          className={`min-w-0 ${item.wrapperClassName || ""}`}
+          key={item.label}
+        >
           <div
             className={`${cardClassName} grid h-full min-h-20 grid-rows-[auto_1fr] gap-2 text-center sm:min-h-24 sm:gap-3`}
           >

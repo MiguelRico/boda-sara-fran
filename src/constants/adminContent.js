@@ -508,8 +508,7 @@ export const adminContent = {
         highPriority: "Alta prioridad",
         mediumPriority: "Media prioridad",
         lowPriority: "Baja prioridad",
-        nextCategory: "Proxima categoria",
-        nextDate: "Proxima fecha",
+        nextTask: "Proxima tarea",
       },
     },
     filters: {
