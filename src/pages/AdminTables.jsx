@@ -15,6 +15,7 @@ import AdminPendingChangesActions from "../components/admin/AdminPendingChangesA
 import AdminPageShell from "../components/admin/AdminPageShell";
 import TableTotalsPanel from "../components/admin/TableTotalsPanel";
 import SelectableCardPage from "../components/admin/SelectableCardPage";
+import SeatOccupantSummary from "../components/admin/SeatOccupantSummary";
 import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
 import TableEditorDialog from "../components/admin/tables/TableEditorDialog";
 import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
@@ -216,8 +217,12 @@ export default function AdminTables() {
   const {
     effectiveSelectedId: effectiveSelectedTableKey,
   } = useEffectiveSelection({
+    allItems: tables,
+    currentPage,
     getId: getTableKey,
     items: pagedTables,
+    onPageChange: setPage,
+    pageSize,
     selectedId: selectedTableKey,
   });
   const pendingChanges = useMemo(
@@ -292,21 +297,18 @@ export default function AdminTables() {
     onPageChange: setPendingGuestsPage,
     totalPages: pendingGuestsTotalPages,
   });
-  const effectiveSelectedPendingGuestKey = pagedPendingGuests.some(
-    (guest) => getPendingGuestRowKey(guest) === selectedPendingGuestKey,
-  )
-    ? selectedPendingGuestKey
-    : pagedPendingGuests[0]
-      ? getPendingGuestRowKey(pagedPendingGuests[0])
-      : "";
-  const selectedPendingGuest = useMemo(
-    () =>
-      pagedPendingGuests.find(
-        (guest) =>
-          getPendingGuestRowKey(guest) === effectiveSelectedPendingGuestKey,
-      ) || null,
-    [effectiveSelectedPendingGuestKey, pagedPendingGuests],
-  );
+  const {
+    effectiveSelectedId: effectiveSelectedPendingGuestKey,
+    selectedItem: selectedPendingGuest,
+  } = useEffectiveSelection({
+    allItems: filteredPendingGuests,
+    currentPage: currentPendingGuestsPage,
+    getId: getPendingGuestRowKey,
+    items: pagedPendingGuests,
+    onPageChange: setPendingGuestsPage,
+    pageSize: pendingGuestsPageSize,
+    selectedId: selectedPendingGuestKey,
+  });
   const pendingGuestTablesWithSeats = useMemo(
     () => tables.filter((table) => Table.getEmptySeats(table).length > 0),
     [tables],
@@ -409,16 +411,8 @@ export default function AdminTables() {
       handleCloseTableForm();
     }
 
-    const nextTables = buildTables({
-      confirmations: updatedConfirmations,
-      manualTables: nextManualTables,
-    });
-    const nextPage = Math.min(
-      page,
-      Math.max(Math.ceil(nextTables.length / pageSize), 1),
-    );
-
-    setPage(nextPage);
+    setSelectedTableKey("");
+    setPage(1);
     setTableToDelete(null);
   };
 
@@ -553,7 +547,6 @@ export default function AdminTables() {
       ...current,
       [filterKey]: value,
     }));
-    setPendingGuestsPage(1);
   };
 
   const handleAssignPendingGuest = useCallback(
@@ -802,12 +795,8 @@ export default function AdminTables() {
                 loading={state.loading}
                 lockPageHeight={false}
                 mobilePageLabel={adminContent.tables.header.mobilePageLabel}
-                onNextPage={() =>
-                  handlePageChange(currentPage + 1, tablesStartRef.current)
-                }
-                onPrevPage={() =>
-                  handlePageChange(currentPage - 1, tablesStartRef.current)
-                }
+                onNextPage={() => handlePageChange(currentPage + 1)}
+                onPrevPage={() => handlePageChange(currentPage - 1)}
                 page={state.loading ? undefined : currentPage}
                 pageDirection={pageDirection}
                 pageLabel={adminContent.tables.header.pageLabel}
@@ -897,16 +886,10 @@ export default function AdminTables() {
                 lockPageHeight={false}
                 mobilePageLabel={adminContent.pendingGuests.pendingEyebrow}
                 onNextPage={() =>
-                  handlePendingGuestsPageChange(
-                    currentPendingGuestsPage + 1,
-                    tablesStartRef.current,
-                  )
+                  handlePendingGuestsPageChange(currentPendingGuestsPage + 1)
                 }
                 onPrevPage={() =>
-                  handlePendingGuestsPageChange(
-                    currentPendingGuestsPage - 1,
-                    tablesStartRef.current,
-                  )
+                  handlePendingGuestsPageChange(currentPendingGuestsPage - 1)
                 }
                 page={state.loading ? undefined : currentPendingGuestsPage}
                 pageDirection={pendingGuestsPageDirection}
@@ -1078,17 +1061,18 @@ function SeatAssignmentDialog({
     onPageChange: setPage,
     totalPages,
   });
-  const effectiveSelectedGuestKey = filteredGuests.some(
-    (guest) => getPendingGuestRowKey(guest) === selectedGuestKey,
-  )
-    ? selectedGuestKey
-    : pagedItems[0]
-      ? getPendingGuestRowKey(pagedItems[0])
-      : "";
-  const selectedGuest =
-    filteredGuests.find(
-      (guest) => getPendingGuestRowKey(guest) === effectiveSelectedGuestKey,
-    ) || null;
+  const {
+    effectiveSelectedId: effectiveSelectedGuestKey,
+    selectedItem: selectedGuest,
+  } = useEffectiveSelection({
+    allItems: filteredGuests,
+    currentPage,
+    getId: getPendingGuestRowKey,
+    items: pagedItems,
+    onPageChange: setPage,
+    pageSize,
+    selectedId: selectedGuestKey,
+  });
 
   const handleAssign = () => {
     if (!selectedGuest) return;
@@ -1111,7 +1095,6 @@ function SeatAssignmentDialog({
       ...current,
       [filterKey]: value,
     }));
-    setPage(1);
   };
 
   return (
@@ -1189,6 +1172,12 @@ function SeatAssignmentDialog({
           pageDirection={pageDirection}
           pageLabel={adminContent.tables.header.pageLabel}
           pageSize={pageSize}
+          summary={
+            <SeatOccupantSummary
+              guestName={currentGuestName}
+              seat={seat.seat}
+            />
+          }
           renderMeasurePage={(items) => (
             <PendingGuestsList
               emptyText={getSeatAssignmentEmptyState(pendingGuests.length).text}
@@ -1511,28 +1500,54 @@ function buildSeatAssignmentChanges(savedConfirmations, currentConfirmations) {
   const savedByConfirmationId = new Map(
     savedConfirmations.map((group) => [getConfirmationKey(group), group]),
   );
+  const seenChanges = new Set();
   const changes = [];
 
   currentConfirmations.forEach((group) => {
     const savedGroup = savedByConfirmationId.get(getConfirmationKey(group));
+    const savedGuestsByKey = new Map(
+      (savedGroup?.guests || []).map((guest, index) => [
+        getGuestChangeKey(savedGroup, guest, index),
+        guest,
+      ]),
+    );
 
     group.guests.forEach((guest, index) => {
-      const savedGuest = savedGroup?.guests?.[index] || {};
+      const guestKey = getGuestChangeKey(group, guest, index);
+      const savedGuest = savedGuestsByKey.get(guestKey) || {};
       const previousAssignment = getGuestAssignmentLabel(savedGuest);
       const currentAssignment = getGuestAssignmentLabel(guest);
 
       if (previousAssignment === currentAssignment) return;
 
-      changes.push(
-        `${Guest.getFullName(
-          guest,
-          rsvpContent.guest.fallbackName(index + 1),
-        )}: ${previousAssignment} -> ${currentAssignment}`,
-      );
+      const change = `${Guest.getFullName(
+        guest,
+        rsvpContent.guest.fallbackName(index + 1),
+      )}: ${previousAssignment} -> ${currentAssignment}`;
+
+      if (seenChanges.has(change)) return;
+
+      seenChanges.add(change);
+      changes.push(change);
     });
   });
 
   return changes;
+}
+
+function getGuestChangeKey(group = {}, guest = {}, index = 0) {
+  return [
+    getConfirmationKey(group),
+    guest.guestId || guest.id || guest.email || "",
+    guest.guestId || guest.id
+      ? ""
+      : `${index}:${Guest.getFullName(
+          guest,
+          rsvpContent.guest.fallbackName(index + 1),
+        )}`,
+  ]
+    .filter(Boolean)
+    .join(":");
 }
 
 function getChangedConfirmations(savedConfirmations, currentConfirmations) {

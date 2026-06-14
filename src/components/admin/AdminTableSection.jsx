@@ -27,6 +27,7 @@ export default function AdminTableSection({
   renderPage,
   sectionRef,
   skeletonConfig = {},
+  summary,
   title,
   totalPages,
   items = [],
@@ -85,6 +86,8 @@ export default function AdminTableSection({
         />
       ) : (
         <>
+          {summary && <div className="mb-4">{summary}</div>}
+
           {filters && hasFilterSlot && <div className="mb-4">{filters}</div>}
 
           {hasPagination && (

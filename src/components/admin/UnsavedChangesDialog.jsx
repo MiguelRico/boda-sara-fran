@@ -14,6 +14,7 @@ export default function UnsavedChangesDialog({
   titleId = "unsaved-changes-title",
 }) {
   useViewportScrollLock(true);
+  const uniqueChanges = getUniqueChanges(changes);
 
   const dialog = (
     <div className="rsvp-dialog-overlay">
@@ -34,7 +35,7 @@ export default function UnsavedChangesDialog({
           {labels.text}
         </p>
         <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
-          {changes.map((change, index) => (
+          {uniqueChanges.map((change, index) => (
             <li
               className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
               key={`${getChangeTitle(change)}-${index}`}
@@ -121,4 +122,31 @@ function getChangeTitle(change) {
   if (typeof change === "string") return change;
 
   return change?.title || "Cambio sin guardar";
+}
+
+function getUniqueChanges(changes = []) {
+  const seen = new Set();
+
+  return changes
+    .map((change) =>
+      typeof change === "string"
+        ? change
+        : {
+            ...change,
+            details: Array.isArray(change?.details)
+              ? Array.from(new Set(change.details))
+              : change?.details,
+          },
+    )
+    .filter((change) => {
+      const key = JSON.stringify({
+        details: Array.isArray(change?.details) ? change.details : [],
+        title: getChangeTitle(change),
+      });
+
+      if (seen.has(key)) return false;
+
+      seen.add(key);
+      return true;
+    });
 }

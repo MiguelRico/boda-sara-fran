@@ -160,7 +160,7 @@ export default function AdminNotifications() {
     return <Navigate to="/admin" replace />;
   }
 
-  const handlePageChange = (nextPage, target = tableStartRef.current) => {
+  const handlePageChange = (nextPage) => {
     if (
       nextPage < 1 ||
       nextPage > totalPages ||
@@ -171,7 +171,6 @@ export default function AdminNotifications() {
 
     setPageDirection(nextPage > effectiveCurrentPage ? 1 : -1);
     setCurrentPage(nextPage);
-    target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleFormChange = (field, value) => {
@@ -238,6 +237,7 @@ export default function AdminNotifications() {
 
     const nextNotifications = removeAdminNotification(deleteTarget.id);
     syncNotifications(nextNotifications);
+    setCurrentPage(1);
     setDeleteTarget(null);
   };
 
@@ -345,15 +345,12 @@ export default function AdminNotifications() {
               <NotificationFilters
                 onQueryChange={(value) => {
                   setQuery(value);
-                  setCurrentPage(1);
                 }}
                 onReadFilterChange={(value) => {
                   setReadFilter(value);
-                  setCurrentPage(1);
                 }}
                 onTypeFilterChange={(value) => {
                   setTypeFilter(value);
-                  setCurrentPage(1);
                 }}
                 query={query}
                 readFilter={readFilter}

@@ -24,6 +24,7 @@ import DeleteDialog from "../ui/DeleteDialog";
 import AdminTableSection from "./AdminTableSection";
 import Card from "./Card";
 import CardActions from "./CardActions";
+import SeatOccupantSummary from "./SeatOccupantSummary";
 import TableGuestCard from "./TableGuestCard";
 
 const TABLE_GROUP_ICON_MAP = {
@@ -169,6 +170,9 @@ function AssignmentModal({
     assignedSeats.find(
       (seat) => getAssignedSeatKey(seat) === effectiveSelectedSeatKey,
     ) || null;
+  const selectedSeatGuestName = selectedSeat?.guest
+    ? Guest.getFullName(selectedSeat.guest, "Invitado")
+    : "";
 
   const handleConfirmUnassignSeat = async () => {
     if (!onUnassignSeat) return;
@@ -230,6 +234,12 @@ function AssignmentModal({
           pageDirection={pageDirection}
           pageLabel={adminContent.tables.header.pageLabel}
           pageSize={pageSize}
+          summary={
+            <SeatOccupantSummary
+              guestName={selectedSeatGuestName}
+              seat={selectedSeat?.seat}
+            />
+          }
           renderMeasurePage={(items) => (
             <AssignedSeatsPage
               emptyState={getAssignedSeatsEmptyState(assignedSeats.length)}
@@ -381,18 +391,20 @@ function TableDiagram({ onSeatClick, onCenterClick, table }) {
           </button>
         )}
 
-        {seats.map(({ seat, transform, x, y }) => (
+        {seats.map(({ seat, style, transform, x, y }) => (
           <SeatDot
             onClick={
               onSeatClick ? () => onSeatClick({ seat, table }) : undefined
             }
             key={seat.seat}
             seat={seat}
-            style={{
-              left: transform ? `${x}%` : `calc(${x}% - 0.65rem)`,
-              top: transform ? `${y}%` : `calc(${y}% - 0.65rem)`,
-              transform,
-            }}
+            style={
+              style || {
+                left: `calc(${x}% - 0.65rem)`,
+                top: `calc(${y}% - 0.65rem)`,
+                transform,
+              }
+            }
           />
         ))}
       </div>
@@ -505,7 +517,6 @@ function SeatDot({ onClick, seat, style }) {
       className={`
         absolute z-10 flex h-5 w-5 items-center justify-center rounded-full
         border text-[0.58rem] font-semibold shadow-[0_8px_18px_rgba(77,56,40,0.12)]
-        [--round-seat-offset:5.15rem] sm:[--round-seat-offset:5.65rem]
         ${onClick ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] md:focus:ring-offset-2" : ""}
         ${
           seat.guest
@@ -543,15 +554,20 @@ function getRectangularSeatPositions(seats) {
 
 function getRoundSeatPositions(seats) {
   const angleStep = (Math.PI * 2) / seats.length;
+  const seatOffsetRem = 5.15;
+  const seatRadiusRem = 0.625;
 
   return seats.map((seat, index) => {
     const angle = -Math.PI / 2 + index * angleStep;
+    const leftOffset = Math.cos(angle) * seatOffsetRem - seatRadiusRem;
+    const topOffset = Math.sin(angle) * seatOffsetRem - seatRadiusRem;
 
     return {
       seat,
-      x: 50,
-      y: 50,
-      transform: `translate(-50%, -50%) rotate(${angle}rad) translateX(var(--round-seat-offset)) rotate(${-angle}rad)`,
+      style: {
+        left: `calc(50% + ${leftOffset.toFixed(3)}rem)`,
+        top: `calc(50% + ${topOffset.toFixed(3)}rem)`,
+      },
     };
   });
 }

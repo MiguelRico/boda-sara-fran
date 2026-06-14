@@ -188,6 +188,7 @@ export default function AdminGuests() {
   const {
     currentPage,
     isMobileView,
+    pageSize,
     pagedItems: pagedRows,
     totalPages,
   } = usePagedData({
@@ -206,8 +207,12 @@ export default function AdminGuests() {
     effectiveSelectedId: effectiveSelectedRowId,
     selectedItem: selectedRow,
   } = useEffectiveSelection({
+    allItems: visibleRows,
+    currentPage,
     getId: getRowId,
     items: pagedRows,
+    onPageChange: setPage,
+    pageSize,
     selectedId: selectedRowId,
   });
 
@@ -259,8 +264,12 @@ export default function AdminGuests() {
     effectiveSelectedId: effectiveSelectedGuestId,
     selectedItem: selectedGuestItem,
   } = useEffectiveSelection({
+    allItems: visibleGuestItems,
+    currentPage: currentGuestPage,
     getId: getRowId,
     items: pagedGuestItems,
+    onPageChange: setGuestPage,
+    pageSize: guestPageSize,
     selectedId: selectedGuestId,
   });
   const selectedGuestGroup =
@@ -338,7 +347,6 @@ export default function AdminGuests() {
 
     if (selectedRow) {
       setSelectedRowId(selectedRow.rowId);
-      setGuestPage(1);
     }
 
     if (editingMode === "guest") {
@@ -352,7 +360,6 @@ export default function AdminGuests() {
     } else {
       setConfirmationFilter("all");
       setConfirmationQuery("");
-      setPage(1);
       setSelectedGuestId("");
     }
 
@@ -377,12 +384,15 @@ export default function AdminGuests() {
         ),
       );
       setSelectedGuestId("");
+      setGuestPage(1);
     } else {
       applyConfirmations(
         removeConfirmationFromList(state.confirmations, deleteTarget.group),
       );
       setSelectedRowId("");
       setSelectedGuestId("");
+      setPage(1);
+      setGuestPage(1);
     }
 
     setDeleteTarget(null);
@@ -561,12 +571,10 @@ export default function AdminGuests() {
                     onFilterChange={(value) => {
                       cancelPageLoading();
                       setConfirmationFilter(value);
-                      setPage(1);
                     }}
                     onQueryChange={(value) => {
                       cancelPageLoading();
                       setConfirmationQuery(value);
-                      setPage(1);
                     }}
                     query={confirmationQuery}
                   />
@@ -577,15 +585,15 @@ export default function AdminGuests() {
                 loading={state.loading}
                 mobilePageLabel={adminContent.guests.list.mobilePageLabel}
                 onNextPage={() =>
-                  handlePageChange(currentPage + 1, tableStartRef.current)
+                  handlePageChange(currentPage + 1)
                 }
                 onPrevPage={() =>
-                  handlePageChange(currentPage - 1, tableStartRef.current)
+                  handlePageChange(currentPage - 1)
                 }
                 page={currentPage}
                 pageDirection={pageDirection}
                 pageLabel={adminContent.guests.list.pageLabel}
-                pageSize={isMobileView ? mobilePageSize : desktopPageSize}
+                pageSize={pageSize}
                 renderMeasurePage={(items) => (
                   <AdminGuestPage
                     emptyState={getGroupEmptyState(rows.length)}
@@ -660,12 +668,10 @@ export default function AdminGuests() {
                     onFilterChange={(value) => {
                       cancelPageLoading();
                       setGuestFilter(value);
-                      setGuestPage(1);
                     }}
                     onQueryChange={(value) => {
                       cancelPageLoading();
                       setGuestQuery(value);
-                      setGuestPage(1);
                     }}
                     query={guestQuery}
                   />
@@ -675,18 +681,8 @@ export default function AdminGuests() {
                 items={visibleGuestItems}
                 loading={state.loading}
                 mobilePageLabel={adminContent.guests.guestList.mobilePageLabel}
-                onNextPage={() =>
-                  handleGuestPageChange(
-                    currentGuestPage + 1,
-                    tableStartRef.current,
-                  )
-                }
-                onPrevPage={() =>
-                  handleGuestPageChange(
-                    currentGuestPage - 1,
-                    tableStartRef.current,
-                  )
-                }
+                onNextPage={() => handleGuestPageChange(currentGuestPage + 1)}
+                onPrevPage={() => handleGuestPageChange(currentGuestPage - 1)}
                 page={currentGuestPage}
                 pageDirection={guestPageDirection}
                 pageLabel={adminContent.guests.list.pageLabel}

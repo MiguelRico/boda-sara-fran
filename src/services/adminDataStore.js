@@ -126,7 +126,7 @@ export const hasAdminPendingChanges = () =>
   getStableJson(store.notifications) !== getStableJson(store.savedNotifications) ||
   getStableJson(store.tasks) !== getStableJson(store.savedTasks);
 
-export const getAdminPendingChangesSummary = () => [
+export const getAdminPendingChangesSummary = () => dedupeChanges([
   ...buildEntityChanges({
     createdLabel: (item) =>
       `Confirmacion creada: ${getConfirmationLabel(item)}`,
@@ -167,7 +167,7 @@ export const getAdminPendingChangesSummary = () => [
     savedItems: store.savedNotifications,
   }),
   ...getAdminTaskChangesSummary(),
-];
+]);
 
 export const getAdminNotificationChangesSummary = () =>
   buildEntityChanges({
@@ -225,6 +225,12 @@ export const discardAdminNotificationChanges = () => {
   );
 
   return store.notifications;
+};
+
+export const discardAdminTaskChanges = () => {
+  store.tasks = Task.normalizeList(store.savedTasks);
+
+  return store.tasks;
 };
 
 export const saveAdminPendingChanges = async ({
@@ -397,6 +403,33 @@ export const removeAdminNotification = (notificationId) => {
   return store.notifications;
 };
 
+export const upsertAdminTask = (task) => {
+  const normalizedTask = Task.normalize(task);
+  const existingIndex = store.tasks.findIndex(
+    (item) => item.id === normalizedTask.id,
+  );
+
+  if (existingIndex === -1) {
+    store.tasks = Task.normalizeList([...store.tasks, normalizedTask]);
+  } else {
+    store.tasks = Task.normalizeList(
+      store.tasks.map((item, index) =>
+        index === existingIndex ? normalizedTask : item,
+      ),
+    );
+  }
+
+  return store.tasks;
+};
+
+export const removeAdminTask = (taskId) => {
+  store.tasks = Task.normalizeList(
+    store.tasks.filter((task) => task.id !== taskId),
+  );
+
+  return store.tasks;
+};
+
 function buildEntityChanges({
   createdLabel,
   currentItems,
@@ -426,7 +459,11 @@ function buildEntityChanges({
     }
   });
 
-  return changes;
+  return dedupeChanges(changes);
+}
+
+function dedupeChanges(changes = []) {
+  return Array.from(new Set(changes));
 }
 
 function getConfirmationLabel(confirmation = {}) {

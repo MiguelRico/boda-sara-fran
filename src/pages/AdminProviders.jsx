@@ -157,8 +157,12 @@ export default function AdminProviders() {
     effectiveSelectedId: effectiveSelectedProviderId,
     selectedItem: selectedProvider,
   } = useEffectiveSelection({
+    allItems: filteredProviders,
+    currentPage,
     getId: getEntityId,
     items: pagedProviders,
+    onPageChange: setPage,
+    pageSize,
     selectedId: selectedProviderId,
   });
 
@@ -196,8 +200,12 @@ export default function AdminProviders() {
   const {
     effectiveSelectedId: effectiveSelectedServiceId,
   } = useEffectiveSelection({
+    allItems: filteredServices,
+    currentPage: currentServicesPage,
     getId: getEntityId,
     items: pagedServices,
+    onPageChange: setServicesPage,
+    pageSize: servicesPageSize,
     selectedId: selectedServiceId,
   });
   const hasPendingChanges =
@@ -316,6 +324,7 @@ export default function AdminProviders() {
         ),
       );
       setSelectedServiceId("");
+      setServicesPage(1);
     } else {
       applyProviders(
         providers.filter(
@@ -324,6 +333,8 @@ export default function AdminProviders() {
       );
       setSelectedProviderId("");
       setSelectedServiceId("");
+      setPage(1);
+      setServicesPage(1);
     }
 
     setDeleteTarget(null);
@@ -364,12 +375,10 @@ export default function AdminProviders() {
 
     if (editingProviderMode === "service") {
       setSelectedServiceId(editingServiceId);
-      setServicesPage(1);
     } else {
       setProviderCategory("");
       setProviderQuery("");
       setSelectedServiceId("");
-      setPage(1);
     }
 
     setEditingProvider(null);
@@ -484,11 +493,9 @@ export default function AdminProviders() {
                     category={providerCategory}
                     onCategoryChange={(value) => {
                       setProviderCategory(value);
-                      setPage(1);
                     }}
                     onQueryChange={(value) => {
                       setProviderQuery(value);
-                      setPage(1);
                     }}
                     query={providerQuery}
                   />
@@ -499,12 +506,8 @@ export default function AdminProviders() {
                 loading={loadingProviders}
                 lockPageHeight={false}
                 mobilePageLabel={adminContent.providers.list.mobilePageLabel}
-                onNextPage={() =>
-                  handlePageChange(currentPage + 1, tableStartRef.current)
-                }
-                onPrevPage={() =>
-                  handlePageChange(currentPage - 1, tableStartRef.current)
-                }
+                onNextPage={() => handlePageChange(currentPage + 1)}
+                onPrevPage={() => handlePageChange(currentPage - 1)}
                 page={loadingProviders ? undefined : currentPage}
                 pageDirection={pageDirection}
                 pageLabel={adminContent.providers.list.pageLabel}
@@ -572,11 +575,9 @@ export default function AdminProviders() {
                   <ProviderFilters
                     onPaymentStatusChange={(value) => {
                       setServicePaymentStatus(value);
-                      setServicesPage(1);
                     }}
                     onQueryChange={(value) => {
                       setServiceQuery(value);
-                      setServicesPage(1);
                     }}
                     paymentStatus={servicePaymentStatus}
                     query={serviceQuery}
@@ -593,16 +594,10 @@ export default function AdminProviders() {
                   adminContent.providers.services.mobilePageLabel
                 }
                 onNextPage={() =>
-                  handleServicesPageChange(
-                    currentServicesPage + 1,
-                    tableStartRef.current,
-                  )
+                  handleServicesPageChange(currentServicesPage + 1)
                 }
                 onPrevPage={() =>
-                  handleServicesPageChange(
-                    currentServicesPage - 1,
-                    tableStartRef.current,
-                  )
+                  handleServicesPageChange(currentServicesPage - 1)
                 }
                 page={loadingProviders ? undefined : currentServicesPage}
                 pageDirection={servicesPageDirection}

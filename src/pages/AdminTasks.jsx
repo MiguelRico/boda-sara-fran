@@ -18,10 +18,13 @@ import {
   validateTask,
 } from "../services/tasksService";
 import {
+  discardAdminTaskChanges,
   getAdminTaskChangesSummary,
   loadAdminDataOnce,
   markAdminDataSaved,
+  removeAdminTask,
   setAdminTasks,
+  upsertAdminTask,
 } from "../services/adminDataStore";
 import AdminEditorDialog from "../components/admin/AdminEditorDialog";
 import AdminPageShell from "../components/admin/AdminPageShell";
@@ -60,7 +63,6 @@ export default function AdminTasks() {
     window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   const isMobileView = useIsMobileView();
   const [loading, setLoading] = useState(true);
-  const [savedTasks, setSavedTasks] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -76,9 +78,8 @@ export default function AdminTasks() {
     title: "",
     type: "success",
   });
-  const hasPendingChanges =
-    JSON.stringify(savedTasks) !== JSON.stringify(tasks);
   const pendingChanges = getAdminTaskChangesSummary();
+  const hasPendingChanges = pendingChanges.length > 0;
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
   const stats = useMemo(() => buildTaskStats(tasks), [tasks]);
   const filteredTasks = useMemo(
@@ -122,7 +123,6 @@ export default function AdminTasks() {
 
         const normalizedTasks = normalizeTasks(snapshot.tasks || []);
 
-        setSavedTasks(normalizedTasks);
         setTasks(normalizedTasks);
       })
       .catch((error) => {
@@ -135,7 +135,6 @@ export default function AdminTasks() {
           title: adminContent.tasks.dialogs.problemTitle,
           type: "error",
         });
-        setSavedTasks([]);
         setTasks([]);
       })
       .finally(() => {
@@ -182,7 +181,7 @@ export default function AdminTasks() {
 
     if (Object.keys(validationErrors).length) return;
 
-    applyTasks(upsertTask(tasks, editingTask));
+    applyTasks(upsertAdminTask(editingTask));
     setEditingTask(null);
     setPopup({
       message: adminContent.tasks.dialogs.pendingMessage,
@@ -206,12 +205,13 @@ export default function AdminTasks() {
   const handleDelete = () => {
     if (!deleteTarget) return;
 
-    applyTasks(tasks.filter((task) => task.id !== deleteTarget.id));
+    applyTasks(removeAdminTask(deleteTarget.id));
     setDeleteTarget(null);
   };
   const handleDiscard = () => {
-    setTasks(savedTasks);
-    setAdminTasks(savedTasks);
+    const restoredTasks = discardAdminTaskChanges();
+
+    setTasks(restoredTasks);
     setEditingTask(null);
     setDeleteTarget(null);
   };
@@ -227,7 +227,6 @@ export default function AdminTasks() {
 
       setAdminTasks(normalizedTasks);
       markAdminDataSaved({ tasks: normalizedTasks });
-      setSavedTasks(normalizedTasks);
       setTasks(normalizedTasks);
       setPopup({
         message: adminContent.tasks.dialogs.savedMessage,
@@ -581,12 +580,3 @@ function filterTasks(tasks, { dateFrom, dateTo, priority, query, status }) {
   });
 }
 
-function upsertTask(tasks, task) {
-  const exists = tasks.some((item) => item.id === task.id);
-
-  if (!exists) return normalizeTasks([...tasks, task]);
-
-  return normalizeTasks(
-    tasks.map((item) => (item.id === task.id ? task : item)),
-  );
-}
