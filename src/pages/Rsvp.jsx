@@ -22,7 +22,11 @@ export default function Rsvp() {
   });
 
   return (
-    <RsvpPageShell spinner={spinner} wrapperRef={rsvpRef}>
+    <RsvpPageShell
+      innerClassName="max-w-md py-6"
+      spinner={spinner}
+      wrapperRef={rsvpRef}
+    >
       <CinematicStaggeredRevealItem index={0} isVisible={rsvpInView}>
         <HeaderSection
           eyebrow={siteContent.rsvp.eyebrow}
@@ -71,7 +75,7 @@ export function RsvpPageShell({
 
       <CinematicSection
         id="search"
-        className="surface-soft"
+        className="surface-soft admin-section"
         innerClassName={innerClassName}
         reveal={false}
       >

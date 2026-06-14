@@ -48,7 +48,7 @@ export default function DeleteDialog({
           {message}
         </p>
         {children}
-        <div className="mt-6 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+        <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
           <div className="flex flex-col gap-3 sm:flex-row">
             <IconButton
               className="flex-1"

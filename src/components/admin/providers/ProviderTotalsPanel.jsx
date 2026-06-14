@@ -2,6 +2,7 @@ import {
   BadgeEuro,
   BriefcaseBusiness,
   CalendarDays,
+  Coins,
   Euro,
   HandCoins,
   ReceiptEuro,
@@ -53,7 +54,7 @@ function ProviderOperationsSummary({ metrics, stats }) {
       value: stats.serviceCount,
     },
     {
-      icon: <CalendarDays size={18} strokeWidth={1.8} />,
+      icon: <Coins size={18} strokeWidth={1.8} />,
       label: metrics.nextPayments,
       value: stats.paymentCount,
     },

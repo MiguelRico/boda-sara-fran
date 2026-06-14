@@ -102,4 +102,3 @@ export const rsvpContent = {
     commentsMaxLength: "Máximo 300 caracteres",
   },
 };
-

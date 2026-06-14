@@ -1,6 +1,8 @@
 import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 import { rsvpContent } from "../../constants/rsvpContent";
 
+const onlyDigits = (value) => String(value || "").replace(/\D/g, "");
+
 export default function ContactDetailsCard({
   contact,
   disableFilledFields = true,
@@ -68,9 +70,13 @@ export default function ContactDetailsCard({
           <Label>{rsvpContent.contact.fields.phone.label}</Label>
 
           <input
+            inputMode="numeric"
+            pattern="[0-9]*"
             type="tel"
             value={contact.phone}
-            onChange={(event) => onContactChange("phone", event.target.value)}
+            onChange={(event) =>
+              onContactChange("phone", onlyDigits(event.target.value))
+            }
             className={inputClassName}
             placeholder={rsvpContent.contact.fields.phone.placeholder}
             disabled={disabledFields.phone}

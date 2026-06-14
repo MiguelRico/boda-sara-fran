@@ -11,6 +11,7 @@ import {
   Home,
   LockKeyhole,
   LogIn,
+  X,
 } from "lucide-react";
 
 import {
@@ -44,6 +45,8 @@ const adminCardIcons = {
   "list-todo": ListTodo,
   "receipt-text": ReceiptText,
 };
+
+const ADMIN_MEMORY_NOTICE_DISMISSED_KEY = "adminMemoryNoticeDismissed";
 
 const getAdminCard = (card) => {
   const Icon = adminCardIcons[card.icon];
@@ -222,16 +225,7 @@ function AdminLogin({
 function AdminDashboard() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5">
-      <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4">
-        <div className="flex items-start gap-3 text-center">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
-            <Info size={17} strokeWidth={1.8} />
-          </span>
-          <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-            {adminContent.auth.memoryNotice}
-          </p>
-        </div>
-      </section>
+      <AdminMemoryNotice />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {siteContent.admin.cards.map((card, index) => (
           <AnimatedInfoCard
@@ -242,5 +236,56 @@ function AdminDashboard() {
         ))}
       </div>
     </div>
+  );
+}
+
+function AdminMemoryNotice() {
+  const [hideForever, setHideForever] = useState(false);
+  const [visible, setVisible] = useState(() => {
+    return (
+      window.localStorage.getItem(ADMIN_MEMORY_NOTICE_DISMISSED_KEY) !== "true"
+    );
+  });
+
+  const handleClose = () => {
+    if (hideForever) {
+      window.localStorage.setItem(ADMIN_MEMORY_NOTICE_DISMISSED_KEY, "true");
+    }
+
+    setVisible(false);
+  };
+
+  if (!visible) return null;
+
+  return (
+    <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
+          <Info size={17} strokeWidth={1.8} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+            {adminContent.auth.memoryNotice}
+          </p>
+
+          <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs font-medium text-[var(--color-muted)]">
+            <input
+              checked={hideForever}
+              className="h-4 w-4 rounded border-[var(--color-border-strong)] accent-[var(--color-accent-dark)]"
+              onChange={(event) => setHideForever(event.target.checked)}
+              type="checkbox"
+            />
+            No mostrar más
+          </label>
+        </div>
+        <IconButton
+          icon={<X size={15} strokeWidth={1.9} />}
+          label="Cerrar aviso"
+          onClick={handleClose}
+          tone="terciary"
+          type="button"
+        />
+      </div>
+    </section>
   );
 }

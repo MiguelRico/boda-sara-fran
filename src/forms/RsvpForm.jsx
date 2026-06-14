@@ -1,13 +1,14 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { createPortal } from "react-dom";
 import { useState } from "react";
 import {
   ArrowLeft,
   Check,
+  MailCheck,
   Pencil,
   Save,
   Trash2,
   UserPlus,
-  MailCheck,
   X,
 } from "lucide-react";
 
@@ -29,6 +30,7 @@ import {
   getGuestSummaryChips,
 } from "../utils/rsvpSummaryChips";
 import useIsMobileView from "../hooks/useIsMobileView";
+import useViewportScrollLock from "../hooks/useViewportScrollLock";
 
 const defaultRenderItem = (_index, children) => children;
 
@@ -66,6 +68,7 @@ export default function RsvpForm({
   const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
   const [guestPage, setGuestPage] = useState(1);
   const [guestPageDirection, setGuestPageDirection] = useState(1);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const guestDeleteName = guestDeleteTarget
     ? Guest.getFullName(guestDeleteTarget.guest)
     : "";
@@ -79,8 +82,9 @@ export default function RsvpForm({
     variant === "admin" ? (
       <Save size={16} strokeWidth={1.8} />
     ) : (
-      <MailCheck size={16} strokeWidth={1.8} />
+      <Save size={16} strokeWidth={1.8} />
     );
+  const reviewSubmitText = variant === "admin" ? submitText : "Guardar";
   const cancelIcon =
     variant === "admin" ? (
       <X size={16} strokeWidth={1.8} />
@@ -116,44 +120,76 @@ export default function RsvpForm({
   const handleRemoveGuest = (guest, index) => {
     setGuestDeleteTarget({ guest, index });
   };
+  const openReviewDialog = () => {
+    const isValid = onValidateConfirmation
+      ? onValidateConfirmation()
+      : !hasInvalidGuest;
+
+    if (!isValid) return;
+
+    setReviewDialogOpen(true);
+  };
   const handleSubmit = (event) => {
+    event.preventDefault();
+
+    if (variant !== "admin") {
+      openReviewDialog();
+      return;
+    }
+
     onSubmit(event);
+  };
+  const handleConfirmSubmit = () => {
+    setReviewDialogOpen(false);
+    onSubmit({ preventDefault: () => {} });
   };
   const isMobilePublicFlow = variant !== "admin";
 
   if (isMobilePublicFlow) {
     return (
-      <MobilePublicRsvpFlow
-        addIcon={addIcon}
-        addText={addText}
-        canAddGuests={canAddGuests}
-        contact={contact}
-        currentGuestPage={currentGuestPage}
-        deleteContextText={deleteContextText}
-        disableContactFields={disableContactFields}
-        errors={errors}
-        flowMode={flowMode}
-        formError={formError}
-        guestDeleteName={guestDeleteName}
-        guestDeleteTarget={guestDeleteTarget}
-        guestPageDirection={guestPageDirection}
-        guests={guests}
-        hasInvalidGuest={hasInvalidGuest}
-        isMobileView={publicFlowIsMobileView}
-        loading={loading}
-        onAddGuest={handleAddGuest}
-        onContactChange={onContactChange}
-        onGuestChange={onGuestChange}
-        onGuestPageChange={handleGuestPageChange}
-        onRemoveGuest={handleRemoveGuest}
-        onSubmit={handleSubmit}
-        onValidateConfirmation={onValidateConfirmation}
-        onValidateContact={onValidateContact}
-        setGuestDeleteTarget={setGuestDeleteTarget}
-        submitIcon={submitIcon}
-        submitText={submitText}
-        totalGuestPages={totalGuestPages}
-      />
+      <>
+        <MobilePublicRsvpFlow
+          addIcon={addIcon}
+          addText={addText}
+          canAddGuests={canAddGuests}
+          contact={contact}
+          currentGuestPage={currentGuestPage}
+          deleteContextText={deleteContextText}
+          disableContactFields={disableContactFields}
+          errors={errors}
+          flowMode={flowMode}
+          formError={formError}
+          guestDeleteName={guestDeleteName}
+          guestDeleteTarget={guestDeleteTarget}
+          guestPageDirection={guestPageDirection}
+          guests={guests}
+          hasInvalidGuest={hasInvalidGuest}
+          isMobileView={publicFlowIsMobileView}
+          loading={loading}
+          onAddGuest={handleAddGuest}
+          onContactChange={onContactChange}
+          onGuestChange={onGuestChange}
+          onGuestPageChange={handleGuestPageChange}
+          onRemoveGuest={handleRemoveGuest}
+          onSubmit={handleSubmit}
+          onValidateConfirmation={onValidateConfirmation}
+          onValidateContact={onValidateContact}
+          setGuestDeleteTarget={setGuestDeleteTarget}
+          submitIcon={submitIcon}
+          submitText={reviewSubmitText}
+          totalGuestPages={totalGuestPages}
+        />
+        {reviewDialogOpen && (
+          <RsvpConfirmationReviewDialog
+            contact={contact}
+            guests={guests}
+            loading={loading}
+            onCancel={() => setReviewDialogOpen(false)}
+            onConfirm={handleConfirmSubmit}
+            submitText="Enviar"
+          />
+        )}
+      </>
     );
   }
 
@@ -252,11 +288,11 @@ export default function RsvpForm({
                   className="w-full"
                   disabled={loading}
                   icon={submitIcon}
-                  label={submitText}
+                  label={reviewSubmitText}
                   tone="primary"
                   type="submit"
                 >
-                  {submitText}
+                  {reviewSubmitText}
                 </IconButton>
               </div>
             </FormCard>,
@@ -273,6 +309,17 @@ export default function RsvpForm({
           onCancel={() => setGuestDeleteTarget(null)}
           onConfirm={handleConfirmGuestDelete}
           title={rsvpContent.form.deleteGuestTitle}
+        />
+      )}
+
+      {reviewDialogOpen && (
+        <RsvpConfirmationReviewDialog
+          contact={contact}
+          guests={guests}
+          loading={loading}
+          onCancel={() => setReviewDialogOpen(false)}
+          onConfirm={handleConfirmSubmit}
+          submitText="Enviar"
         />
       )}
     </>
@@ -596,6 +643,12 @@ function MobileRsvpReview({
 }) {
   return (
     <div className="space-y-5">
+      <div className="relative mb-0 items-center justify-center text-center">
+        <p className="section-text">
+          Revisa tus datos de contacto e invitados antes de confirmar
+        </p>
+      </div>
+
       <MobileActionsPanel>
         <IconButton
           className="w-full"
@@ -609,13 +662,6 @@ function MobileRsvpReview({
           {submitText}
         </IconButton>
       </MobileActionsPanel>
-
-      <div className="relative mb-0 items-center justify-center text-center">
-        <p className="section-text">
-          Revisa tus datos de contacto e invitados antes de enviar la
-          confirmación
-        </p>
-      </div>
 
       <ContactSummaryCard
         contact={contact}
@@ -648,6 +694,102 @@ function MobileRsvpReview({
       </FormCard>
     </div>
   );
+}
+
+function RsvpConfirmationReviewDialog({
+  contact,
+  guests,
+  loading,
+  onCancel,
+  onConfirm,
+  submitText,
+}) {
+  const normalizedGuests = Guest.normalizeList(guests, { ensureOne: false });
+  const groupChips = getGroupSummaryChips(contact, normalizedGuests);
+
+  useViewportScrollLock(true);
+
+  const dialog = (
+    <div className="rsvp-dialog-overlay">
+      <div
+        aria-labelledby="rsvp-confirmation-review-title"
+        aria-modal="true"
+        className="premium-card rsvp-dialog-card"
+        role="alertdialog"
+      >
+        <p className="section-eyebrow mb-3">Revisión</p>
+        <h2
+          className="font-serif text-3xl text-[var(--color-accent-dark)]"
+          id="rsvp-confirmation-review-title"
+        >
+          Revisa la confirmación
+        </h2>
+        <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
+          Comprueba los datos antes de enviar el formulario.
+        </p>
+
+        <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <IconButton
+              className="flex-1"
+              disabled={loading}
+              icon={<MailCheck size={16} strokeWidth={1.8} />}
+              onClick={onConfirm}
+              showText="always"
+              tone="primary"
+              type="button"
+            >
+              {submitText}
+            </IconButton>
+            <IconButton
+              className="flex-1"
+              disabled={loading}
+              icon={<X size={16} strokeWidth={1.8} />}
+              onClick={onCancel}
+              showText="always"
+              tone="terciary"
+              type="button"
+            >
+              Seguir editando
+            </IconButton>
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-3 text-left">
+          <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4">
+            <p className="section-eyebrow mb-2">Contacto</p>
+            <h3 className="break-words font-serif text-2xl leading-none text-[var(--color-accent-dark)]">
+              {contact.confirmationName || "Grupo sin nombre"}
+            </h3>
+            <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+              {groupChips.map((chip) => (
+                <Chip
+                  className={chip.className}
+                  href={chip.href}
+                  icon={chip.icon}
+                  key={chip.key}
+                  strong={chip.strong}
+                  tone={chip.tone}
+                  value={chip.value}
+                  valueClassName={chip.valueClassName}
+                />
+              ))}
+            </div>
+          </div>
+
+          {normalizedGuests.map((guest, index) => (
+            <GuestSummaryCard
+              guest={guest}
+              index={index}
+              key={guest.id || guest.guestId || index}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(dialog, document.body);
 }
 
 function GuestSummaryCard({ guest, index }) {
@@ -806,7 +948,7 @@ function GuestPager({
       </FormCard>
 
       <Pagination
-        className="mt-5"
+        className="mt-4"
         isMobileView={isMobileView}
         label={pageLabel}
         nextLabel={rsvpContent.form.next}
