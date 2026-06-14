@@ -70,3 +70,73 @@ export function AdminMetricGridSkeleton({
     </div>
   );
 }
+
+export function AdminMetricGroupCard({
+  className = "",
+  icon,
+  items,
+  title,
+}) {
+  return (
+    <article
+      className={`rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 sm:p-5 ${className}`}
+    >
+      <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
+        {icon && (
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)] sm:h-10 sm:w-10">
+            {icon}
+          </div>
+        )}
+        <p className="min-w-0 text-xs leading-snug text-[var(--color-muted)] sm:uppercase sm:tracking-[0.16em]">
+          {title}
+        </p>
+      </div>
+      <div className={`grid gap-2 ${getGroupColumnsClass(items.length)}`}>
+        {items.map((item) => (
+          <div className="min-w-0 text-center" key={item.label}>
+            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
+              {item.icon}
+            </div>
+            <p className="mt-2 text-[0.66rem] leading-snug text-[var(--color-muted)] sm:text-xs">
+              {item.label}
+            </p>
+            <p className="mt-1 break-words font-serif text-lg leading-none text-[var(--color-accent-dark)] sm:text-3xl">
+              {item.value}
+            </p>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+export function AdminMetricGroupCardSkeleton({
+  className = "",
+  itemCount = 3,
+}) {
+  return (
+    <div
+      className={`rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 sm:p-5 ${className}`}
+    >
+      <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
+        <SkeletonBlock className="h-8 w-8 rounded-full sm:h-10 sm:w-10" />
+        <SkeletonBlock className="h-3 w-28 max-w-full rounded-full" />
+      </div>
+      <div className={`grid gap-2 ${getGroupColumnsClass(itemCount)}`}>
+        {Array.from({ length: itemCount }).map((_, index) => (
+          <div className="min-w-0 text-center" key={index}>
+            <SkeletonBlock className="mx-auto h-8 w-8 rounded-full" />
+            <SkeletonBlock className="mx-auto mt-2 h-3 w-16 rounded-full" />
+            <SkeletonBlock className="mx-auto mt-2 h-7 w-12 rounded-full sm:h-10 sm:w-16" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function getGroupColumnsClass(count) {
+  if (count <= 2) return "grid-cols-2";
+
+  return "grid-cols-3";
+}

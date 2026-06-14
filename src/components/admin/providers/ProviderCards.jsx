@@ -143,6 +143,7 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
       >
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
           <Chip
+            className="col-span-2"
             href={getEmailHref(provider.email)}
             icon={<Mail size={13} strokeWidth={1.8} />}
             tone="secondary"
@@ -160,13 +161,16 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
               href={webHref}
               icon={<Globe size={13} strokeWidth={1.8} />}
               target="_blank"
+              tone="secondary"
               value="Web"
             />
           )}
           <Chip
             icon={<BriefcaseBusiness size={13} strokeWidth={1.8} />}
             strong
-            value={`${provider.services.length} servicios`}
+            value={`${provider.services.length} servicios · ${paymentCount} ${
+              paymentCount === 1 ? "plazo" : "plazos"
+            }`}
           />
           <Chip
             icon={<Euro size={13} strokeWidth={1.8} />}
@@ -174,17 +178,11 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
             value={formatCurrency(total)}
           />
           <Chip
-            icon={<CalendarDays size={13} strokeWidth={1.8} />}
-            value={`${paymentCount} ${paymentCount === 1 ? "plazo" : "plazos"}`}
-          />
-          <Chip
+            className="col-span-2"
             icon={<BadgeEuro size={13} strokeWidth={1.8} />}
             strong
-            value={formatCurrency(paid)}
-          />
-          <Chip
-            icon={<ReceiptText size={13} strokeWidth={1.8} />}
-            value={formatCurrency(pending)}
+            value={`Pagado ${formatCurrency(paid)} · Pendiente ${formatCurrency(pending)}`}
+            valueClassName="whitespace-normal break-words leading-snug"
           />
         </div>
       </Card>

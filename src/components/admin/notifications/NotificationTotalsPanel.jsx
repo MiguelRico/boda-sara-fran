@@ -2,7 +2,10 @@ import { Bell, BellOff, CircleAlert, CreditCard, MailCheck } from "lucide-react"
 
 import { adminContent } from "../../../constants/adminContent";
 import { GUESTS_TYPE } from "../../../models/AdminNotification";
-import { AdminMetricGrid, AdminMetricGridSkeleton } from "../AdminMetricGrid";
+import {
+  AdminMetricGroupCard,
+  AdminMetricGroupCardSkeleton,
+} from "../AdminMetricGrid";
 
 const NOTIFICATION_METRIC_GRID_CLASS =
   "grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3";
@@ -19,46 +22,57 @@ export default function NotificationTotalsPanel({ loading, stats }) {
         {adminContent.notifications.overview.title}
       </h2>
       {loading ? (
-        <AdminMetricGridSkeleton
-          className={NOTIFICATION_METRIC_GRID_CLASS}
-          count={6}
-        />
+        <div className={NOTIFICATION_METRIC_GRID_CLASS}>
+          <AdminMetricGroupCardSkeleton className="col-span-3" />
+          <AdminMetricGroupCardSkeleton className="col-span-3" />
+        </div>
       ) : (
-        <AdminMetricGrid
-          className={NOTIFICATION_METRIC_GRID_CLASS}
-          items={[
-            {
-              icon: <Bell size={22} strokeWidth={1.8} />,
-              label: metrics.total,
-              value: stats.totalCount,
-            },
-            {
-              icon: <Bell size={22} strokeWidth={1.8} />,
-              label: metrics.read,
-              value: stats.readCount,
-            },
-            {
-              icon: <BellOff size={22} strokeWidth={1.8} />,
-              label: metrics.unread,
-              value: stats.unreadCount,
-            },
-            {
-              icon: <CircleAlert size={22} strokeWidth={1.8} />,
-              label: metrics.warning,
-              value: stats.typeCounts.Aviso || 0,
-            },
-            {
-              icon: <CreditCard size={22} strokeWidth={1.8} />,
-              label: metrics.payment,
-              value: stats.typeCounts.Pago || 0,
-            },
-            {
-              icon: <MailCheck size={22} strokeWidth={1.8} />,
-              label: metrics.confirmation,
-              value: stats.typeCounts[GUESTS_TYPE] || 0,
-            },
-          ]}
-        />
+        <div className={NOTIFICATION_METRIC_GRID_CLASS}>
+          <AdminMetricGroupCard
+            className="col-span-3"
+            icon={<Bell size={22} strokeWidth={1.8} />}
+            items={[
+              {
+                icon: <Bell size={18} strokeWidth={1.8} />,
+                label: metrics.total,
+                value: stats.totalCount,
+              },
+              {
+                icon: <Bell size={18} strokeWidth={1.8} />,
+                label: metrics.read,
+                value: stats.readCount,
+              },
+              {
+                icon: <BellOff size={18} strokeWidth={1.8} />,
+                label: metrics.unread,
+                value: stats.unreadCount,
+              },
+            ]}
+            title={metrics.total}
+          />
+          <AdminMetricGroupCard
+            className="col-span-3"
+            icon={<CircleAlert size={22} strokeWidth={1.8} />}
+            items={[
+              {
+                icon: <CircleAlert size={18} strokeWidth={1.8} />,
+                label: metrics.warning,
+                value: stats.typeCounts.Aviso || 0,
+              },
+              {
+                icon: <CreditCard size={18} strokeWidth={1.8} />,
+                label: metrics.payment,
+                value: stats.typeCounts.Pago || 0,
+              },
+              {
+                icon: <MailCheck size={18} strokeWidth={1.8} />,
+                label: metrics.confirmation,
+                value: stats.typeCounts[GUESTS_TYPE] || 0,
+              },
+            ]}
+            title={metrics.types}
+          />
+        </div>
       )}
     </section>
   );

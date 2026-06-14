@@ -1,10 +1,12 @@
 import { Armchair, CircleCheckBig, CircleDashed, Grid2X2 } from "lucide-react";
 
 import { adminContent } from "../../constants/adminContent";
-import { AdminMetricGrid, AdminMetricGridSkeleton } from "./AdminMetricGrid";
+import {
+  AdminMetricGroupCard,
+  AdminMetricGroupCardSkeleton,
+} from "./AdminMetricGrid";
 
-const TABLE_METRIC_GRID_CLASS =
-  "grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3";
+const TABLE_METRIC_GRID_CLASS = "grid grid-cols-3 gap-2 sm:gap-3";
 
 export default function TableTotalsPanel({ loading, stats }) {
   return (
@@ -16,41 +18,48 @@ export default function TableTotalsPanel({ loading, stats }) {
         {adminContent.tables.overview.title}
       </h2>
       {loading ? (
-        <AdminMetricGridSkeleton
-          count={4}
-          className={TABLE_METRIC_GRID_CLASS}
-        />
+        <div className={TABLE_METRIC_GRID_CLASS}>
+          <AdminMetricGroupCardSkeleton className="col-span-3" itemCount={2} />
+          <AdminMetricGroupCardSkeleton className="col-span-3" itemCount={2} />
+        </div>
       ) : (
-        <AdminMetricGrid
-          className={TABLE_METRIC_GRID_CLASS}
-          items={getTableSummaryItems(stats)}
-        />
+        <div className={TABLE_METRIC_GRID_CLASS}>
+          <AdminMetricGroupCard
+            className="col-span-3"
+            icon={<Grid2X2 size={22} strokeWidth={1.8} />}
+            items={[
+              {
+                icon: <Grid2X2 size={18} strokeWidth={1.8} />,
+                label: adminContent.tables.overview.metrics.tableCount,
+                value: stats.totalTables,
+              },
+              {
+                icon: <Armchair size={18} strokeWidth={1.8} />,
+                label: adminContent.tables.overview.metrics.seatCount,
+                value: stats.totalSeats,
+              },
+            ]}
+            title={adminContent.tables.overview.metrics.tableCount}
+          />
+          <AdminMetricGroupCard
+            className="col-span-3"
+            icon={<CircleCheckBig size={22} strokeWidth={1.8} />}
+            items={[
+              {
+                icon: <CircleCheckBig size={18} strokeWidth={1.8} />,
+                label: adminContent.tables.overview.metrics.assignedSeats,
+                value: stats.assignedSeats,
+              },
+              {
+                icon: <CircleDashed size={18} strokeWidth={1.8} />,
+                label: adminContent.tables.overview.metrics.pendingSeats,
+                value: stats.pendingSeats,
+              },
+            ]}
+            title={adminContent.tables.overview.metrics.assignedSeats}
+          />
+        </div>
       )}
     </section>
   );
-}
-
-function getTableSummaryItems(stats) {
-  return [
-    {
-      label: adminContent.tables.overview.metrics.tableCount,
-      value: stats.totalTables,
-      icon: <Grid2X2 size={22} strokeWidth={1.8} />,
-    },
-    {
-      label: adminContent.tables.overview.metrics.seatCount,
-      value: stats.totalSeats,
-      icon: <Armchair size={22} strokeWidth={1.8} />,
-    },
-    {
-      label: adminContent.tables.overview.metrics.assignedSeats,
-      value: stats.assignedSeats,
-      icon: <CircleCheckBig size={22} strokeWidth={1.8} />,
-    },
-    {
-      label: adminContent.tables.overview.metrics.pendingSeats,
-      value: stats.pendingSeats,
-      icon: <CircleDashed size={22} strokeWidth={1.8} />,
-    },
-  ];
 }

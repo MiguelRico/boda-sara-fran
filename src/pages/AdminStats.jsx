@@ -12,6 +12,7 @@ import TableTotalsPanel from "../components/admin/TableTotalsPanel";
 import VerticalBarChart from "../components/admin/VerticalBarChart";
 import ProviderTotalsPanel from "../components/admin/providers/ProviderTotalsPanel";
 import NotificationTotalsPanel from "../components/admin/notifications/NotificationTotalsPanel";
+import TaskTotalsPanel from "../components/admin/tasks/TaskTotalsPanel";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
@@ -25,6 +26,7 @@ import { loadAdminDataOnce } from "../services/adminDataStore";
 import { buildTables, buildTableStats } from "../services/tablesService";
 import { buildProviderStats } from "../services/providersService";
 import { buildNotificationStats } from "../services/notificationsService";
+import { buildTaskStats } from "../services/tasksService";
 import useIsMobileView from "../hooks/useIsMobileView";
 
 const ADMIN_OUTBOUND_BUS_OPTIONS = [
@@ -59,6 +61,7 @@ const emptyState = {
   notifications: [],
   providers: [],
   tables: [],
+  tasks: [],
   error: "",
 };
 
@@ -87,6 +90,7 @@ export default function AdminStats() {
         notifications: response.notifications,
         providers: response.providers,
         tables: response.tables,
+        tasks: response.tasks,
         error: "",
       });
     } catch (error) {
@@ -98,6 +102,7 @@ export default function AdminStats() {
         notifications: [],
         providers: [],
         tables: [],
+        tasks: [],
         error: adminContent.stats.dialogs.loadError,
       });
     }
@@ -144,6 +149,10 @@ export default function AdminStats() {
     () => buildNotificationStats(state.notifications),
     [state.notifications],
   );
+  const taskStats = useMemo(
+    () => buildTaskStats(state.tasks),
+    [state.tasks],
+  );
 
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
@@ -183,6 +192,7 @@ export default function AdminStats() {
                 loading={state.loading}
                 stats={notificationStats}
               />
+              <TaskTotalsPanel loading={state.loading} stats={taskStats} />
             </div>
           </CinematicStaggeredRevealItem>
         </div>
