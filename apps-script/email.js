@@ -122,6 +122,7 @@ function sendAdminNotification(confirmationName, email, phone, guests) {
   const fallback = EMAIL_COPY.fallback;
   const labels = copy.labels;
   const adminUrl = `${APP_BASE_URL}/admin`;
+  const menuRowEnabled = isMenuModuleEnabled();
   const guestsHtml = guests
     .map((guest) => {
       const guestName = [guest.name, guest.lastname].filter(Boolean).join(" ");
@@ -135,10 +136,14 @@ function sendAdminNotification(confirmationName, email, phone, guests) {
             <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${COLOR_ACCENT};margin-bottom:8px;">${escapeEmailHtml(labels.name)}</div>
             <div style="font-size:18px;line-height:1.4;color:${COLOR_TEXT};font-weight:600;margin-bottom:12px;">${escapeEmailHtml(guestName)}</div>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-              <tr>
-                <td style="padding:8px 0;color:${COLOR_ACCENT_DARK};font-size:13px;font-weight:600;width:34%;">${escapeEmailHtml(labels.menu)}</td>
-                <td style="padding:8px 0;color:${COLOR_TEXT};font-size:13px;line-height:1.6;">${emailValue(guest.menu, "-")}</td>
-              </tr>
+              ${
+                menuRowEnabled
+                  ? `<tr>
+                      <td style="padding:8px 0;color:${COLOR_ACCENT_DARK};font-size:13px;font-weight:600;width:34%;">${escapeEmailHtml(labels.menu)}</td>
+                      <td style="padding:8px 0;color:${COLOR_TEXT};font-size:13px;line-height:1.6;">${emailValue(guest.menu, "-")}</td>
+                    </tr>`
+                  : ""
+              }
               <tr>
                 <td style="padding:8px 0;color:${COLOR_ACCENT_DARK};font-size:13px;font-weight:600;width:34%;">${escapeEmailHtml(labels.bus)}</td>
                 <td style="padding:8px 0;color:${COLOR_TEXT};font-size:13px;line-height:1.6;">${escapeEmailHtml(labels.outbound)}: ${emailValue(guest.outboundBus, fallback.noBus)} | ${escapeEmailHtml(labels.return)}: ${emailValue(guest.returnBus, fallback.noBus)}</td>

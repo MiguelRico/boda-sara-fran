@@ -403,6 +403,20 @@ function getCurrentTimestamp() {
   return new Date().toISOString();
 }
 
+function getBooleanScriptProperty(name, defaultValue) {
+  const value = PropertiesService.getScriptProperties().getProperty(name);
+
+  if (value == null || value === "") return Boolean(defaultValue);
+
+  return ["1", "true", "yes", "on", "enabled", "si", "s"].includes(
+    String(value).trim().toLowerCase(),
+  );
+}
+
+function isMenuModuleEnabled() {
+  return getBooleanScriptProperty("ENABLE_MENU_MODULE", false);
+}
+
 function decodeConfirmationName(value) {
   const text = String(value || "").trim();
 

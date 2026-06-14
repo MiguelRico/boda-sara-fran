@@ -21,6 +21,7 @@ import StatusDialog from "../components/ui/StatusDialog";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import { adminContent } from "../constants/adminContent";
 import { COMMON_ALLERGIES } from "../constants/rsvp";
+import { isMenuModuleEnabled } from "../config/features";
 import { Confirmation, Guest } from "../models";
 import { loadAdminDataOnce } from "../services/adminDataStore";
 import { buildTables, buildTableStats } from "../services/tablesService";
@@ -332,15 +333,17 @@ function getGuestItems(confirmations) {
 }
 
 function buildGuestStats(rows, guests) {
+  const menuGuests = isMenuModuleEnabled ? guests : [];
+
   return {
     allergyCount: guests.filter(
       (guest) => Guest.normalize(guest).allergies.length > 0,
     ).length,
     commentsCount: guests.filter(Guest.hasComments).length,
-    fishCount: guests.filter((guest) => guest.menu === "Pescado").length,
+    fishCount: menuGuests.filter((guest) => guest.menu === "Pescado").length,
     groupCount: rows.length,
     guestCount: guests.length,
-    meatCount: guests.filter((guest) => guest.menu === "Carne").length,
+    meatCount: menuGuests.filter((guest) => guest.menu === "Carne").length,
     otherAllergyCount: guests.filter(Guest.hasOtherAllergies).length,
     outboundBusCount: guests.filter(
       (guest) => guest.outboundBus && guest.outboundBus !== "No",
