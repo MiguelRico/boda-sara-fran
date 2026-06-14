@@ -127,15 +127,18 @@ export function AdminMetricGroupCard({
 export function AdminMetricGroupCardSkeleton({
   className = "",
   itemCount = 3,
+  showHeader = true,
 }) {
   return (
     <div
       className={`rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 sm:p-5 ${className}`}
     >
-      <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
-        <SkeletonBlock className="h-8 w-8 rounded-full sm:h-10 sm:w-10" />
-        <SkeletonBlock className="h-3 w-28 max-w-full rounded-full" />
-      </div>
+      {showHeader && (
+        <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
+          <SkeletonBlock className="h-8 w-8 rounded-full sm:h-10 sm:w-10" />
+          <SkeletonBlock className="h-3 w-28 max-w-full rounded-full" />
+        </div>
+      )}
       <div className={`grid gap-2 ${getGroupColumnsClass(itemCount)}`}>
         {Array.from({ length: itemCount }).map((_, index) => (
           <div className="min-w-0 text-center" key={index}>

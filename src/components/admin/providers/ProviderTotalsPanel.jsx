@@ -10,7 +10,7 @@ import {
 import { adminContent } from "../../../constants/adminContent";
 import { PROVIDER_CATEGORY_LABELS } from "../../../constants/providers";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
-import { AdminMetricGridSkeleton } from "../AdminMetricGrid";
+import { AdminMetricGroupCardSkeleton } from "../AdminMetricGrid";
 
 export default function ProviderTotalsPanel({ loading, stats }) {
   const metrics = adminContent.providers.overview.metrics;
@@ -24,10 +24,11 @@ export default function ProviderTotalsPanel({ loading, stats }) {
         {adminContent.providers.overview.title}
       </h2>
       {loading ? (
-        <AdminMetricGridSkeleton
-          className="grid grid-cols-1 gap-2 sm:gap-3"
-          count={6}
-        />
+        <div className="space-y-3">
+          <AdminMetricGroupCardSkeleton showHeader={false} />
+          <AdminMetricGroupCardSkeleton showHeader={false} />
+          <AdminMetricGroupCardSkeleton />
+        </div>
       ) : (
         <div className="space-y-3">
           <ProviderOperationsSummary metrics={metrics} stats={stats} />

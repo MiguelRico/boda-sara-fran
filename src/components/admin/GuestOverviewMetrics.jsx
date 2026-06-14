@@ -97,15 +97,26 @@ export function GuestOverviewMetricGrid({ metrics, stats }) {
 export function GuestOverviewMetricGridSkeleton() {
   return (
     <div className={getGuestMetricGridClass()}>
-      <AdminMetricGroupCardSkeleton className="col-span-4" />
+      <AdminMetricGroupCardSkeleton
+        className="col-span-4"
+        showHeader={false}
+      />
       {isMenuModuleEnabled && (
         <AdminMetricGridSkeleton
           className="col-span-4 grid grid-cols-2 gap-2 sm:gap-3"
           count={2}
         />
       )}
-      <AdminMetricGroupCardSkeleton className="col-span-2" itemCount={2} />
-      <AdminMetricGroupCardSkeleton className="col-span-2" itemCount={2} />
+      <AdminMetricGroupCardSkeleton
+        className="col-span-2"
+        itemCount={2}
+        showHeader={false}
+      />
+      <AdminMetricGroupCardSkeleton
+        className="col-span-2"
+        itemCount={2}
+        showHeader={false}
+      />
     </div>
   );
 }

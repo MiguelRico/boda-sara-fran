@@ -270,7 +270,13 @@ const DEFAULT_TASKS = [
   ["Preparar lecturas", "ceremonia", "2026-08-01", "media", "Sara"],
   ["Preparar votos", "ceremonia", "2026-08-10", "media", "Fran"],
   ["Elegir musica ceremonia", "ceremonia", "2026-07-25", "media", "Sara"],
-  ["Confirmar decoracion ceremonia", "ceremonia", "2026-08-01", "media", "Fran"],
+  [
+    "Confirmar decoracion ceremonia",
+    "ceremonia",
+    "2026-08-01",
+    "media",
+    "Fran",
+  ],
   ["Comprar traje novio", "novios", "2026-05-15", "alta", "Fran"],
   ["Comprar traje novia", "novios", "2026-04-15", "alta", "Sara"],
   ["Prueba vestido novia", "novios", "2026-06-15", "alta", "Sara"],
@@ -309,7 +315,9 @@ const DEFAULT_TASKS = [
 
 function ensureHeader(sheet, headers) {
   const currentHeaders = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
-  const needsHeader = headers.some((header, index) => currentHeaders[index] !== header);
+  const needsHeader = headers.some(
+    (header, index) => currentHeaders[index] !== header,
+  );
 
   if (needsHeader) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -401,7 +409,9 @@ function decodeConfirmationName(value) {
   if (!text) return "";
 
   try {
-    return Utilities.newBlob(Utilities.base64Decode(text)).getDataAsString("UTF-8").trim();
+    return Utilities.newBlob(Utilities.base64Decode(text))
+      .getDataAsString("UTF-8")
+      .trim();
   } catch (err) {
     return text;
   }
@@ -416,7 +426,9 @@ function encodeConfirmationName(value) {
 }
 
 function encodeConfirmationForApi(confirmation) {
-  const encodedConfirmationName = encodeConfirmationName(confirmation.confirmationName);
+  const encodedConfirmationName = encodeConfirmationName(
+    confirmation.confirmationName,
+  );
 
   return {
     confirmationId: confirmation.confirmationId || "",
@@ -497,12 +509,16 @@ function getNormalizedConfirmationData(data) {
 
 function deleteGuestRows(sheet, confirmation) {
   const data = sheet.getDataRange().getValues();
-  const confirmationId = String(confirmation.confirmationId || "").trim().toLowerCase();
+  const confirmationId = String(confirmation.confirmationId || "")
+    .trim()
+    .toLowerCase();
 
   if (!confirmationId) return;
 
   for (let i = data.length - 1; i > 0; i--) {
-    const rowConfirmationId = String(data[i][GUESTS_COLUMNS.confirmationId] || "")
+    const rowConfirmationId = String(
+      data[i][GUESTS_COLUMNS.confirmationId] || "",
+    )
       .trim()
       .toLowerCase();
 
@@ -514,12 +530,16 @@ function deleteGuestRows(sheet, confirmation) {
 
 function deleteConfirmationRow(sheet, confirmation) {
   const data = sheet.getDataRange().getValues();
-  const confirmationId = String(confirmation.confirmationId || "").trim().toLowerCase();
+  const confirmationId = String(confirmation.confirmationId || "")
+    .trim()
+    .toLowerCase();
 
   if (!confirmationId) return;
 
   for (let i = data.length - 1; i > 0; i--) {
-    const rowConfirmationId = String(data[i][CONFIRMATIONS_COLUMNS.confirmationId] || "")
+    const rowConfirmationId = String(
+      data[i][CONFIRMATIONS_COLUMNS.confirmationId] || "",
+    )
       .trim()
       .toLowerCase();
 
@@ -603,7 +623,9 @@ function buildNotificationRow(notification) {
 }
 
 function normalizeTaskCategory(value) {
-  const category = String(value || "").trim().toLowerCase();
+  const category = String(value || "")
+    .trim()
+    .toLowerCase();
   const validCategories = [
     "ceremonia",
     "novios",
@@ -616,13 +638,16 @@ function normalizeTaskCategory(value) {
     "fiesta",
     "decoracion",
     "pagos",
+    "otros",
   ];
 
   return validCategories.indexOf(category) >= 0 ? category : "ceremonia";
 }
 
 function normalizeTaskPriority(value) {
-  const priority = String(value || "").trim().toLowerCase();
+  const priority = String(value || "")
+    .trim()
+    .toLowerCase();
 
   if (priority === "alta" || priority === "media" || priority === "baja") {
     return priority;
@@ -632,7 +657,9 @@ function normalizeTaskPriority(value) {
 }
 
 function normalizeTaskStatus(value) {
-  const status = String(value || "").trim().toLowerCase();
+  const status = String(value || "")
+    .trim()
+    .toLowerCase();
 
   if (status === "completed" || status === "completa") return "completed";
 
@@ -734,10 +761,14 @@ function getConfirmationNotificationTitle(confirmation, action) {
 function createServicePaymentNotifications(provider, service, action) {
   const payments = (Array.isArray(service.payments) ? service.payments : [])
     .slice(0, Math.max(Number(service.paymentCount) || 1, 1))
-    .filter((payment) => String(payment.date || payment.fechaPrevista || "").trim());
+    .filter((payment) =>
+      String(payment.date || payment.fechaPrevista || "").trim(),
+    );
 
   payments.forEach((payment, index) => {
-    const paymentDate = String(payment.date || payment.fechaPrevista || "").trim();
+    const paymentDate = String(
+      payment.date || payment.fechaPrevista || "",
+    ).trim();
     const amount = payment.amount || payment.importe || "";
     const detailParts = [
       provider.name ? `Proveedor: ${provider.name}` : "",
@@ -771,12 +802,16 @@ function validateUniqueConfirmationContact(confirmation) {
   const confirmationId = String(confirmation.confirmationId || "")
     .trim()
     .toLowerCase();
-  const email = String(confirmation.email || "").trim().toLowerCase();
+  const email = String(confirmation.email || "")
+    .trim()
+    .toLowerCase();
   const phone = normalizePhoneSearch(confirmation.phone);
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    const rowConfirmationId = String(row[CONFIRMATIONS_COLUMNS.confirmationId] || "")
+    const rowConfirmationId = String(
+      row[CONFIRMATIONS_COLUMNS.confirmationId] || "",
+    )
       .trim()
       .toLowerCase();
 
@@ -798,7 +833,8 @@ function validateUniqueConfirmationContact(confirmation) {
 }
 
 function buildGuestFromRow(row, confirmation, assignmentContext) {
-  const confirmationName = row[GUESTS_COLUMNS.confirmationName] || confirmation.confirmationName || "";
+  const confirmationName =
+    row[GUESTS_COLUMNS.confirmationName] || confirmation.confirmationName || "";
   const confirmationId =
     row[GUESTS_COLUMNS.confirmationId] || confirmation.confirmationId || "";
   const guestId = row[GUESTS_COLUMNS.guestId] || "";
@@ -833,7 +869,8 @@ function buildGuestFromRow(row, confirmation, assignmentContext) {
 
 function buildGuestRow(data, guest) {
   const now = getCurrentTimestamp();
-  const guestId = String(guest.guestId || guest.id || "").trim() || createEntityId("guest");
+  const guestId =
+    String(guest.guestId || guest.id || "").trim() || createEntityId("guest");
 
   return [
     guestId,
@@ -894,7 +931,9 @@ function buildAssignmentFromRow(row) {
 function buildAssignmentContext() {
   const tablesRows = getTablesSheet().getDataRange().getDisplayValues();
   const seatsRows = getSeatsSheet().getDataRange().getDisplayValues();
-  const assignmentRows = getTableAssignmentsSheet().getDataRange().getDisplayValues();
+  const assignmentRows = getTableAssignmentsSheet()
+    .getDataRange()
+    .getDisplayValues();
   const tablesById = {};
   const tablesByName = {};
   const seatsById = {};
@@ -907,7 +946,8 @@ function buildAssignmentContext() {
     if (!table.tableId) continue;
 
     tablesById[table.tableId] = table;
-    if (table.name) tablesByName[String(table.name).trim().toLowerCase()] = table;
+    if (table.name)
+      tablesByName[String(table.name).trim().toLowerCase()] = table;
   }
 
   for (let i = 1; i < seatsRows.length; i++) {
@@ -922,7 +962,8 @@ function buildAssignmentContext() {
   for (let i = 1; i < assignmentRows.length; i++) {
     const assignment = buildAssignmentFromRow(assignmentRows[i]);
 
-    if (!assignment.guestId || !assignment.tableId || !assignment.seatId) continue;
+    if (!assignment.guestId || !assignment.tableId || !assignment.seatId)
+      continue;
 
     assignmentsByGuestId[assignment.guestId] = assignment;
   }
@@ -938,12 +979,16 @@ function buildAssignmentContext() {
 
 function deleteAssignmentsByConfirmationId(sheet, confirmationId) {
   const data = sheet.getDataRange().getValues();
-  const normalizedConfirmationId = String(confirmationId || "").trim().toLowerCase();
+  const normalizedConfirmationId = String(confirmationId || "")
+    .trim()
+    .toLowerCase();
 
   if (!normalizedConfirmationId) return;
 
   for (let i = data.length - 1; i > 0; i--) {
-    const rowConfirmationId = String(data[i][TABLE_ASSIGNMENTS_COLUMNS.confirmationId] || "")
+    const rowConfirmationId = String(
+      data[i][TABLE_ASSIGNMENTS_COLUMNS.confirmationId] || "",
+    )
       .trim()
       .toLowerCase();
 
@@ -961,7 +1006,9 @@ function appendAssignmentRowsForGuests(sheet, confirmation, guests) {
   guests.forEach((guest) => {
     const guestId = String(guest.guestId || guest.id || "").trim();
     const rawTableId = String(guest.tableId || "").trim();
-    const tableName = String(guest.table || "").trim().toLowerCase();
+    const tableName = String(guest.table || "")
+      .trim()
+      .toLowerCase();
     const table = rawTableId
       ? context.tablesById[rawTableId]
       : context.tablesByName[tableName];
@@ -984,7 +1031,12 @@ function appendAssignmentRowsForGuests(sheet, confirmation, guests) {
 
   if (rows.length) {
     sheet
-      .getRange(sheet.getLastRow() + 1, 1, rows.length, TABLE_ASSIGNMENTS_HEADERS.length)
+      .getRange(
+        sheet.getLastRow() + 1,
+        1,
+        rows.length,
+        TABLE_ASSIGNMENTS_HEADERS.length,
+      )
       .setValues(rows);
   }
 }
@@ -993,8 +1045,12 @@ function cleanAssignmentsOutsideValidSeats(sheet, validTableIds, validSeatIds) {
   const data = sheet.getDataRange().getValues();
 
   for (let i = data.length - 1; i > 0; i--) {
-    const tableId = String(data[i][TABLE_ASSIGNMENTS_COLUMNS.tableId] || "").trim();
-    const seatId = String(data[i][TABLE_ASSIGNMENTS_COLUMNS.seatId] || "").trim();
+    const tableId = String(
+      data[i][TABLE_ASSIGNMENTS_COLUMNS.tableId] || "",
+    ).trim();
+    const seatId = String(
+      data[i][TABLE_ASSIGNMENTS_COLUMNS.seatId] || "",
+    ).trim();
 
     if (!validTableIds.has(tableId) || !validSeatIds.has(seatId)) {
       sheet.deleteRow(i + 1);
@@ -1015,13 +1071,23 @@ function deleteDataRows(sheet) {
 }
 
 function isTruthySheetValue(value) {
-  const text = String(value || "").trim().toLowerCase();
+  const text = String(value || "")
+    .trim()
+    .toLowerCase();
 
-  return value === true || text === "true" || text === "si" || text === "s" || text === "1";
+  return (
+    value === true ||
+    text === "true" ||
+    text === "si" ||
+    text === "s" ||
+    text === "1"
+  );
 }
 
 function isActiveSheetValue(value) {
-  const text = String(value || "").trim().toLowerCase();
+  const text = String(value || "")
+    .trim()
+    .toLowerCase();
 
   return !text || isTruthySheetValue(value);
 }
@@ -1029,4 +1095,3 @@ function isActiveSheetValue(value) {
 function getProviderTimestamp(value, fallback) {
   return String(value || fallback || new Date().toISOString());
 }
-

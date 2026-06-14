@@ -28,10 +28,15 @@ export default function RsvpCreate() {
   );
 
   return (
-    <RsvpPageShell spinner={spinner} wrapperRef={rsvpRef}>
+    <RsvpPageShell
+      innerClassName="max-w-md py-6"
+      spinner={spinner}
+      wrapperRef={rsvpRef}
+    >
       <CinematicStaggeredRevealItem index={0} isVisible={rsvpInView}>
         <HeaderSection
           eyebrow={siteContent.rsvp.eyebrow}
+          isMobileView
           title="Crear confirmación"
           titleAs="h1"
           text={siteContent.rsvp.text}

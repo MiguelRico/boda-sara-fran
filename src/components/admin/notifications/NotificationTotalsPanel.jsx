@@ -30,8 +30,14 @@ export default function NotificationTotalsPanel({ loading, stats }) {
       </h2>
       {loading ? (
         <div className={NOTIFICATION_METRIC_GRID_CLASS}>
-          <AdminMetricGroupCardSkeleton className="col-span-3" />
-          <AdminMetricGroupCardSkeleton className="col-span-3" />
+          <AdminMetricGroupCardSkeleton
+            className="col-span-3"
+            showHeader={false}
+          />
+          <AdminMetricGroupCardSkeleton
+            className="col-span-3"
+            showHeader={false}
+          />
         </div>
       ) : (
         <div className={NOTIFICATION_METRIC_GRID_CLASS}>

@@ -5,6 +5,7 @@ export default function ContactDetailsCard({
   contact,
   disableFilledFields = true,
   errors,
+  forceMobileLayout = false,
   onContactChange,
 }) {
   const disabledFields =
@@ -24,7 +25,11 @@ export default function ContactDetailsCard({
         {rsvpContent.contact.title}
       </h2>
 
-      <div className="grid gap-5 md:grid-cols-3 mt-4">
+      <div
+        className={`mt-4 grid gap-5 ${
+          forceMobileLayout ? "" : "md:grid-cols-3"
+        }`}
+      >
         <div>
           <Label>{rsvpContent.contact.fields.confirmationName.label}</Label>
 

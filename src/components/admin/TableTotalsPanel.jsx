@@ -22,10 +22,12 @@ export default function TableTotalsPanel({ loading, stats }) {
           <AdminMetricGroupCardSkeleton
             className="col-span-2"
             itemCount={2}
+            showHeader={false}
           />
           <AdminMetricGroupCardSkeleton
             className="col-span-2"
             itemCount={2}
+            showHeader={false}
           />
         </div>
       ) : (

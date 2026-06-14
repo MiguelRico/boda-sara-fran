@@ -62,6 +62,7 @@ export default function RsvpForm({
 }) {
   const detectedIsMobileView = useIsMobileView();
   const isMobileView = forcedIsMobileView ?? detectedIsMobileView;
+  const publicFlowIsMobileView = variant !== "admin" ? true : isMobileView;
   const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
   const [guestPage, setGuestPage] = useState(1);
   const [guestPageDirection, setGuestPageDirection] = useState(1);
@@ -118,7 +119,7 @@ export default function RsvpForm({
   const handleSubmit = (event) => {
     onSubmit(event);
   };
-  const isMobilePublicFlow = variant !== "admin" && isMobileView;
+  const isMobilePublicFlow = variant !== "admin";
 
   if (isMobilePublicFlow) {
     return (
@@ -138,7 +139,7 @@ export default function RsvpForm({
         guestPageDirection={guestPageDirection}
         guests={guests}
         hasInvalidGuest={hasInvalidGuest}
-        isMobileView={isMobileView}
+        isMobileView={publicFlowIsMobileView}
         loading={loading}
         onAddGuest={handleAddGuest}
         onContactChange={onContactChange}
@@ -450,6 +451,7 @@ function MobilePublicRsvpFlow({
                   contact={contact}
                   disableFilledFields={disableContactFields}
                   errors={errors}
+                  forceMobileLayout
                   onContactChange={onContactChange}
                 />
               </div>
@@ -487,6 +489,7 @@ function MobilePublicRsvpFlow({
                         canRemove={false}
                         card
                         errors={errors}
+                        forceMobileLayout
                         guest={items[0]}
                         index={pageNumber - 1}
                         onGuestChange={onGuestChange}
@@ -716,6 +719,7 @@ function GuestPager({
       canRemove={false}
       card={card}
       errors={errors}
+      forceMobileLayout={variant !== "admin"}
       guest={items[0]}
       index={pageNumber - 1}
       onGuestChange={onGuestChange}

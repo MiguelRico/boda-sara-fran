@@ -155,27 +155,25 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
             tone="secondary"
             value={provider.phone || "-"}
           />
-          {provider.web && (
+          {provider.web ? (
             <Chip
-              className="col-span-2"
               href={webHref}
               icon={<Globe size={13} strokeWidth={1.8} />}
               target="_blank"
               tone="secondary"
               value="Web"
             />
+          ) : (
+            <span aria-hidden="true" />
           )}
           <Chip
+            className="col-span-2"
             icon={<BriefcaseBusiness size={13} strokeWidth={1.8} />}
             strong
             value={`${provider.services.length} servicios · ${paymentCount} ${
               paymentCount === 1 ? "plazo" : "plazos"
-            }`}
-          />
-          <Chip
-            icon={<Euro size={13} strokeWidth={1.8} />}
-            strong
-            value={formatCurrency(total)}
+            } · ${formatCurrency(total)}`}
+            valueClassName="whitespace-normal break-words leading-snug"
           />
           <Chip
             className="col-span-2"

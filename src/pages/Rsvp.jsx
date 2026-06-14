@@ -59,7 +59,12 @@ export default function Rsvp() {
   );
 }
 
-export function RsvpPageShell({ children, spinner, wrapperRef }) {
+export function RsvpPageShell({
+  children,
+  innerClassName = "max-w-4xl py-6",
+  spinner,
+  wrapperRef,
+}) {
   return (
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
@@ -67,7 +72,7 @@ export function RsvpPageShell({ children, spinner, wrapperRef }) {
       <CinematicSection
         id="search"
         className="surface-soft"
-        innerClassName="max-w-4xl py-6"
+        innerClassName={innerClassName}
         reveal={false}
       >
         <div ref={wrapperRef}>{children}</div>

@@ -1,6 +1,6 @@
 export default function TableSectionSkeleton({
   actions = true,
-  cardCount = 4,
+  cardCount = 1,
   columnsClassName = "",
   count = true,
   filters = false,

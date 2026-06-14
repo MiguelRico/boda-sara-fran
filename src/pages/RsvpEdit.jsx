@@ -35,10 +35,15 @@ export default function RsvpEdit() {
   }
 
   return (
-    <RsvpPageShell spinner={spinner} wrapperRef={rsvpRef}>
+    <RsvpPageShell
+      innerClassName="max-w-md py-6"
+      spinner={spinner}
+      wrapperRef={rsvpRef}
+    >
       <CinematicStaggeredRevealItem index={0} isVisible={rsvpInView}>
         <HeaderSection
           eyebrow={siteContent.rsvp.eyebrow}
+          isMobileView
           title="Modificar confirmación"
           titleAs="h1"
           text="Actualiza los invitados, alergias y transporte de vuestra confirmación."

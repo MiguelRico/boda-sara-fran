@@ -5,6 +5,7 @@ import {
   Bell,
   ChartColumn,
   ClipboardCheck,
+  Info,
   ListTodo,
   ReceiptText,
   Home,
@@ -221,6 +222,16 @@ function AdminLogin({
 function AdminDashboard() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5">
+      <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4">
+        <div className="flex items-start gap-3 text-center">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
+            <Info size={17} strokeWidth={1.8} />
+          </span>
+          <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+            {adminContent.auth.memoryNotice}
+          </p>
+        </div>
+      </section>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {siteContent.admin.cards.map((card, index) => (
           <AnimatedInfoCard

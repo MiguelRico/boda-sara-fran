@@ -32,8 +32,14 @@ export default function TaskTotalsPanel({ loading, stats }) {
       </h2>
       {loading ? (
         <div className={TASK_METRIC_GRID_CLASS}>
-          <AdminMetricGroupCardSkeleton className="col-span-3" />
-          <AdminMetricGroupCardSkeleton className="col-span-3" />
+          <AdminMetricGroupCardSkeleton
+            className="col-span-3"
+            showHeader={false}
+          />
+          <AdminMetricGroupCardSkeleton
+            className="col-span-3"
+            showHeader={false}
+          />
           <AdminMetricGroupCardSkeleton className="col-span-3" />
         </div>
       ) : (

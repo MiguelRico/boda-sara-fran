@@ -21,6 +21,7 @@ export default function GuestCard({
   canRemove,
   card = true,
   errors,
+  forceMobileLayout = false,
   guest,
   index,
   onGuestChange,
@@ -52,7 +53,9 @@ export default function GuestCard({
         </div>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div
+        className={`grid gap-5 ${forceMobileLayout ? "" : "md:grid-cols-2"}`}
+      >
         <div>
           <Label>{rsvpContent.guest.fields.name.label}</Label>
 
@@ -145,7 +148,11 @@ export default function GuestCard({
           {rsvpContent.guest.panels.allergies.text}
         </p>
         <div className="mt-3">
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div
+            className={`grid grid-cols-2 gap-2 ${
+              forceMobileLayout ? "" : "md:grid-cols-4"
+            }`}
+          >
             {COMMON_ALLERGIES.map((allergy) => {
               const checked = guest.allergies.includes(allergy);
 
@@ -190,7 +197,11 @@ export default function GuestCard({
         <p className="text-xs leading-relaxed text-[var(--color-accent)]">
           {rsvpContent.guest.panels.bus.text}
         </p>
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <div
+          className={`mt-3 grid gap-3 ${
+            forceMobileLayout ? "" : "md:grid-cols-2"
+          }`}
+        >
           <BusSelect
             label={rsvpContent.guest.fields.outboundBus.label}
             value={guest.outboundBus}
@@ -212,7 +223,11 @@ export default function GuestCard({
           <p className="text-xs leading-relaxed text-[var(--color-accent)]">
             {rsvpContent.guest.panels.seating.text}
           </p>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <div
+            className={`mt-3 grid gap-3 ${
+              forceMobileLayout ? "" : "md:grid-cols-2"
+            }`}
+          >
             <div>
               <Label>{rsvpContent.guest.fields.table.label}</Label>
 

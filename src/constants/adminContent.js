@@ -10,6 +10,8 @@ export const adminContent = {
     backHome: "Volver al inicio",
     loading: "Cargando datos...",
     error: "La contraseña no es correcta.",
+    memoryNotice:
+      "Los cambios del panel de administración se aplican en memoria hasta confirmarlos con el botón de guardar de cada página. Si pulsas deshacer cambios, se descartarán las modificaciones pendientes de esa página.",
   },
   stats: {
     header: {

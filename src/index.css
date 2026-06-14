@@ -3,6 +3,12 @@
 @theme {
   --font-serif: "Cormorant", ui-serif, Georgia, serif;
   --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+
+  --breakpoint-sm: 999999px;
+  --breakpoint-md: 999999px;
+  --breakpoint-lg: 999999px;
+  --breakpoint-xl: 999999px;
+  --breakpoint-2xl: 999999px;
 }
 
 :root {
@@ -72,7 +78,8 @@ body {
   }
 
   .cinematic-container {
-    @apply mx-auto w-full max-w-6xl;
+    @apply mx-auto w-full max-w-md;
+    max-width: 28rem !important;
   }
 
   .section-eyebrow {
