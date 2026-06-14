@@ -151,10 +151,9 @@ function AssignmentModal({
   const [removingSeat, setRemovingSeat] = useState("");
   const [seatToUnassign, setSeatToUnassign] = useState(null);
   const { currentPage, isMobileView, pageSize, totalPages } = usePagedData({
-    desktopPageSize: 4,
     items: assignedSeats,
-    mobilePageSize: 1,
     page,
+    pageSize: 1,
   });
   const { handlePageChange, pageDirection } = usePageTransition({
     currentPage,
@@ -372,7 +371,10 @@ function TableDiagram({ onSeatClick, onCenterClick, table }) {
         {onCenterClick && (
           <button
             type="button"
-            onClick={onCenterClick}
+            onClick={(event) => {
+              event.stopPropagation();
+              onCenterClick();
+            }}
             className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 px-3 py-1 text-center text-[0.75rem] font-semibold text-[var(--color-accent-dark)] transition hover:text-[var(--color-accent)] focus:outline-none"
           >
             {tableContent.card.centerAction}
@@ -489,6 +491,10 @@ function SeatDot({ onClick, seat, style }) {
   const guestName = seat.guest ? Guest.getFullName(seat.guest, "Invitado") : "";
   const initials = seat.guest ? getGuestInitials(seat.guest) : "";
   const Component = onClick ? "button" : "span";
+  const handleClick = (event) => {
+    event.stopPropagation();
+    onClick?.();
+  };
 
   return (
     <Component
@@ -507,7 +513,7 @@ function SeatDot({ onClick, seat, style }) {
             : "border-[var(--color-border-strong)] bg-white text-[var(--color-accent)]"
         }
       `}
-      onClick={onClick}
+      onClick={onClick ? handleClick : undefined}
       title={tableContent.card.seatTitle({ guestName, seat: seat.seat })}
       type={onClick ? "button" : undefined}
       style={style}

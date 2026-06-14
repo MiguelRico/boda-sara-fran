@@ -1402,6 +1402,7 @@ function TableCardsPage({
           onSeatClick={onSeatClick}
           onSelect={onSelect}
           onUnassignSeat={onUnassignSeat}
+          reveal={false}
           selected={getTableKey(table) === selectedTableKey}
           table={table}
         />
