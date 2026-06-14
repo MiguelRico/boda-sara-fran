@@ -1000,6 +1000,7 @@ export default function AdminTables() {
         <SeatAssignmentDialog
           assigning={assigningSeat}
           guests={assignableGuests}
+          pendingGuests={guestsPending}
           onAssign={handleAssignGuestToSeat}
           onCancel={handleCloseSeatAssignment}
           onRemove={handleRemoveGuestFromSeat}
@@ -1014,6 +1015,7 @@ export default function AdminTables() {
 function SeatAssignmentDialog({
   assigning,
   guests,
+  pendingGuests,
   onAssign,
   onCancel,
   onRemove,
@@ -1042,13 +1044,9 @@ function SeatAssignmentDialog({
   const canRemoveGuest = Boolean(currentGuest);
   const [selectedGuestKey, setSelectedGuestKey] = useState("");
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
-  const assignableGuests = guests.filter((guest) => {
-    if (currentGuest) {
-      return getPendingGuestRowKey(guest) !== currentGuestKey;
-    }
-
-    return !guest.table || !guest.seat;
-  });
+  const assignableGuests = pendingGuests.filter(
+    (guest) => getPendingGuestRowKey(guest) !== currentGuestKey,
+  );
   const availableConfirmations = Array.from(
     new Set(
       assignableGuests.map((guest) => guest.confirmationName).filter(Boolean),
@@ -1193,8 +1191,10 @@ function SeatAssignmentDialog({
           pageSize={pageSize}
           renderMeasurePage={(items) => (
             <PendingGuestsList
-              emptyText={getSeatAssignmentEmptyState(guests.length).text}
-              emptyTitle={getSeatAssignmentEmptyState(guests.length).title}
+              emptyText={getSeatAssignmentEmptyState(pendingGuests.length).text}
+              emptyTitle={
+                getSeatAssignmentEmptyState(pendingGuests.length).title
+              }
               guests={items}
               onSelect={() => {}}
               selectedGuestKey={effectiveSelectedGuestKey}
@@ -1202,8 +1202,10 @@ function SeatAssignmentDialog({
           )}
           renderPage={(items) => (
             <PendingGuestsList
-              emptyText={getSeatAssignmentEmptyState(guests.length).text}
-              emptyTitle={getSeatAssignmentEmptyState(guests.length).title}
+              emptyText={getSeatAssignmentEmptyState(pendingGuests.length).text}
+              emptyTitle={
+                getSeatAssignmentEmptyState(pendingGuests.length).title
+              }
               guests={items}
               onSelect={(guest) =>
                 setSelectedGuestKey(getPendingGuestRowKey(guest))
@@ -1211,7 +1213,7 @@ function SeatAssignmentDialog({
               selectedGuestKey={effectiveSelectedGuestKey}
             />
           )}
-          sourceItemsCount={guests.length}
+          sourceItemsCount={pendingGuests.length}
           title={seatLabel}
           totalPages={totalPages}
         />

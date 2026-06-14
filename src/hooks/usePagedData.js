@@ -7,24 +7,29 @@ export default function usePagedData({
   items,
   mobilePageSize,
   page,
+  pageSize,
 }) {
   const isMobileView = useIsMobileView();
 
   return useMemo(() => {
-    const pageSize = isMobileView ? mobilePageSize : desktopPageSize;
-    const totalPages = Math.max(Math.ceil(items.length / pageSize), 1);
+    const effectivePageSize =
+      pageSize || (isMobileView ? mobilePageSize : desktopPageSize) || 1;
+    const totalPages = Math.max(
+      Math.ceil(items.length / effectivePageSize),
+      1,
+    );
     const currentPage = Math.min(page, totalPages);
     const pagedItems = items.slice(
-      (currentPage - 1) * pageSize,
-      currentPage * pageSize,
+      (currentPage - 1) * effectivePageSize,
+      currentPage * effectivePageSize,
     );
 
     return {
       currentPage,
       isMobileView,
-      pageSize,
+      pageSize: effectivePageSize,
       pagedItems,
       totalPages,
     };
-  }, [desktopPageSize, isMobileView, items, mobilePageSize, page]);
+  }, [desktopPageSize, isMobileView, items, mobilePageSize, page, pageSize]);
 }
