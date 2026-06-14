@@ -6,7 +6,7 @@ import {
   AdminMetricGroupCardSkeleton,
 } from "./AdminMetricGrid";
 
-const TABLE_METRIC_GRID_CLASS = "grid grid-cols-3 gap-2 sm:gap-3";
+const TABLE_METRIC_GRID_CLASS = "grid grid-cols-4 gap-2 sm:gap-3";
 
 export default function TableTotalsPanel({ loading, stats }) {
   return (
@@ -19,13 +19,19 @@ export default function TableTotalsPanel({ loading, stats }) {
       </h2>
       {loading ? (
         <div className={TABLE_METRIC_GRID_CLASS}>
-          <AdminMetricGroupCardSkeleton className="col-span-3" itemCount={2} />
-          <AdminMetricGroupCardSkeleton className="col-span-3" itemCount={2} />
+          <AdminMetricGroupCardSkeleton
+            className="col-span-2"
+            itemCount={2}
+          />
+          <AdminMetricGroupCardSkeleton
+            className="col-span-2"
+            itemCount={2}
+          />
         </div>
       ) : (
         <div className={TABLE_METRIC_GRID_CLASS}>
           <AdminMetricGroupCard
-            className="col-span-3"
+            className="col-span-2"
             icon={<Grid2X2 size={22} strokeWidth={1.8} />}
             items={[
               {
@@ -39,10 +45,12 @@ export default function TableTotalsPanel({ loading, stats }) {
                 value: stats.totalSeats,
               },
             ]}
+            showHeaderIcon={false}
+            showHeaderTitle={false}
             title={adminContent.tables.overview.metrics.tableCount}
           />
           <AdminMetricGroupCard
-            className="col-span-3"
+            className="col-span-2"
             icon={<CircleCheckBig size={22} strokeWidth={1.8} />}
             items={[
               {
@@ -56,6 +64,8 @@ export default function TableTotalsPanel({ loading, stats }) {
                 value: stats.pendingSeats,
               },
             ]}
+            showHeaderIcon={false}
+            showHeaderTitle={false}
             title={adminContent.tables.overview.metrics.assignedSeats}
           />
         </div>

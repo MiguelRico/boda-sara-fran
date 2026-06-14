@@ -1,4 +1,5 @@
 import {
+  ArrowDown,
   CalendarDays,
   CheckCircle2,
   Circle,
@@ -19,7 +20,7 @@ import { formatDate } from "../../../utils/formatters";
 const priorityIcons = {
   alta: Siren,
   media: Flag,
-  baja: Flag,
+  baja: ArrowDown,
 };
 
 export default function TaskCards({
@@ -143,5 +144,5 @@ function getPriorityClassName(priority) {
     return `${baseClassName} border-amber-200 bg-amber-100 text-amber-700`;
   }
 
-  return `${baseClassName} border-emerald-200 bg-emerald-100 text-emerald-700`;
+  return `${baseClassName} border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)]`;
 }

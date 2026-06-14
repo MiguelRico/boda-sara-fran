@@ -149,10 +149,7 @@ export default function AdminStats() {
     () => buildNotificationStats(state.notifications),
     [state.notifications],
   );
-  const taskStats = useMemo(
-    () => buildTaskStats(state.tasks),
-    [state.tasks],
-  );
+  const taskStats = useMemo(() => buildTaskStats(state.tasks), [state.tasks]);
 
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
@@ -178,6 +175,11 @@ export default function AdminStats() {
 
           <CinematicStaggeredRevealItem index={2} isVisible={statsInView}>
             <div className="grid gap-5">
+              <TaskTotalsPanel loading={state.loading} stats={taskStats} />
+              <NotificationTotalsPanel
+                loading={state.loading}
+                stats={notificationStats}
+              />
               <StatsGuestTotalsPanel
                 chartStats={stats}
                 loading={state.loading}
@@ -188,11 +190,6 @@ export default function AdminStats() {
                 loading={state.loading}
                 stats={providerStats}
               />
-              <NotificationTotalsPanel
-                loading={state.loading}
-                stats={notificationStats}
-              />
-              <TaskTotalsPanel loading={state.loading} stats={taskStats} />
             </div>
           </CinematicStaggeredRevealItem>
         </div>
@@ -365,8 +362,8 @@ function BarChart({ colors = BAR_COLORS, compact = false, items }) {
 
         return (
           <div
-            className={`rounded-lg border border-[var(--color-border)] bg-white/45 ${
-              compact ? "p-1.5" : "p-2"
+            className={`rounded-lg bg-white/45 ${
+              compact ? "p-1.5" : "border border-[var(--color-border)] p-2"
             }`}
             key={item.label}
           >

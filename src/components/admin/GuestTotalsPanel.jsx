@@ -164,8 +164,10 @@ function BarChart({ colors = BAR_COLORS, compact = false, items }) {
 
         return (
           <div
-            className={`rounded-lg border border-[var(--color-border)] bg-white/45 ${
-              compact ? "p-1.5" : "p-2"
+            className={`rounded-lg bg-white/45 ${
+              compact
+                ? "p-1.5"
+                : "border border-[var(--color-border)] p-2"
             }`}
             key={item.label}
           >

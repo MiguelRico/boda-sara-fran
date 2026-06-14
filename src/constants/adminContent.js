@@ -502,16 +502,16 @@ export const adminContent = {
       text: "Checklist de preparativos, responsables, prioridades y fechas limite.",
     },
     overview: {
-      eyebrow: "Checklist",
+      eyebrow: "Tareas",
       title: "Tareas",
       metrics: {
         total: "Total",
         pending: "Pendientes",
         completed: "Completas",
         priority: "Prioridad",
-        highPriority: "Alta prioridad",
-        mediumPriority: "Media prioridad",
-        lowPriority: "Baja prioridad",
+        highPriority: "Alta",
+        mediumPriority: "Media",
+        lowPriority: "Baja",
         nextTask: "Proxima tarea",
       },
     },
@@ -529,13 +529,13 @@ export const adminContent = {
       dateToLabel: "Hasta",
     },
     list: {
-      eyebrow: "Checklist",
+      eyebrow: "Tareas por categoria",
       title: "Tareas por categoria",
       emptyTitle: "Sin tareas",
       emptyText: "Crea tareas para empezar a organizar la checklist.",
-      noFilterText: "No hay tareas que coincidan con los filtros seleccionados.",
-      categoryCount: (count) =>
-        `${count} ${count === 1 ? "tarea" : "tareas"}`,
+      noFilterText:
+        "No hay tareas que coincidan con los filtros seleccionados.",
+      categoryCount: (count) => `${count} ${count === 1 ? "tarea" : "tareas"}`,
     },
     actions: {
       add: "Agregar tarea",
@@ -568,7 +568,7 @@ export const adminContent = {
       warningEyebrow: "Aviso",
     },
     form: {
-      eyebrow: "Checklist",
+      eyebrow: "Tarea",
       title: "Tarea",
       fields: {
         category: "Categoria",

@@ -1,4 +1,10 @@
-import { CheckCircle2, ChevronDown, Flag, Siren } from "lucide-react";
+import {
+  ArrowDown,
+  CheckCircle2,
+  ChevronDown,
+  Flag,
+  Siren,
+} from "lucide-react";
 import { useState } from "react";
 
 import TaskCards from "./TaskCards";
@@ -59,7 +65,7 @@ function CategorySummary({ summary }) {
       <SummaryPill
         icon={<CheckCircle2 size={12} strokeWidth={2} />}
         label="Completas"
-        toneClassName="border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]"
+        toneClassName="border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-[var(--shadow-button)]"
         value={summary.completed}
       />
       <SummaryPill
@@ -75,9 +81,9 @@ function CategorySummary({ summary }) {
         value={summary.media}
       />
       <SummaryPill
-        icon={<Flag size={12} strokeWidth={2} />}
+        icon={<ArrowDown size={12} strokeWidth={2} />}
         label="Baja"
-        toneClassName="border-emerald-200 bg-emerald-100 text-emerald-700"
+        toneClassName="border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)]"
         value={summary.baja}
       />
     </div>

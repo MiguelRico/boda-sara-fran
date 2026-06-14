@@ -20,7 +20,7 @@ export function GuestOverviewMetricGrid({ metrics, stats }) {
   return (
     <div className={getGuestMetricGridClass()}>
       <AdminMetricGroupCard
-        className="col-span-3"
+        className="col-span-4"
         icon={<MailCheck size={22} strokeWidth={1.8} />}
         items={[
           {
@@ -39,18 +39,20 @@ export function GuestOverviewMetricGrid({ metrics, stats }) {
             value: stats.commentsCount,
           },
         ]}
+        showHeaderIcon={false}
+        showHeaderTitle={false}
         title={metrics.confirmations}
       />
 
       {isMenuModuleEnabled && (
         <AdminMetricGrid
-          className="col-span-3 grid grid-cols-2 gap-2 sm:gap-3"
+          className="col-span-4 grid grid-cols-2 gap-2 sm:gap-3"
           items={getMenuMetricItems(metrics, stats)}
         />
       )}
 
       <AdminMetricGroupCard
-        className="col-span-3"
+        className="col-span-2"
         icon={<AlertTriangle size={22} strokeWidth={1.8} />}
         items={[
           {
@@ -64,11 +66,13 @@ export function GuestOverviewMetricGrid({ metrics, stats }) {
             value: stats.otherAllergyCount,
           },
         ]}
+        showHeaderIcon={false}
+        showHeaderTitle={false}
         title={metrics.allergies}
       />
 
       <AdminMetricGroupCard
-        className="col-span-3"
+        className="col-span-2"
         icon={<BusFront size={22} strokeWidth={1.8} />}
         items={[
           {
@@ -82,6 +86,8 @@ export function GuestOverviewMetricGrid({ metrics, stats }) {
             value: stats.returnBusCount,
           },
         ]}
+        showHeaderIcon={false}
+        showHeaderTitle={false}
         title="Transporte"
       />
     </div>
@@ -91,21 +97,21 @@ export function GuestOverviewMetricGrid({ metrics, stats }) {
 export function GuestOverviewMetricGridSkeleton() {
   return (
     <div className={getGuestMetricGridClass()}>
-      <AdminMetricGroupCardSkeleton className="col-span-3" />
+      <AdminMetricGroupCardSkeleton className="col-span-4" />
       {isMenuModuleEnabled && (
         <AdminMetricGridSkeleton
-          className="col-span-3 grid grid-cols-2 gap-2 sm:gap-3"
+          className="col-span-4 grid grid-cols-2 gap-2 sm:gap-3"
           count={2}
         />
       )}
-      <AdminMetricGroupCardSkeleton className="col-span-3" itemCount={2} />
-      <AdminMetricGroupCardSkeleton className="col-span-3" itemCount={2} />
+      <AdminMetricGroupCardSkeleton className="col-span-2" itemCount={2} />
+      <AdminMetricGroupCardSkeleton className="col-span-2" itemCount={2} />
     </div>
   );
 }
 
 function getGuestMetricGridClass() {
-  return "grid grid-cols-3 gap-2 sm:gap-3";
+  return "grid grid-cols-4 gap-2 sm:gap-3";
 }
 
 function getMenuMetricItems(metrics, stats) {

@@ -297,6 +297,7 @@ export default function AdminTasks() {
 
         <CinematicStaggeredRevealItem index={4} isVisible={tasksInView}>
           <AdminTableSection
+            className="mt-4"
             actions={
               <TaskTableActions
                 loading={loading}
@@ -465,7 +466,11 @@ function TaskFilters({
         }
       : null,
     dateFrom
-      ? { key: "dateFrom", label: dateFrom, onRemove: () => onDateFromChange("") }
+      ? {
+          key: "dateFrom",
+          label: dateFrom,
+          onRemove: () => onDateFromChange(""),
+        }
       : null,
     dateTo
       ? { key: "dateTo", label: dateTo, onRemove: () => onDateToChange("") }
@@ -562,7 +567,8 @@ function filterTasks(tasks, { dateFrom, dateTo, priority, query, status }) {
       !normalizedQuery || searchableText.includes(normalizedQuery);
     const matchesStatus = !status || task.status === status;
     const matchesPriority = !priority || task.priority === priority;
-    const matchesDateFrom = !dateFrom || (task.maxDate && task.maxDate >= dateFrom);
+    const matchesDateFrom =
+      !dateFrom || (task.maxDate && task.maxDate >= dateFrom);
     const matchesDateTo = !dateTo || (task.maxDate && task.maxDate <= dateTo);
 
     return (
@@ -580,5 +586,7 @@ function upsertTask(tasks, task) {
 
   if (!exists) return normalizeTasks([...tasks, task]);
 
-  return normalizeTasks(tasks.map((item) => (item.id === task.id ? task : item)));
+  return normalizeTasks(
+    tasks.map((item) => (item.id === task.id ? task : item)),
+  );
 }

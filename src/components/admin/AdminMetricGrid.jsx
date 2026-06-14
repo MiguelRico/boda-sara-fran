@@ -75,22 +75,36 @@ export function AdminMetricGroupCard({
   className = "",
   icon,
   items,
+  showHeaderIcon = true,
+  showHeaderTitle = true,
   title,
 }) {
+  const hasHeader = (showHeaderIcon && icon) || (showHeaderTitle && title);
+
   return (
     <article
       className={`rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 sm:p-5 ${className}`}
     >
-      <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
-        {icon && (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)] sm:h-10 sm:w-10">
-            {icon}
-          </div>
-        )}
-        <p className="min-w-0 text-xs leading-snug text-[var(--color-muted)] sm:uppercase sm:tracking-[0.16em]">
-          {title}
-        </p>
-      </div>
+      {hasHeader && (
+        <div
+          className={`mb-3 grid items-center gap-2 ${
+            showHeaderIcon && icon
+              ? "grid-cols-[auto_minmax(0,1fr)]"
+              : "grid-cols-1"
+          }`}
+        >
+          {showHeaderIcon && icon && (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)] sm:h-10 sm:w-10">
+              {icon}
+            </div>
+          )}
+          {showHeaderTitle && title && (
+            <p className="min-w-0 text-xs leading-snug text-[var(--color-muted)] sm:uppercase sm:tracking-[0.16em]">
+              {title}
+            </p>
+          )}
+        </div>
+      )}
       <div className={`grid gap-2 ${getGroupColumnsClass(items.length)}`}>
         {items.map((item) => (
           <div className="min-w-0 text-center" key={item.label}>

@@ -25,6 +25,7 @@ export const ProviderService = {
     return {
       id,
       serviceId: overrides.serviceId || overrides.id || id,
+      category: normalizeString(overrides.category),
       name: normalizeString(overrides.name),
       paymentCount: Math.min(
         Math.max(Number(overrides.paymentCount) || 1, 1),
@@ -34,6 +35,7 @@ export const ProviderService = {
         ProviderPayment.normalize(overrides.payments?.[index]),
       ),
       price: normalizeString(overrides.price),
+      providerName: normalizeString(overrides.providerName),
     };
   },
 

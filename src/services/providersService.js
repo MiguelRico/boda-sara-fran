@@ -48,8 +48,10 @@ export function getNextPaymentInfoFromServices(services) {
         amount: Number(payment.amount) || 0,
         date: String(payment.date || "").trim(),
         paid: payment.paid,
+        serviceCategory: service.category || "",
         providerName: service.providerName || "",
         serviceName: service.name || "",
+        servicePrice: Number(service.price) || 0,
       })),
     )
     .filter((payment) => !payment.paid && payment.date);
@@ -60,7 +62,9 @@ export function getNextPaymentInfoFromServices(services) {
       count: 0,
       date: "",
       providerName: "",
+      serviceCategory: "",
       serviceName: "",
+      servicePrice: 0,
     };
   }
 
@@ -77,7 +81,9 @@ export function getNextPaymentInfoFromServices(services) {
     count: nextPayments.length,
     date: nextDate,
     providerName: nextPayments[0]?.providerName || "",
+    serviceCategory: nextPayments[0]?.serviceCategory || "",
     serviceName: nextPayments[0]?.serviceName || "",
+    servicePrice: nextPayments[0]?.servicePrice || 0,
   };
 }
 
@@ -92,9 +98,14 @@ export function buildProviderStats(providers) {
       const providerTotal = getProviderTotal(provider);
       const providerPaid = getProviderPaidTotal(provider);
       const paidServiceCount = provider.services.filter(isServicePaid).length;
+      const paymentCount = provider.services.reduce(
+        (total, service) => total + service.paymentCount,
+        0,
+      );
 
       return {
         paidServiceCount: stats.paidServiceCount + paidServiceCount,
+        paymentCount: stats.paymentCount + paymentCount,
         providerCount: stats.providerCount + 1,
         serviceCount: stats.serviceCount + provider.services.length,
         totalBudget: stats.totalBudget + providerTotal,
@@ -104,6 +115,7 @@ export function buildProviderStats(providers) {
     },
     {
       paidServiceCount: 0,
+      paymentCount: 0,
       providerCount: 0,
       serviceCount: 0,
       totalBudget: 0,
@@ -115,6 +127,7 @@ export function buildProviderStats(providers) {
     normalizedProviders.flatMap((provider) =>
       provider.services.map((service) => ({
         ...service,
+        category: provider.category,
         providerName: provider.name,
       })),
     ),
@@ -127,7 +140,9 @@ export function buildProviderStats(providers) {
     nextPaymentCount: nextPayment.count,
     nextPaymentDate: nextPayment.date,
     nextPaymentProviderName: nextPayment.providerName,
+    nextPaymentServiceCategory: nextPayment.serviceCategory,
     nextPaymentServiceName: nextPayment.serviceName,
+    nextPaymentServicePrice: nextPayment.servicePrice,
   };
 }
 

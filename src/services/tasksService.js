@@ -32,6 +32,7 @@ export function buildTaskStats(tasks) {
     completedCount: completedTasks.length,
     nextTaskCategory: nextTask?.category || "",
     nextTaskDate: nextTask?.maxDate || "",
+    nextTaskTitle: nextTask?.title || "",
     pendingCount: pendingTasks.length,
     priorityCounts,
     totalCount: normalizedTasks.length,

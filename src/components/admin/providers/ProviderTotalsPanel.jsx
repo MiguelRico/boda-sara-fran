@@ -8,10 +8,9 @@ import {
 } from "lucide-react";
 
 import { adminContent } from "../../../constants/adminContent";
+import { PROVIDER_CATEGORY_LABELS } from "../../../constants/providers";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
-import { AdminMetricGrid, AdminMetricGridSkeleton } from "../AdminMetricGrid";
-
-const PROVIDER_METRIC_GRID_CLASS = "grid grid-cols-2 gap-2 sm:gap-3";
+import { AdminMetricGridSkeleton } from "../AdminMetricGrid";
 
 export default function ProviderTotalsPanel({ loading, stats }) {
   const metrics = adminContent.providers.overview.metrics;
@@ -26,47 +25,40 @@ export default function ProviderTotalsPanel({ loading, stats }) {
       </h2>
       {loading ? (
         <AdminMetricGridSkeleton
-          className={PROVIDER_METRIC_GRID_CLASS}
+          className="grid grid-cols-1 gap-2 sm:gap-3"
           count={6}
         />
       ) : (
         <div className="space-y-3">
-          <AdminMetricGrid
-            className={PROVIDER_METRIC_GRID_CLASS}
-            items={[
-              {
-                icon: <BriefcaseBusiness size={22} strokeWidth={1.8} />,
-                label: metrics.providers,
-                value: stats.providerCount,
-              },
-              {
-                icon: <BadgeEuro size={22} strokeWidth={1.8} />,
-                label: metrics.services,
-                value: stats.serviceCount,
-              },
-            ]}
-          />
-
+          <ProviderOperationsSummary metrics={metrics} stats={stats} />
           <ProviderFinanceSummary metrics={metrics} stats={stats} />
-
-          <AdminMetricGrid
-            className="grid grid-cols-1 gap-2 sm:gap-3"
-            items={[
-              {
-                detail: [
-                  formatDate(stats.nextPaymentDate),
-                  formatCurrency(stats.nextPaymentAmount),
-                ].join(" · "),
-                icon: <CalendarDays size={22} strokeWidth={1.8} />,
-                label: metrics.nextService,
-                value: getNextServiceLabel(stats),
-              },
-            ]}
-          />
+          <ProviderNextServiceSummary metrics={metrics} stats={stats} />
         </div>
       )}
     </section>
   );
+}
+
+function ProviderOperationsSummary({ metrics, stats }) {
+  const items = [
+    {
+      icon: <BriefcaseBusiness size={18} strokeWidth={1.8} />,
+      label: metrics.providers,
+      value: stats.providerCount,
+    },
+    {
+      icon: <BadgeEuro size={18} strokeWidth={1.8} />,
+      label: metrics.services,
+      value: stats.serviceCount,
+    },
+    {
+      icon: <CalendarDays size={18} strokeWidth={1.8} />,
+      label: metrics.nextPayments,
+      value: stats.paymentCount,
+    },
+  ];
+
+  return <ProviderGroupedSummary items={items} />;
 }
 
 function ProviderFinanceSummary({ metrics, stats }) {
@@ -88,12 +80,13 @@ function ProviderFinanceSummary({ metrics, stats }) {
     },
   ];
 
+  return <ProviderGroupedSummary items={items} />;
+}
+
+function ProviderGroupedSummary({ items }) {
   return (
     <article className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 sm:p-5">
-      <p className="text-center text-xs leading-snug text-[var(--color-muted)] sm:uppercase sm:tracking-[0.16em]">
-        {metrics.paymentStatus}
-      </p>
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {items.map((item) => (
           <div className="min-w-0 text-center" key={item.label}>
             <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
@@ -112,10 +105,30 @@ function ProviderFinanceSummary({ metrics, stats }) {
   );
 }
 
-function getNextServiceLabel(stats) {
-  if (!stats.nextPaymentServiceName) return "-";
+function ProviderNextServiceSummary({ metrics, stats }) {
+  const serviceName = stats.nextPaymentServiceName || "-";
+  const category =
+    PROVIDER_CATEGORY_LABELS[stats.nextPaymentServiceCategory] ||
+    stats.nextPaymentServiceCategory ||
+    "-";
+  const amount = formatCurrency(
+    stats.nextPaymentServicePrice || stats.nextPaymentAmount,
+  );
 
-  if (!stats.nextPaymentProviderName) return stats.nextPaymentServiceName;
-
-  return `${stats.nextPaymentServiceName} · ${stats.nextPaymentProviderName}`;
+  return (
+    <article className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 text-center sm:p-5">
+      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
+        <CalendarDays size={22} strokeWidth={1.8} />
+      </div>
+      <p className="mt-3 text-xs leading-snug text-[var(--color-muted)] sm:uppercase sm:tracking-[0.16em]">
+        {metrics.nextService} ({formatDate(stats.nextPaymentDate)})
+      </p>
+      <p className="mt-2 break-words font-serif text-2xl leading-none text-[var(--color-accent-dark)] sm:text-3xl">
+        {serviceName}
+      </p>
+      <p className="mt-2 text-sm leading-snug text-[var(--color-muted)]">
+        {category} · {amount}
+      </p>
+    </article>
+  );
 }

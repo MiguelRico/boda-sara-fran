@@ -1,4 +1,11 @@
-import { Bell, BellOff, CircleAlert, CreditCard, MailCheck } from "lucide-react";
+import {
+  Bell,
+  BellOff,
+  CircleAlert,
+  CreditCard,
+  Inbox,
+  MailCheck,
+} from "lucide-react";
 
 import { adminContent } from "../../../constants/adminContent";
 import { GUESTS_TYPE } from "../../../models/AdminNotification";
@@ -30,10 +37,10 @@ export default function NotificationTotalsPanel({ loading, stats }) {
         <div className={NOTIFICATION_METRIC_GRID_CLASS}>
           <AdminMetricGroupCard
             className="col-span-3"
-            icon={<Bell size={22} strokeWidth={1.8} />}
+            icon={<Inbox size={22} strokeWidth={1.8} />}
             items={[
               {
-                icon: <Bell size={18} strokeWidth={1.8} />,
+                icon: <Inbox size={18} strokeWidth={1.8} />,
                 label: metrics.total,
                 value: stats.totalCount,
               },
@@ -48,6 +55,8 @@ export default function NotificationTotalsPanel({ loading, stats }) {
                 value: stats.unreadCount,
               },
             ]}
+            showHeaderIcon={false}
+            showHeaderTitle={false}
             title={metrics.total}
           />
           <AdminMetricGroupCard
@@ -70,6 +79,8 @@ export default function NotificationTotalsPanel({ loading, stats }) {
                 value: stats.typeCounts[GUESTS_TYPE] || 0,
               },
             ]}
+            showHeaderIcon={false}
+            showHeaderTitle={false}
             title={metrics.types}
           />
         </div>
