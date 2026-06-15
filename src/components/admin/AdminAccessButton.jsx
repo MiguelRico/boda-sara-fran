@@ -175,6 +175,7 @@ export default function AdminAccessButton() {
         label={
           isAuthenticated ? menuContent.openAuthenticated : menuContent.openGuest
         }
+        keepTextOnAdminSubpages
         onClick={handleMainClick}
         showText
         type="button"
@@ -190,6 +191,7 @@ export default function AdminAccessButton() {
           <IconButton
             className="w-full justify-start border-transparent bg-transparent shadow-none hover:bg-[var(--color-bg-soft)]"
             icon={<LayoutDashboard size={16} strokeWidth={1.8} />}
+            keepTextOnAdminSubpages
             label={menuContent.panel}
             onClick={handleNavigateAdmin}
             role="menuitem"
@@ -203,6 +205,7 @@ export default function AdminAccessButton() {
           <IconButton
             className="w-full justify-start border-transparent bg-transparent shadow-none hover:bg-[var(--color-bg-soft)]"
             icon={<LogOut size={16} strokeWidth={1.8} />}
+            keepTextOnAdminSubpages
             label={menuContent.logout}
             onClick={handleLogout}
             role="menuitem"

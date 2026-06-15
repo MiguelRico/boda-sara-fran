@@ -140,8 +140,8 @@ export default function AnimatedInfoCard({ card, index }) {
   return (
     <RevealOnView
       as="article"
-      amount={0.7}
-      margin="0px 0px -12% 0px"
+      amount={0.25}
+      margin="0px 0px -4% 0px"
       delay={index * 0.06}
       className={card.summaryView ? "h-auto w-fit max-w-full" : "h-full"}
     >

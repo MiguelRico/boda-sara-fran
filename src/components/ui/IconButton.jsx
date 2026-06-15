@@ -16,6 +16,7 @@ export default function IconButton({
   disabled = false,
   href,
   icon,
+  keepTextOnAdminSubpages = false,
   label,
   onClick,
   showText = true,
@@ -25,12 +26,17 @@ export default function IconButton({
   type = "button",
   ...props
 }) {
+  const isAdminSubpage =
+    typeof window !== "undefined" && window.location.pathname.startsWith("/admin/");
+  const effectiveShowText =
+    isAdminSubpage && !keepTextOnAdminSubpages ? false : showText;
   const accessibleLabel =
     label || (typeof children === "string" ? children : "");
   const hasText = Boolean(
-    showText && (typeof children === "string" || typeof children === "number"),
+    effectiveShowText &&
+      (typeof children === "string" || typeof children === "number"),
   );
-  const textClass = showText === "always" ? "inline" : "hidden";
+  const textClass = effectiveShowText === "always" ? "inline" : "hidden";
   const content = (
     <>
       {(icon || !hasText) && (
@@ -49,7 +55,7 @@ export default function IconButton({
   );
   const toneClass = toneClasses[tone] ?? toneClasses.secondary;
   const sizeClass = hasText
-    ? showText === "always"
+    ? effectiveShowText === "always"
       ? "min-h-11 gap-2 px-5 py-3"
       : "h-10 w-10"
     : "h-10 w-10";

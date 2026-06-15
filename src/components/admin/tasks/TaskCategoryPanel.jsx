@@ -25,7 +25,7 @@ export default function TaskCategoryPanel({
   return (
     <section className="rounded-[1rem] border border-[var(--color-border)] bg-white/35 p-2">
       <button
-        className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 text-left"
+        className="grid w-full grid-cols-[minmax(0,1fr)_8.75rem_auto] items-center gap-2 text-left"
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
@@ -62,7 +62,7 @@ export default function TaskCategoryPanel({
 
 function CategorySummary({ summary }) {
   return (
-    <div className="flex min-w-0 items-center justify-end gap-1">
+    <div className="grid w-[8.75rem] grid-cols-4 gap-1">
       <SummaryPill
         icon={<CheckCircle2 size={12} strokeWidth={2} />}
         label={adminContent.tasks.overview.metrics.completed}
@@ -95,7 +95,7 @@ function SummaryPill({ icon, label, toneClassName, value }) {
   return (
     <span
       aria-label={`${label}: ${value}`}
-      className={`inline-flex h-7 min-w-7 items-center justify-center gap-1 rounded-full border px-2 text-[0.68rem] font-semibold leading-none ${toneClassName}`}
+      className={`inline-flex h-7 w-8 items-center justify-center gap-0.5 rounded-full border text-[0.68rem] font-semibold leading-none ${toneClassName}`}
       title={`${label}: ${value}`}
     >
       {icon}

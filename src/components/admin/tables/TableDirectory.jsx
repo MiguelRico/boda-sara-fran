@@ -9,11 +9,7 @@ import { getTableKey } from "../../../services/tablesService";
 import { getTableRenderKey } from "../../../utils/renderKeys";
 import TableAnimatedInfoCard from "./TableAnimatedInfoCard";
 
-export function TableTabActions({
-  loading,
-  onCreate,
-  showText = true,
-}) {
+export function TableTabActions({ loading, onCreate, showText = true }) {
   if (!onCreate) return null;
 
   return (
@@ -95,7 +91,7 @@ export function PendingGuestAssignmentActions({
       </div>
 
       <IconButton
-        className="w-full self-end"
+        className="w-full self-end mt-2"
         disabled={!canAssign || assigning}
         icon={
           assigning ? (

@@ -12,7 +12,7 @@ export default function TableSectionSkeleton({
   return (
     <>
       {(count || actions) && (
-        <div className="mt-3 flex flex-col gap-3">
+        <div className="mt-4 flex flex-col gap-3">
           {count && (
             <SkeletonBlock className="h-4 w-56 max-w-full rounded-full" />
           )}
@@ -96,16 +96,14 @@ export function TableCardsSkeleton({
             <SkeletonBlock className="mt-3 h-7 w-44 max-w-[70%] rounded-full" />
           </div>
           <div className="relative mt-4 grid grid-cols-2 gap-2">
-            {Array.from({ length: Math.max(lines, 2) }).map(
-              (_, lineIndex) => (
-                <SkeletonBlock
-                  className={`h-9 rounded-full ${
-                    lineIndex > 1 ? "col-span-2" : ""
-                  }`}
-                  key={lineIndex}
-                />
-              ),
-            )}
+            {Array.from({ length: Math.max(lines, 2) }).map((_, lineIndex) => (
+              <SkeletonBlock
+                className={`h-9 rounded-full ${
+                  lineIndex > 1 ? "col-span-2" : ""
+                }`}
+                key={lineIndex}
+              />
+            ))}
           </div>
         </div>
       ))}

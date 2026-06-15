@@ -4,7 +4,11 @@ import { adminContent } from "../../../constants/adminContent";
 import { isMenuModuleEnabled } from "../../../config/features";
 import { Guest } from "../../../models";
 import CollapsiblePanel from "../../ui/CollapsiblePanel";
-import { AdminEmptyState, SelectableCardFrame, TableGuestCard } from "../common";
+import {
+  AdminEmptyState,
+  SelectableCardFrame,
+  TableGuestCard,
+} from "../common";
 import { selectClassName, Label } from "../../rsvp/FormPrimitives";
 
 export default function PendingGuestsList({
@@ -145,4 +149,3 @@ function getPendingGuestRowKey(guest) {
     `${guest.confirmationId || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`
   );
 }
-

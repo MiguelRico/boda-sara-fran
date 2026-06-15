@@ -65,7 +65,7 @@ export default function AdminTableSection({
         </h2>
 
         {!loading && (count || actions) && (
-          <div className="mt-3 flex flex-col gap-3">
+          <div className="mt-4 flex flex-col gap-3">
             {actions && (
               <div
                 className={`rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4 ${

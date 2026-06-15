@@ -106,6 +106,7 @@ export default function NotificationsAccessButton() {
         aria-haspopup="menu"
         className="relative bg-white/70 shadow-[0_18px_45px_rgba(52,69,49,0.12)] backdrop-blur-md hover:bg-white/90"
         icon={<Bell size={18} strokeWidth={1.8} />}
+        keepTextOnAdminSubpages
         label={adminContent.notifications.access.label}
         onClick={() => setIsOpen((current) => !current)}
         showText
@@ -176,6 +177,7 @@ export default function NotificationsAccessButton() {
           <IconButton
             className="mt-2 w-full justify-start border-transparent bg-transparent shadow-none hover:bg-[var(--color-bg-soft)]"
             icon={<Bell size={16} strokeWidth={1.8} />}
+            keepTextOnAdminSubpages
             label={adminContent.notifications.access.viewAll}
             onClick={() => {
               setIsOpen(false);

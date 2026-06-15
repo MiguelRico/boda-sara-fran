@@ -111,16 +111,18 @@ function TaskCard({ onDelete, onEdit, onToggleStatus, task }) {
     >
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
         <Chip
+          className="min-h-8"
           icon={<CalendarDays size={13} strokeWidth={1.8} />}
           value={formatDate(task.maxDate)}
         />
         <Chip
+          className="min-h-8"
           icon={<UserRound size={13} strokeWidth={1.8} />}
           value={task.responsible || "-"}
         />
         {task.description && (
           <Chip
-            className="col-span-2"
+            className="col-span-2 min-h-8"
             icon={<ClipboardList size={13} strokeWidth={1.8} />}
             value={task.description}
             valueClassName="whitespace-normal break-words leading-snug"

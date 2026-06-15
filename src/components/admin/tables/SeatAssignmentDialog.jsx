@@ -1,10 +1,7 @@
 import { useRef, useState } from "react";
 import { Check, Trash2 } from "lucide-react";
 
-import {
-  AdminTableSection,
-  SeatOccupantSummary,
-} from "../common";
+import { AdminTableSection, SeatOccupantSummary } from "../common";
 import DeleteDialog from "../../ui/DeleteDialog";
 import IconButton from "../../ui/IconButton";
 import SeatAssignmentModal from "../../ui/SeatAssignmentModal";
@@ -16,9 +13,7 @@ import useEffectiveSelection from "../../../hooks/useEffectiveSelection";
 import usePagedData from "../../../hooks/usePagedData";
 import usePageTransition from "../../../hooks/usePageTransition";
 import { DEFAULT_TABLE_PAGE_SIZE } from "../../../utils/paginationState";
-import PendingGuestsList, {
-  PendingGuestsFilters,
-} from "./PendingGuestsList";
+import PendingGuestsList, { PendingGuestsFilters } from "./PendingGuestsList";
 
 export default function SeatAssignmentDialog({
   assigning,
@@ -48,7 +43,9 @@ export default function SeatAssignmentDialog({
     : seat.guest
       ? Guest.getFullName(seat.guest, adminContent.common.fallbacks.guest)
       : "";
-  const currentGuestKey = currentGuest ? getPendingGuestRowKey(currentGuest) : "";
+  const currentGuestKey = currentGuest
+    ? getPendingGuestRowKey(currentGuest)
+    : "";
   const canRemoveGuest = Boolean(currentGuest);
   const [selectedGuestKey, setSelectedGuestKey] = useState("");
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
