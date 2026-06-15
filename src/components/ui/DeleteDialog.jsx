@@ -30,11 +30,19 @@ export default function DeleteDialog({
         aria-describedby={messageId}
         aria-labelledby={titleId}
         aria-modal="true"
-        className="premium-card rsvp-dialog-card"
+        className="premium-card rsvp-dialog-card relative"
         ref={dialogRef}
         role="alertdialog"
         tabIndex={-1}
       >
+        <IconButton
+          className="absolute right-4 top-4"
+          data-autofocus="true"
+          icon={<X size={17} strokeWidth={1.8} />}
+          label={cancelText}
+          onClick={onCancel}
+          type="button"
+        />
         <AlertTriangle
           className="mx-auto text-red-500"
           size={30}
@@ -54,10 +62,11 @@ export default function DeleteDialog({
         </p>
         {children}
         <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <div className="flex flex-col gap-3">
+          <div className="grid gap-3">
             <IconButton
-              className="flex-1"
+              className="w-full"
               icon={<Trash2 size={16} strokeWidth={1.8} />}
+              keepTextOnAdminSubpages
               label={confirmText}
               onClick={onConfirm}
               showText="always"
@@ -65,18 +74,6 @@ export default function DeleteDialog({
               type="button"
             >
               {confirmText}
-            </IconButton>
-            <IconButton
-              className="flex-1"
-              data-autofocus="true"
-              icon={<X size={16} strokeWidth={1.8} />}
-              label={cancelText}
-              onClick={onCancel}
-              showText="always"
-              tone="terciary"
-              type="button"
-            >
-              {cancelText}
             </IconButton>
           </div>
         </div>

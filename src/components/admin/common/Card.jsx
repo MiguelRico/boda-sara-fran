@@ -29,15 +29,13 @@ export default function Card({
       )}
 
       {hasActions && actionsPlacement === "overlay" && (
-        <div className="absolute right-5 top-4 z-20">
-          {actions}
-        </div>
+        <div className="absolute right-5 top-4 z-20">{actions}</div>
       )}
 
       <div className="relative flex h-full flex-col">
         <div>
           <p
-            className={`section-eyebrow mb-2 ${hasActions ? "mt-4" : ""} ${
+            className={`section-eyebrow mb-4 ${hasActions ? "mt-4" : ""} ${
               actionsPlacement === "overlay" ? "pr-24" : ""
             }`}
           >

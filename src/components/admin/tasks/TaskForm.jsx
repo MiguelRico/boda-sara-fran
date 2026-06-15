@@ -25,6 +25,7 @@ export default function TaskForm({ errors = {}, form, onChange, onSubmit }) {
         <IconButton
           className="w-full"
           icon={<Save size={16} strokeWidth={1.8} />}
+          keepTextOnAdminSubpages
           label={adminContent.tasks.actions.save}
           showText="always"
           tone="primary"

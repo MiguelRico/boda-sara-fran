@@ -148,6 +148,14 @@ export default function AdminTasks() {
     setTasks(normalizedTasks);
     setAdminTasks(normalizedTasks);
   };
+  const showPendingPopup = () => {
+    setPopup({
+      message: adminContent.tasks.dialogs.pendingMessage,
+      open: true,
+      title: adminContent.tasks.dialogs.pendingTitle,
+      type: "success",
+    });
+  };
   const handleCreateTask = () => {
     setErrors({});
     setEditingTask(createEmptyTask());
@@ -173,12 +181,7 @@ export default function AdminTasks() {
 
     applyTasks(upsertAdminTask(editingTask));
     setEditingTask(null);
-    setPopup({
-      message: adminContent.tasks.dialogs.pendingMessage,
-      open: true,
-      title: adminContent.tasks.dialogs.pendingTitle,
-      type: "success",
-    });
+    showPendingPopup();
   };
   const handleToggleStatus = (task) => {
     applyTasks(
@@ -191,12 +194,14 @@ export default function AdminTasks() {
           : item,
       ),
     );
+    showPendingPopup();
   };
   const handleDelete = () => {
     if (!deleteTarget) return;
 
     applyTasks(removeAdminTask(deleteTarget.id));
     setDeleteTarget(null);
+    showPendingPopup();
   };
   const handleDiscard = () => {
     const restoredTasks = discardAdminTaskChanges();

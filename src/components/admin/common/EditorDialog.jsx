@@ -27,7 +27,7 @@ export default function EditorDialog({
         role="dialog"
         tabIndex={-1}
       >
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
             <h2
               className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]"

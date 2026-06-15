@@ -23,11 +23,19 @@ export default function UnsavedChangesDialog({
       <div
         aria-labelledby={titleId}
         aria-modal="true"
-        className="premium-card rsvp-dialog-card"
+        className="premium-card rsvp-dialog-card relative flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden"
         ref={dialogRef}
         role="alertdialog"
         tabIndex={-1}
       >
+        <IconButton
+          className="absolute right-4 top-4"
+          data-autofocus="true"
+          icon={<X size={17} strokeWidth={1.8} />}
+          label={labels.keepEditing || "Cerrar"}
+          onClick={onCancel}
+          type="button"
+        />
         <p className="section-eyebrow mb-3">{labels.eyebrow}</p>
         <h2
           className="font-serif text-3xl text-[var(--color-accent-dark)]"
@@ -38,32 +46,34 @@ export default function UnsavedChangesDialog({
         <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
           {labels.text}
         </p>
-        <ul className="mt-4 max-h-48 space-y-2 overflow-y-auto text-left text-sm text-[var(--color-muted)]">
-          {uniqueChanges.map((change, index) => (
-            <li
-              className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
-              key={`${getChangeTitle(change)}-${index}`}
-            >
-              <p className="font-medium text-[var(--color-accent-dark)]">
-                {getChangeTitle(change)}
-              </p>
-              {Array.isArray(change?.details) && change.details.length > 0 && (
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-relaxed">
-                  {change.details.map((detail) => (
-                    <li key={detail}>{detail}</li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
         <DialogActions
           actions={actions}
           labels={labels}
-          onCancel={onCancel}
           onConfirm={onConfirm}
           onSaveAndExit={onSaveAndExit}
         />
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
+          <ul className="space-y-2 text-left text-sm text-[var(--color-muted)]">
+            {uniqueChanges.map((change, index) => (
+              <li
+                className="rounded-2xl border border-[var(--color-border)] bg-white/45 px-4 py-3"
+                key={`${getChangeTitle(change)}-${index}`}
+              >
+                <p className="font-medium text-[var(--color-accent-dark)]">
+                  {getChangeTitle(change)}
+                </p>
+                {Array.isArray(change?.details) &&
+                  change.details.length > 0 && (
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-relaxed">
+                      {change.details.map((detail) => (
+                        <li key={detail}>{detail}</li>
+                      ))}
+                    </ul>
+                  )}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
@@ -74,7 +84,6 @@ export default function UnsavedChangesDialog({
 function DialogActions({
   actions,
   labels,
-  onCancel,
   onConfirm,
   onSaveAndExit,
 }) {
@@ -93,33 +102,44 @@ function DialogActions({
         onClick: onSaveAndExit,
         tone: "primary",
       },
-      {
-        icon: <X size={16} strokeWidth={1.8} />,
-        label: labels.keepEditing,
-        onClick: onCancel,
-        tone: "terciary",
-      },
     ].filter((action) => action.label && action.onClick);
+  const filteredActions = dialogActions.filter(
+    (action) => !isCancelLikeAction(action, labels),
+  );
 
   return (
-    <div className="mt-6 flex flex-col gap-3">
-      {dialogActions.map((action) => (
-        <IconButton
-          className="flex-1"
-          data-autofocus={action.tone === "terciary" ? "true" : undefined}
-          disabled={action.disabled}
-          icon={action.icon}
-          key={action.label}
-          label={action.label}
-          onClick={action.onClick}
-          showText="always"
-          tone={action.tone}
-          type="button"
-        >
-          {action.label}
-        </IconButton>
-      ))}
+    <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+      <div className="grid gap-3">
+        {filteredActions.map((action) => (
+          <IconButton
+            className="w-full"
+            disabled={action.disabled}
+            icon={action.icon}
+            keepTextOnAdminSubpages
+            key={action.label}
+            label={action.label}
+            onClick={action.onClick}
+            showText="always"
+            tone={action.tone}
+            type="button"
+          >
+            {action.label}
+          </IconButton>
+        ))}
+      </div>
     </div>
+  );
+}
+
+function isCancelLikeAction(action, labels) {
+  const label = String(action?.label || "").toLowerCase();
+  const keepEditing = String(labels?.keepEditing || "").toLowerCase();
+
+  return (
+    (keepEditing && label === keepEditing) ||
+    label.includes("seguir editando") ||
+    label.includes("cancelar") ||
+    label.includes("cerrar")
   );
 }
 

@@ -25,6 +25,7 @@ export default function NotificationForm({
         <IconButton
           className="w-full"
           icon={<Save size={16} strokeWidth={1.8} />}
+          keepTextOnAdminSubpages
           label={content.save}
           showText="always"
           tone="primary"

@@ -114,6 +114,12 @@ export default function AdminTables() {
   const [pendingGuestsError, setPendingGuestsError] = useState("");
   const [selectedPendingGuestKey, setSelectedPendingGuestKey] = useState("");
   const [selectedTableKey, setSelectedTableKey] = useState("");
+  const [popup, setPopup] = useState({
+    message: "",
+    open: false,
+    title: "",
+    type: "success",
+  });
   const [activeTab, setActiveTab] = useAdminActiveTab(
     ADMIN_ACTIVE_TAB_KEY,
     "tables",
@@ -365,6 +371,15 @@ export default function AdminTables() {
     setTableToDelete(null);
   };
 
+  const showPendingPopup = useCallback(() => {
+    setPopup({
+      message: adminContent.tables.dialogs.pendingMessage,
+      open: true,
+      title: adminContent.tables.dialogs.pendingTitle,
+      type: "success",
+    });
+  }, []);
+
   const handleConfirmDeleteTable = async () => {
     if (!tableToDelete) return;
 
@@ -408,6 +423,7 @@ export default function AdminTables() {
     setSelectedTableKey("");
     setPage(1);
     setTableToDelete(null);
+    showPendingPopup();
   };
 
   const handleSeatClick = ({ seat, table }) => {
@@ -524,6 +540,7 @@ export default function AdminTables() {
           error: "",
         }));
         setAdminConfirmations(updatedConfirmations);
+        showPendingPopup();
       } catch (error) {
         console.error("Error al asignar mesa:", error);
         setState((prev) => ({
@@ -533,7 +550,7 @@ export default function AdminTables() {
         throw error;
       }
     },
-    [state.confirmations, tables],
+    [showPendingPopup, state.confirmations, tables],
   );
 
   const handlePendingGuestsFilterChange = (filterKey, value) => {
@@ -606,6 +623,7 @@ export default function AdminTables() {
         error: "",
       }));
       setAdminConfirmations(updatedConfirmations);
+      showPendingPopup();
     } catch (error) {
       console.error("Error al asignar asiento:", error);
       setState((prev) => ({
@@ -639,6 +657,7 @@ export default function AdminTables() {
         error: "",
       }));
       setAdminConfirmations(updatedConfirmations);
+      showPendingPopup();
     } catch (error) {
       console.error("Error al liberar asiento:", error);
       setState((prev) => ({
@@ -688,6 +707,7 @@ export default function AdminTables() {
     }
 
     handleCloseTableForm();
+    showPendingPopup();
   };
 
   const {
@@ -935,6 +955,14 @@ export default function AdminTables() {
         title={adminContent.tables.dialogs.problemTitle}
         type="error"
       />
+      <StatusDialog
+        eyebrow={adminContent.tables.dialogs.warningEyebrow}
+        message={popup.message}
+        onClose={() => setPopup((current) => ({ ...current, open: false }))}
+        open={popup.open}
+        title={popup.title}
+        type={popup.type}
+      />
 
       {showTableForm && (
         <TableEditorDialog
@@ -968,7 +996,6 @@ export default function AdminTables() {
         <SeatAssignmentDialog
           assigning={assigningSeat}
           guests={assignableGuests}
-          pendingGuests={guestsPending}
           onAssign={handleAssignGuestToSeat}
           onCancel={handleCloseSeatAssignment}
           onRemove={handleRemoveGuestFromSeat}

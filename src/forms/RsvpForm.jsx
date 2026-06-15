@@ -178,6 +178,7 @@ export default function RsvpForm({
               className="w-full"
               disabled={loading}
               icon={submitIcon}
+              keepTextOnAdminSubpages
               label={submitText}
               showText="always"
               tone="primary"

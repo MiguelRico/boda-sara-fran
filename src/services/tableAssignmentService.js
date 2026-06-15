@@ -207,6 +207,31 @@ export const assignGuestToSeatLocal = ({
   const tableName = getTableKey(table);
   const seatNumber = seat.seat;
   let selectedGuestFound = false;
+  let selectedOriginalAssignment = null;
+
+  confirmations.forEach((group) => {
+    group.guests.forEach((guest, index) => {
+      const isSelectedGuest = doesGuestMatch({
+        group,
+        confirmationId,
+        guest,
+        guestconfirmationName,
+        guestId,
+        guestIndex,
+        guestName,
+        index,
+      });
+
+      if (isSelectedGuest) {
+        selectedOriginalAssignment = {
+          table: guest.table,
+          tableId: guest.tableId,
+          seat: guest.seat,
+        };
+      }
+    });
+  });
+
   const updatedConfirmations = confirmations.map((group) => {
     let changed = false;
     const guests = group.guests.map((guest, index) => {
@@ -236,6 +261,18 @@ export const assignGuestToSeatLocal = ({
           tableId: table.tableId || table.id || "",
           table: tableName,
           seat: seatNumber,
+        };
+      }
+
+      if (
+        selectedOriginalAssignment?.table &&
+        selectedOriginalAssignment?.seat
+      ) {
+        return {
+          ...guest,
+          table: selectedOriginalAssignment.table,
+          tableId: selectedOriginalAssignment.tableId || "",
+          seat: selectedOriginalAssignment.seat,
         };
       }
 

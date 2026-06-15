@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Check } from "lucide-react";
+import { X } from "lucide-react";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
@@ -43,7 +43,7 @@ export default function StatusDialog({
   const dialog = (
     <div className="rsvp-dialog-overlay">
       <div
-        className="premium-card rsvp-dialog-card"
+        className="premium-card rsvp-dialog-card relative"
         role={role}
         aria-modal="true"
         aria-labelledby="status-dialog-title"
@@ -51,6 +51,14 @@ export default function StatusDialog({
         ref={dialogRef}
         tabIndex={-1}
       >
+        <IconButton
+          className="absolute right-4 top-4"
+          data-autofocus="true"
+          icon={<X size={17} strokeWidth={1.8} />}
+          label={closeText}
+          onClick={handleClose}
+          type="button"
+        />
         <p className="section-eyebrow mb-3">
           {eyebrow ??
             (type === "success"
@@ -73,18 +81,6 @@ export default function StatusDialog({
         </p>
 
         {children}
-
-        <IconButton
-          className="mt-8"
-          data-autofocus="true"
-          icon={<Check size={16} strokeWidth={1.8} />}
-          onClick={handleClose}
-          tone="primary"
-          type="button"
-          showText="always"
-        >
-          {closeText}
-        </IconButton>
       </div>
     </div>
   );

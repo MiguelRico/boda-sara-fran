@@ -3,7 +3,7 @@ import { Plus, Save, Trash2 } from "lucide-react";
 
 import { adminContent } from "../../../constants/adminContent";
 import { PROVIDER_CATEGORIES } from "../../../constants/providers";
-import { FieldError, FormCard, inputClassName } from "../../rsvp/FormPrimitives";
+import { FieldError, FormCard } from "../../rsvp/FormPrimitives";
 import CollapsiblePanel from "../../ui/CollapsiblePanel";
 import { SelectField, TextField } from "../../ui/FormFields";
 import IconButton from "../../ui/IconButton";
@@ -47,6 +47,7 @@ export default function ProviderForm({
           className="w-full"
           disabled={loading}
           icon={<Save size={16} strokeWidth={1.8} />}
+          keepTextOnAdminSubpages
           label={adminContent.providers.form.save}
           showText="always"
           tone="primary"
@@ -119,7 +120,7 @@ export default function ProviderForm({
 
       {showServiceFields && (
         <FormCard>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-4">
             <div>
               <p className="section-eyebrow mb-2">
                 {adminContent.providers.form.servicesTitle}
@@ -132,12 +133,17 @@ export default function ProviderForm({
             </div>
             {mode !== "service" && (
               <IconButton
+                className="w-full"
                 icon={<Plus size={16} strokeWidth={1.8} />}
+                keepTextOnAdminSubpages
                 label={adminContent.providers.form.addService}
                 onClick={onAddService}
+                showText="always"
                 tone="secondary"
                 type="button"
-              />
+              >
+                {adminContent.providers.form.addService}
+              </IconButton>
             )}
           </div>
 
@@ -178,12 +184,17 @@ export default function ProviderForm({
                   />
                   {mode !== "service" && (
                     <IconButton
+                      className="w-full"
                       icon={<Trash2 size={16} strokeWidth={1.8} />}
+                      keepTextOnAdminSubpages
                       label={adminContent.providers.form.deleteService}
                       onClick={() => onRemoveService(serviceIndex)}
+                      showText="always"
                       tone="danger"
                       type="button"
-                    />
+                    >
+                      {adminContent.providers.form.deleteService}
+                    </IconButton>
                   )}
                 </div>
 
@@ -191,66 +202,48 @@ export default function ProviderForm({
                   <AnimatePresence initial={false}>
                     {service.payments
                       .slice(0, service.paymentCount)
-                      .map((payment, paymentIndex) => (
-                        <motion.div
-                          animate="visible"
-                          className="rounded-2xl border border-[var(--color-border)] bg-white/50 p-3"
-                          exit="hidden"
-                          initial="hidden"
-                          key={paymentIndex}
-                          layout
-                          transition={paymentTransition}
-                          variants={paymentVariants}
-                        >
-                          <p className="section-eyebrow mb-3">
-                            {adminContent.providers.form.payment(paymentIndex + 1)}
-                          </p>
-                          <input
-                            className={inputClassName}
-                            onChange={(event) =>
-                              onPaymentChange(
-                                serviceIndex,
-                                paymentIndex,
-                                "amount",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="Importe"
-                            type="number"
-                            value={payment.amount}
+                      .map((payment, paymentIndex) => {
+                        const paymentTitle = adminContent.providers.form.payment(
+                          paymentIndex + 1,
+                        );
+                        const paymentFields = (
+                          <ProviderPaymentFields
+                            onPaymentChange={onPaymentChange}
+                            payment={payment}
+                            paymentIndex={paymentIndex}
+                            serviceIndex={serviceIndex}
                           />
-                          <input
-                            className={`${inputClassName} mt-3`}
-                            onChange={(event) =>
-                              onPaymentChange(
-                                serviceIndex,
-                                paymentIndex,
-                                "date",
-                                event.target.value,
-                              )
-                            }
-                            type="date"
-                            value={payment.date}
-                          />
-                          <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 px-4 py-3 text-sm text-[var(--color-accent-dark)] transition hover:bg-white">
-                            <span>Pagado</span>
-                            <input
-                              checked={payment.paid}
-                              className="peer sr-only"
-                              onChange={(event) =>
-                                onPaymentChange(
-                                  serviceIndex,
-                                  paymentIndex,
-                                  "paid",
-                                  event.target.checked,
-                                )
-                              }
-                              type="checkbox"
-                            />
-                            <span className="relative h-6 w-11 rounded-full bg-[var(--color-border-strong)] transition after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--color-accent-dark)] peer-checked:after:translate-x-full" />
-                          </label>
-                        </motion.div>
-                      ))}
+                        );
+
+                        return (
+                          <motion.div
+                            animate="visible"
+                            exit="hidden"
+                            initial="hidden"
+                            key={paymentIndex}
+                            layout
+                            transition={paymentTransition}
+                            variants={paymentVariants}
+                          >
+                            {service.paymentCount > 1 ? (
+                              <CollapsiblePanel
+                                className="bg-white/50"
+                                defaultOpen={paymentIndex === 0}
+                                title={paymentTitle}
+                              >
+                                {paymentFields}
+                              </CollapsiblePanel>
+                            ) : (
+                              <div className="rounded-2xl border border-[var(--color-border)] bg-white/50 p-3">
+                                <p className="section-eyebrow mb-3">
+                                  {paymentTitle}
+                                </p>
+                                {paymentFields}
+                              </div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
                   </AnimatePresence>
                 </div>
                 <FieldError>{errors[`service_${serviceIndex}_payments`]}</FieldError>
@@ -260,5 +253,50 @@ export default function ProviderForm({
         </FormCard>
       )}
     </form>
+  );
+}
+
+function ProviderPaymentFields({
+  onPaymentChange,
+  payment,
+  paymentIndex,
+  serviceIndex,
+}) {
+  return (
+    <div className="grid gap-3">
+      <TextField
+        label={adminContent.providers.form.fields.paymentAmount}
+        onChange={(value) =>
+          onPaymentChange(serviceIndex, paymentIndex, "amount", value)
+        }
+        type="number"
+        value={payment.amount}
+      />
+      <TextField
+        label={adminContent.providers.form.fields.paymentDate}
+        onChange={(value) =>
+          onPaymentChange(serviceIndex, paymentIndex, "date", value)
+        }
+        type="date"
+        value={payment.date}
+      />
+      <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 px-4 py-3 text-sm text-[var(--color-accent-dark)] transition hover:bg-white">
+        <span>{adminContent.providers.form.fields.paymentPaid}</span>
+        <input
+          checked={payment.paid}
+          className="peer sr-only"
+          onChange={(event) =>
+            onPaymentChange(
+              serviceIndex,
+              paymentIndex,
+              "paid",
+              event.target.checked,
+            )
+          }
+          type="checkbox"
+        />
+        <span className="relative h-6 w-11 rounded-full bg-[var(--color-border-strong)] transition after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--color-accent-dark)] peer-checked:after:translate-x-full" />
+      </label>
+    </div>
   );
 }

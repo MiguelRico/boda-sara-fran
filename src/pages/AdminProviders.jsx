@@ -227,6 +227,14 @@ export default function AdminProviders() {
     setProviders(normalizedProviders);
     setAdminProviders(normalizedProviders);
   };
+  const showPendingPopup = () => {
+    setPopup({
+      message: adminContent.providers.dialogs.pendingMessage,
+      open: true,
+      title: adminContent.providers.dialogs.pendingTitle,
+      type: "success",
+    });
+  };
   const handleSavePendingChanges = async () => {
     if (!hasPendingChanges) return true;
 
@@ -333,6 +341,7 @@ export default function AdminProviders() {
     }
 
     setDeleteTarget(null);
+    showPendingPopup();
   };
   const {
     blocker,
@@ -370,6 +379,7 @@ export default function AdminProviders() {
     }
 
     setEditingProvider(null);
+    showPendingPopup();
   };
   const handleProviderChange = (field, value) => {
     setEditingProvider((current) => ({

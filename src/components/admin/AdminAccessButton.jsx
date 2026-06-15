@@ -153,9 +153,11 @@ export default function AdminAccessButton() {
           changes={logoutChanges}
           labels={{
             eyebrow: adminContent.tables.dialogs.unsavedEyebrow,
+            keepEditing: "Cerrar",
             text: menuContent.pendingText,
             title: menuContent.pendingTitle,
           }}
+          onCancel={() => setLogoutChanges(null)}
           titleId="admin-logout-unsaved-changes-title"
         />
       )}

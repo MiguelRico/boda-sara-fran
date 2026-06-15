@@ -27,6 +27,7 @@ export const uiContent = {
     title: "No se pudo cargar",
   },
   seat: {
+    assignedTo: "Asignado a",
     label: "Asiento",
     emptyOccupant: "Sin asignar",
   },

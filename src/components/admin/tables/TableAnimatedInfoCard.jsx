@@ -5,7 +5,7 @@ import {
   Fish,
   Heart,
   MessageCircle,
-  Trash2,
+  Unlink,
   UsersRound,
 } from "lucide-react";
 import { useRef, useState } from "react";
@@ -25,7 +25,6 @@ import {
   AdminTableSection,
   Card,
   CardActions,
-  SeatOccupantSummary,
   SelectableCardFrame,
   TableGuestCard,
 } from "../common";
@@ -173,10 +172,6 @@ function AssignmentModal({
     assignedSeats.find(
       (seat) => getAssignedSeatKey(seat) === effectiveSelectedSeatKey,
     ) || null;
-  const selectedSeatGuestName = selectedSeat?.guest
-    ? Guest.getFullName(selectedSeat.guest, adminContent.common.fallbacks.guest)
-    : "";
-
   const handleConfirmUnassignSeat = async () => {
     if (!onUnassignSeat) return;
     if (!seatToUnassign) return;
@@ -210,7 +205,8 @@ function AssignmentModal({
               <IconButton
                 className="w-full"
                 disabled={!selectedSeat || removingSeat === selectedSeat?.seat}
-                icon={<Trash2 size={16} strokeWidth={1.8} />}
+                icon={<Unlink size={16} strokeWidth={1.8} />}
+                keepTextOnAdminSubpages
                 label={adminContent.tables.dialogs.unassignSeat}
                 onClick={() => selectedSeat && setSeatToUnassign(selectedSeat)}
                 showText="always"
@@ -240,12 +236,6 @@ function AssignmentModal({
           pageDirection={pageDirection}
           pageLabel={adminContent.tables.header.pageLabel}
           pageSize={pageSize}
-          summary={
-            <SeatOccupantSummary
-              guestName={selectedSeatGuestName}
-              seat={selectedSeat?.seat}
-            />
-          }
           renderMeasurePage={(items) => (
             <AssignedSeatsPage
               emptyState={getAssignedSeatsEmptyState(assignedSeats.length)}

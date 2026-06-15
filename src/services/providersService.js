@@ -149,11 +149,13 @@ export function buildProviderStats(providers) {
 }
 
 export function buildPendingProviderChanges(savedProviders, currentProviders) {
+  const normalizedSavedProviders = normalizeProviders(savedProviders);
+  const normalizedCurrentProviders = normalizeProviders(currentProviders);
   const savedById = new Map(
-    savedProviders.map((provider) => [provider.id, provider]),
+    normalizedSavedProviders.map((provider) => [provider.id, provider]),
   );
   const currentById = new Map(
-    currentProviders.map((provider) => [provider.id, provider]),
+    normalizedCurrentProviders.map((provider) => [provider.id, provider]),
   );
   const changes = [];
 
@@ -182,9 +184,7 @@ export function buildPendingProviderChanges(savedProviders, currentProviders) {
     }
   });
 
-  return changes.length
-    ? changes
-    : [adminContent.common.changes.providerPending];
+  return changes;
 }
 
 export function isServicePaid(service) {

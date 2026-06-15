@@ -66,17 +66,17 @@ export default function TableForm({
     <form className="mt-4" noValidate onSubmit={onSubmit}>
       <div className="mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
         <div
-          className={`grid w-full gap-3 ${
-            onDelete ? "grid-cols-2" : "grid-cols-1"
-          }`}
+          className="grid w-full grid-cols-1 gap-3"
         >
           {onDelete && (
             <IconButton
               className="w-full"
               disabled={loading}
               icon={<Trash2 size={16} strokeWidth={1.8} />}
+              keepTextOnAdminSubpages
               label={tableContent.form.deleteLabel}
               onClick={onDelete}
+              showText="always"
               tone="danger"
               type="button"
             >
@@ -88,7 +88,9 @@ export default function TableForm({
             className="w-full"
             disabled={loading}
             icon={<Save size={16} strokeWidth={1.8} />}
+            keepTextOnAdminSubpages
             label={content.submitText}
+            showText="always"
             tone="primary"
             type="submit"
           >

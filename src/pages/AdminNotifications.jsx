@@ -182,6 +182,14 @@ export default function AdminNotifications() {
     setEditingNotification(null);
     setErrors({});
   };
+  const showPendingPopup = () => {
+    setStatusPopup({
+      message: adminContent.notifications.dialogs.pendingMessage,
+      open: true,
+      title: adminContent.notifications.dialogs.pendingTitle,
+      type: "success",
+    });
+  };
 
   const handleSaveNotification = (event) => {
     event.preventDefault();
@@ -194,12 +202,7 @@ export default function AdminNotifications() {
     const nextNotifications = upsertAdminNotification(form);
     syncNotifications(nextNotifications);
     closeEditor();
-    setStatusPopup({
-      message: adminContent.notifications.dialogs.pendingMessage,
-      open: true,
-      title: adminContent.notifications.dialogs.pendingTitle,
-      type: "success",
-    });
+    showPendingPopup();
   };
 
   const handleToggleRead = (notification) => {
@@ -227,6 +230,7 @@ export default function AdminNotifications() {
     syncNotifications(nextNotifications);
     setCurrentPage(1);
     setDeleteTarget(null);
+    showPendingPopup();
   };
 
   const handleDiscard = () => {

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Check, Trash2 } from "lucide-react";
+import { Armchair, Shuffle, Unlink } from "lucide-react";
 
 import { AdminTableSection, SeatOccupantSummary } from "../common";
 import DeleteDialog from "../../ui/DeleteDialog";
@@ -18,7 +18,6 @@ import PendingGuestsList, { PendingGuestsFilters } from "./PendingGuestsList";
 export default function SeatAssignmentDialog({
   assigning,
   guests,
-  pendingGuests,
   onAssign,
   onCancel,
   onRemove,
@@ -49,9 +48,7 @@ export default function SeatAssignmentDialog({
   const canRemoveGuest = Boolean(currentGuest);
   const [selectedGuestKey, setSelectedGuestKey] = useState("");
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
-  const assignableGuests = pendingGuests.filter(
-    (guest) => getPendingGuestRowKey(guest) !== currentGuestKey,
-  );
+  const assignableGuests = guests;
   const availableConfirmations = Array.from(
     new Set(
       assignableGuests.map((guest) => guest.confirmationName).filter(Boolean),
@@ -94,6 +91,16 @@ export default function SeatAssignmentDialog({
     pageSize,
     selectedId: selectedGuestKey,
   });
+  const selectedGuestHasSeat = Boolean(selectedGuest?.table && selectedGuest?.seat);
+  const selectedGuestIsCurrent = Boolean(
+    selectedGuest && getPendingGuestRowKey(selectedGuest) === currentGuestKey,
+  );
+  const assignLabel = assigning
+    ? adminContent.tables.dialogs.assigning
+    : selectedGuestHasSeat
+      ? adminContent.tables.dialogs.swapSeat
+      : adminContent.tables.dialogs.assign;
+  const AssignIcon = selectedGuestHasSeat ? Shuffle : Armchair;
 
   const handleAssign = () => {
     if (!selectedGuest) return;
@@ -120,9 +127,7 @@ export default function SeatAssignmentDialog({
       [filterKey]: value,
     }));
   };
-  const seatAssignmentEmptyState = getSeatAssignmentEmptyState(
-    pendingGuests.length,
-  );
+  const seatAssignmentEmptyState = getSeatAssignmentEmptyState(guests.length);
 
   return (
     <>
@@ -135,18 +140,16 @@ export default function SeatAssignmentDialog({
       >
         <AdminTableSection
           actions={
-            <div
-              className={`grid w-full gap-3 ${
-                canRemoveGuest ? "grid-cols-2" : "grid-cols-1"
-              }`}
-            >
+            <div className="grid w-full grid-cols-1 gap-3">
               {canRemoveGuest && (
                 <IconButton
                   className="w-full"
                   disabled={assigning}
-                  icon={<Trash2 size={16} strokeWidth={1.8} />}
+                  icon={<Unlink size={16} strokeWidth={1.8} />}
+                  keepTextOnAdminSubpages
                   label={adminContent.tables.dialogs.remove}
                   onClick={() => setShowRemoveConfirm(true)}
+                  showText="always"
                   tone="danger"
                   type="button"
                 >
@@ -156,20 +159,16 @@ export default function SeatAssignmentDialog({
 
               <IconButton
                 className="w-full"
-                disabled={!selectedGuest || assigning}
-                icon={<Check size={16} strokeWidth={1.8} />}
-                label={
-                  assigning
-                    ? adminContent.tables.dialogs.assigning
-                    : adminContent.tables.dialogs.assign
-                }
+                disabled={!selectedGuest || selectedGuestIsCurrent || assigning}
+                icon={<AssignIcon size={16} strokeWidth={1.8} />}
+                keepTextOnAdminSubpages
+                label={assignLabel}
                 onClick={handleAssign}
+                showText="always"
                 tone="primary"
                 type="button"
               >
-                {assigning
-                  ? adminContent.tables.dialogs.assigning
-                  : adminContent.tables.dialogs.assign}
+                {assignLabel}
               </IconButton>
             </div>
           }
@@ -219,11 +218,12 @@ export default function SeatAssignmentDialog({
               selectedGuestKey={effectiveSelectedGuestKey}
             />
           )}
-          sourceItemsCount={pendingGuests.length}
+          sourceItemsCount={guests.length}
           summary={
             <SeatOccupantSummary
               guestName={currentGuestName}
               seat={seat.seat}
+              title="Asignado a"
             />
           }
           title={seatLabel}

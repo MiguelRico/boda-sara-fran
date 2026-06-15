@@ -30,7 +30,7 @@ export default function SeatAssignmentModal({
         role="dialog"
         tabIndex={-1}
       >
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4">
           <div>
             {eyebrow && <p className="section-eyebrow mb-2">{eyebrow}</p>}
             <h2

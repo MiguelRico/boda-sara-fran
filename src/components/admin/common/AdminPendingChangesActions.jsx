@@ -109,10 +109,12 @@ export default function AdminPendingChangesActions({
           changes={changes}
           labels={{
             eyebrow: dialogEyebrow,
+            keepEditing: keepEditingLabel || uiContent.actions.close,
             text: dialogMode === "discard" ? discardDialogText : saveDialogText,
             title:
               dialogMode === "discard" ? discardDialogTitle : saveDialogTitle,
           }}
+          onCancel={closeDialog}
           titleId={`admin-pending-${dialogMode}-changes-title`}
         />
       )}
