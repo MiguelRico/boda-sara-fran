@@ -7,9 +7,10 @@ export default function HistorySection() {
   const { history } = siteContent.details;
 
   return (
-    <CinematicSection id="history" className="surface-soft max-w-7xl py-6">
+    <CinematicSection id="history" className="surface-soft ">
       <div>
         <HeaderSection
+          className="max-w-7xl py-6"
           eyebrow={history.eyebrow}
           title={history.title}
           titleAs="h1"
