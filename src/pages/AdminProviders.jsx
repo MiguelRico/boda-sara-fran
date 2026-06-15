@@ -2,24 +2,18 @@ import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
-  Plus,
   Save,
-  Search,
   Trash2,
   X,
 } from "lucide-react";
 
-import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import { ADMIN_PASSWORD } from "../constants/admin";
 import { adminContent } from "../constants/adminContent";
 import {
-  PROVIDER_CATEGORIES,
-  PROVIDER_CATEGORY_LABELS,
-} from "../constants/providers";
-import {
   buildProviderStats,
+  buildPendingProviderChanges,
   createEmptyProvider,
   createEmptyService,
-  isServicePaid,
   normalizeProviders,
   persistProviders,
 } from "../services/providersService";
@@ -29,28 +23,25 @@ import {
   markAdminDataSaved,
   setAdminProviders,
 } from "../services/adminDataStore";
-import AdminTableSection from "../components/admin/AdminTableSection";
-import AdminEntityTabs from "../components/admin/AdminEntityTabs";
-import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
-import AdminEditorDialog from "../components/admin/AdminEditorDialog";
-import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
+import {
+  AdminEntityTabs,
+  AdminPageShell,
+  AdminPendingChangesActions,
+  AdminTableSection,
+  EditorDialog as AdminEditorDialog,
+  UnsavedChangesDialog,
+} from "../components/admin/common";
 import {
   ProviderCardsPage,
+  ProviderFilters,
+  ProviderForm,
+  ProviderTableActions,
+  ProviderTotalsPanel,
   ServiceCardsPage,
-} from "../components/admin/providers/ProviderCards";
-import ProviderForm from "../components/admin/providers/ProviderForm";
-import ProviderTotalsPanel from "../components/admin/providers/ProviderTotalsPanel";
-import AdminPageShell from "../components/admin/AdminPageShell";
+} from "../components/admin/providers";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import {
-  inputClassName,
-  Label,
-  selectClassName,
-} from "../components/rsvp/FormPrimitives";
-import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import DeleteDialog from "../components/ui/DeleteDialog";
-import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import useIsMobileView from "../hooks/useIsMobileView";
@@ -59,11 +50,21 @@ import usePageTransition from "../hooks/usePageTransition";
 import useEffectiveSelection from "../hooks/useEffectiveSelection";
 import useAdminActiveTab from "../hooks/useAdminActiveTab";
 import useSpinner from "../hooks/useSpinner";
-import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
+import useAdminLocalChanges from "../hooks/useAdminLocalChanges";
+import { storageKeys } from "../config/storageKeys";
+import { isAdminSessionAuthenticated } from "../utils/adminSession";
+import {
+  filterProviders,
+  filterServices,
+  getDeleteTargetName,
+  getProviderEmptyState,
+  getProviderServices,
+  getServiceEmptyState,
+  upsertProvider,
+} from "../utils/providerPageUtils";
+import { DEFAULT_TABLE_PAGE_SIZE } from "../utils/paginationState";
 
-const desktopPageSize = 6;
-const mobilePageSize = 1;
-const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = "adminProvidersActiveTab";
+const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = storageKeys.adminActiveTabs.providers;
 const getEntityId = (item) => item.id;
 
 export default function AdminProviders() {
@@ -76,8 +77,7 @@ export default function AdminProviders() {
     once: true,
     amount: 0.1,
   });
-  const isAuthenticated =
-    window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  const isAuthenticated = isAdminSessionAuthenticated();
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [savedProviders, setSavedProviders] = useState([]);
   const [providers, setProviders] = useState([]);
@@ -139,14 +139,13 @@ export default function AdminProviders() {
   );
   const {
     currentPage,
-    pageSize,
+    pageSize: providerPageSize,
     pagedItems: pagedProviders,
     totalPages,
   } = usePagedData({
-    desktopPageSize,
     items: filteredProviders,
-    mobilePageSize,
     page,
+    pageSize: DEFAULT_TABLE_PAGE_SIZE,
   });
   const { handlePageChange, pageDirection } = usePageTransition({
     currentPage,
@@ -162,7 +161,7 @@ export default function AdminProviders() {
     getId: getEntityId,
     items: pagedProviders,
     onPageChange: setPage,
-    pageSize,
+    pageSize: providerPageSize,
     selectedId: selectedProviderId,
   });
 
@@ -184,10 +183,9 @@ export default function AdminProviders() {
     pagedItems: pagedServices,
     totalPages: servicesTotalPages,
   } = usePagedData({
-    desktopPageSize,
     items: filteredServices,
-    mobilePageSize,
     page: servicesPage,
+    pageSize: DEFAULT_TABLE_PAGE_SIZE,
   });
   const {
     handlePageChange: handleServicesPageChange,
@@ -208,15 +206,12 @@ export default function AdminProviders() {
     pageSize: servicesPageSize,
     selectedId: selectedServiceId,
   });
-  const hasPendingChanges =
-    JSON.stringify(savedProviders) !== JSON.stringify(providers);
   const pendingChanges = useMemo(
     () => buildPendingProviderChanges(savedProviders, providers),
     [providers, savedProviders],
   );
+  const hasPendingChanges = pendingChanges.length > 0;
   const stats = useMemo(() => buildProviderStats(providers), [providers]);
-
-  const blocker = useUnsavedChangesNavigation(hasPendingChanges);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -339,23 +334,16 @@ export default function AdminProviders() {
 
     setDeleteTarget(null);
   };
-  const handleCancelBlockedNavigation = () => {
-    blocker.reset?.();
-  };
-  const handleConfirmBlockedNavigation = () => {
-    handleDiscardPendingChanges();
-    blocker.proceed?.();
-  };
-  const handleSaveAndExitBlockedNavigation = async () => {
-    const saved = await handleSavePendingChanges();
-
-    if (saved) {
-      blocker.proceed?.();
-      return;
-    }
-
-    blocker.reset?.();
-  };
+  const {
+    blocker,
+    cancelBlockedNavigation,
+    discardAndContinueNavigation,
+    saveAndContinueNavigation,
+  } = useAdminLocalChanges({
+    hasPendingChanges,
+    onDiscard: handleDiscardPendingChanges,
+    onSave: handleSavePendingChanges,
+  });
   const handleSubmitProvider = (event) => {
     event.preventDefault();
 
@@ -438,9 +426,9 @@ export default function AdminProviders() {
       {blocker.state === "blocked" && (
         <UnsavedProviderChangesDialog
           changes={pendingChanges}
-          onCancel={handleCancelBlockedNavigation}
-          onConfirm={handleConfirmBlockedNavigation}
-          onSaveAndExit={handleSaveAndExitBlockedNavigation}
+          onCancel={cancelBlockedNavigation}
+          onConfirm={discardAndContinueNavigation}
+          onSaveAndExit={saveAndContinueNavigation}
           saving={spinner.loading}
         />
       )}
@@ -459,8 +447,10 @@ export default function AdminProviders() {
           <AdminPendingChangesActions
             changes={pendingChanges}
             discardLabel={adminContent.providers.actions.discardChanges}
-            discardDialogText="Se desharan los cambios pendientes de proveedores y servicios."
-            discardDialogTitle="Deshacer cambios de proveedores"
+            discardDialogText={adminContent.providers.dialogs.discardPendingText}
+            discardDialogTitle={
+              adminContent.providers.dialogs.discardPendingTitle
+            }
             hasPendingChanges={hasPendingChanges}
             onDiscard={handleDiscardPendingChanges}
             onSave={handleSavePendingChanges}
@@ -511,7 +501,7 @@ export default function AdminProviders() {
                 page={loadingProviders ? undefined : currentPage}
                 pageDirection={pageDirection}
                 pageLabel={adminContent.providers.list.pageLabel}
-                pageSize={loadingProviders ? undefined : pageSize}
+                pageSize={loadingProviders ? undefined : providerPageSize}
                 renderMeasurePage={(items) => (
                   <ProviderCardsPage
                     emptyState={getProviderEmptyState(providers.length)}
@@ -541,8 +531,8 @@ export default function AdminProviders() {
                   />
                 )}
                 skeletonConfig={{
+                  actionCount: 3,
                   content: {
-                    columnsClassName: "lg:grid-cols-2",
                     itemClassName: "min-h-40",
                     lines: 3,
                   },
@@ -567,7 +557,7 @@ export default function AdminProviders() {
                 contentRef={tableStartRef}
                 count={
                   selectedProvider
-                    ? `${adminContent.providers.list.pageLabel}: ${selectedProvider.name || "Proveedor sin nombre"}`
+                    ? `${adminContent.providers.list.pageLabel}: ${selectedProvider.name || adminContent.common.fallbacks.provider}`
                     : ""
                 }
                 eyebrow={adminContent.providers.services.eyebrow}
@@ -648,8 +638,8 @@ export default function AdminProviders() {
                   />
                 )}
                 skeletonConfig={{
+                  actionCount: 2,
                   content: {
-                    columnsClassName: "lg:grid-cols-2",
                     itemClassName: "min-h-40",
                     lines: 3,
                   },
@@ -812,282 +802,4 @@ function getProviderEditorTitle({ mode, provider, providers, serviceId }) {
   return providers.some((item) => item.id === provider.id)
     ? adminContent.providers.dialogs.editTitle
     : adminContent.providers.dialogs.createTitle;
-}
-
-function ProviderFilters({
-  category = "",
-  onCategoryChange,
-  onPaymentStatusChange,
-  onQueryChange,
-  paymentStatus = "",
-  query,
-  showCategory = true,
-  showPaymentStatus = false,
-}) {
-  const selectedCategory = showCategory
-    ? PROVIDER_CATEGORIES.find((item) => item.value === category)
-    : null;
-  const selectedPaymentStatus = adminContent.providers.filters.paymentStatuses.find(
-    (item) => item.value === paymentStatus,
-  );
-  const activeFilters = [
-    query.trim()
-      ? { key: "query", label: query.trim(), onRemove: () => onQueryChange("") }
-      : null,
-    selectedCategory
-      ? {
-          key: "category",
-          label: selectedCategory.label,
-          onRemove: () => onCategoryChange?.(""),
-        }
-      : null,
-    selectedPaymentStatus
-      ? {
-          key: "paymentStatus",
-          label: selectedPaymentStatus.label,
-          onRemove: () => onPaymentStatusChange?.(""),
-        }
-      : null,
-  ].filter(Boolean);
-
-  return (
-    <CollapsiblePanel
-      activeFilters={activeFilters}
-      title={adminContent.providers.filters.eyebrow}
-    >
-      <div
-        className={`grid gap-4 ${
-          showCategory && showPaymentStatus
-            ? "lg:grid-cols-[1fr_14rem_14rem]"
-            : showCategory || showPaymentStatus
-              ? "lg:grid-cols-[1fr_18rem]"
-              : "lg:grid-cols-1"
-        } lg:items-end`}
-      >
-        <div>
-          <Label>{adminContent.providers.filters.searchLabel}</Label>
-          <label className="relative block">
-            <Search
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
-              size={18}
-              strokeWidth={1.8}
-            />
-            <input
-              className={`${inputClassName} pl-12`}
-              onChange={(event) => onQueryChange(event.target.value)}
-              placeholder={adminContent.providers.filters.searchPlaceholder}
-              type="search"
-              value={query}
-            />
-          </label>
-        </div>
-
-        {showCategory && (
-          <div>
-            <Label>{adminContent.providers.filters.categoryLabel}</Label>
-            <select
-              className={selectClassName}
-              onChange={(event) => onCategoryChange?.(event.target.value)}
-              value={category}
-            >
-              <option value="">
-                {adminContent.providers.filters.allCategories}
-              </option>
-              {PROVIDER_CATEGORIES.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {showPaymentStatus && (
-          <div>
-            <Label>{adminContent.providers.filters.paymentStatusLabel}</Label>
-            <select
-              className={selectClassName}
-              onChange={(event) => onPaymentStatusChange?.(event.target.value)}
-              value={paymentStatus}
-            >
-              <option value="">
-                {adminContent.providers.filters.allPaymentStatuses}
-              </option>
-              {adminContent.providers.filters.paymentStatuses.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-    </CollapsiblePanel>
-  );
-}
-
-function ProviderTableActions({
-  loading,
-  onCreate,
-  showText,
-}) {
-  if (!onCreate) return null;
-
-  return (
-    <div className="grid w-full gap-3">
-      <IconButton
-        className="w-full"
-        disabled={loading}
-        icon={<Plus size={18} strokeWidth={2.4} />}
-        label={adminContent.providers.actions.add}
-        onClick={onCreate}
-        showText={showText ? "always" : undefined}
-        tone="primary"
-        type="button"
-      >
-        {showText ? adminContent.providers.actions.add : undefined}
-      </IconButton>
-    </div>
-  );
-}
-
-function filterProviders(providers, { category, query }) {
-  const normalizedQuery = query.trim().toLowerCase();
-
-  return providers.filter((provider) => {
-    const matchesCategory = !category || provider.category === category;
-    const searchableText = [
-      provider.name,
-      provider.email,
-      provider.phone,
-      PROVIDER_CATEGORY_LABELS[provider.category],
-      ...provider.services.map((service) => service.name),
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    return (
-      matchesCategory &&
-      (!normalizedQuery || searchableText.includes(normalizedQuery))
-    );
-  });
-}
-
-function getProviderServices(providers) {
-  return providers.flatMap((provider) =>
-    provider.services.map((service) => ({
-      ...service,
-      category: provider.category,
-      providerId: provider.id,
-      providerName: provider.name || "Proveedor sin nombre",
-    })),
-  );
-}
-
-function filterServices(services, { paymentStatus, query }) {
-  const normalizedQuery = query.trim().toLowerCase();
-
-  return services.filter((service) => {
-    const matchesPaymentStatus =
-      !paymentStatus ||
-      (paymentStatus === "paid" && isServicePaid(service)) ||
-      (paymentStatus === "unpaid" && !isServicePaid(service));
-    const searchableText = String(service.name || "").toLowerCase();
-
-    return (
-      matchesPaymentStatus &&
-      (!normalizedQuery || searchableText.includes(normalizedQuery))
-    );
-  });
-}
-
-function getDeleteTargetName(deleteTarget) {
-  if (deleteTarget.type === "service") {
-    return deleteTarget.service?.name || "Servicio sin nombre";
-  }
-
-  return deleteTarget.provider?.name || "Proveedor sin nombre";
-}
-
-function getProviderEmptyState(sourceCount) {
-  if (sourceCount > 0) {
-    return {
-      text: adminContent.providers.list.noFilterText,
-      title: adminContent.providers.list.emptyTitle,
-    };
-  }
-
-  return {
-    text: adminContent.providers.list.emptyText,
-    title: adminContent.providers.list.emptyTitle,
-  };
-}
-
-function getServiceEmptyState(providerCount, serviceCount, selectedProvider) {
-  if (providerCount === 0) {
-    return {
-      text: adminContent.providers.services.noProvidersText,
-      title: adminContent.providers.services.noProvidersTitle,
-    };
-  }
-
-  if (!selectedProvider) {
-    return {
-      text: adminContent.providers.services.noSelectionText,
-      title: adminContent.providers.services.noSelectionTitle,
-    };
-  }
-
-  if (serviceCount > 0) {
-    return {
-      text: adminContent.providers.services.noFilterText,
-      title: adminContent.providers.services.emptyTitle,
-    };
-  }
-
-  return {
-    text: adminContent.providers.services.emptyText,
-    title: adminContent.providers.services.emptyTitle,
-  };
-}
-
-function buildPendingProviderChanges(savedProviders, currentProviders) {
-  const savedById = new Map(
-    savedProviders.map((provider) => [provider.id, provider]),
-  );
-  const currentById = new Map(
-    currentProviders.map((provider) => [provider.id, provider]),
-  );
-  const changes = [];
-
-  currentById.forEach((provider, providerId) => {
-    const savedProvider = savedById.get(providerId);
-
-    if (!savedProvider) {
-      changes.push(`Proveedor creado: ${provider.name || "sin nombre"}`);
-      return;
-    }
-
-    if (JSON.stringify(savedProvider) !== JSON.stringify(provider)) {
-      changes.push(`Proveedor modificado: ${provider.name || "sin nombre"}`);
-    }
-  });
-
-  savedById.forEach((provider, providerId) => {
-    if (!currentById.has(providerId)) {
-      changes.push(`Proveedor eliminado: ${provider.name || "sin nombre"}`);
-    }
-  });
-
-  return changes.length ? changes : ["Cambios pendientes en proveedores"];
-}
-
-function upsertProvider(providers, provider) {
-  const exists = providers.some((item) => item.id === provider.id);
-
-  if (!exists) return normalizeProviders([...providers, provider]);
-
-  return normalizeProviders(
-    providers.map((item) => (item.id === provider.id ? provider : item)),
-  );
 }

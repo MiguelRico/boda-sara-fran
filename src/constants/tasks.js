@@ -1,4 +1,4 @@
-import { siteContent } from "./siteContent";
+import { siteContent } from "../config/siteContent";
 
 export const TASK_CATEGORIES = [
   { value: "ceremonia", label: "Ceremonia" },

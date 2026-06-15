@@ -15,9 +15,7 @@ import {
 } from "lucide-react";
 
 import {
-  ADMIN_AUTH_EVENT,
   ADMIN_PASSWORD,
-  ADMIN_SESSION_KEY,
 } from "../constants/admin";
 import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeaderSection from "../components/ui/HeaderSection";
@@ -32,10 +30,20 @@ import {
   inputClassName,
   Label,
 } from "../components/rsvp/FormPrimitives";
-import { siteContent } from "../constants/siteContent";
+import { siteContent } from "../config/siteContent";
 import { adminContent } from "../constants/adminContent";
+import { storageKeys } from "../config/storageKeys";
 import { loadAdminDataOnce } from "../services/adminDataStore";
 import useIsMobileView from "../hooks/useIsMobileView";
+import {
+  isAdminSessionAuthenticated,
+  setAdminSessionAuthenticated,
+  subscribeAdminAuthChange,
+} from "../utils/adminSession";
+import {
+  getLocalStorageValue,
+  setLocalStorageValue,
+} from "../utils/browserStorage";
 
 const adminCardIcons = {
   armchair: Armchair,
@@ -46,7 +54,8 @@ const adminCardIcons = {
   "receipt-text": ReceiptText,
 };
 
-const ADMIN_MEMORY_NOTICE_DISMISSED_KEY = "adminMemoryNoticeDismissed";
+const ADMIN_MEMORY_NOTICE_DISMISSED_KEY =
+  storageKeys.adminMemoryNoticeDismissed;
 
 const getAdminCard = (card) => {
   const Icon = adminCardIcons[card.icon];
@@ -71,7 +80,7 @@ export default function Admin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+    return isAdminSessionAuthenticated();
   });
 
   const canSubmit = useMemo(() => password.trim().length > 0, [password]);
@@ -79,14 +88,14 @@ export default function Admin() {
   useEffect(() => {
     const syncAuthState = () => {
       setIsAuthenticated(
-        window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true",
+        isAdminSessionAuthenticated(),
       );
     };
 
-    window.addEventListener(ADMIN_AUTH_EVENT, syncAuthState);
+    const unsubscribeAdminAuthChange = subscribeAdminAuthChange(syncAuthState);
 
     return () => {
-      window.removeEventListener(ADMIN_AUTH_EVENT, syncAuthState);
+      unsubscribeAdminAuthChange();
     };
   }, []);
 
@@ -97,8 +106,7 @@ export default function Admin() {
       try {
         setLoading(true);
         await loadAdminDataOnce({ password: ADMIN_PASSWORD });
-        window.sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
-        window.dispatchEvent(new Event(ADMIN_AUTH_EVENT));
+        setAdminSessionAuthenticated();
         setIsAuthenticated(true);
         setError("");
         setPassword("");
@@ -204,7 +212,7 @@ function AdminLogin({
             tone="primary"
             type="submit"
           >
-            Entrar
+            {adminContent.auth.submit}
           </IconButton>
 
           <IconButton
@@ -214,7 +222,7 @@ function AdminLogin({
             to="/"
             tone="terciary"
           >
-            Volver al inicio
+            {adminContent.auth.backHome}
           </IconButton>
         </div>
       </form>
@@ -226,7 +234,7 @@ function AdminDashboard() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5">
       <AdminMemoryNotice />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4">
         {siteContent.admin.cards.map((card, index) => (
           <AnimatedInfoCard
             key={card.title}
@@ -242,14 +250,12 @@ function AdminDashboard() {
 function AdminMemoryNotice() {
   const [hideForever, setHideForever] = useState(false);
   const [visible, setVisible] = useState(() => {
-    return (
-      window.localStorage.getItem(ADMIN_MEMORY_NOTICE_DISMISSED_KEY) !== "true"
-    );
+    return getLocalStorageValue(ADMIN_MEMORY_NOTICE_DISMISSED_KEY) !== "true";
   });
 
   const handleClose = () => {
     if (hideForever) {
-      window.localStorage.setItem(ADMIN_MEMORY_NOTICE_DISMISSED_KEY, "true");
+      setLocalStorageValue(ADMIN_MEMORY_NOTICE_DISMISSED_KEY, "true");
     }
 
     setVisible(false);
@@ -275,12 +281,12 @@ function AdminMemoryNotice() {
               onChange={(event) => setHideForever(event.target.checked)}
               type="checkbox"
             />
-            No mostrar más
+            {adminContent.auth.memoryNoticeHideForever}
           </label>
         </div>
         <IconButton
           icon={<X size={15} strokeWidth={1.9} />}
-          label="Cerrar aviso"
+          label={adminContent.auth.memoryNoticeDismiss}
           onClick={handleClose}
           tone="terciary"
           type="button"

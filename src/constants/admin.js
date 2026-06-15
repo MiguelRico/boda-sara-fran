@@ -1,6 +1,3 @@
-export const ADMIN_PASSWORD =
-  import.meta.env.VITE_ADMIN_PASSWORD || "sara-fran-admin";
+import { appEnvironment } from "../config/environment";
 
-export const ADMIN_SESSION_KEY = "boda-sara-fran-admin-auth";
-
-export const ADMIN_AUTH_EVENT = "boda-sara-fran-admin-auth-change";
+export const ADMIN_PASSWORD = appEnvironment.adminPassword;

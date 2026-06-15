@@ -48,7 +48,7 @@ export default function SearchInvitationCard({
           <p className={textClassName}>{rsvpContent.searchInvitation.text}</p>
         </div>
 
-        <div className="mb-4 grid gap-4 sm:grid-cols-2">
+        <div className="mb-4 grid gap-4">
           <div>
             <Label>{rsvpContent.searchInvitation.emailLabel}</Label>
 
@@ -81,7 +81,7 @@ export default function SearchInvitationCard({
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row-reverse">
+        <div className="flex flex-col gap-4">
           <IconButton
             className="flex-1"
             disabled={loading}

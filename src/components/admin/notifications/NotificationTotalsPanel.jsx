@@ -12,10 +12,10 @@ import { GUESTS_TYPE } from "../../../models/AdminNotification";
 import {
   AdminMetricGroupCard,
   AdminMetricGroupCardSkeleton,
-} from "../AdminMetricGrid";
+} from "../common";
 
 const NOTIFICATION_METRIC_GRID_CLASS =
-  "grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3";
+  "grid grid-cols-3 gap-2";
 
 export default function NotificationTotalsPanel({ loading, stats }) {
   const metrics = adminContent.notifications.overview.metrics;

@@ -1,7 +1,7 @@
 import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../ui/HeaderSection";
 import ImageCarousel from "../ui/ImageCarousel";
-import { siteContent } from "../../constants/siteContent";
+import { siteContent } from "../../config/siteContent";
 
 export default function HistorySection() {
   const { history } = siteContent.details;
@@ -19,7 +19,7 @@ export default function HistorySection() {
         <ImageCarousel
           images={history.images}
           className="mx-auto mt-4 max-w-4xl"
-          imageClassName="aspect-[4/5] w-full text-center sm:aspect-[16/10] lg:aspect-[16/9]"
+          imageClassName="aspect-[4/5] w-full text-center"
           imageLoading="eager"
         />
       </div>

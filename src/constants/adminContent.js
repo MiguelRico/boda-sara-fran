@@ -12,6 +12,66 @@ export const adminContent = {
     error: "La contraseña no es correcta.",
     memoryNotice:
       "Los cambios del panel de administración se aplican en memoria hasta confirmarlos con el botón de guardar de cada página. Si pulsas deshacer cambios, se descartarán las modificaciones pendientes de esa página.",
+    memoryNoticeDismiss: "Cerrar aviso",
+    memoryNoticeHideForever: "No mostrar más",
+    accessMenu: {
+      adminLabel: "Admin",
+      openAuthenticated: "Abrir menú admin",
+      openGuest: "Acceso admin",
+      panel: "Panel admin",
+      logout: "Cerrar sesión",
+      pendingTitle: "Cambios pendientes",
+      pendingText:
+        "Eliminar cambios limpiará todo cambio en memoria de admin. Guardar cambios los enviará a Apps Script antes de cerrar sesión.",
+      deleteChanges: "Eliminar cambios",
+      saveChanges: "Guardar cambios",
+      discardChanges: "Deshacer cambios",
+    },
+  },
+  common: {
+    changes: {
+      confirmationCreated: (label) => `Confirmación creada: ${label}`,
+      confirmationModified: (label) => `Confirmación modificada: ${label}`,
+      confirmationEdited: (label) => `Confirmación editada: ${label}`,
+      confirmationDeleted: (label) => `Confirmación eliminada: ${label}`,
+      confirmationNew: "Confirmación nueva",
+      tableCreated: (label) => `Mesa creada: ${label}`,
+      tableModified: (label) => `Mesa modificada: ${label}`,
+      tableDeleted: (label) => `Mesa eliminada: ${label}`,
+      providerCreated: (label) => `Proveedor creado: ${label}`,
+      providerModified: (label) => `Proveedor modificado: ${label}`,
+      providerDeleted: (label) => `Proveedor eliminado: ${label}`,
+      providerPending: "Cambios pendientes en proveedores",
+      notificationCreated: (label) => `Notificación creada: ${label}`,
+      notificationModified: (label) => `Notificación modificada: ${label}`,
+      notificationDeleted: (label) => `Notificación eliminada: ${label}`,
+      taskCreated: (label) => `Tarea creada: ${label}`,
+      taskModified: (label) => `Tarea modificada: ${label}`,
+      taskDeleted: (label) => `Tarea eliminada: ${label}`,
+      guestDeleted: (label) => `Invitado eliminado: ${label}`,
+      contact: (labels) => `Contacto: ${labels.join(", ")}`,
+      guestsAdded: (labels) => `Invitados añadidos: ${labels.join(", ")}`,
+      guestsRemoved: (labels) => `Invitados eliminados: ${labels.join(", ")}`,
+      guestsModified: (labels) =>
+        `Invitados modificados: ${labels.join(", ")}`,
+      noUnsavedChanges: "Cambios sin guardar",
+      contactFields: {
+        confirmationName: "Nombre de confirmación",
+        email: "Email",
+        phone: "Teléfono",
+      },
+    },
+    fallbacks: {
+      confirmation: "Confirmación sin nombre",
+      group: "Grupo sin nombre",
+      guest: "Invitado sin nombre",
+      notification: "Notificación sin título",
+      provider: "Proveedor sin nombre",
+      service: "Servicio sin nombre",
+      task: "Tarea sin título",
+      unnamed: "sin nombre",
+    },
+    separator: " · ",
   },
   stats: {
     header: {
@@ -62,6 +122,7 @@ export const adminContent = {
     overview: {
       eyebrow: "Confirmaciones",
       title: "Confirmaciones",
+      emptyAllergies: "Sin alergias registradas",
       metrics: {
         confirmations: "Recibidas",
         guests: "Invitados",
@@ -106,6 +167,10 @@ export const adminContent = {
       guestListTitle: "Invitados",
       guestCountLabel: ({ page, total }) => `${page} / ${total}`,
     },
+    validation: {
+      duplicateEmail: "Ya existe una confirmación con este email.",
+      duplicatePhone: "Ya existe una confirmación con este teléfono.",
+    },
     guestList: {
       eyebrow: "Invitados confirmados",
       title: "Invitados confirmados",
@@ -137,6 +202,9 @@ export const adminContent = {
       groupEditorTitle: "Editar confirmación",
       guestEditorTitle: "Editar invitado",
       guestListEditorTitle: "Editar invitados",
+      discardPendingTitle: "Deshacer cambios de invitados",
+      discardPendingText:
+        "Se desharán los cambios pendientes de confirmaciones e invitados.",
       unsavedTitle: "Se perderan los cambios",
       unsavedMessage:
         "Tienes cambios sin guardar en esta confirmacion. Si sales ahora, se perderan.",
@@ -174,6 +242,8 @@ export const adminContent = {
       warningEyebrow: "Aviso",
       problemTitle: "Ha ocurrido un problema",
       close: "Cerrar",
+      fallbackGuestDeleteTarget: "este invitado",
+      fallbackConfirmationDeleteTarget: "esta confirmación",
     },
     spinner: {
       create: "Creando confirmación...",
@@ -255,6 +325,9 @@ export const adminContent = {
       unsavedTitle: "Se perderan los cambios",
       unsavedText:
         "Tienes cambios pendientes en mesas. Si sales ahora, no se enviaran a Apps Script.",
+      discardPendingTitle: "Deshacer cambios de mesas",
+      discardPendingText:
+        "Se desharán los cambios pendientes de mesas y asignaciones.",
       keepEditing: "Seguir editando",
       exitWithoutSaving: "Salir sin guardar",
       saveAndExit: "Guardar y salir",
@@ -284,6 +357,12 @@ export const adminContent = {
       assign: "No se pudo asignar el asiento. Intenta de nuevo.",
       assignTable: "No se pudo asignar la mesa. Intenta de nuevo.",
       unassign: "No se pudo liberar el asiento. Intenta de nuevo.",
+      groupNotFound: "Grupo de invitación no encontrado",
+      guestNotFound: "Invitado no encontrado en el grupo",
+      tableNotFound: "Mesa no encontrada",
+      seatUnavailable: "El asiento no está disponible",
+      noGuestAssignedToSeat:
+        "No hay ningún invitado asignado a este asiento",
     },
     changes: {
       created: (name) => `Mesa creada: ${name}`,
@@ -383,6 +462,9 @@ export const adminContent = {
         `Se marcará para eliminar el servicio ${name}. Podrás deshacerlo antes de guardar los cambios.`,
       loadError: "No se pudieron cargar los proveedores.",
       saveError: "No se pudieron guardar los proveedores.",
+      discardPendingTitle: "Deshacer cambios de proveedores",
+      discardPendingText:
+        "Se desharán los cambios pendientes de proveedores y servicios.",
       unsavedText:
         "Tienes cambios pendientes en proveedores. Si sales ahora, no se guardarán.",
       warningEyebrow: "Aviso",
@@ -452,6 +534,10 @@ export const adminContent = {
         title: "Ej: Pago pendiente del fotógrafo",
       },
     },
+    validation: {
+      requiredDate: "La fecha es obligatoria",
+      requiredTitle: "El título es obligatorio",
+    },
     filters: {
       eyebrow: "Filtros",
       searchLabel: "Búsqueda",
@@ -515,6 +601,11 @@ export const adminContent = {
         mediumPriority: "Media",
         lowPriority: "Baja",
         nextTask: "Proxima tarea",
+      },
+      priorityLabels: {
+        high: "Alta",
+        medium: "Media",
+        low: "Baja",
       },
     },
     filters: {

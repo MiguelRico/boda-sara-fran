@@ -3,15 +3,15 @@ import { Bell, Inbox } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import IconButton from "../../ui/IconButton";
-import {
-  ADMIN_AUTH_EVENT,
-  ADMIN_PASSWORD,
-  ADMIN_SESSION_KEY,
-} from "../../../constants/admin";
-import { updateAdminNotificationRead } from "../../../api/notificationsApi";
+import { ADMIN_PASSWORD } from "../../../constants/admin";
 import { adminContent } from "../../../constants/adminContent";
+import {
+  isAdminSessionAuthenticated,
+  subscribeAdminAuthChange,
+} from "../../../utils/adminSession";
 import { AdminNotification } from "../../../models";
 import { CONFIRMATION_TYPE } from "../../../models/AdminNotification";
+import { updateNotificationRead } from "../../../services/notificationsService";
 import { NotificationChips } from "./NotificationCards";
 import {
   getAdminDataSnapshot,
@@ -19,14 +19,12 @@ import {
   markAdminNotificationRead,
 } from "../../../services/adminDataStore";
 
-function getAdminAuthState() {
-  return window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
-}
-
 export default function NotificationsAccessButton() {
   const navigate = useNavigate();
   const menuRef = useRef(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(getAdminAuthState);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    isAdminSessionAuthenticated,
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const visibleNotifications = notifications.filter(isVisibleNotification);
@@ -40,14 +38,14 @@ export default function NotificationsAccessButton() {
 
   useEffect(() => {
     const syncAuthState = () => {
-      setIsAuthenticated(getAdminAuthState());
+      setIsAuthenticated(isAdminSessionAuthenticated());
     };
 
-    window.addEventListener(ADMIN_AUTH_EVENT, syncAuthState);
+    const unsubscribeAdminAuthChange = subscribeAdminAuthChange(syncAuthState);
     window.addEventListener("storage", syncAuthState);
 
     return () => {
-      window.removeEventListener(ADMIN_AUTH_EVENT, syncAuthState);
+      unsubscribeAdminAuthChange();
       window.removeEventListener("storage", syncAuthState);
     };
   }, []);
@@ -92,7 +90,7 @@ export default function NotificationsAccessButton() {
   const handleMarkRead = (notificationId) => {
     markAdminNotificationRead(notificationId, { markSaved: true });
     refreshNotifications();
-    void updateAdminNotificationRead({
+    void updateNotificationRead({
       notificationId,
       password: ADMIN_PASSWORD,
       read: true,
@@ -102,7 +100,7 @@ export default function NotificationsAccessButton() {
   };
 
   return (
-    <div className="fixed left-3 top-3 z-50 sm:left-5 sm:top-5" ref={menuRef}>
+    <div className="fixed left-3 top-3 z-50" ref={menuRef}>
       <IconButton
         aria-expanded={isOpen}
         aria-haspopup="menu"

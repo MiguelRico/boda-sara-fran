@@ -4,7 +4,8 @@ import { Navigate, useSearchParams } from "react-router-dom";
 
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import HeaderSection from "../components/ui/HeaderSection";
-import { siteContent } from "../constants/siteContent";
+import { rsvpContent } from "../constants/rsvpContent";
+import { siteContent } from "../config/siteContent";
 import RsvpForm from "../forms/RsvpForm";
 import useRsvp from "../hooks/useRsvp";
 import useSpinner from "../hooks/useSpinner.js";
@@ -44,9 +45,9 @@ export default function RsvpEdit() {
         <HeaderSection
           eyebrow={siteContent.rsvp.eyebrow}
           isMobileView
-          title="Modificar confirmación"
+          title={rsvpContent.editPage.title}
           titleAs="h1"
-          text="Actualiza los invitados, alergias y transporte de vuestra confirmación."
+          text={rsvpContent.editPage.text}
         />
       </CinematicStaggeredRevealItem>
 

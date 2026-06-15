@@ -1,6 +1,6 @@
 import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../ui/HeaderSection";
-import { siteContent } from "../../constants/siteContent";
+import { siteContent } from "../../config/siteContent";
 import TimelineCard from "./timeline/TimelineCard";
 
 export default function TimelineSection() {

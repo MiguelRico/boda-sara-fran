@@ -8,7 +8,7 @@ export default function ImageCarousel({
   autoPlay = true,
   interval = 4500,
   className = "",
-  imageClassName = "aspect-[4/5] w-full sm:aspect-[16/10] lg:aspect-[16/9]",
+  imageClassName = "aspect-[4/5] w-full",
   imageLoading = "lazy",
   showSingleImageControls = false,
 }) {
@@ -44,7 +44,7 @@ export default function ImageCarousel({
 
   return (
     <div className={className}>
-      <div className="premium-card p-3 sm:p-4">
+      <div className="premium-card p-3">
         <div
           className={`relative overflow-hidden rounded-[1.7rem] ${imageClassName}`}
         >
@@ -72,7 +72,6 @@ export default function ImageCarousel({
                   h-10 w-10 -translate-y-1/2 border-white/50 bg-white/70
                   text-[var(--color-accent-dark)] backdrop-blur-md
                   hover:scale-105 hover:bg-white
-                  sm:left-5 sm:h-12 sm:w-12
                 "
                 icon={<ChevronLeft size={18} strokeWidth={1.8} />}
                 label="Imagen anterior"
@@ -86,7 +85,6 @@ export default function ImageCarousel({
                   h-10 w-10 -translate-y-1/2 border-white/50 bg-white/70
                   text-[var(--color-accent)] backdrop-blur-md
                   hover:scale-105 hover:bg-white
-                  sm:right-5 sm:h-12 sm:w-12
                 "
                 icon={<ChevronRight size={18} strokeWidth={1.8} />}
                 label="Imagen siguiente"
@@ -96,12 +94,12 @@ export default function ImageCarousel({
             </>
           )}
 
-          <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-t from-transparent to-black/35 p-5 sm:p-7">
+          <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-t from-transparent to-black/35 p-5">
             <AnimatePresence mode="wait">
               {currentImage.caption && (
                 <motion.p
                   key={currentImage.caption}
-                  className="max-w-xl text-sm leading-relaxed text-white/90 sm:text-base"
+                  className="max-w-xl text-sm leading-relaxed text-white/90"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}

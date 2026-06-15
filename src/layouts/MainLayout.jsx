@@ -2,29 +2,31 @@ import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import AdminAccessButton from "../components/admin/AdminAccessButton";
-import NotificationsAccessButton from "../components/admin/notifications/NotificationsAccessButton";
+import { NotificationsAccessButton } from "../components/admin/notifications";
 import HelpAccessButton from "../components/help/HelpAccessButton";
 import ScrollManager from "../components/ui/ScrollManager";
-import { ADMIN_AUTH_EVENT, ADMIN_SESSION_KEY } from "../constants/admin";
-
-function getAdminAuthState() {
-  return window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
-}
+import {
+  isAdminSessionAuthenticated,
+  subscribeAdminAuthChange,
+} from "../utils/adminSession";
 
 export default function MainLayout() {
   const location = useLocation();
   const pageKey = location.pathname + location.search + location.hash;
   const initialY = location.hash ? 0 : 24;
-  const [isAuthenticated, setIsAuthenticated] = useState(getAdminAuthState);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    isAdminSessionAuthenticated,
+  );
 
   useEffect(() => {
-    const syncAuthState = () => setIsAuthenticated(getAdminAuthState());
+    const syncAuthState = () =>
+      setIsAuthenticated(isAdminSessionAuthenticated());
 
-    window.addEventListener(ADMIN_AUTH_EVENT, syncAuthState);
+    const unsubscribeAdminAuthChange = subscribeAdminAuthChange(syncAuthState);
     window.addEventListener("storage", syncAuthState);
 
     return () => {
-      window.removeEventListener(ADMIN_AUTH_EVENT, syncAuthState);
+      unsubscribeAdminAuthChange();
       window.removeEventListener("storage", syncAuthState);
     };
   }, []);

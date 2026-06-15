@@ -4,11 +4,6 @@
   --font-serif: "Cormorant", ui-serif, Georgia, serif;
   --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
 
-  --breakpoint-sm: 999999px;
-  --breakpoint-md: 999999px;
-  --breakpoint-lg: 999999px;
-  --breakpoint-xl: 999999px;
-  --breakpoint-2xl: 999999px;
 }
 
 :root {
@@ -70,7 +65,7 @@ body {
   }
 
   .cinematic-section {
-    @apply relative flex min-h-[100svh] items-center justify-center px-5 py-4 sm:px-8 lg:px-12;
+    @apply relative flex min-h-[100svh] items-center justify-center px-5 py-4;
   }
 
   .admin-section {
@@ -83,27 +78,27 @@ body {
   }
 
   .section-eyebrow {
-    @apply mb-4 font-sans text-[0.68rem] uppercase tracking-[0.32em] sm:text-xs;
+    @apply mb-4 font-sans text-[0.68rem] uppercase tracking-[0.32em];
     color: var(--color-accent);
   }
 
   .section-title {
-    @apply font-serif text-[2.75rem] font-normal leading-[0.95] tracking-[0.03em] sm:text-6xl lg:text-7xl;
+    @apply font-serif text-[2.75rem] font-normal leading-[0.95] tracking-[0.03em];
     color: var(--color-text);
   }
 
   .hero-title {
-    @apply font-serif text-[4rem] font-normal leading-[0.85] tracking-[0.04em] sm:text-8xl lg:text-9xl;
+    @apply font-serif text-[4rem] font-normal leading-[0.85] tracking-[0.04em];
     color: var(--color-text);
   }
 
   .section-text {
-    @apply mx-auto mt-6 mb-4 max-w-2xl font-sans text-[0.95rem] leading-[1.9] sm:text-base;
+    @apply mx-auto mt-6 mb-4 max-w-2xl font-sans text-[0.95rem] leading-[1.9];
     color: var(--color-muted);
   }
 
   .premium-card {
-    @apply rounded-[2rem] border p-4 backdrop-blur-sm transition-all duration-700 sm:p-8;
+    @apply rounded-[2rem] border p-4 backdrop-blur-sm transition-all duration-700;
     border-color: var(--color-border);
     background: rgba(255, 255, 255, 0.55);
     box-shadow: var(--shadow-soft);

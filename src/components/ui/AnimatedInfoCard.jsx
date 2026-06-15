@@ -31,7 +31,6 @@ function InfoCard({
         bg-white/55 p-7 shadow-[0_24px_70px_rgba(77,56,40,0.08)]
         backdrop-blur-sm transition-all duration-700
         hover:-translate-y-1 hover:border-[var(--color-border)] hover:bg-white/80
-        sm:p-8
         ${to ? "cursor-pointer" : ""}
         ${className}
       `}
@@ -39,11 +38,11 @@ function InfoCard({
       {summaryView ? (
         <div
           className={`relative flex min-w-0 flex-col items-center justify-center text-center ${
-            summaryCompact ? "gap-1.5 sm:gap-3" : "gap-1.5 sm:gap-3"
+            summaryCompact ? "gap-1.5" : "gap-1.5"
           }`}
         >
           {icon && (
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-base sm:h-11 sm:w-11 sm:text-xl">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-strong)] bg-white/70 text-base">
               {icon}
             </span>
           )}
@@ -52,8 +51,8 @@ function InfoCard({
             <p
               className={`min-w-0 break-words leading-relaxed text-[var(--color-accent)] ${
                 summaryCompact
-                  ? "text-[0.6rem] sm:text-sm"
-                  : "text-[0.6rem] sm:text-base"
+                  ? "text-[0.6rem]"
+                  : "text-[0.6rem]"
               }`}
             >
               {subtitle}
@@ -64,8 +63,8 @@ function InfoCard({
             <p
               className={`font-serif leading-tight text-[var(--color-text)] ${
                 summaryCompact
-                  ? "text-xl sm:text-4xl"
-                  : "text-xl sm:text-4xl"
+                  ? "text-xl"
+                  : "text-xl"
               }`}
             >
               {title}
@@ -75,7 +74,7 @@ function InfoCard({
           {description && (
             <p
               className={`min-w-0 break-words leading-relaxed text-[var(--color-accent)] ${
-                summaryCompact ? "text-xs sm:text-base" : "text-sm sm:text-base"
+                summaryCompact ? "text-xs" : "text-sm"
               }`}
             >
               {description}
@@ -99,21 +98,21 @@ function InfoCard({
 
             {inlineTitleDescription ? (
               <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
-                <h3 className="font-serif text-3xl leading-tight text-[var(--color-text)] sm:text-4xl">
+                <h3 className="font-serif text-3xl leading-tight text-[var(--color-text)]">
                   {title}
                 </h3>
 
-                <p className="text-sm leading-relaxed text-[var(--color-accent)] sm:text-base">
+                <p className="text-sm leading-relaxed text-[var(--color-accent)]">
                   {description}
                 </p>
               </div>
             ) : (
               <>
-                <h3 className="font-serif text-3xl leading-tight text-[var(--color-text)] sm:text-4xl">
+                <h3 className="font-serif text-3xl leading-tight text-[var(--color-text)]">
                   {title}
                 </h3>
 
-                <p className="mt-5 flex-1 text-sm leading-relaxed text-[var(--color-accent)] sm:text-base">
+                <p className="mt-5 flex-1 text-sm leading-relaxed text-[var(--color-accent)]">
                   {description}
                 </p>
               </>

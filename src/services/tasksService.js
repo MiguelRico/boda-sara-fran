@@ -1,5 +1,6 @@
-import { findAllTasks, saveAdminTasks } from "../api/tasksApi";
+import { adminContent } from "../constants/adminContent";
 import { Task } from "../models";
+import { taskRepository } from "../repositories/taskRepository";
 
 export const createEmptyTask = Task.create;
 export const normalizeTasks = Task.normalizeList;
@@ -40,10 +41,10 @@ export function buildTaskStats(tasks) {
 }
 
 export const loadTasks = async ({ password } = {}) => {
-  const response = await findAllTasks({ password });
+  const response = await taskRepository.findAll({ password });
 
   if (response?.success === false) {
-    throw new Error(response.error || "No se pudieron cargar las tareas.");
+    throw new Error(response.error || adminContent.tasks.dialogs.loadError);
   }
 
   return normalizeTasks(response?.tasks || []);
@@ -52,7 +53,7 @@ export const loadTasks = async ({ password } = {}) => {
 export const persistTasks = async ({ password, tasks }) => {
   const normalizedTasks = normalizeTasks(tasks);
 
-  await saveAdminTasks({
+  await taskRepository.saveAdmin({
     password,
     tasks: normalizedTasks,
   });

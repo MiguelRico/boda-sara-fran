@@ -1,5 +1,6 @@
-import AdminEditorDialog from "../AdminEditorDialog";
-import TableForm from "../TableForm";
+import { EditorDialog as AdminEditorDialog } from "../common";
+import { tableContent } from "../../../constants/tableContent";
+import TableForm from "./TableForm";
 
 export default function TableEditorDialog({
   content,
@@ -9,7 +10,7 @@ export default function TableEditorDialog({
   onChange,
   onSubmit,
   seatReductionWarning = [],
-  title = "Crear mesa",
+  title = tableContent.form.title,
 }) {
   return (
     <AdminEditorDialog

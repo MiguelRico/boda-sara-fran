@@ -16,7 +16,6 @@ export default function IconButton({
   disabled = false,
   href,
   icon,
-  isMobileView = false,
   label,
   onClick,
   showText = true,
@@ -26,14 +25,12 @@ export default function IconButton({
   type = "button",
   ...props
 }) {
-  void isMobileView;
-
   const accessibleLabel =
     label || (typeof children === "string" ? children : "");
   const hasText = Boolean(
     showText && (typeof children === "string" || typeof children === "number"),
   );
-  const textClass = showText === "always" ? "inline" : "hidden sm:inline";
+  const textClass = showText === "always" ? "inline" : "hidden";
   const content = (
     <>
       {(icon || !hasText) && (
@@ -43,7 +40,7 @@ export default function IconButton({
       )}
       {hasText && (
         <span
-          className={`${textClass} min-w-0 truncate text-[0.68rem] uppercase tracking-[0.22em] sm:text-xs`}
+          className={`${textClass} min-w-0 truncate text-[0.68rem] uppercase tracking-[0.22em]`}
         >
           {children}
         </span>
@@ -54,8 +51,8 @@ export default function IconButton({
   const sizeClass = hasText
     ? showText === "always"
       ? "min-h-11 gap-2 px-5 py-3"
-      : "h-10 w-10 sm:min-h-11 sm:w-auto sm:gap-2 sm:px-5 sm:py-3"
-    : "h-10 w-10 sm:h-11 sm:w-11";
+      : "h-10 w-10"
+    : "h-10 w-10";
   const baseClass = `inline-flex shrink-0 items-center justify-center rounded-full border font-sans transition-all duration-500 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-500 disabled:shadow-none disabled:hover:translate-y-0 ${toneClass} ${sizeClass} ${className}`;
 
   if (to) {

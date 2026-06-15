@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../ui/HeaderSection";
-import { siteContent } from "../../constants/siteContent";
+import { siteContent } from "../../config/siteContent";
 
 function getTimeLeft(targetDate) {
   const difference = targetDate.getTime() - new Date().getTime();
@@ -30,8 +30,8 @@ function getTimeLeft(targetDate) {
 
 function CountdownCard({ label, value }) {
   return (
-    <div className="premium-card px-4 py-8 text-center sm:px-6 sm:py-10">
-      <span className="section-text block font-serif text-5xl sm:text-6xl lg:text-7xl">
+    <div className="premium-card px-4 py-8 text-center">
+      <span className="section-text block font-serif text-5xl">
         {value}
       </span>
 
@@ -69,7 +69,7 @@ export default function CountdownSection() {
           text={countdown.text}
         />
 
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-4">
           {items.map((item) => (
             <CountdownCard key={item.label} {...item} />
           ))}

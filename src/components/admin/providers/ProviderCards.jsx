@@ -33,10 +33,14 @@ import {
 } from "../../../services/providersService";
 import { getEmailHref, getPhoneHref } from "../../../utils/contactLinks";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
-import Card from "../Card";
-import CardActions from "../CardActions";
-import SelectableCardPage from "../SelectableCardPage";
+import {
+  Card,
+  CardActions,
+  SelectableCardFrame,
+  SelectableCardPage,
+} from "../common";
 import Chip from "../../ui/Chip";
+import { adminContent } from "../../../constants/adminContent";
 
 const PROVIDER_ICON_COMPONENTS = {
   bus: BusFront,
@@ -117,13 +121,10 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
   const webHref = getWebHref(provider.web);
 
   return (
-    <div
-      className={`h-full rounded-[2rem] transition ${
-        selected
-          ? "ring-2 ring-[var(--color-accent-dark)] md:ring-offset-2 md:ring-offset-[var(--color-bg)]"
-          : "ring-0"
-      }`}
+    <SelectableCardFrame
+      className="h-full"
       onClick={() => onSelect(provider)}
+      selected={selected}
     >
       <Card
         actionsPlacement="overlay"
@@ -139,7 +140,7 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
         }
         decorativeText={getProviderCategoryIcon(provider.category)}
         eyebrow={PROVIDER_CATEGORY_LABELS[provider.category]}
-        title={provider.name || "Proveedor sin nombre"}
+        title={provider.name || adminContent.common.fallbacks.provider}
       >
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
           <Chip
@@ -170,21 +171,25 @@ function ProviderCard({ onDelete, onEdit, onSelect, provider, selected }) {
             className="col-span-2"
             icon={<BriefcaseBusiness size={13} strokeWidth={1.8} />}
             strong
-            value={`${provider.services.length} servicios · ${paymentCount} ${
+            value={`${provider.services.length} servicios${adminContent.common.separator}${paymentCount} ${
               paymentCount === 1 ? "plazo" : "plazos"
-            } · ${formatCurrency(total)}`}
+            }${adminContent.common.separator}${formatCurrency(total)}`}
             valueClassName="whitespace-normal break-words leading-snug"
           />
           <Chip
             className="col-span-2"
             icon={<BadgeEuro size={13} strokeWidth={1.8} />}
             strong
-            value={`Pagado ${formatCurrency(paid)} · Pendiente ${formatCurrency(pending)}`}
+            value={`${adminContent.providers.overview.metrics.paid} ${formatCurrency(
+              paid,
+            )}${adminContent.common.separator}${
+              adminContent.providers.overview.metrics.pending
+            } ${formatCurrency(pending)}`}
             valueClassName="whitespace-normal break-words leading-snug"
           />
         </div>
       </Card>
-    </div>
+    </SelectableCardFrame>
   );
 }
 
@@ -192,13 +197,10 @@ function ServiceCard({ onDelete, onEdit, onSelect, selected, service }) {
   const activePayments = getActiveServicePayments(service);
 
   return (
-    <div
-      className={`h-full rounded-[2rem] transition ${
-        selected
-          ? "ring-2 ring-[var(--color-accent-dark)] md:ring-offset-2 md:ring-offset-[var(--color-bg)]"
-          : "ring-0"
-      }`}
+    <SelectableCardFrame
+      className="h-full"
       onClick={() => onSelect(service)}
+      selected={selected}
     >
       <Card
         actionsPlacement="overlay"
@@ -214,7 +216,7 @@ function ServiceCard({ onDelete, onEdit, onSelect, selected, service }) {
         }
         decorativeText={getProviderCategoryIcon(service.category)}
         eyebrow={service.providerName}
-        title={service.name || "Servicio sin nombre"}
+        title={service.name || adminContent.common.fallbacks.service}
       >
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
           <Chip
@@ -243,13 +245,13 @@ function ServiceCard({ onDelete, onEdit, onSelect, selected, service }) {
                 `Plazo ${index + 1}`,
                 formatDate(payment.date),
                 formatCurrency(payment.amount),
-              ].join(" · ")}
+              ].join(adminContent.common.separator)}
               valueClassName="whitespace-normal break-words leading-snug"
             />
           ))}
         </div>
       </Card>
-    </div>
+    </SelectableCardFrame>
   );
 }
 

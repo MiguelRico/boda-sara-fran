@@ -15,7 +15,6 @@ export default function MapLink({ href }) {
         transition-all duration-300
         hover:border-[var(--color-border)]
         hover:bg-white
-        sm:ml-auto
       "
     >
       Mapa

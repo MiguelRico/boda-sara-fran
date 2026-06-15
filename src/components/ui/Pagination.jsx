@@ -1,28 +1,27 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { uiContent } from "../../constants/uiContent";
 import IconButton from "./IconButton";
 
 export default function Pagination({
   className = "mt-5",
-  isMobileView = false,
   onNext,
   onPrev,
   page,
-  previousLabel = "Anterior",
-  nextLabel = "Siguiente",
+  previousLabel = uiContent.actions.previous,
+  nextLabel = uiContent.actions.next,
   totalPages,
 }) {
   const pageLabel = `${page} / ${totalPages}`;
-  void isMobileView;
 
   return (
     <div
       className={`${className} rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4`}
     >
-      <div className="flex flex-col gap-3 text-sm text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
-        <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:flex items-center">
+      <div className="flex flex-col gap-3 text-sm text-[var(--color-muted)]">
+        <div className="grid w-full grid-cols-3 items-center gap-3">
           <IconButton
-            className="w-full sm:w-auto"
+            className="w-full"
             disabled={page === 1}
             icon={<ChevronLeft size={16} strokeWidth={1.8} />}
             label={previousLabel}
@@ -37,7 +36,7 @@ export default function Pagination({
           <p className="text-center">{pageLabel}</p>
 
           <IconButton
-            className="w-full sm:w-auto"
+            className="w-full"
             disabled={page === totalPages}
             icon={<ChevronRight size={16} strokeWidth={1.8} />}
             label={nextLabel}

@@ -5,6 +5,9 @@ export const rsvpContent = {
     defaultDeleteContext: "formulario",
     defaultSubmitText: "Confirmar",
     actionsEyebrow: "Acciones",
+    addGuestText: "Invitado",
+    reviewSubmitText: "Enviar confirmación",
+    saveGuests: "Guardar invitados",
     deleteGuestTitle: "Eliminar invitado",
     deleteGuestMessage: ({ context, guestName, guestNumber }) =>
       `Se eliminará ${
@@ -37,7 +40,7 @@ export const rsvpContent = {
   guest: {
     fallbackName: (number) => `Invitado ${number}`,
     fields: {
-      name: { label: "Nombre *", placeholder: "Ej: Sara" },
+      name: { label: "Nombre *", placeholder: "Ej: Nombre" },
       lastname: { label: "Apellidos *", placeholder: "Ej: Garcia" },
       menu: { label: "Menú *" },
       comments: {
@@ -81,6 +84,13 @@ export const rsvpContent = {
     text: "Confirma tu asistencia y la de tu familia.",
     action: "Crear nueva",
   },
+  createPage: {
+    title: "Crear confirmación",
+  },
+  editPage: {
+    title: "Modificar confirmación",
+    text: "Actualiza los invitados, alergias y transporte de vuestra confirmación.",
+  },
   searchInvitation: {
     eyebrow: "Buscar invitación",
     title: "Modificar tu confirmación",
@@ -91,6 +101,51 @@ export const rsvpContent = {
     phonePlaceholder: "Ej: 600123456",
     searchAction: "Buscar mi confirmación",
     backHome: "Volver al inicio",
+  },
+  status: {
+    close: "Cerrar",
+    backHome: "Volver al inicio",
+    problemTitle: "Ha ocurrido un problema",
+    searchLoading: "Buscando confirmación...",
+    submitLoading: "Enviando confirmación...",
+    loadLoading: "Cargando confirmación...",
+    notFoundTitle: "No encontrada",
+    notFoundMessage:
+      "No hemos encontrado una confirmación asociada a ese email o teléfono.",
+    missingIdError: "La confirmación encontrada no tiene confirmationId.",
+    searchError:
+      "Ha ocurrido un error buscando la confirmación. Por favor, inténtalo de nuevo en unos minutos.",
+    duplicatedContactTitle: "Contacto duplicado",
+    duplicatedEmail: "Ya existe una confirmación con este email.",
+    duplicatedPhone: "Ya existe una confirmación con este teléfono.",
+    duplicatedContactMessage:
+      "Ya existe una confirmación con ese email o teléfono. Usa otro contacto o modifica la confirmación existente.",
+    validationTitle: "Revisa la confirmación",
+    validationMessage:
+      "Hay campos obligatorios o con formato incorrecto. Corrígelos antes de enviar la confirmación.",
+    submitSuccessTitle: "Confirmación recibida",
+    submitCreateSuccess: "Hemos guardado correctamente vuestra confirmación.",
+    submitEditSuccess: "Hemos actualizado correctamente vuestra confirmación.",
+    submitError:
+      "No hemos podido guardar vuestra confirmación. Por favor, intentadlo de nuevo en unos minutos.",
+    loadMissing:
+      "No se encontró la confirmación. Si el problema persiste, ponte en contacto con la organización.",
+    loadError:
+      "Error cargando la confirmación. Si el problema persiste, ponte en contacto con la organización.",
+  },
+  review: {
+    contactEyebrow: "Datos de contacto",
+    editContact: "Editar datos",
+    editGuests: "Editar invitados",
+    guestsEyebrow: "Invitados confirmados",
+    intro:
+      "Revisa tus datos de contacto e invitados antes de enviar tu confirmación",
+    guestCount: (count) => `${count} ${count === 1 ? "Invitado" : "Invitados"}`,
+    dialogEyebrow: "Revisión",
+    dialogTitle: "Revisa la confirmación",
+    dialogText: "Comprueba los datos antes de enviar el formulario.",
+    contactTitle: "Contacto",
+    keepEditing: "Seguir editando",
   },
   contactDetails: {
     heading: "Contacto",

@@ -1,5 +1,6 @@
 export default function TableSectionSkeleton({
   actions = true,
+  actionCount = 3,
   cardCount = 1,
   columnsClassName = "",
   count = true,
@@ -11,12 +12,12 @@ export default function TableSectionSkeleton({
   return (
     <>
       {(count || actions) && (
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-3 flex flex-col gap-3">
           {count && (
             <SkeletonBlock className="h-4 w-56 max-w-full rounded-full" />
           )}
 
-          {actions && <TableActionsSkeleton />}
+          {actions && <TableActionsSkeleton count={actionCount} />}
         </div>
       )}
 
@@ -34,11 +35,14 @@ export default function TableSectionSkeleton({
   );
 }
 
-export function TableActionsSkeleton() {
+export function TableActionsSkeleton({ count = 3 }) {
   return (
     <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-      <div className="grid w-full grid-cols-4 gap-3 sm:w-auto">
-        {Array.from({ length: 4 }).map((_, index) => (
+      <div
+        className="grid w-full gap-3"
+        style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
+      >
+        {Array.from({ length: count }).map((_, index) => (
           <SkeletonBlock className="h-11 min-w-0 rounded-full" key={index} />
         ))}
       </div>
@@ -49,19 +53,9 @@ export function TableActionsSkeleton() {
 export function TableFiltersSkeleton() {
   return (
     <div className="my-4 rounded-[1rem] border border-[var(--color-border)] bg-white/45 p-2.5">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-2">
         <SkeletonBlock className="h-5 w-32 rounded-full" />
-        <SkeletonBlock className="h-5 w-9 rounded-full" />
-      </div>
-      <div className="mt-2 grid gap-4 lg:grid-cols-[1fr_18rem] lg:items-end">
-        <div>
-          <SkeletonBlock className="mb-2 h-3 w-24 rounded-full" />
-          <SkeletonBlock className="h-12 rounded-[1rem]" />
-        </div>
-        <div>
-          <SkeletonBlock className="mb-2 h-3 w-20 rounded-full" />
-          <SkeletonBlock className="h-12 rounded-[1rem]" />
-        </div>
+        <SkeletonBlock className="h-[1.125rem] w-8 rounded-full" />
       </div>
     </div>
   );
@@ -70,7 +64,7 @@ export function TableFiltersSkeleton() {
 export function TablePaginationSkeleton() {
   return (
     <div className="mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-      <div className="grid grid-cols-3 items-center gap-3 sm:w-auto sm:max-w-md">
+      <div className="grid grid-cols-3 items-center gap-3">
         <SkeletonBlock className="h-11 rounded-full" />
         <SkeletonBlock className="h-5 rounded-full" />
         <SkeletonBlock className="h-11 rounded-full" />
@@ -89,26 +83,29 @@ export function TableCardsSkeleton({
     <div className={`grid gap-4 ${columnsClassName}`}>
       {Array.from({ length: count }).map((_, index) => (
         <div
-          className={`${itemClassName} rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 sm:p-5`}
+          className={`${itemClassName} relative overflow-hidden rounded-[2rem] border border-[var(--color-border-strong)] bg-white/55 p-5 shadow-[0_24px_70px_rgba(77,56,40,0.08)]`}
           key={index}
         >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <SkeletonBlock className="h-3 w-24 rounded-full" />
-              <SkeletonBlock className="mt-2 h-7 w-40 rounded-full" />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <SkeletonBlock className="h-9 w-9 rounded-full" />
-              <SkeletonBlock className="h-9 w-9 rounded-full" />
-            </div>
+          <SkeletonBlock className="absolute right-6 top-6 h-14 w-14 rounded-full opacity-50" />
+          <div className="absolute right-5 top-4 z-10 grid grid-cols-2 gap-2">
+            <SkeletonBlock className="h-9 w-9 rounded-full" />
+            <SkeletonBlock className="h-9 w-9 rounded-full" />
           </div>
-          <div className="mt-4 space-y-3">
-            {Array.from({ length: lines }).map((__, lineIndex) => (
-              <SkeletonBlock
-                className="h-3 w-64 max-w-full rounded-full"
-                key={lineIndex}
-              />
-            ))}
+          <div className="relative">
+            <SkeletonBlock className="mt-4 h-3 w-24 rounded-full" />
+            <SkeletonBlock className="mt-3 h-7 w-44 max-w-[70%] rounded-full" />
+          </div>
+          <div className="relative mt-4 grid grid-cols-2 gap-2">
+            {Array.from({ length: Math.max(lines, 2) }).map(
+              (_, lineIndex) => (
+                <SkeletonBlock
+                  className={`h-9 rounded-full ${
+                    lineIndex > 1 ? "col-span-2" : ""
+                  }`}
+                  key={lineIndex}
+                />
+              ),
+            )}
           </div>
         </div>
       ))}

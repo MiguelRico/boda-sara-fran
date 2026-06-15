@@ -6,14 +6,14 @@ import {
   findConfirmationByPhone,
   saveAdminConfirmation,
   savePublicConfirmation,
-} from "../services/rsvpService";
+} from "../gateways/appScriptGateway";
 
 export const confirmationRepository = {
-  deleteAdminConfirmation,
-  findAllConfirmations,
+  deleteAdmin: deleteAdminConfirmation,
+  findAll: findAllConfirmations,
   findByEmail: findConfirmationByEmail,
   findById: findConfirmationById,
   findByPhone: findConfirmationByPhone,
-  saveAdminConfirmation,
-  savePublicConfirmation,
+  saveAdmin: saveAdminConfirmation,
+  savePublic: savePublicConfirmation,
 };

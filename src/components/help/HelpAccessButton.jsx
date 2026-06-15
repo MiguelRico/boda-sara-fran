@@ -3,7 +3,8 @@ import { CircleHelp, Mail, Phone } from "lucide-react";
 
 import IconButton from "../ui/IconButton";
 import StatusDialog from "../ui/StatusDialog";
-import { siteContent } from "../../constants/siteContent";
+import { siteContent } from "../../config/siteContent";
+import { uiContent } from "../../constants/uiContent";
 import { getEmailHref, getPhoneHref } from "../../utils/contactLinks";
 
 export default function HelpAccessButton() {
@@ -12,21 +13,21 @@ export default function HelpAccessButton() {
 
   return (
     <>
-      <div className="fixed left-3 top-3 z-50 sm:left-5 sm:top-5">
+      <div className="fixed left-3 top-3 z-50">
         <IconButton
           className="bg-white/70 shadow-[0_18px_45px_rgba(52,69,49,0.12)] backdrop-blur-md hover:bg-white/90"
           icon={<CircleHelp size={18} strokeWidth={1.8} />}
-          label="Abrir ayuda"
+          label={help.openLabel}
           onClick={() => setIsOpen(true)}
           type="button"
           tone="terciary"
         >
-          Ayuda
+          {help.buttonText}
         </IconButton>
       </div>
 
       <StatusDialog
-        closeText="Cerrar"
+        closeText={uiContent.actions.close}
         eyebrow={help.eyebrow}
         message={help.text}
         onClose={() => setIsOpen(false)}
@@ -34,7 +35,7 @@ export default function HelpAccessButton() {
         role="dialog"
         title={help.title}
       >
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid gap-3">
           {help.contacts.map((contact) => (
             <div
               className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4 text-left"
@@ -53,7 +54,7 @@ export default function HelpAccessButton() {
                   showText="always"
                   tone="terciary"
                 >
-                  {contact.phone || "Telefono pendiente"}
+                  {contact.phone || help.phonePending}
                 </IconButton>
 
                 <IconButton
@@ -64,7 +65,7 @@ export default function HelpAccessButton() {
                   showText="always"
                   tone="terciary"
                 >
-                  {contact.email || "Email pendiente"}
+                  {contact.email || help.emailPending}
                 </IconButton>
               </div>
             </div>

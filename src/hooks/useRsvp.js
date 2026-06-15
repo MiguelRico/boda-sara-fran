@@ -2,13 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { MAX_GUESTS } from "../constants/rsvp";
+import { rsvpContent } from "../constants/rsvpContent";
 import { Confirmation, Guest } from "../models";
-import {
-  findConfirmationByEmail,
-  findConfirmationById,
-  findConfirmationByPhone,
-  savePublicConfirmation,
-} from "../api/confirmationsApi";
+import { confirmationRepository } from "../repositories/confirmationRepository";
 import { getConfirmationIdUrl } from "../utils/confirmationNameCodec";
 import {
   validateRsvpContact,
@@ -17,7 +13,7 @@ import {
 } from "../utils/rsvpValidation";
 
 const createInitialPopup = () => ({
-  closeText: "Cerrar",
+  closeText: rsvpContent.status.close,
   closeTo: null,
   open: false,
   type: "success",
@@ -125,27 +121,26 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     if (hasValidationErrors(validationErrors)) return;
 
     try {
-      show("Buscando confirmación...");
+      show(rsvpContent.status.searchLoading);
 
       const response = contact.email.trim()
-        ? await findConfirmationByEmail(contact.email)
-        : await findConfirmationByPhone(contact.phone);
+        ? await confirmationRepository.findByEmail(contact.email)
+        : await confirmationRepository.findByPhone(contact.phone);
 
       if (!response.found) {
         setPopup({
-          closeText: "Cerrar",
+          closeText: rsvpContent.status.close,
           closeTo: null,
           open: true,
           type: "error",
-          title: "No encontrada",
-          message:
-            "No hemos encontrado una confirmación asociada a ese email o telefono.",
+          title: rsvpContent.status.notFoundTitle,
+          message: rsvpContent.status.notFoundMessage,
         });
         return;
       }
 
       if (!response.confirmationId) {
-        throw new Error("La confirmacion encontrada no tiene confirmationId.");
+        throw new Error(rsvpContent.status.missingIdError);
       }
 
       navigate(getConfirmationIdUrl(response.confirmationId), {
@@ -156,13 +151,12 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
       console.error(error);
 
       setPopup({
-        closeText: "Volver al inicio",
+        closeText: rsvpContent.status.backHome,
         closeTo: "/",
         open: true,
         type: "error",
-        title: "Ha ocurrido un problema",
-        message:
-          "Ha ocurrido un error buscando tu confirmación. Por favor, inténtalo de nuevo en unos minutos. Si el problema persiste ponte en contacto con Sara o Fran.",
+        title: rsvpContent.status.problemTitle,
+        message: rsvpContent.status.searchError,
       });
     } finally {
       if (!keepSpinnerUntilNavigation) {
@@ -196,8 +190,12 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     const normalizedEmail = contact.email.trim();
     const normalizedPhone = contact.phone.trim();
     const [emailResponse, phoneResponse] = await Promise.all([
-      normalizedEmail ? findConfirmationByEmail(normalizedEmail) : null,
-      normalizedPhone ? findConfirmationByPhone(normalizedPhone) : null,
+      normalizedEmail
+        ? confirmationRepository.findByEmail(normalizedEmail)
+        : null,
+      normalizedPhone
+        ? confirmationRepository.findByPhone(normalizedPhone)
+        : null,
     ]);
     const currentId = String(currentConfirmationId || "").trim();
     const duplicatedEmail =
@@ -214,20 +212,19 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
     setErrors((current) => ({
       ...current,
       email: duplicatedEmail
-        ? "Ya existe una confirmacion con este email."
+        ? rsvpContent.status.duplicatedEmail
         : current.email,
       phone: duplicatedPhone
-        ? "Ya existe una confirmacion con este telefono."
+        ? rsvpContent.status.duplicatedPhone
         : current.phone,
     }));
     setPopup({
-      closeText: "Cerrar",
+      closeText: rsvpContent.status.close,
       closeTo: null,
       open: true,
       type: "error",
-      title: "Contacto duplicado",
-      message:
-        "Ya existe una confirmacion con ese email o telefono. Usa otro contacto o modifica la confirmacion existente.",
+      title: rsvpContent.status.duplicatedContactTitle,
+      message: rsvpContent.status.duplicatedContactMessage,
     });
 
     return false;
@@ -241,13 +238,12 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
 
     if (hasValidationErrors(validationErrors)) {
       setPopup({
-        closeText: "Cerrar",
+        closeText: rsvpContent.status.close,
         closeTo: null,
         open: true,
         type: "error",
-        title: "Revisa la confirmación",
-        message:
-          "Hay campos obligatorios o con formato incorrecto. Corrígelos antes de enviar la confirmación.",
+        title: rsvpContent.status.validationTitle,
+        message: rsvpContent.status.validationMessage,
       });
       return;
     }
@@ -263,39 +259,38 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
         }),
       };
 
-      show("Enviando confirmación...");
+      show(rsvpContent.status.submitLoading);
 
       const hasUniqueContact = await validateUniqueContact();
 
       if (!hasUniqueContact) return;
 
-      await savePublicConfirmation(payload, {
+      await confirmationRepository.savePublic(payload, {
         method: isEdition ? "PUT" : "POST",
       });
 
       setErrors({});
 
       setPopup({
-        closeText: "Volver al inicio",
+        closeText: rsvpContent.status.backHome,
         closeTo: "/",
         open: true,
         type: "success",
-        title: "¡Confirmación recibida!",
+        title: rsvpContent.status.submitSuccessTitle,
         message: isEdition
-          ? "Hemos actualizado correctamente vuestra confirmación."
-          : "Hemos guardado correctamente vuestra confirmación.",
+          ? rsvpContent.status.submitEditSuccess
+          : rsvpContent.status.submitCreateSuccess,
       });
     } catch (error) {
       console.error(error);
 
       setPopup({
-        closeText: "Volver al inicio",
+        closeText: rsvpContent.status.backHome,
         closeTo: "/",
         open: true,
         type: "error",
-        title: "Ha ocurrido un problema",
-        message:
-          "No hemos podido guardar vuestra confirmación. Por favor, intentadlo de nuevo en unos minutos. Si el problema persiste ponte en contacto con Sara o Fran.",
+        title: rsvpContent.status.problemTitle,
+        message: rsvpContent.status.submitError,
       });
     } finally {
       hide();
@@ -308,19 +303,19 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
       if (navigationGroup) return;
 
       try {
-        show("Cargando confirmación...");
+        show(rsvpContent.status.loadLoading);
 
-        const response = await findConfirmationById(confirmationIdFromUrl);
+        const response =
+          await confirmationRepository.findById(confirmationIdFromUrl);
 
         if (!response.found) {
           setPopup({
-            closeText: "Volver al inicio",
+            closeText: rsvpContent.status.backHome,
             closeTo: "/",
             open: true,
             type: "error",
-            title: "Ha ocurrido un problema",
-            message:
-              "No se encontró la confirmación. Si el problema persiste ponte en contacto con Sara o Fran.",
+            title: rsvpContent.status.problemTitle,
+            message: rsvpContent.status.loadMissing,
           });
 
           return;
@@ -331,13 +326,12 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
         console.error(error);
 
         setPopup({
-          closeText: "Volver al inicio",
+          closeText: rsvpContent.status.backHome,
           closeTo: "/",
           open: true,
           type: "error",
-          title: "Ha ocurrido un problema",
-          message:
-            "Error cargando confirmación. Si el problema persiste ponte en contacto con Sara o Fran.",
+          title: rsvpContent.status.problemTitle,
+          message: rsvpContent.status.loadError,
         });
       } finally {
         hide();

@@ -1,5 +1,7 @@
-import { findAllProviders, saveAdminProviders } from "../api/providersApi";
+import { adminContent } from "../constants/adminContent";
 import { Provider, ProviderPayment, ProviderService } from "../models";
+import { providerRepository } from "../repositories/providerRepository";
+import { hasJsonChanged } from "../utils/objectSnapshot";
 import { validateProvider } from "../validators/providerValidators";
 
 export const createEmptyPayment = ProviderPayment.create;
@@ -146,6 +148,45 @@ export function buildProviderStats(providers) {
   };
 }
 
+export function buildPendingProviderChanges(savedProviders, currentProviders) {
+  const savedById = new Map(
+    savedProviders.map((provider) => [provider.id, provider]),
+  );
+  const currentById = new Map(
+    currentProviders.map((provider) => [provider.id, provider]),
+  );
+  const changes = [];
+
+  currentById.forEach((provider, providerId) => {
+    const savedProvider = savedById.get(providerId);
+    const providerLabel =
+      provider.name || adminContent.common.fallbacks.unnamed;
+
+    if (!savedProvider) {
+      changes.push(adminContent.common.changes.providerCreated(providerLabel));
+      return;
+    }
+
+    if (hasJsonChanged(savedProvider, provider)) {
+      changes.push(adminContent.common.changes.providerModified(providerLabel));
+    }
+  });
+
+  savedById.forEach((provider, providerId) => {
+    if (!currentById.has(providerId)) {
+      changes.push(
+        adminContent.common.changes.providerDeleted(
+          provider.name || adminContent.common.fallbacks.unnamed,
+        ),
+      );
+    }
+  });
+
+  return changes.length
+    ? changes
+    : [adminContent.common.changes.providerPending];
+}
+
 export function isServicePaid(service) {
   const price = Number(service?.price) || 0;
   const paid = getServicePaidTotal(service);
@@ -154,10 +195,10 @@ export function isServicePaid(service) {
 }
 
 export const loadProviders = async ({ password } = {}) => {
-  const response = await findAllProviders({ password });
+  const response = await providerRepository.findAll({ password });
 
   if (response?.success === false) {
-    throw new Error(response.error || "No se pudieron cargar los proveedores.");
+    throw new Error(response.error || adminContent.providers.dialogs.loadError);
   }
 
   return normalizeProviders(response?.providers || []);
@@ -166,7 +207,7 @@ export const loadProviders = async ({ password } = {}) => {
 export const persistProviders = async ({ password, providers }) => {
   const normalizedProviders = normalizeProviders(providers);
 
-  await saveAdminProviders({
+  await providerRepository.saveAdmin({
     password,
     providers: normalizedProviders,
   });

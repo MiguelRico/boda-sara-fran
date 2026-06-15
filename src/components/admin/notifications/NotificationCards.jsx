@@ -7,13 +7,12 @@ import {
   MailCheck,
 } from "lucide-react";
 
-import Card from "../Card";
-import CardActions from "../CardActions";
-import SelectableCardPage from "../SelectableCardPage";
+import { Card, CardActions, SelectableCardPage } from "../common";
 import Chip from "../../ui/Chip";
 import IconButton from "../../ui/IconButton";
 import { formatDate } from "../../../utils/formatters";
 import { CONFIRMATION_TYPE } from "../../../models/AdminNotification";
+import { adminContent } from "../../../constants/adminContent";
 
 const typeIcons = {
   Aviso: CircleAlert,
@@ -88,7 +87,7 @@ function NotificationCard({ notification, onDelete, onEdit, onToggleRead }) {
       actionsPlacement="overlay"
       decorativeText={<TypeIcon size={72} strokeWidth={1.5} />}
       eyebrow={notification.type}
-      title={notification.title || "Notificación sin título"}
+      title={notification.title || adminContent.common.fallbacks.notification}
     >
       <NotificationChips notification={notification} />
     </Card>

@@ -11,13 +11,14 @@ import {
 import { useNavigate } from "react-router-dom";
 
 import IconButton from "../ui/IconButton";
-import UnsavedChangesDialog from "./UnsavedChangesDialog";
-import {
-  ADMIN_AUTH_EVENT,
-  ADMIN_PASSWORD,
-  ADMIN_SESSION_KEY,
-} from "../../constants/admin";
+import { UnsavedChangesDialog } from "./common";
+import { ADMIN_PASSWORD } from "../../constants/admin";
 import { adminContent } from "../../constants/adminContent";
+import {
+  clearAdminSession,
+  isAdminSessionAuthenticated,
+  subscribeAdminAuthChange,
+} from "../../utils/adminSession";
 import {
   clearAdminDataStore,
   discardAdminPendingChanges,
@@ -26,28 +27,27 @@ import {
   saveAdminPendingChanges,
 } from "../../services/adminDataStore";
 
-function getAdminAuthState() {
-  return window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
-}
-
 export default function AdminAccessButton() {
   const navigate = useNavigate();
+  const menuContent = adminContent.auth.accessMenu;
   const menuRef = useRef(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(getAdminAuthState);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    isAdminSessionAuthenticated,
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [logoutChanges, setLogoutChanges] = useState(null);
   const [savingLogoutChanges, setSavingLogoutChanges] = useState(false);
 
   useEffect(() => {
     const syncAuthState = () => {
-      setIsAuthenticated(getAdminAuthState());
+      setIsAuthenticated(isAdminSessionAuthenticated());
     };
 
-    window.addEventListener(ADMIN_AUTH_EVENT, syncAuthState);
+    const unsubscribeAdminAuthChange = subscribeAdminAuthChange(syncAuthState);
     window.addEventListener("storage", syncAuthState);
 
     return () => {
-      window.removeEventListener(ADMIN_AUTH_EVENT, syncAuthState);
+      unsubscribeAdminAuthChange();
       window.removeEventListener("storage", syncAuthState);
     };
   }, []);
@@ -87,8 +87,7 @@ export default function AdminAccessButton() {
 
   const completeLogout = () => {
     clearAdminDataStore();
-    window.sessionStorage.removeItem(ADMIN_SESSION_KEY);
-    window.dispatchEvent(new Event(ADMIN_AUTH_EVENT));
+    clearAdminSession();
     setLogoutChanges(null);
     setIsOpen(false);
     navigate("/admin");
@@ -125,28 +124,28 @@ export default function AdminAccessButton() {
   };
 
   return (
-    <div className="fixed right-3 top-3 z-50 sm:right-5 sm:top-5" ref={menuRef}>
+    <div className="fixed right-3 top-3 z-50" ref={menuRef}>
       {logoutChanges && (
         <UnsavedChangesDialog
           actions={[
             {
               disabled: savingLogoutChanges,
               icon: <Trash2 size={16} strokeWidth={1.8} />,
-              label: "Eliminar cambios",
+              label: menuContent.deleteChanges,
               onClick: handleDiscardAndLogout,
               tone: "danger",
             },
             {
               disabled: savingLogoutChanges,
               icon: <Save size={16} strokeWidth={1.8} />,
-              label: "Guardar cambios",
+              label: menuContent.saveChanges,
               onClick: handleSaveAndLogout,
               tone: "primary",
             },
             {
               disabled: savingLogoutChanges,
               icon: <X size={16} strokeWidth={1.8} />,
-              label: "Deshacer cambios",
+              label: menuContent.discardChanges,
               onClick: handleDiscardAndLogout,
               tone: "terciary",
             },
@@ -154,8 +153,8 @@ export default function AdminAccessButton() {
           changes={logoutChanges}
           labels={{
             eyebrow: adminContent.tables.dialogs.unsavedEyebrow,
-            text: "Eliminar cambios limpiara todo cambio en memoria de admin. Guardar cambios los enviara a Apps Script antes de cerrar sesion.",
-            title: "Cambios pendientes",
+            text: menuContent.pendingText,
+            title: menuContent.pendingTitle,
           }}
           titleId="admin-logout-unsaved-changes-title"
         />
@@ -173,12 +172,14 @@ export default function AdminAccessButton() {
             <LockKeyhole size={18} strokeWidth={1.8} />
           )
         }
-        label={isAuthenticated ? "Abrir menu admin" : "Acceso admin"}
+        label={
+          isAuthenticated ? menuContent.openAuthenticated : menuContent.openGuest
+        }
         onClick={handleMainClick}
         showText
         type="button"
       >
-        Admin
+        {menuContent.adminLabel}
       </IconButton>
 
       {isAuthenticated && isOpen && (
@@ -189,27 +190,27 @@ export default function AdminAccessButton() {
           <IconButton
             className="w-full justify-start border-transparent bg-transparent shadow-none hover:bg-[var(--color-bg-soft)]"
             icon={<LayoutDashboard size={16} strokeWidth={1.8} />}
-            label="Panel admin"
+            label={menuContent.panel}
             onClick={handleNavigateAdmin}
             role="menuitem"
             showText="always"
             type="button"
             tone="terciary"
           >
-            Panel admin
+            {menuContent.panel}
           </IconButton>
 
           <IconButton
             className="w-full justify-start border-transparent bg-transparent shadow-none hover:bg-[var(--color-bg-soft)]"
             icon={<LogOut size={16} strokeWidth={1.8} />}
-            label="Cerrar sesion"
+            label={menuContent.logout}
             onClick={handleLogout}
             role="menuitem"
             showText="always"
             type="button"
             tone="terciary"
           >
-            Cerrar sesion
+            {menuContent.logout}
           </IconButton>
         </div>
       )}

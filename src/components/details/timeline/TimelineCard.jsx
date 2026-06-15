@@ -25,12 +25,10 @@ export default function TimelineCard({ event, index, isLast }) {
         grid
         grid-cols-[4.5rem_1.5rem_1fr]
         gap-4
-        sm:grid-cols-[6rem_2rem_1fr]
-        sm:gap-6
       "
     >
       <div className="pt-2 text-right">
-        <span className="font-serif text-2xl leading-none --color-accent-dark sm:text-3xl">
+        <span className="font-serif text-2xl leading-none --color-accent-dark">
           {event.time}
         </span>
       </div>
@@ -69,7 +67,7 @@ export default function TimelineCard({ event, index, isLast }) {
             </span>
           </div>
 
-          <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)] sm:text-base">
+          <p className="mt-2 text-sm leading-relaxed text-[var(--color-accent)]">
             {event.description}
           </p>
         </div>

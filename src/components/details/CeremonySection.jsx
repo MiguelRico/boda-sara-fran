@@ -2,7 +2,7 @@ import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../ui/HeaderSection";
 import ImageCarousel from "../ui/ImageCarousel";
 import IconButton from "../ui/IconButton";
-import { siteContent } from "../../constants/siteContent";
+import { siteContent } from "../../config/siteContent";
 import { MapPin } from "lucide-react";
 
 export default function CeremonySection() {
@@ -34,7 +34,7 @@ export default function CeremonySection() {
         <ImageCarousel
           images={ceremony.images}
           className="mx-auto mt-4 w-full max-w-4xl"
-          imageClassName="aspect-[4/5] w-full sm:aspect-[16/10] lg:aspect-[4/3]"
+          imageClassName="aspect-[4/5] w-full"
         />
       </div>
     </CinematicSection>

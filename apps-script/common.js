@@ -591,7 +591,6 @@ function normalizeNotificationType(value) {
   const type = String(value || "").trim();
 
   if (type === "Pago" || type === "Invitados") return type;
-  if (type === "Confirmación" || type === "Confirmacion") return "Invitados";
 
   return "Aviso";
 }
@@ -766,10 +765,10 @@ function createConfirmationNotification(confirmation, guests, action) {
 function getConfirmationNotificationTitle(confirmation, action) {
   const name = confirmation.confirmationName || "Sin nombre";
 
-  if (action === "deleted") return `Confirmacion eliminada: ${name}`;
-  if (action === "updated") return `Confirmacion actualizada: ${name}`;
+  if (action === "deleted") return `Confirmación eliminada: ${name}`;
+  if (action === "updated") return `Confirmación actualizada: ${name}`;
 
-  return `Confirmacion recibida: ${name}`;
+  return `Confirmación recibida: ${name}`;
 }
 
 function createServicePaymentNotifications(provider, service, action) {

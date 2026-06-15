@@ -1,4 +1,4 @@
-import { findAllTables, saveAdminTables } from "../services/rsvpService";
+import { findAllTables, saveAdminTables } from "../gateways/appScriptGateway";
 
 export const tableRepository = {
   findAll: findAllTables,
