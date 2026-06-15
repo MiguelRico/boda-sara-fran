@@ -94,12 +94,12 @@ export default function ImageCarousel({
             </>
           )}
 
-          <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-t from-transparent to-black/35 p-5">
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center bg-gradient-to-t from-transparent to-black/35 p-5 text-center">
             <AnimatePresence mode="wait">
               {currentImage.caption && (
                 <motion.p
                   key={currentImage.caption}
-                  className="max-w-xl text-sm leading-relaxed text-white/90"
+                  className="mx-auto max-w-xl text-center text-sm leading-relaxed text-white/90"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}

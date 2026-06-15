@@ -131,7 +131,7 @@ export const siteContentOverrides = {
       address: "Aguas del Pino, Ctra. A-5052, km 4 · Punta Umbría, Huelva.",
       mapUrl:
         "https://www.google.com/maps/search/?api=1&query=Aguas%20del%20Pino%2C%20Ctra%20A-5052%2C%20km%204%2C%20Punta%20Umbr%C3%ADa%2C%20Huelva",
-      mapLabel: "Cómo llegar",
+      mapLabel: "Como llegar",
       images: [
         {
           src: "/carousel/aguas-del-pino-1.jpg",

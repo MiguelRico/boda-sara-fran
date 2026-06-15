@@ -22,11 +22,11 @@ export default function CeremonySection() {
             <IconButton
               href={ceremony.mapUrl}
               icon={<MapPin size={16} strokeWidth={1.8} />}
-              showText
+              showText="always"
               target="_blank"
               tone="primary"
             >
-              {ceremony.mapLabel}
+              {ceremony.mapLabel || "Como llegar"}
             </IconButton>
           </div>
         </HeaderSection>
@@ -40,6 +40,3 @@ export default function CeremonySection() {
     </CinematicSection>
   );
 }
-
-
-
