@@ -74,7 +74,7 @@ export const siteContentOverrides = {
   },
   details: {
     history: {
-      eyebrow: "Una historia construida poco a poco",
+      eyebrow: "Construida poco a poco",
       title: "Nuestra historia",
       text: "Entre viajes, momentos sencillos y recuerdos compartidos, llegamos hasta este día con muchísima ilusión.",
       images: [
