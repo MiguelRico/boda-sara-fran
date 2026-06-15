@@ -2,17 +2,17 @@ import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-import { ADMIN_SESSION_KEY } from "../constants/admin";
+import { isAdminSessionAuthenticated } from "../utils/adminSession";
 import {
   GuestOverviewMetricGrid,
   GuestOverviewMetricGridSkeleton,
-} from "../components/admin/GuestOverviewMetrics";
+} from "../components/admin/guests";
 import { SkeletonBlock } from "../components/ui/TableSectionSkeleton";
-import TableTotalsPanel from "../components/admin/TableTotalsPanel";
-import VerticalBarChart from "../components/admin/VerticalBarChart";
-import ProviderTotalsPanel from "../components/admin/providers/ProviderTotalsPanel";
-import NotificationTotalsPanel from "../components/admin/notifications/NotificationTotalsPanel";
-import TaskTotalsPanel from "../components/admin/tasks/TaskTotalsPanel";
+import { TableTotalsPanel } from "../components/admin/tables";
+import { VerticalBarChart } from "../components/admin/common";
+import { ProviderTotalsPanel } from "../components/admin/providers";
+import { NotificationTotalsPanel } from "../components/admin/notifications";
+import { TaskTotalsPanel } from "../components/admin/tasks";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
@@ -72,8 +72,7 @@ export default function AdminStats() {
     once: true,
     amount: 0.2,
   });
-  const isAuthenticated =
-    window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  const isAuthenticated = isAdminSessionAuthenticated();
   const isMobileView = useIsMobileView();
   const [state, setState] = useState(emptyState);
 
@@ -234,7 +233,7 @@ function StatsGuestTotalsPanel({ chartStats, loading, stats }) {
               title={content.charts.allergies}
             >
               <BarStatsCard
-                emptyText="Sin alergias registradas"
+                emptyText={adminContent.guests.overview.emptyAllergies}
                 items={chartStats.allergiesByType}
               />
             </CollapsiblePanel>
@@ -262,24 +261,12 @@ function StatsChartsSkeleton() {
           key={panelIndex}
         >
           <div className="flex items-center justify-between gap-2">
-            <SkeletonBlock className="h-5 w-32 rounded-full" />
-            <SkeletonBlock className="h-5 w-9 rounded-full" />
-          </div>
-          <div className="mt-2 grid gap-1.5">
-            {Array.from({ length: panelIndex === 0 ? 3 : 2 }).map(
-              (_, rowIndex) => (
-                <div
-                  className="rounded-lg border border-[var(--color-border)] bg-white/45 p-1.5"
-                  key={rowIndex}
-                >
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <SkeletonBlock className="h-3 w-20 rounded-full" />
-                    <SkeletonBlock className="h-3 w-10 rounded-full" />
-                  </div>
-                  <SkeletonBlock className="h-1.5 rounded-full" />
-                </div>
-              ),
-            )}
+            <SkeletonBlock
+              className={`h-5 rounded-full ${
+                panelIndex === 0 ? "w-28" : "w-24"
+              }`}
+            />
+            <SkeletonBlock className="h-[1.125rem] w-8 rounded-full" />
           </div>
         </div>
       ))}

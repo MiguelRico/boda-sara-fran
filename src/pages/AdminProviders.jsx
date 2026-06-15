@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 
-import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import { ADMIN_PASSWORD } from "../constants/admin";
 import { adminContent } from "../constants/adminContent";
 import {
   PROVIDER_CATEGORIES,
@@ -17,6 +17,7 @@ import {
 } from "../constants/providers";
 import {
   buildProviderStats,
+  buildPendingProviderChanges,
   createEmptyProvider,
   createEmptyService,
   isServicePaid,
@@ -29,18 +30,20 @@ import {
   markAdminDataSaved,
   setAdminProviders,
 } from "../services/adminDataStore";
-import AdminTableSection from "../components/admin/AdminTableSection";
-import AdminEntityTabs from "../components/admin/AdminEntityTabs";
-import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
-import AdminEditorDialog from "../components/admin/AdminEditorDialog";
-import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
+import {
+  AdminEntityTabs,
+  AdminPageShell,
+  AdminPendingChangesActions,
+  AdminTableSection,
+  EditorDialog as AdminEditorDialog,
+  UnsavedChangesDialog,
+} from "../components/admin/common";
 import {
   ProviderCardsPage,
   ServiceCardsPage,
-} from "../components/admin/providers/ProviderCards";
-import ProviderForm from "../components/admin/providers/ProviderForm";
-import ProviderTotalsPanel from "../components/admin/providers/ProviderTotalsPanel";
-import AdminPageShell from "../components/admin/AdminPageShell";
+  ProviderForm,
+  ProviderTotalsPanel,
+} from "../components/admin/providers";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import {
@@ -60,10 +63,11 @@ import useEffectiveSelection from "../hooks/useEffectiveSelection";
 import useAdminActiveTab from "../hooks/useAdminActiveTab";
 import useSpinner from "../hooks/useSpinner";
 import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
+import { storageKeys } from "../config/storageKeys";
+import { isAdminSessionAuthenticated } from "../utils/adminSession";
 
-const desktopPageSize = 6;
-const mobilePageSize = 1;
-const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = "adminProvidersActiveTab";
+const ADMIN_PAGE_SIZE = 1;
+const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = storageKeys.adminActiveTabs.providers;
 const getEntityId = (item) => item.id;
 
 export default function AdminProviders() {
@@ -76,8 +80,7 @@ export default function AdminProviders() {
     once: true,
     amount: 0.1,
   });
-  const isAuthenticated =
-    window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  const isAuthenticated = isAdminSessionAuthenticated();
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [savedProviders, setSavedProviders] = useState([]);
   const [providers, setProviders] = useState([]);
@@ -139,14 +142,13 @@ export default function AdminProviders() {
   );
   const {
     currentPage,
-    pageSize,
+    pageSize: providerPageSize,
     pagedItems: pagedProviders,
     totalPages,
   } = usePagedData({
-    desktopPageSize,
     items: filteredProviders,
-    mobilePageSize,
     page,
+    pageSize: ADMIN_PAGE_SIZE,
   });
   const { handlePageChange, pageDirection } = usePageTransition({
     currentPage,
@@ -162,7 +164,7 @@ export default function AdminProviders() {
     getId: getEntityId,
     items: pagedProviders,
     onPageChange: setPage,
-    pageSize,
+    pageSize: providerPageSize,
     selectedId: selectedProviderId,
   });
 
@@ -184,10 +186,9 @@ export default function AdminProviders() {
     pagedItems: pagedServices,
     totalPages: servicesTotalPages,
   } = usePagedData({
-    desktopPageSize,
     items: filteredServices,
-    mobilePageSize,
     page: servicesPage,
+    pageSize: ADMIN_PAGE_SIZE,
   });
   const {
     handlePageChange: handleServicesPageChange,
@@ -208,12 +209,11 @@ export default function AdminProviders() {
     pageSize: servicesPageSize,
     selectedId: selectedServiceId,
   });
-  const hasPendingChanges =
-    JSON.stringify(savedProviders) !== JSON.stringify(providers);
   const pendingChanges = useMemo(
     () => buildPendingProviderChanges(savedProviders, providers),
     [providers, savedProviders],
   );
+  const hasPendingChanges = pendingChanges.length > 0;
   const stats = useMemo(() => buildProviderStats(providers), [providers]);
 
   const blocker = useUnsavedChangesNavigation(hasPendingChanges);
@@ -459,8 +459,10 @@ export default function AdminProviders() {
           <AdminPendingChangesActions
             changes={pendingChanges}
             discardLabel={adminContent.providers.actions.discardChanges}
-            discardDialogText="Se desharan los cambios pendientes de proveedores y servicios."
-            discardDialogTitle="Deshacer cambios de proveedores"
+            discardDialogText={adminContent.providers.dialogs.discardPendingText}
+            discardDialogTitle={
+              adminContent.providers.dialogs.discardPendingTitle
+            }
             hasPendingChanges={hasPendingChanges}
             onDiscard={handleDiscardPendingChanges}
             onSave={handleSavePendingChanges}
@@ -511,7 +513,7 @@ export default function AdminProviders() {
                 page={loadingProviders ? undefined : currentPage}
                 pageDirection={pageDirection}
                 pageLabel={adminContent.providers.list.pageLabel}
-                pageSize={loadingProviders ? undefined : pageSize}
+                pageSize={loadingProviders ? undefined : providerPageSize}
                 renderMeasurePage={(items) => (
                   <ProviderCardsPage
                     emptyState={getProviderEmptyState(providers.length)}
@@ -541,8 +543,8 @@ export default function AdminProviders() {
                   />
                 )}
                 skeletonConfig={{
+                  actionCount: 3,
                   content: {
-                    columnsClassName: "lg:grid-cols-2",
                     itemClassName: "min-h-40",
                     lines: 3,
                   },
@@ -567,7 +569,7 @@ export default function AdminProviders() {
                 contentRef={tableStartRef}
                 count={
                   selectedProvider
-                    ? `${adminContent.providers.list.pageLabel}: ${selectedProvider.name || "Proveedor sin nombre"}`
+                    ? `${adminContent.providers.list.pageLabel}: ${selectedProvider.name || adminContent.common.fallbacks.provider}`
                     : ""
                 }
                 eyebrow={adminContent.providers.services.eyebrow}
@@ -648,8 +650,8 @@ export default function AdminProviders() {
                   />
                 )}
                 skeletonConfig={{
+                  actionCount: 2,
                   content: {
-                    columnsClassName: "lg:grid-cols-2",
                     itemClassName: "min-h-40",
                     lines: 3,
                   },
@@ -855,15 +857,7 @@ function ProviderFilters({
       activeFilters={activeFilters}
       title={adminContent.providers.filters.eyebrow}
     >
-      <div
-        className={`grid gap-4 ${
-          showCategory && showPaymentStatus
-            ? "lg:grid-cols-[1fr_14rem_14rem]"
-            : showCategory || showPaymentStatus
-              ? "lg:grid-cols-[1fr_18rem]"
-              : "lg:grid-cols-1"
-        } lg:items-end`}
-      >
+      <div className="grid gap-4">
         <div>
           <Label>{adminContent.providers.filters.searchLabel}</Label>
           <label className="relative block">
@@ -979,7 +973,7 @@ function getProviderServices(providers) {
       ...service,
       category: provider.category,
       providerId: provider.id,
-      providerName: provider.name || "Proveedor sin nombre",
+      providerName: provider.name || adminContent.common.fallbacks.provider,
     })),
   );
 }
@@ -1003,10 +997,10 @@ function filterServices(services, { paymentStatus, query }) {
 
 function getDeleteTargetName(deleteTarget) {
   if (deleteTarget.type === "service") {
-    return deleteTarget.service?.name || "Servicio sin nombre";
+    return deleteTarget.service?.name || adminContent.common.fallbacks.service;
   }
 
-  return deleteTarget.provider?.name || "Proveedor sin nombre";
+  return deleteTarget.provider?.name || adminContent.common.fallbacks.provider;
 }
 
 function getProviderEmptyState(sourceCount) {
@@ -1049,37 +1043,6 @@ function getServiceEmptyState(providerCount, serviceCount, selectedProvider) {
     text: adminContent.providers.services.emptyText,
     title: adminContent.providers.services.emptyTitle,
   };
-}
-
-function buildPendingProviderChanges(savedProviders, currentProviders) {
-  const savedById = new Map(
-    savedProviders.map((provider) => [provider.id, provider]),
-  );
-  const currentById = new Map(
-    currentProviders.map((provider) => [provider.id, provider]),
-  );
-  const changes = [];
-
-  currentById.forEach((provider, providerId) => {
-    const savedProvider = savedById.get(providerId);
-
-    if (!savedProvider) {
-      changes.push(`Proveedor creado: ${provider.name || "sin nombre"}`);
-      return;
-    }
-
-    if (JSON.stringify(savedProvider) !== JSON.stringify(provider)) {
-      changes.push(`Proveedor modificado: ${provider.name || "sin nombre"}`);
-    }
-  });
-
-  savedById.forEach((provider, providerId) => {
-    if (!currentById.has(providerId)) {
-      changes.push(`Proveedor eliminado: ${provider.name || "sin nombre"}`);
-    }
-  });
-
-  return changes.length ? changes : ["Cambios pendientes en proveedores"];
 }
 
 function upsertProvider(providers, provider) {

@@ -3,17 +3,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 
-import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
-import AdminEditorDialog from "../components/admin/AdminEditorDialog";
-import AdminPageShell from "../components/admin/AdminPageShell";
-import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
-import AdminTableSection from "../components/admin/AdminTableSection";
-import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
+import { ADMIN_PASSWORD } from "../constants/admin";
+import { isAdminSessionAuthenticated } from "../utils/adminSession";
+import {
+  AdminPageShell,
+  AdminPendingChangesActions,
+  AdminTableSection,
+  EditorDialog as AdminEditorDialog,
+  UnsavedChangesDialog,
+} from "../components/admin/common";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import NotificationCards from "../components/admin/notifications/NotificationCards";
-import NotificationForm from "../components/admin/notifications/NotificationForm";
-import NotificationTotalsPanel from "../components/admin/notifications/NotificationTotalsPanel";
+import {
+  NotificationCards,
+  NotificationForm,
+  NotificationTotalsPanel,
+} from "../components/admin/notifications";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import IconButton from "../components/ui/IconButton";
@@ -26,10 +31,6 @@ import {
 import { adminContent } from "../constants/adminContent";
 import { AdminNotification } from "../models";
 import {
-  saveAdminNotifications,
-  updateAdminNotificationRead,
-} from "../api/notificationsApi";
-import {
   discardAdminNotificationChanges,
   getAdminDataSnapshot,
   getAdminNotificationChangesSummary,
@@ -39,17 +40,20 @@ import {
   setAdminNotificationRead,
   upsertAdminNotification,
 } from "../services/adminDataStore";
-import { buildNotificationStats } from "../services/notificationsService";
+import {
+  buildNotificationStats,
+  persistNotifications,
+  updateNotificationRead,
+} from "../services/notificationsService";
 import useIsMobileView from "../hooks/useIsMobileView";
 import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
 
 const createEmptyForm = () => AdminNotification.create();
-const DESKTOP_PAGE_SIZE = 6;
-const MOBILE_PAGE_SIZE = 4;
+const NOTIFICATIONS_PAGE_SIZE = 4;
 const READ_FILTERS = [
-  { value: "", label: "Todas" },
-  { value: "unread", label: "No leídas" },
-  { value: "read", label: "Leídas" },
+  { value: "", label: adminContent.notifications.filters.allTypes },
+  { value: "unread", label: adminContent.notifications.overview.metrics.unread },
+  { value: "read", label: adminContent.notifications.overview.metrics.read },
 ];
 
 export default function AdminNotifications() {
@@ -59,10 +63,9 @@ export default function AdminNotifications() {
     once: true,
     amount: 0.12,
   });
-  const isAuthenticated =
-    window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  const isAuthenticated = isAdminSessionAuthenticated();
   const isMobileView = useIsMobileView();
-  const pageSize = isMobileView ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
+  const pageSize = NOTIFICATIONS_PAGE_SIZE;
   const [state, setState] = useState({
     error: "",
     loading: true,
@@ -223,7 +226,7 @@ export default function AdminNotifications() {
     );
 
     syncNotifications(nextNotifications);
-    void updateAdminNotificationRead({
+    void updateNotificationRead({
       notificationId: notification.id,
       password: ADMIN_PASSWORD,
       read: nextRead,
@@ -255,7 +258,7 @@ export default function AdminNotifications() {
         state.notifications,
       );
 
-      await saveAdminNotifications({
+      await persistNotifications({
         notifications: normalizedNotifications,
         password: ADMIN_PASSWORD,
       });
@@ -389,8 +392,8 @@ export default function AdminNotifications() {
               />
             )}
             skeletonConfig={{
+              actionCount: 1,
               content: {
-                columnsClassName: "lg:grid-cols-2",
                 itemClassName: "min-h-40",
                 lines: 2,
               },
@@ -425,7 +428,7 @@ export default function AdminNotifications() {
         <DeleteDialog
           confirmText={adminContent.notifications.actions.delete}
           message={adminContent.notifications.dialogs.deleteMessage(
-            deleteTarget.title || "esta notificación",
+            deleteTarget.title || "esta notificaciÃ³n",
           )}
           onCancel={() => setDeleteTarget(null)}
           onConfirm={handleDeleteNotification}
@@ -530,7 +533,7 @@ function NotificationFilters({
 
   return (
     <CollapsiblePanel activeFilters={activeFilters} title={content.eyebrow}>
-      <div className="grid gap-4 lg:grid-cols-[1fr_12rem_12rem] lg:items-end">
+      <div className="grid gap-4">
         <div>
           <Label>{content.searchLabel}</Label>
           <label className="relative block">

@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
+import {
+  getLocalStorageValue,
+  setLocalStorageValue,
+} from "../utils/browserStorage";
 
-export default function useAdminActiveTab(storageKey, fallbackTab) {
+export default function useAdminActiveTab(
+  storageKey,
+  fallbackTab,
+) {
   const [activeTab, setActiveTab] = useState(() => {
-    try {
-      return window.localStorage.getItem(storageKey) || fallbackTab;
-    } catch {
-      return fallbackTab;
-    }
+    return getLocalStorageValue(storageKey) || fallbackTab;
   });
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(storageKey, activeTab);
-    } catch {
-      // Storage can be unavailable in private or locked browser contexts.
-    }
+    setLocalStorageValue(storageKey, activeTab);
   }, [activeTab, storageKey]);
 
   return [activeTab, setActiveTab];

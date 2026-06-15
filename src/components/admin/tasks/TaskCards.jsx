@@ -9,8 +9,7 @@ import {
   UserRound,
 } from "lucide-react";
 
-import Card from "../Card";
-import CardActions from "../CardActions";
+import { Card, CardActions } from "../common";
 import Chip from "../../ui/Chip";
 import IconButton from "../../ui/IconButton";
 import { TASK_PRIORITY_LABELS } from "../../../constants/tasks";
@@ -50,7 +49,7 @@ export default function TaskCards({
   }
 
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
+    <div className="grid gap-3">
       {tasks.map((task) => (
         <TaskCard
           key={task.id}
@@ -108,7 +107,7 @@ function TaskCard({ onDelete, onEdit, onToggleStatus, task }) {
           {TASK_PRIORITY_LABELS[task.priority] || task.priority}
         </span>
       }
-      title={task.title || "Tarea sin titulo"}
+      title={task.title || adminContent.common.fallbacks.task}
     >
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
         <Chip

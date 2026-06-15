@@ -3,7 +3,7 @@ import { useRef } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../cinematic/CinematicStaggeredRevealItem";
 import IconButton from "../ui/IconButton";
-import { siteContent } from "../../constants/siteContent";
+import { siteContent } from "../../config/siteContent";
 import { CalendarCheck, Map } from "lucide-react";
 
 export default function HeroSection() {
@@ -37,7 +37,7 @@ export default function HeroSection() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={4} isVisible={heroInView}>
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mt-10 flex flex-col items-center justify-center gap-4">
             <IconButton
               icon={<CalendarCheck size={16} strokeWidth={1.8} />}
               showText="always"

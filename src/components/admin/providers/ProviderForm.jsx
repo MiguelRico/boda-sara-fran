@@ -62,7 +62,7 @@ export default function ProviderForm({
             <p className="section-eyebrow mb-2">
               {adminContent.providers.form.contactTitle}
             </p>
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-5">
               <TextField
                 error={errors.name}
                 label={adminContent.providers.form.fields.name}
@@ -93,7 +93,7 @@ export default function ProviderForm({
           </FormCard>
 
           <CollapsiblePanel title="Datos opcionales">
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-5">
               <TextField
                 label={adminContent.providers.form.fields.address}
                 onChange={(value) => onChange("address", value)}
@@ -105,7 +105,7 @@ export default function ProviderForm({
                 type="url"
                 value={form.web}
               />
-              <div className="md:col-span-2">
+              <div>
                 <TextField
                   label={adminContent.providers.form.fields.accountNumber}
                   onChange={(value) => onChange("accountNumber", value)}
@@ -147,7 +147,7 @@ export default function ProviderForm({
                 className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4"
                 key={service.id}
               >
-                <div className="grid gap-4 md:grid-cols-[1fr_10rem_8rem_auto] md:items-end">
+                <div className="grid gap-4">
                   <TextField
                     error={errors[`service_${serviceIndex}_name`]}
                     label={adminContent.providers.form.fields.serviceName}
@@ -187,7 +187,7 @@ export default function ProviderForm({
                   )}
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="mt-4 grid gap-3">
                   <AnimatePresence initial={false}>
                     {service.payments
                       .slice(0, service.paymentCount)

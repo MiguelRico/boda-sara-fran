@@ -1,4 +1,4 @@
-import { findAllTasks, saveAdminTasks } from "../services/rsvpService";
+import { findAllTasks, saveAdminTasks } from "../gateways/appScriptGateway";
 
 export const taskRepository = {
   findAll: findAllTasks,

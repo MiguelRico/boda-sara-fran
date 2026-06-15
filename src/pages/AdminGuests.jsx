@@ -3,38 +3,48 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Pencil, Plus, Save, Search, Trash2, UsersRound, X } from "lucide-react";
 
-import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import { ADMIN_PASSWORD } from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import IconButton from "../components/ui/IconButton";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
-import AdminEntityTabs from "../components/admin/AdminEntityTabs";
-import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
-import AdminPageShell from "../components/admin/AdminPageShell";
-import AdminEditorDialog from "../components/admin/AdminEditorDialog";
-import Card from "../components/admin/Card";
-import SelectableCardPage from "../components/admin/SelectableCardPage";
-import AdminTableSection from "../components/admin/AdminTableSection";
-import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
-import GuestTotalsPanel from "../components/admin/GuestTotalsPanel";
-import TableGuestCard from "../components/admin/TableGuestCard";
+import {
+  AdminEntityTabs,
+  AdminPageShell,
+  AdminPendingChangesActions,
+  AdminTableSection,
+  Card,
+  EditorDialog as AdminEditorDialog,
+  SelectableCardFrame,
+  SelectableCardPage,
+  TableGuestCard,
+  UnsavedChangesDialog,
+} from "../components/admin/common";
+import { GuestTotalsPanel } from "../components/admin/guests";
 import CollapsiblePanel from "../components/ui/CollapsiblePanel";
 import Chip from "../components/ui/Chip";
 import RsvpForm from "../forms/RsvpForm";
 import { COMMON_ALLERGIES, MAX_GUESTS } from "../constants/rsvp";
+import { rsvpContent } from "../constants/rsvpContent";
 import { isMenuModuleEnabled } from "../config/features";
+import { storageKeys } from "../config/storageKeys";
 import { Confirmation, Guest } from "../models";
-import {
-  deleteAdminConfirmation,
-  saveAdminConfirmation,
-} from "../api/confirmationsApi";
 import {
   loadAdminDataOnce,
   markAdminDataSaved,
   setAdminConfirmations,
 } from "../services/adminDataStore";
+import {
+  buildGroupEditorChanges,
+  buildPendingConfirmationChanges,
+  getConfirmationKey,
+  getDuplicateContactErrors,
+  persistGuestChanges,
+  removeConfirmationFromList,
+  upsertConfirmationInList,
+} from "../services/guestsService";
 import {
   inputClassName,
   Label,
@@ -46,6 +56,7 @@ import usePageTransition from "../hooks/usePageTransition";
 import useEffectiveSelection from "../hooks/useEffectiveSelection";
 import useAdminActiveTab from "../hooks/useAdminActiveTab";
 import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
+import { isAdminSessionAuthenticated } from "../utils/adminSession";
 import {
   createDraftGroup,
   normalizeAdminGroupBeforeSave,
@@ -54,11 +65,11 @@ import { getGroupSummaryChips } from "../utils/rsvpSummaryChips";
 import { adminContent } from "../constants/adminContent";
 import { normalizeAdminConfirmations } from "../utils/rsvpGroups";
 import { validateRsvpContact, validateRsvpForm } from "../utils/rsvpValidation";
+import { getStableJson } from "../utils/objectSnapshot";
 
-const desktopPageSize = 8;
-const mobilePageSize = 1;
+const ADMIN_PAGE_SIZE = 1;
 const filters = adminContent.guests.filters.options;
-const ADMIN_GUESTS_ACTIVE_TAB_KEY = "adminGuestsActiveTab";
+const ADMIN_GUESTS_ACTIVE_TAB_KEY = storageKeys.adminActiveTabs.guests;
 const getRowId = (item) => item.rowId;
 const ADMIN_OUTBOUND_BUS_OPTIONS = [
   { value: "No", label: "No" },
@@ -110,8 +121,7 @@ export default function AdminGuests() {
     once: true,
     amount: 0.18,
   });
-  const isAuthenticated =
-    window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  const isAuthenticated = isAdminSessionAuthenticated();
   const [state, setState] = useState(emptyState);
   const [savedConfirmations, setSavedConfirmations] = useState([]);
   const [confirmationQuery, setConfirmationQuery] = useState("");
@@ -188,14 +198,13 @@ export default function AdminGuests() {
   const {
     currentPage,
     isMobileView,
-    pageSize,
+    pageSize: rowPageSize,
     pagedItems: pagedRows,
     totalPages,
   } = usePagedData({
-    desktopPageSize,
     items: visibleRows,
-    mobilePageSize,
     page,
+    pageSize: ADMIN_PAGE_SIZE,
   });
   const { cancelPageLoading, handlePageChange, pageDirection } =
     usePageTransition({
@@ -212,7 +221,7 @@ export default function AdminGuests() {
     getId: getRowId,
     items: pagedRows,
     onPageChange: setPage,
-    pageSize,
+    pageSize: rowPageSize,
     selectedId: selectedRowId,
   });
 
@@ -247,10 +256,9 @@ export default function AdminGuests() {
     pagedItems: pagedGuestItems,
     totalPages: guestTotalPages,
   } = usePagedData({
-    desktopPageSize,
     items: visibleGuestItems,
-    mobilePageSize,
     page: guestPage,
+    pageSize: ADMIN_PAGE_SIZE,
   });
   const {
     handlePageChange: handleGuestPageChange,
@@ -412,6 +420,7 @@ export default function AdminGuests() {
 
       await persistGuestChanges({
         currentConfirmations: state.confirmations,
+        password: ADMIN_PASSWORD,
         savedConfirmations,
       });
 
@@ -464,8 +473,7 @@ export default function AdminGuests() {
     );
     const restoredTotalPages = Math.max(
       Math.ceil(
-        restoredVisibleRows.length /
-          (isMobileView ? mobilePageSize : desktopPageSize),
+        restoredVisibleRows.length / ADMIN_PAGE_SIZE,
       ),
       1,
     );
@@ -474,7 +482,6 @@ export default function AdminGuests() {
   }, [
     confirmationFilter,
     confirmationQuery,
-    isMobileView,
     savedConfirmations,
   ]);
 
@@ -535,8 +542,8 @@ export default function AdminGuests() {
           <AdminPendingChangesActions
             changes={pendingChanges}
             discardLabel={adminContent.guests.actions.discardChanges}
-            discardDialogText="Se desharan los cambios pendientes de confirmaciones e invitados."
-            discardDialogTitle="Deshacer cambios de invitados"
+            discardDialogText={adminContent.guests.dialogs.discardPendingText}
+            discardDialogTitle={adminContent.guests.dialogs.discardPendingTitle}
             hasPendingChanges={hasPendingChanges}
             loading={state.loading}
             onDiscard={handleDiscardPendingChanges}
@@ -593,7 +600,7 @@ export default function AdminGuests() {
                 page={currentPage}
                 pageDirection={pageDirection}
                 pageLabel={adminContent.guests.list.pageLabel}
-                pageSize={pageSize}
+                pageSize={rowPageSize}
                 renderMeasurePage={(items) => (
                   <AdminGuestPage
                     emptyState={getGroupEmptyState(rows.length)}
@@ -625,8 +632,8 @@ export default function AdminGuests() {
                 sectionRef={tableCardRef}
                 sourceItemsCount={rows.length}
                 skeletonConfig={{
+                  actionCount: 3,
                   content: {
-                    columnsClassName: "lg:grid-cols-2",
                     itemClassName: "min-h-40",
                     lines: 2,
                   },
@@ -657,7 +664,7 @@ export default function AdminGuests() {
                     ? `${adminContent.guests.list.pageLabel}: ${
                         selectedGuestGroup.confirmationName ||
                         selectedGuestGroup.email ||
-                        "Confirmación sin nombre"
+                        adminContent.common.fallbacks.confirmation
                       }`
                     : ""
                 }
@@ -732,8 +739,8 @@ export default function AdminGuests() {
                 sectionRef={tableCardRef}
                 sourceItemsCount={guestItems.length}
                 skeletonConfig={{
+                  actionCount: 3,
                   content: {
-                    columnsClassName: "lg:grid-cols-2",
                     itemClassName: "min-h-40",
                     lines: 2,
                   },
@@ -829,7 +836,7 @@ function FiltersCard({ filter, onFilterChange, onQueryChange, query }) {
       className="mb-4"
       title={adminContent.guests.filters.eyebrow}
     >
-      <div className="grid gap-4 lg:grid-cols-[1fr_18rem] lg:items-end">
+      <div className="grid gap-4">
         <div>
           <Label>{adminContent.guests.filters.searchLabel}</Label>
           <label className="relative block">
@@ -996,13 +1003,10 @@ function GuestItemsPage({
 
 function GuestItemCard({ guestItem, onDelete, onEdit, onSelect, selected }) {
   return (
-    <div
-      className={`h-full rounded-[2rem] transition ${
-        selected
-          ? "ring-2 ring-[var(--color-accent-dark)] md:ring-offset-2 md:ring-offset-[var(--color-bg)]"
-          : "ring-0"
-      }`}
+    <SelectableCardFrame
+      className="h-full"
       onClick={() => onSelect(guestItem)}
+      selected={selected}
     >
       <TableGuestCard
         actions={
@@ -1023,7 +1027,7 @@ function GuestItemCard({ guestItem, onDelete, onEdit, onSelect, selected }) {
         eyebrow={guestItem.confirmationName}
         guest={guestItem}
       />
-    </div>
+    </SelectableCardFrame>
   );
 }
 
@@ -1069,13 +1073,10 @@ function AdminGuestConfirmationCard({
   const chips = getGroupSummaryChips(row, row.guests);
 
   return (
-    <div
-      className={`relative h-full rounded-[2rem] transition ${
-        selected
-          ? "ring-2 ring-[var(--color-accent-dark)] md:ring-offset-2 md:ring-offset-[var(--color-bg)]"
-          : "ring-0"
-      }`}
+    <SelectableCardFrame
+      className="relative h-full"
       onClick={() => onSelect(row)}
+      selected={selected}
     >
       <Card
         actionsPlacement="overlay"
@@ -1097,7 +1098,7 @@ function AdminGuestConfirmationCard({
         eyebrow={`${row.groupSize} ${
           row.groupSize === 1 ? "persona" : "personas"
         }`}
-        title={row.confirmationName || "Grupo sin nombre"}
+        title={row.confirmationName || adminContent.common.fallbacks.group}
         titleRef={titleRef}
         titleStyle={titleStyle}
       >
@@ -1116,7 +1117,7 @@ function AdminGuestConfirmationCard({
           ))}
         </div>
       </Card>
-    </div>
+    </SelectableCardFrame>
   );
 }
 
@@ -1290,8 +1291,8 @@ function GroupEditor({
       titleId="group-editor-title"
     >
       <RsvpForm
-        addText="Invitado"
-        cancelText="Cancelar"
+        addText={rsvpContent.form.addGuestText}
+        cancelText={rsvpContent.form.defaultCancelText}
         contact={draft}
         deleteContextText="editor"
         disableContactFields={{ confirmationName: !isCreation }}
@@ -1309,12 +1310,12 @@ function GroupEditor({
         canAddGuests={!isSingleGuestMode}
         showContactDetails={!isGuestListMode}
         showGuestList={!isGroupMode}
-        submitText="Guardar"
+        submitText={rsvpContent.form.reviewSubmitText}
         variant="admin"
       />
 
       <StatusDialog
-        closeText="Cerrar"
+        closeText={adminContent.guests.dialogs.close}
         eyebrow={adminContent.guests.dialogs.warningEyebrow}
         message={adminContent.guests.dialogs.validationMessage}
         onClose={() => setValidationPopupOpen(false)}
@@ -1382,13 +1383,16 @@ function removeGuestFromConfirmationList(confirmations, group, guestIndex) {
 
 function getDeleteTargetLabel(deleteTarget) {
   if (deleteTarget.type === "guest") {
-    return Guest.getFullName(deleteTarget.guest, "este invitado");
+    return Guest.getFullName(
+      deleteTarget.guest,
+      adminContent.guests.dialogs.fallbackGuestDeleteTarget,
+    );
   }
 
   return (
     deleteTarget.group?.confirmationName ||
     deleteTarget.group?.email ||
-    "esta confirmación"
+    adminContent.guests.dialogs.fallbackConfirmationDeleteTarget
   );
 }
 
@@ -1529,288 +1533,4 @@ function getGuestListEmptyState(groupCount, guestCount, selectedGroup) {
     text: adminContent.guests.guestList.noGuestsText,
     title: adminContent.guests.guestList.noGuestsTitle,
   };
-}
-
-function getStableJson(value) {
-  return JSON.stringify(value);
-}
-
-function upsertConfirmationInList(confirmations, group) {
-  const normalizedGroup = normalizeAdminConfirmations([group])[0];
-  const normalizedKey = getConfirmationKey(normalizedGroup);
-  const existingIndex = confirmations.findIndex((item) => {
-    const itemKey = getConfirmationKey(item);
-
-    return normalizedKey ? itemKey === normalizedKey : false;
-  });
-
-  if (existingIndex === -1) {
-    return normalizeAdminConfirmations([...confirmations, normalizedGroup]);
-  }
-
-  return normalizeAdminConfirmations(
-    confirmations.map((item, index) =>
-      index === existingIndex ? normalizedGroup : item,
-    ),
-  );
-}
-
-function getConfirmationKey(group) {
-  const normalizedGroup = group || {};
-
-  return (
-    normalizedGroup.confirmationId ||
-    normalizedGroup.id ||
-    `draft:${normalizedGroup.email || ""}:${normalizedGroup.phone || ""}`
-  );
-}
-
-function getDuplicateContactErrors(group, confirmations) {
-  const normalizedGroup = Confirmation.normalize(group);
-  const targetKey = getConfirmationKey(normalizedGroup);
-  const email = normalizedGroup.email.trim().toLowerCase();
-  const phone = normalizePhoneForComparison(normalizedGroup.phone);
-  const errors = {};
-
-  Confirmation.normalizeList(confirmations).some((confirmation) => {
-    if (getConfirmationKey(confirmation) === targetKey) return false;
-
-    const duplicatedEmail =
-      email && confirmation.email.trim().toLowerCase() === email;
-    const duplicatedPhone =
-      phone && normalizePhoneForComparison(confirmation.phone) === phone;
-
-    if (duplicatedEmail) {
-      errors.email = "Ya existe una confirmacion con este email.";
-    }
-
-    if (duplicatedPhone) {
-      errors.phone = "Ya existe una confirmacion con este telefono.";
-    }
-
-    return duplicatedEmail || duplicatedPhone;
-  });
-
-  return errors;
-}
-
-function normalizePhoneForComparison(value) {
-  return String(value || "").replace(/\D/g, "");
-}
-
-function removeConfirmationFromList(confirmations, target) {
-  const targetKey = getConfirmationKey(target);
-
-  return normalizeAdminConfirmations(
-    confirmations.filter(
-      (group) => group !== target && getConfirmationKey(group) !== targetKey,
-    ),
-  );
-}
-
-async function persistGuestChanges({
-  currentConfirmations,
-  savedConfirmations,
-}) {
-  const savedByconfirmationName = new Map(
-    savedConfirmations.map((group) => [getConfirmationKey(group), group]),
-  );
-  const currentByconfirmationName = new Map(
-    currentConfirmations.map((group) => [getConfirmationKey(group), group]),
-  );
-  const persistencePromises = [];
-
-  savedByconfirmationName.forEach((group, confirmationName) => {
-    if (!currentByconfirmationName.has(confirmationName)) {
-      persistencePromises.push(
-        deleteAdminConfirmation({
-          confirmationId: group.confirmationId || group.id || "",
-          password: ADMIN_PASSWORD,
-        }),
-      );
-    }
-  });
-
-  currentByconfirmationName.forEach((group, confirmationName) => {
-    const savedGroup = savedByconfirmationName.get(confirmationName);
-    const isCreation = !savedGroup;
-
-    if (!isCreation && getStableJson(savedGroup) === getStableJson(group)) {
-      return;
-    }
-
-    persistencePromises.push(
-      saveAdminConfirmation({
-        confirmation: group,
-        method: isCreation ? "POST" : "PUT",
-        password: ADMIN_PASSWORD,
-      }),
-    );
-  });
-
-  await Promise.all(persistencePromises);
-}
-
-function buildPendingConfirmationChanges(
-  savedConfirmations,
-  currentConfirmations,
-) {
-  const savedByconfirmationName = new Map(
-    savedConfirmations.map((group) => [getConfirmationKey(group), group]),
-  );
-  const currentByconfirmationName = new Map(
-    currentConfirmations.map((group) => [getConfirmationKey(group), group]),
-  );
-  const changes = [];
-
-  currentByconfirmationName.forEach((group, confirmationName) => {
-    const savedGroup = savedByconfirmationName.get(confirmationName);
-
-    if (!savedGroup) {
-      changes.push({
-        details: buildGroupEditorChanges({}, group, {
-          isCreation: true,
-        }),
-        title: `Confirmacion creada: ${group.confirmationName || confirmationName || group.email || "sin nombre"}`,
-      });
-      return;
-    }
-
-    if (getStableJson(savedGroup) !== getStableJson(group)) {
-      changes.push({
-        details: buildGroupEditorChanges(savedGroup, group, {
-          isCreation: false,
-        }),
-        title: `Confirmacion editada: ${getGroupChangeLabel(savedGroup, group)}`,
-      });
-    }
-  });
-
-  savedByconfirmationName.forEach((group, confirmationName) => {
-    if (!currentByconfirmationName.has(confirmationName)) {
-      changes.push({
-        details: Guest.normalizeList(group.guests, { ensureOne: false }).map(
-          (guest, index) =>
-            `Invitado eliminado: ${Guest.getDisplayName(guest, index)}`,
-        ),
-        title: `Confirmacion eliminada: ${group.confirmationName || confirmationName || group.email || "sin nombre"}`,
-      });
-    }
-  });
-
-  return changes;
-}
-
-function buildGroupEditorChanges(originalGroup, draftGroup, { isCreation }) {
-  const original = normalizeAdminGroupBeforeSave(originalGroup, { isCreation });
-  const draft = normalizeAdminGroupBeforeSave(draftGroup, { isCreation });
-  const contactChanges = [];
-
-  if (isCreation) {
-    contactChanges.push("Confirmacion nueva");
-  }
-
-  [
-    ["confirmationName", "Nombre de confirmacion"],
-    ["email", "Email"],
-    ["phone", "Telefono"],
-  ].forEach(([field, label]) => {
-    if (String(original[field] || "") !== String(draft[field] || "")) {
-      contactChanges.push(label);
-    }
-  });
-
-  const guestChanges = buildGuestEditorChanges(original.guests, draft.guests);
-  const groupLabel = getGroupChangeLabel(original, draft);
-  const changeParts = [];
-
-  if (contactChanges.length) {
-    changeParts.push(`Contacto: ${contactChanges.join(", ")}`);
-  }
-
-  if (guestChanges.added.length) {
-    changeParts.push(`Invitados anadidos: ${guestChanges.added.join(", ")}`);
-  }
-
-  if (guestChanges.removed.length) {
-    changeParts.push(
-      `Invitados eliminados: ${guestChanges.removed.join(", ")}`,
-    );
-  }
-
-  if (guestChanges.modified.length) {
-    changeParts.push(
-      `Invitados modificados: ${guestChanges.modified.join(", ")}`,
-    );
-  }
-
-  void groupLabel;
-
-  return changeParts.length ? changeParts : ["Cambios sin guardar"];
-}
-
-function buildGuestEditorChanges(originalGuests = [], draftGuests = []) {
-  const originalGuestsByKey = getGuestsByEditorKey(originalGuests);
-  const draftGuestsByKey = getGuestsByEditorKey(draftGuests);
-  const changes = {
-    added: [],
-    modified: [],
-    removed: [],
-  };
-
-  originalGuestsByKey.forEach((originalGuest, guestKey) => {
-    const draftGuest = draftGuestsByKey.get(guestKey);
-
-    if (!draftGuest) {
-      changes.removed.push(getGuestChangeLabel(originalGuest, guestKey));
-      return;
-    }
-
-    if (getStableJson(originalGuest) !== getStableJson(draftGuest)) {
-      changes.modified.push(getGuestChangeLabel(draftGuest, guestKey));
-    }
-  });
-
-  draftGuestsByKey.forEach((draftGuest, guestKey) => {
-    if (!originalGuestsByKey.has(guestKey)) {
-      changes.added.push(getGuestChangeLabel(draftGuest, guestKey));
-    }
-  });
-
-  return changes;
-}
-
-function getGuestsByEditorKey(guests = []) {
-  const guestKeyCounts = new Map();
-
-  return new Map(
-    guests.map((guest, index) => {
-      const baseKey = getGuestEditorBaseKey(guest, index);
-      const nextCount = (guestKeyCounts.get(baseKey) || 0) + 1;
-
-      guestKeyCounts.set(baseKey, nextCount);
-
-      return [`${baseKey}#${nextCount}`, guest];
-    }),
-  );
-}
-
-function getGuestEditorBaseKey(guest, index) {
-  const guestName = Guest.getFullName(guest, "").trim().toLowerCase();
-
-  return guestName || `invitado-${index + 1}`;
-}
-
-function getGuestChangeLabel(guest, guestKey) {
-  return Guest.getFullName(guest, "") || guestKey.replace(/#\d+$/, "");
-}
-
-function getGroupChangeLabel(original, draft) {
-  const originalLabel =
-    original.confirmationName || original.email || "sin nombre";
-  const draftLabel = draft.confirmationName || draft.email || "sin nombre";
-
-  if (originalLabel === draftLabel) return draftLabel;
-
-  return `${originalLabel} -> ${draftLabel}`;
 }

@@ -14,7 +14,7 @@ import {
 
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestCard from "../components/rsvp/GuestCard";
-import AdminTableSection from "../components/admin/AdminTableSection";
+import { AdminTableSection } from "../components/admin/common";
 import { FieldError, FormCard } from "../components/rsvp/FormPrimitives";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import Chip from "../components/ui/Chip";
@@ -84,7 +84,8 @@ export default function RsvpForm({
     ) : (
       <Save size={16} strokeWidth={1.8} />
     );
-  const reviewSubmitText = variant === "admin" ? submitText : "Guardar";
+  const reviewSubmitText =
+    variant === "admin" ? submitText : rsvpContent.form.reviewSubmitText;
   const cancelIcon =
     variant === "admin" ? (
       <X size={16} strokeWidth={1.8} />
@@ -258,7 +259,7 @@ export default function RsvpForm({
               <p className="section-eyebrow mb-4">
                 {rsvpContent.form.actionsEyebrow}
               </p>
-              <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid w-full grid-cols-2 gap-3">
                 <IconButton
                   className="w-full"
                   disabled={loading}
@@ -453,12 +454,12 @@ function MobilePublicRsvpFlow({
         className="w-full"
         disabled={loading}
         icon={<Check size={16} strokeWidth={1.8} />}
-        label="Guardar invitados"
+        label={rsvpContent.form.saveGuests}
         onClick={handleReview}
         tone="primary"
         type="button"
       >
-        Guardar invitados
+        {rsvpContent.form.saveGuests}
       </IconButton>
     </div>
   );
@@ -592,14 +593,16 @@ function ContactSummaryCard({ contact, guests, onEdit }) {
     <FormCard>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="section-eyebrow mb-2">Datos de contacto</p>
+          <p className="section-eyebrow mb-2">
+            {rsvpContent.review.contactEyebrow}
+          </p>
           <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-            {contact.confirmationName || "Grupo sin nombre"}
+            {contact.confirmationName || adminContent.common.fallbacks.group}
           </h2>
         </div>
         <IconButton
           icon={<Pencil size={16} strokeWidth={1.8} />}
-          label="Editar datos"
+          label={rsvpContent.review.editContact}
           onClick={onEdit}
           tone="secondary"
           type="button"
@@ -645,7 +648,7 @@ function MobileRsvpReview({
     <div className="space-y-5">
       <div className="relative mb-0 items-center justify-center text-center">
         <p className="section-text">
-          Revisa tus datos de contacto e invitados antes de confirmar
+          {rsvpContent.review.intro}
         </p>
       </div>
 
@@ -672,14 +675,16 @@ function MobileRsvpReview({
       <FormCard>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="section-eyebrow mb-2">Invitados confirmados</p>
+            <p className="section-eyebrow mb-2">
+              {rsvpContent.review.guestsEyebrow}
+            </p>
             <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-              {guests.length} Invitados
+              {rsvpContent.review.guestCount(guests.length)}
             </h2>
           </div>
           <IconButton
             icon={<Pencil size={16} strokeWidth={1.8} />}
-            label="Editar invitados"
+            label={rsvpContent.review.editGuests}
             onClick={onEditGuests}
             tone="secondary"
             type="button"
@@ -717,19 +722,21 @@ function RsvpConfirmationReviewDialog({
         className="premium-card rsvp-dialog-card"
         role="alertdialog"
       >
-        <p className="section-eyebrow mb-3">Revisión</p>
+        <p className="section-eyebrow mb-3">
+          {rsvpContent.review.dialogEyebrow}
+        </p>
         <h2
           className="font-serif text-3xl text-[var(--color-accent-dark)]"
           id="rsvp-confirmation-review-title"
         >
-          Revisa la confirmación
+          {rsvpContent.review.dialogTitle}
         </h2>
         <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
-          Comprueba los datos antes de enviar el formulario.
+          {rsvpContent.review.dialogText}
         </p>
 
         <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-3">
             <IconButton
               className="flex-1"
               disabled={loading}
@@ -750,16 +757,18 @@ function RsvpConfirmationReviewDialog({
               tone="terciary"
               type="button"
             >
-              Seguir editando
+              {rsvpContent.review.keepEditing}
             </IconButton>
           </div>
         </div>
 
         <div className="mt-4 space-y-3 text-left">
           <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4">
-            <p className="section-eyebrow mb-2">Contacto</p>
+            <p className="section-eyebrow mb-2">
+              {rsvpContent.review.contactTitle}
+            </p>
             <h3 className="break-words font-serif text-2xl leading-none text-[var(--color-accent-dark)]">
-              {contact.confirmationName || "Grupo sin nombre"}
+              {contact.confirmationName || adminContent.common.fallbacks.group}
             </h3>
             <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
               {groupChips.map((chip) => (

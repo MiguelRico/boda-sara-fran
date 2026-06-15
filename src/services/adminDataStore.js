@@ -1,21 +1,18 @@
 import { ADMIN_PASSWORD } from "../constants/admin";
+import { adminContent } from "../constants/adminContent";
 import { AdminNotification, Table, Task } from "../models";
-import { findAllConfirmations } from "../api/confirmationsApi";
-import { findAllNotifications } from "../api/notificationsApi";
-import { findAllProviders } from "../api/providersApi";
-import { findAllTasks } from "../api/tasksApi";
-import { findAllTables } from "../api/tablesApi";
-import {
-  saveAdminConfirmation,
-  deleteAdminConfirmation,
-} from "../api/confirmationsApi";
-import { saveAdminProviders } from "../api/providersApi";
-import { saveAdminNotifications } from "../api/notificationsApi";
-import { saveAdminTasks } from "../api/tasksApi";
-import { saveAdminTables } from "../api/tablesApi";
 import { mapAdminConfirmations } from "../mappers/confirmationMapper";
 import { mapAdminProviders } from "../mappers/providerMapper";
 import { mapAdminTables } from "../mappers/tableMapper";
+import { confirmationRepository } from "../repositories/confirmationRepository";
+import { notificationRepository } from "../repositories/notificationRepository";
+import { providerRepository } from "../repositories/providerRepository";
+import { tableRepository } from "../repositories/tableRepository";
+import { taskRepository } from "../repositories/taskRepository";
+import {
+  cloneJson,
+  hasJsonChanged,
+} from "../utils/objectSnapshot";
 
 const emptySnapshot = {
   confirmations: [],
@@ -35,9 +32,11 @@ const emptySnapshot = {
 const store = { ...emptySnapshot };
 
 const getConfirmationKey = (group = {}) =>
-  group.confirmationId || group.id || `draft:${group.email || ""}:${group.phone || ""}`;
-const getStableJson = (value) => JSON.stringify(value);
-const cloneData = (value) => JSON.parse(JSON.stringify(value));
+  group.confirmationId ||
+  group.id ||
+  `draft:${group.email || ""}:${group.phone || ""}`;
+const getUnnamedFallback = () => adminContent.common.fallbacks.unnamed;
+const changesContent = adminContent.common.changes;
 
 export const clearAdminDataStore = () => {
   store.confirmations = [];
@@ -59,20 +58,20 @@ export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
   if (store.loadingPromise) return store.loadingPromise;
 
   store.loadingPromise = Promise.all([
-    findAllConfirmations({ password }),
-    findAllTables({ password }).catch((error) => {
+    confirmationRepository.findAll({ password }),
+    tableRepository.findAll({ password }).catch((error) => {
       console.error("Error al cargar mesas guardadas:", error);
       return { tables: [] };
     }),
-    findAllProviders({ password }).catch((error) => {
+    providerRepository.findAll({ password }).catch((error) => {
       console.error("Error al cargar proveedores:", error);
       return { providers: [] };
     }),
-    findAllNotifications({ password }).catch((error) => {
+    notificationRepository.findAll({ password }).catch((error) => {
       console.error("Error al cargar notificaciones:", error);
       return { notifications: [] };
     }),
-    findAllTasks({ password }).catch((error) => {
+    taskRepository.findAll({ password }).catch((error) => {
       console.error("Error al cargar tareas:", error);
       return { tasks: [] };
     }),
@@ -85,20 +84,21 @@ export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
         notificationsResponse,
         tasksResponse,
       ]) => {
-      store.confirmations = mapAdminConfirmations(confirmationsResponse);
-      store.tables = Table.normalizeList(
-        mapAdminTables(tablesResponse?.tables || []),
-      );
-      store.providers = mapAdminProviders(providersResponse?.providers || []);
-      store.notifications = AdminNotification.normalizeList(
-        notificationsResponse?.notifications || notificationsResponse || [],
-      );
-      store.tasks = Task.normalizeList(tasksResponse?.tasks || []);
-      markAdminDataSaved();
-      store.loaded = true;
+        store.confirmations = mapAdminConfirmations(confirmationsResponse);
+        store.tables = Table.normalizeList(
+          mapAdminTables(tablesResponse?.tables || []),
+        );
+        store.providers = mapAdminProviders(providersResponse?.providers || []);
+        store.notifications = AdminNotification.normalizeList(
+          notificationsResponse?.notifications || notificationsResponse || [],
+        );
+        store.tasks = Task.normalizeList(tasksResponse?.tasks || []);
+        markAdminDataSaved();
+        store.loaded = true;
 
-      return getAdminDataSnapshot();
-    })
+        return getAdminDataSnapshot();
+      },
+    )
     .finally(() => {
       store.loadingPromise = null;
     });
@@ -107,87 +107,97 @@ export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
 };
 
 export const getAdminDataSnapshot = () => ({
-  confirmations: cloneData(store.confirmations),
-  notifications: cloneData(store.notifications),
-  providers: cloneData(store.providers),
-  savedConfirmations: cloneData(store.savedConfirmations),
-  savedNotifications: cloneData(store.savedNotifications),
-  savedProviders: cloneData(store.savedProviders),
-  savedTables: cloneData(store.savedTables),
-  savedTasks: cloneData(store.savedTasks),
-  tables: cloneData(store.tables),
-  tasks: cloneData(store.tasks),
+  confirmations: cloneJson(store.confirmations),
+  notifications: cloneJson(store.notifications),
+  providers: cloneJson(store.providers),
+  savedConfirmations: cloneJson(store.savedConfirmations),
+  savedNotifications: cloneJson(store.savedNotifications),
+  savedProviders: cloneJson(store.savedProviders),
+  savedTables: cloneJson(store.savedTables),
+  savedTasks: cloneJson(store.savedTasks),
+  tables: cloneJson(store.tables),
+  tasks: cloneJson(store.tasks),
 });
 
 export const hasAdminPendingChanges = () =>
-  getStableJson(store.confirmations) !== getStableJson(store.savedConfirmations) ||
-  getStableJson(store.tables) !== getStableJson(store.savedTables) ||
-  getStableJson(store.providers) !== getStableJson(store.savedProviders) ||
-  getStableJson(store.notifications) !== getStableJson(store.savedNotifications) ||
-  getStableJson(store.tasks) !== getStableJson(store.savedTasks);
+  hasJsonChanged(store.confirmations, store.savedConfirmations) ||
+  hasJsonChanged(store.tables, store.savedTables) ||
+  hasJsonChanged(store.providers, store.savedProviders) ||
+  hasJsonChanged(store.notifications, store.savedNotifications) ||
+  hasJsonChanged(store.tasks, store.savedTasks);
 
-export const getAdminPendingChangesSummary = () => dedupeChanges([
-  ...buildEntityChanges({
-    createdLabel: (item) =>
-      `Confirmacion creada: ${getConfirmationLabel(item)}`,
-    currentItems: store.confirmations,
-    deletedLabel: (item) =>
-      `Confirmacion eliminada: ${getConfirmationLabel(item)}`,
-    getKey: getConfirmationKey,
-    modifiedLabel: (item) =>
-      `Confirmacion modificada: ${getConfirmationLabel(item)}`,
-    savedItems: store.savedConfirmations,
-  }),
-  ...buildEntityChanges({
-    createdLabel: (item) => `Mesa creada: ${item.name || "sin nombre"}`,
-    currentItems: store.tables,
-    deletedLabel: (item) => `Mesa eliminada: ${item.name || "sin nombre"}`,
-    getKey: (item) => item.id || item.name,
-    modifiedLabel: (item) => `Mesa modificada: ${item.name || "sin nombre"}`,
-    savedItems: store.savedTables,
-  }),
-  ...buildEntityChanges({
-    createdLabel: (item) => `Proveedor creado: ${item.name || "sin nombre"}`,
-    currentItems: store.providers,
-    deletedLabel: (item) =>
-      `Proveedor eliminado: ${item.name || "sin nombre"}`,
-    getKey: (item) => item.id,
-    modifiedLabel: (item) =>
-      `Proveedor modificado: ${item.name || "sin nombre"}`,
-    savedItems: store.savedProviders,
-  }),
-  ...buildEntityChanges({
-    createdLabel: (item) => `Notificacion creada: ${item.title || "sin título"}`,
-    currentItems: store.notifications,
-    deletedLabel: (item) =>
-      `Notificacion eliminada: ${item.title || "sin título"}`,
-    getKey: (item) => item.id,
-    modifiedLabel: (item) =>
-      `Notificacion modificada: ${item.title || "sin título"}`,
-    savedItems: store.savedNotifications,
-  }),
-  ...getAdminTaskChangesSummary(),
-]);
+export const getAdminPendingChangesSummary = () =>
+  dedupeChanges([
+    ...buildEntityChanges({
+      createdLabel: (item) =>
+        changesContent.confirmationCreated(getConfirmationLabel(item)),
+      currentItems: store.confirmations,
+      deletedLabel: (item) =>
+        changesContent.confirmationDeleted(getConfirmationLabel(item)),
+      getKey: getConfirmationKey,
+      modifiedLabel: (item) =>
+        changesContent.confirmationModified(getConfirmationLabel(item)),
+      savedItems: store.savedConfirmations,
+    }),
+    ...buildEntityChanges({
+      createdLabel: (item) =>
+        changesContent.tableCreated(item.name || getUnnamedFallback()),
+      currentItems: store.tables,
+      deletedLabel: (item) =>
+        changesContent.tableDeleted(item.name || getUnnamedFallback()),
+      getKey: (item) => item.id || item.name,
+      modifiedLabel: (item) =>
+        changesContent.tableModified(item.name || getUnnamedFallback()),
+      savedItems: store.savedTables,
+    }),
+    ...buildEntityChanges({
+      createdLabel: (item) =>
+        changesContent.providerCreated(item.name || getUnnamedFallback()),
+      currentItems: store.providers,
+      deletedLabel: (item) =>
+        changesContent.providerDeleted(item.name || getUnnamedFallback()),
+      getKey: (item) => item.id,
+      modifiedLabel: (item) =>
+        changesContent.providerModified(item.name || getUnnamedFallback()),
+      savedItems: store.savedProviders,
+    }),
+    ...buildEntityChanges({
+      createdLabel: (item) =>
+        changesContent.notificationCreated(item.title || getUnnamedFallback()),
+      currentItems: store.notifications,
+      deletedLabel: (item) =>
+        changesContent.notificationDeleted(item.title || getUnnamedFallback()),
+      getKey: (item) => item.id,
+      modifiedLabel: (item) =>
+        changesContent.notificationModified(item.title || getUnnamedFallback()),
+      savedItems: store.savedNotifications,
+    }),
+    ...getAdminTaskChangesSummary(),
+  ]);
 
 export const getAdminNotificationChangesSummary = () =>
   buildEntityChanges({
-    createdLabel: (item) => `Notificacion creada: ${item.title || "sin título"}`,
+    createdLabel: (item) =>
+      changesContent.notificationCreated(item.title || getUnnamedFallback()),
     currentItems: store.notifications,
     deletedLabel: (item) =>
-      `Notificacion eliminada: ${item.title || "sin título"}`,
+      changesContent.notificationDeleted(item.title || getUnnamedFallback()),
     getKey: (item) => item.id,
     modifiedLabel: (item) =>
-      `Notificacion modificada: ${item.title || "sin título"}`,
+      changesContent.notificationModified(item.title || getUnnamedFallback()),
     savedItems: store.savedNotifications,
   });
 
 export const getAdminTaskChangesSummary = () =>
   buildEntityChanges({
-    createdLabel: (item) => `Tarea creada: ${item.title || "sin titulo"}`,
+    createdLabel: (item) =>
+      changesContent.taskCreated(item.title || getUnnamedFallback()),
     currentItems: store.tasks,
-    deletedLabel: (item) => `Tarea eliminada: ${item.title || "sin titulo"}`,
+    deletedLabel: (item) =>
+      changesContent.taskDeleted(item.title || getUnnamedFallback()),
     getKey: (item) => item.id,
-    modifiedLabel: (item) => `Tarea modificada: ${item.title || "sin titulo"}`,
+    modifiedLabel: (item) =>
+      changesContent.taskModified(item.title || getUnnamedFallback()),
     savedItems: store.savedTasks,
   });
 
@@ -253,12 +263,12 @@ export const saveAdminPendingChanges = async ({
   store.confirmations.forEach((confirmation) => {
     const key = getConfirmationKey(confirmation);
 
-    if (getStableJson(savedById.get(key)) === getStableJson(confirmation)) {
+    if (!hasJsonChanged(savedById.get(key), confirmation)) {
       return;
     }
 
     confirmationRequests.push(
-      saveAdminConfirmation({
+      confirmationRepository.saveAdmin({
         confirmation,
         method: savedById.has(key) ? "PUT" : "POST",
         password,
@@ -272,7 +282,7 @@ export const saveAdminPendingChanges = async ({
     if (currentById.has(key) || !confirmation.confirmationId) return;
 
     confirmationRequests.push(
-      deleteAdminConfirmation({
+      confirmationRepository.deleteAdmin({
         confirmationId: confirmation.confirmationId,
         password,
       }),
@@ -281,10 +291,13 @@ export const saveAdminPendingChanges = async ({
 
   await Promise.all([
     ...confirmationRequests,
-    saveAdminNotifications({ password, notifications: store.notifications }),
-    saveAdminTables({ password, tables: store.tables }),
-    saveAdminProviders({ password, providers: store.providers }),
-    saveAdminTasks({ password, tasks: store.tasks }),
+    notificationRepository.saveAdmin({
+      password,
+      notifications: store.notifications,
+    }),
+    tableRepository.saveAdmin({ password, tables: store.tables }),
+    providerRepository.saveAdmin({ password, providers: store.providers }),
+    taskRepository.saveAdmin({ password, tasks: store.tasks }),
   ]);
 
   return markAdminDataSaved();
@@ -448,7 +461,7 @@ function buildEntityChanges({
       return;
     }
 
-    if (getStableJson(savedByKey.get(key)) !== getStableJson(item)) {
+    if (hasJsonChanged(savedByKey.get(key), item)) {
       changes.push(modifiedLabel(item));
     }
   });
@@ -471,7 +484,7 @@ function getConfirmationLabel(confirmation = {}) {
     confirmation.confirmationName ||
     confirmation.email ||
     confirmation.phone ||
-    "sin nombre"
+    getUnnamedFallback()
   );
 }
 

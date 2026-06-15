@@ -14,10 +14,10 @@ import { formatDate } from "../../../utils/formatters";
 import {
   AdminMetricGroupCard,
   AdminMetricGroupCardSkeleton,
-} from "../AdminMetricGrid";
+} from "../common";
 
 const TASK_METRIC_GRID_CLASS =
-  "grid grid-cols-3 gap-2 sm:gap-3";
+  "grid grid-cols-3 gap-2";
 
 export default function TaskTotalsPanel({ loading, stats }) {
   const metrics = adminContent.tasks.overview.metrics;
@@ -106,14 +106,14 @@ function TaskNextSummary({ metrics, stats }) {
     "-";
 
   return (
-    <article className="col-span-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 text-center sm:p-5">
+    <article className="col-span-3 rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 text-center">
       <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
         <CalendarDays size={22} strokeWidth={1.8} />
       </div>
-      <p className="mt-3 text-xs leading-snug text-[var(--color-muted)] sm:uppercase sm:tracking-[0.16em]">
+      <p className="mt-3 text-xs leading-snug text-[var(--color-muted)]">
         {metrics.nextTask} ({formatDate(stats.nextTaskDate)})
       </p>
-      <p className="mt-2 break-words font-serif text-2xl leading-none text-[var(--color-accent-dark)] sm:text-3xl">
+      <p className="mt-2 break-words font-serif text-2xl leading-none text-[var(--color-accent-dark)]">
         {stats.nextTaskTitle || "-"}
       </p>
       <p className="mt-2 text-sm leading-snug text-[var(--color-muted)]">

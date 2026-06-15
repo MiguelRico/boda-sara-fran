@@ -40,7 +40,7 @@ export default function NotificationForm({
           {content.title}
         </h2>
 
-        <div className="grid gap-5 md:grid-cols-[1fr_12rem_12rem]">
+        <div className="grid gap-5">
           <div>
             <Label>{content.fields.title}</Label>
             <input

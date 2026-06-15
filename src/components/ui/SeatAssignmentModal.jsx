@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
+import { uiContent } from "../../constants/uiContent";
 import IconButton from "./IconButton";
 
 export default function SeatAssignmentModal({
@@ -21,7 +22,7 @@ export default function SeatAssignmentModal({
       <div
         aria-labelledby="seat-assignment-modal-title"
         aria-modal="true"
-        className={`premium-card max-h-[calc(100dvh-2rem)] w-full ${maxWidthClassName} overflow-y-auto p-5 text-left sm:max-h-[calc(100dvh-3rem)] sm:p-7`}
+        className={`premium-card max-h-[calc(100dvh-2rem)] w-full ${maxWidthClassName} overflow-y-auto p-5 text-left`}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >
@@ -36,7 +37,7 @@ export default function SeatAssignmentModal({
             </h2>
           </div>
 
-          <IconButton label="Cerrar" onClick={onClose}>
+          <IconButton label={uiContent.actions.close} onClick={onClose}>
             <X size={17} strokeWidth={1.8} />
           </IconButton>
         </div>

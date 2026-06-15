@@ -1,6 +1,6 @@
 import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../ui/HeaderSection";
-import { siteContent } from "../../constants/siteContent";
+import { siteContent } from "../../config/siteContent";
 import TransportCard from "./transport/TransportCard";
 
 export default function TransportSection() {
@@ -15,7 +15,7 @@ export default function TransportSection() {
           text={transport.text}
         />
 
-        <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-5">
           {transport.routes.map((route) => (
             <TransportCard key={route.title} route={route} />
           ))}

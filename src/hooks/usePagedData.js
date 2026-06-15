@@ -3,17 +3,14 @@ import { useMemo } from "react";
 import useIsMobileView from "./useIsMobileView";
 
 export default function usePagedData({
-  desktopPageSize,
   items,
-  mobilePageSize,
   page,
-  pageSize,
+  pageSize = 1,
 }) {
   const isMobileView = useIsMobileView();
 
   return useMemo(() => {
-    const effectivePageSize =
-      pageSize || (isMobileView ? mobilePageSize : desktopPageSize) || 1;
+    const effectivePageSize = pageSize || 1;
     const totalPages = Math.max(
       Math.ceil(items.length / effectivePageSize),
       1,
@@ -31,5 +28,5 @@ export default function usePagedData({
       pagedItems,
       totalPages,
     };
-  }, [desktopPageSize, isMobileView, items, mobilePageSize, page, pageSize]);
+  }, [isMobileView, items, page, pageSize]);
 }

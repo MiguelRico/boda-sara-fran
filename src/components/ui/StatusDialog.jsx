@@ -4,11 +4,12 @@ import { Check } from "lucide-react";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
+import { uiContent } from "../../constants/uiContent";
 import IconButton from "./IconButton";
 
 export default function StatusDialog({
   children,
-  closeText = "Cerrar",
+  closeText = uiContent.actions.close,
   closeTo,
   eyebrow,
   message,
@@ -44,7 +45,10 @@ export default function StatusDialog({
         aria-describedby="status-dialog-message"
       >
         <p className="section-eyebrow mb-3">
-          {eyebrow ?? (type === "success" ? "Confirmado" : "Aviso")}
+          {eyebrow ??
+            (type === "success"
+              ? uiContent.dialog.successEyebrow
+              : uiContent.dialog.warningEyebrow)}
         </p>
 
         <h2

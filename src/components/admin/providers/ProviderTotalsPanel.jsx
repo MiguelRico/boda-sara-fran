@@ -11,7 +11,7 @@ import {
 import { adminContent } from "../../../constants/adminContent";
 import { PROVIDER_CATEGORY_LABELS } from "../../../constants/providers";
 import { formatCurrency, formatDate } from "../../../utils/formatters";
-import { AdminMetricGroupCardSkeleton } from "../AdminMetricGrid";
+import { SkeletonBlock } from "../../ui/TableSectionSkeleton";
 
 export default function ProviderTotalsPanel({ loading, stats }) {
   const metrics = adminContent.providers.overview.metrics;
@@ -26,9 +26,9 @@ export default function ProviderTotalsPanel({ loading, stats }) {
       </h2>
       {loading ? (
         <div className="space-y-3">
-          <AdminMetricGroupCardSkeleton showHeader={false} />
-          <AdminMetricGroupCardSkeleton showHeader={false} />
-          <AdminMetricGroupCardSkeleton />
+          <ProviderGroupedSummarySkeleton />
+          <ProviderGroupedSummarySkeleton />
+          <ProviderNextServiceSummarySkeleton />
         </div>
       ) : (
         <div className="space-y-3">
@@ -38,6 +38,33 @@ export default function ProviderTotalsPanel({ loading, stats }) {
         </div>
       )}
     </section>
+  );
+}
+
+function ProviderGroupedSummarySkeleton() {
+  return (
+    <article className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3">
+      <div className="grid grid-cols-3 gap-2">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div className="min-w-0 text-center" key={index}>
+            <SkeletonBlock className="mx-auto h-8 w-8 rounded-full" />
+            <SkeletonBlock className="mx-auto mt-2 h-3 w-14 rounded-full" />
+            <SkeletonBlock className="mx-auto mt-2 h-6 w-12 rounded-full" />
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function ProviderNextServiceSummarySkeleton() {
+  return (
+    <article className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 text-center">
+      <SkeletonBlock className="mx-auto h-10 w-10 rounded-full" />
+      <SkeletonBlock className="mx-auto mt-3 h-3 w-36 max-w-full rounded-full" />
+      <SkeletonBlock className="mx-auto mt-3 h-8 w-40 max-w-full rounded-full" />
+      <SkeletonBlock className="mx-auto mt-3 h-4 w-28 max-w-full rounded-full" />
+    </article>
   );
 }
 
@@ -87,17 +114,17 @@ function ProviderFinanceSummary({ metrics, stats }) {
 
 function ProviderGroupedSummary({ items }) {
   return (
-    <article className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 sm:p-5">
+    <article className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3">
       <div className="grid grid-cols-3 gap-2">
         {items.map((item) => (
           <div className="min-w-0 text-center" key={item.label}>
             <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
               {item.icon}
             </div>
-            <p className="mt-2 text-[0.66rem] leading-snug text-[var(--color-muted)] sm:text-xs">
+            <p className="mt-2 text-[0.66rem] leading-snug text-[var(--color-muted)]">
               {item.label}
             </p>
-            <p className="mt-1 break-words font-serif text-lg leading-none text-[var(--color-accent-dark)] sm:text-3xl">
+            <p className="mt-1 break-words font-serif text-lg leading-none text-[var(--color-accent-dark)]">
               {item.value}
             </p>
           </div>
@@ -118,14 +145,14 @@ function ProviderNextServiceSummary({ metrics, stats }) {
   );
 
   return (
-    <article className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 text-center sm:p-5">
+    <article className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-3 text-center">
       <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
         <CalendarDays size={22} strokeWidth={1.8} />
       </div>
-      <p className="mt-3 text-xs leading-snug text-[var(--color-muted)] sm:uppercase sm:tracking-[0.16em]">
+      <p className="mt-3 text-xs leading-snug text-[var(--color-muted)]">
         {metrics.nextService} ({formatDate(stats.nextPaymentDate)})
       </p>
-      <p className="mt-2 break-words font-serif text-2xl leading-none text-[var(--color-accent-dark)] sm:text-3xl">
+      <p className="mt-2 break-words font-serif text-2xl leading-none text-[var(--color-accent-dark)]">
         {serviceName}
       </p>
       <p className="mt-2 text-sm leading-snug text-[var(--color-muted)]">

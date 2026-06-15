@@ -1,30 +1,37 @@
 import { ADMIN_TABLES_STORAGE_KEY } from "../constants/tables";
+import { adminContent } from "../constants/adminContent";
+import { tableContent } from "../constants/tableContent";
+import { rsvpContent } from "../constants/rsvpContent";
 import { Confirmation, Guest, Table } from "../models";
-import {
-  findAllConfirmations,
-  saveAdminConfirmation,
-} from "../api/confirmationsApi";
-import { findAllTables, saveAdminTables } from "../api/tablesApi";
+import { confirmationRepository } from "../repositories/confirmationRepository";
+import { tableRepository } from "../repositories/tableRepository";
 import { normalizeAdminConfirmations } from "../utils/rsvpGroups";
 import { getTableGroupOption } from "../constants/tables";
 import {
   getTableKey,
   validateTableForm,
 } from "../validators/tableValidators";
+import { getStableJson, hasJsonChanged } from "../utils/objectSnapshot";
+import {
+  getLocalStorageValue,
+  setLocalStorageValue,
+} from "../utils/browserStorage";
 
 export { getTableKey, validateTableForm };
 
 export const loadAdminTableConfirmations = async ({ password } = {}) => {
-  const response = await findAllConfirmations({ password });
+  const response = await confirmationRepository.findAll({
+    password,
+  });
 
   return normalizeAdminConfirmations(response);
 };
 
 export const loadAdminTables = async ({ password } = {}) => {
-  const response = await findAllTables({ password });
+  const response = await tableRepository.findAll({ password });
 
   if (response?.success === false) {
-    throw new Error(response.error || "No se pudieron cargar las mesas.");
+    throw new Error(response.error || adminContent.tables.errors.load);
   }
 
   return Table.normalizeList(response?.tables || []);
@@ -33,7 +40,7 @@ export const loadAdminTables = async ({ password } = {}) => {
 export const readStoredTables = () => {
   try {
     return Table.normalizeList(
-      JSON.parse(window.localStorage.getItem(ADMIN_TABLES_STORAGE_KEY) || "[]"),
+      JSON.parse(getLocalStorageValue(ADMIN_TABLES_STORAGE_KEY) || "[]"),
     );
   } catch {
     return [];
@@ -41,18 +48,14 @@ export const readStoredTables = () => {
 };
 
 export const saveStoredTables = (tables) => {
-  try {
-    window.localStorage.setItem(
-      ADMIN_TABLES_STORAGE_KEY,
-      JSON.stringify(Table.normalizeList(tables)),
-    );
-  } catch {
-    // Storage can be unavailable in private or locked browser contexts.
-  }
+  setLocalStorageValue(
+    ADMIN_TABLES_STORAGE_KEY,
+    JSON.stringify(Table.normalizeList(tables)),
+  );
 };
 
 export const persistAdminTables = async ({ password, tables }) => {
-  await saveAdminTables({
+  await tableRepository.saveAdmin({
     password,
     tables: Table.normalizeList(tables).map((table) => ({
       id: table.id || table.tableId,
@@ -75,6 +78,185 @@ export const buildTables = ({ confirmations, manualTables }) => {
 };
 
 export const buildTableStats = (tables) => Table.buildStats(tables);
+
+const getConfirmationKey = (group) => group.confirmationId || group.id;
+
+export function buildPendingTableChanges({
+  currentConfirmations,
+  currentManualTables,
+  savedConfirmations,
+  savedManualTables,
+}) {
+  const changes = [
+    ...buildManualTableChanges(savedManualTables, currentManualTables),
+    ...buildSeatAssignmentChanges(savedConfirmations, currentConfirmations),
+  ];
+
+  return changes.length ? changes : [];
+}
+
+function buildManualTableChanges(savedTables, currentTables) {
+  const savedByKey = new Map(
+    savedTables.map((table) => [getTableKey(table), table]),
+  );
+  const currentByKey = new Map(
+    currentTables.map((table) => [getTableKey(table), table]),
+  );
+  const changes = [];
+
+  currentByKey.forEach((table, tableKey) => {
+    if (!tableKey) return;
+
+    const savedTable = savedByKey.get(tableKey);
+
+    if (!savedTable) {
+      changes.push(adminContent.tables.changes.created(table.name));
+      return;
+    }
+
+    if (hasJsonChanged(savedTable, table)) {
+      changes.push(adminContent.tables.changes.modified(table.name));
+    }
+  });
+
+  savedByKey.forEach((table, tableKey) => {
+    if (tableKey && !currentByKey.has(tableKey)) {
+      changes.push(adminContent.tables.changes.deleted(table.name));
+    }
+  });
+
+  return changes;
+}
+
+function buildSeatAssignmentChanges(savedConfirmations, currentConfirmations) {
+  const savedByConfirmationId = new Map(
+    savedConfirmations.map((group) => [getConfirmationKey(group), group]),
+  );
+  const seenChanges = new Set();
+  const changes = [];
+
+  currentConfirmations.forEach((group) => {
+    const savedGroup = savedByConfirmationId.get(getConfirmationKey(group));
+    const savedGuestsByKey = new Map(
+      (savedGroup?.guests || []).map((guest, index) => [
+        getGuestChangeKey(savedGroup, guest, index),
+        guest,
+      ]),
+    );
+
+    group.guests.forEach((guest, index) => {
+      const guestKey = getGuestChangeKey(group, guest, index);
+      const savedGuest = savedGuestsByKey.get(guestKey) || {};
+      const previousAssignment = getGuestAssignmentLabel(savedGuest);
+      const currentAssignment = getGuestAssignmentLabel(guest);
+
+      if (previousAssignment === currentAssignment) return;
+
+      const change = `${Guest.getFullName(
+        guest,
+        rsvpContent.guest.fallbackName(index + 1),
+      )}: ${previousAssignment} -> ${currentAssignment}`;
+
+      if (seenChanges.has(change)) return;
+
+      seenChanges.add(change);
+      changes.push(change);
+    });
+  });
+
+  return changes;
+}
+
+function getGuestChangeKey(group = {}, guest = {}, index = 0) {
+  return [
+    getConfirmationKey(group),
+    guest.guestId || guest.id || guest.email || "",
+    guest.guestId || guest.id
+      ? ""
+      : `${index}:${Guest.getFullName(
+          guest,
+          rsvpContent.guest.fallbackName(index + 1),
+        )}`,
+  ]
+    .filter(Boolean)
+    .join(":");
+}
+
+export function getChangedConfirmations(savedConfirmations, currentConfirmations) {
+  const savedByConfirmationId = new Map(
+    savedConfirmations.map((group) => [
+      getConfirmationKey(group),
+      getStableJson(group),
+    ]),
+  );
+
+  return currentConfirmations.filter(
+    (group) =>
+      savedByConfirmationId.get(getConfirmationKey(group)) !==
+      getStableJson(group),
+  );
+}
+
+function getGuestAssignmentLabel(guest = {}) {
+  const table = String(guest.table || "").trim();
+  const seat = String(guest.seat || "").trim();
+
+  if (!table && !seat) return adminContent.tables.changes.noSeat;
+
+  return adminContent.tables.changes.assignmentLabel({ seat, table });
+}
+
+export function getGuestsUnassignedBySeatReduction(table, seatCount) {
+  const nextSeatCount = Number(seatCount) || 0;
+
+  return table.seats
+    .filter((seat) => seat.guest && Number(seat.seat) > nextSeatCount)
+    .sort((left, right) => Number(left.seat) - Number(right.seat))
+    .map((seat) => ({
+      name: Guest.getFullName(seat.guest, adminContent.common.fallbacks.guest),
+      seat: seat.seat,
+    }));
+}
+
+export function unassignGuestsOutsideTableSize({
+  confirmations,
+  seatCount,
+  table,
+}) {
+  const tableKey = getTableKey(table);
+  const nextSeatCount = Number(seatCount) || 0;
+
+  if (!tableKey || !nextSeatCount) return confirmations;
+
+  return confirmations.map((group) => {
+    let changed = false;
+    const guests = group.guests.map((guest) => {
+      const isRemovedSeat =
+        getTableKey({ name: guest.table }) === tableKey &&
+        Number(guest.seat) > nextSeatCount;
+
+      if (!isRemovedSeat) return guest;
+
+      changed = true;
+
+      return {
+        ...guest,
+        table: "",
+        seat: "",
+      };
+    });
+
+    return changed ? { ...group, guests } : group;
+  });
+}
+
+export function getPendingGuestRowKey(guest) {
+  return (
+    guest.guestId ||
+    guest.id ||
+    `${guest.confirmationId || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`
+  );
+}
 
 const getGuestsWithGroupIndex = (confirmations) =>
   Confirmation.normalizeList(confirmations).flatMap((confirmation) =>
@@ -197,7 +379,7 @@ export const assignPendingGuestToSeatLocal = ({
   });
 
   if (!confirmation) {
-    throw new Error("Grupo de invitacion no encontrado");
+    throw new Error(adminContent.tables.errors.groupNotFound);
   }
 
   const nextGuestIndex = confirmation.guests.findIndex((guest, index) =>
@@ -213,13 +395,13 @@ export const assignPendingGuestToSeatLocal = ({
   );
 
   if (nextGuestIndex === -1) {
-    throw new Error("Invitado no encontrado en el grupo");
+    throw new Error(adminContent.tables.errors.guestNotFound);
   }
 
   const currentGuest = confirmation.guests[nextGuestIndex];
 
   if (!currentGuest) {
-    throw new Error("Invitado no encontrado en el grupo");
+    throw new Error(adminContent.tables.errors.guestNotFound);
   }
 
   const table = tables.find(
@@ -227,7 +409,7 @@ export const assignPendingGuestToSeatLocal = ({
   );
 
   if (!table) {
-    throw new Error("Mesa no encontrada");
+    throw new Error(adminContent.tables.errors.tableNotFound);
   }
 
   const occupiedByAnotherGuest = table.seats.some(
@@ -235,7 +417,7 @@ export const assignPendingGuestToSeatLocal = ({
   );
 
   if (occupiedByAnotherGuest) {
-    throw new Error("El asiento no esta disponible");
+    throw new Error(adminContent.tables.errors.seatUnavailable);
   }
 
   const updatedConfirmation = {
@@ -288,7 +470,7 @@ export const assignPendingGuestToSeat = async ({
         : group.confirmationName === guestconfirmationName,
   );
 
-  await saveAdminConfirmation({
+  await confirmationRepository.saveAdmin({
         confirmation: updatedConfirmation,
     password,
   });
@@ -352,7 +534,7 @@ export const assignGuestToSeatLocal = ({
     return changed ? { ...group, guests } : group;
   });
   if (!selectedGuestFound) {
-    throw new Error("Invitado no encontrado en el grupo");
+    throw new Error(adminContent.tables.errors.guestNotFound);
   }
 
   return updatedConfirmations;
@@ -385,7 +567,7 @@ export const assignGuestToSeat = async ({
 
   await Promise.all(
     changedConfirmations.map((group) =>
-      saveAdminConfirmation({
+      confirmationRepository.saveAdmin({
         confirmation: group,
         password,
       }),
@@ -424,7 +606,7 @@ export const unassignGuestFromSeatLocal = ({ confirmations, seat, table }) => {
   );
 
   if (!changedConfirmations.length) {
-    throw new Error("No hay ningun invitado asignado a este asiento");
+    throw new Error(adminContent.tables.errors.noGuestAssignedToSeat);
   }
 
   return updatedConfirmations;
@@ -438,7 +620,7 @@ export const unassignGuestFromSeat = async ({ confirmations, password, seat, tab
 
   await Promise.all(
     changedConfirmations.map((group) =>
-      saveAdminConfirmation({
+      confirmationRepository.saveAdmin({
         confirmation: group,
         password,
       }),
@@ -449,15 +631,7 @@ export const unassignGuestFromSeat = async ({ confirmations, password, seat, tab
 };
 
 export const downloadTablesCsv = (tables) => {
-  const headers = [
-    "mesa",
-    "grupo",
-    "forma",
-    "notas",
-    "asiento",
-    "invitado",
-    "menu",
-  ];
+  const headers = tableContent.csv.headers;
   const lines = tables.flatMap((table) =>
     table.seats.map((seat) =>
       [
@@ -466,7 +640,9 @@ export const downloadTablesCsv = (tables) => {
         Table.getShapeLabel(table),
         table.notes,
         seat.seat,
-        seat.guest ? Guest.getFullName(seat.guest, "Invitado") : "",
+        seat.guest
+          ? Guest.getFullName(seat.guest, adminContent.common.fallbacks.guest)
+          : "",
         seat.guest?.menu || "",
       ]
         .map(escapeCsvValue)
@@ -479,7 +655,7 @@ export const downloadTablesCsv = (tables) => {
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = "mesas.csv";
+  link.download = tableContent.csv.filename;
   link.click();
   URL.revokeObjectURL(url);
 };

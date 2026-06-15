@@ -1,4 +1,7 @@
-import { findAllProviders, saveAdminProviders } from "../services/rsvpService";
+import {
+  findAllProviders,
+  saveAdminProviders,
+} from "../gateways/appScriptGateway";
 
 export const providerRepository = {
   findAll: findAllProviders,

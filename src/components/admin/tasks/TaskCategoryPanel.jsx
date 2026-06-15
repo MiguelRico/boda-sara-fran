@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { adminContent } from "../../../constants/adminContent";
 import TaskCards from "./TaskCards";
 
 export default function TaskCategoryPanel({
@@ -29,7 +30,7 @@ export default function TaskCategoryPanel({
         type="button"
       >
         <span className="min-w-0 px-1">
-          <span className="block truncate font-serif text-lg leading-none text-[var(--color-accent-dark)] sm:text-xl">
+          <span className="block truncate font-serif text-lg leading-none text-[var(--color-accent-dark)]">
             {category.label}
           </span>
         </span>
@@ -64,25 +65,25 @@ function CategorySummary({ summary }) {
     <div className="flex min-w-0 items-center justify-end gap-1">
       <SummaryPill
         icon={<CheckCircle2 size={12} strokeWidth={2} />}
-        label="Completas"
+        label={adminContent.tasks.overview.metrics.completed}
         toneClassName="border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-[var(--shadow-button)]"
         value={summary.completed}
       />
       <SummaryPill
         icon={<Siren size={12} strokeWidth={2} />}
-        label="Alta"
+        label={adminContent.tasks.overview.priorityLabels.high}
         toneClassName="border-rose-200 bg-rose-100 text-rose-700"
         value={summary.alta}
       />
       <SummaryPill
         icon={<Flag size={12} strokeWidth={2} />}
-        label="Media"
+        label={adminContent.tasks.overview.priorityLabels.medium}
         toneClassName="border-amber-200 bg-amber-100 text-amber-700"
         value={summary.media}
       />
       <SummaryPill
         icon={<ArrowDown size={12} strokeWidth={2} />}
-        label="Baja"
+        label={adminContent.tasks.overview.priorityLabels.low}
         toneClassName="border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)]"
         value={summary.baja}
       />

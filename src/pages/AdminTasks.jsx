@@ -1,9 +1,10 @@
-import { useInView } from "framer-motion";
+﻿import { useInView } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 
-import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
+import { ADMIN_PASSWORD } from "../constants/admin";
+import { isAdminSessionAuthenticated } from "../utils/adminSession";
 import { adminContent } from "../constants/adminContent";
 import {
   TASK_CATEGORIES,
@@ -26,14 +27,18 @@ import {
   setAdminTasks,
   upsertAdminTask,
 } from "../services/adminDataStore";
-import AdminEditorDialog from "../components/admin/AdminEditorDialog";
-import AdminPageShell from "../components/admin/AdminPageShell";
-import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
-import AdminTableSection from "../components/admin/AdminTableSection";
-import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
-import TaskCategoryPanel from "../components/admin/tasks/TaskCategoryPanel";
-import TaskForm from "../components/admin/tasks/TaskForm";
-import TaskTotalsPanel from "../components/admin/tasks/TaskTotalsPanel";
+import {
+  AdminPageShell,
+  AdminPendingChangesActions,
+  AdminTableSection,
+  EditorDialog as AdminEditorDialog,
+  UnsavedChangesDialog,
+} from "../components/admin/common";
+import {
+  TaskCategoryPanel,
+  TaskForm,
+  TaskTotalsPanel,
+} from "../components/admin/tasks";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import DeleteDialog from "../components/ui/DeleteDialog";
@@ -59,8 +64,7 @@ export default function AdminTasks() {
     once: true,
     amount: 0.12,
   });
-  const isAuthenticated =
-    window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  const isAuthenticated = isAdminSessionAuthenticated();
   const isMobileView = useIsMobileView();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
@@ -325,8 +329,8 @@ export default function AdminTasks() {
             items={filteredTasks}
             loading={loading}
             skeletonConfig={{
+              actionCount: 1,
               content: {
-                columnsClassName: "lg:grid-cols-2",
                 itemClassName: "min-h-40",
                 lines: 3,
               },
@@ -478,7 +482,7 @@ function TaskFilters({
 
   return (
     <CollapsiblePanel activeFilters={activeFilters} title={content.eyebrow}>
-      <div className="grid gap-4 lg:grid-cols-[1fr_12rem_12rem_10rem_10rem] lg:items-end">
+      <div className="grid gap-4">
         <div>
           <Label>{content.searchLabel}</Label>
           <label className="relative block">

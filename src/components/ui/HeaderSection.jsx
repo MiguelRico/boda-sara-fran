@@ -9,9 +9,7 @@ export default function HeaderSection({
   children,
 }) {
   const Title = titleAs;
-  const textClassName = hideTextOnMobile
-    ? "section-text hidden sm:block"
-    : "section-text";
+  const textClassName = hideTextOnMobile ? "hidden" : "section-text";
   const shouldShowTitleAndText = !isMobileView;
 
   return (

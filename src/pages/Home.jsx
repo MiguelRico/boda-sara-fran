@@ -4,7 +4,7 @@ import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeroSection from "../components/home/HeroSection";
-import { siteContent } from "../constants/siteContent";
+import { siteContent } from "../config/siteContent";
 
 const homeCardIcons = {
   "bus-front": BusFront,
@@ -31,7 +31,7 @@ export default function Home() {
 
       <CinematicSection id="detalles">
         <div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5">
             {siteContent.home.cards.map((card, index) => (
               <AnimatedInfoCard
                 key={card.title}

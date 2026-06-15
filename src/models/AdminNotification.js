@@ -1,12 +1,8 @@
+import { adminContent } from "../constants/adminContent";
+
 const DEFAULT_TYPE = "Aviso";
 export const GUESTS_TYPE = "Invitados";
 export const CONFIRMATION_TYPE = GUESTS_TYPE;
-const LEGACY_CONFIRMATION_TYPES = new Set([
-  "Confirmación",
-  "Confirmacion",
-  "ConfirmaciÃ³n",
-  "ConfirmaciÃƒÂ³n",
-]);
 const VALID_TYPES = new Set(["Aviso", "Pago", GUESTS_TYPE]);
 
 const normalizeString = (value) => String(value || "").trim();
@@ -29,10 +25,6 @@ const createStableId = (input = {}) => {
 
 function normalizeNotificationType(value) {
   const type = normalizeString(value) || DEFAULT_TYPE;
-
-  if (LEGACY_CONFIRMATION_TYPES.has(type)) {
-    return GUESTS_TYPE;
-  }
 
   return VALID_TYPES.has(type) ? type : DEFAULT_TYPE;
 }
@@ -78,11 +70,11 @@ export class AdminNotification {
     const errors = {};
 
     if (!notification.title) {
-      errors.title = "El título es obligatorio";
+      errors.title = adminContent.notifications.validation.requiredTitle;
     }
 
     if (!notification.date) {
-      errors.date = "La fecha es obligatoria";
+      errors.date = adminContent.notifications.validation.requiredDate;
     }
 
     return errors;

@@ -4,6 +4,8 @@ export const tableContent = {
     title: "Crear mesa",
     submitText: "Guardar",
     cancelText: "Cancelar",
+    deleteText: "Eliminar",
+    deleteLabel: "Eliminar mesa",
     fields: {
       name: {
         label: "Nombre de la mesa *",
@@ -31,6 +33,8 @@ export const tableContent = {
   card: {
     defaultEyebrow: "Mesa",
     centerAction: "Ver asientos",
+    deleteAction: "Eliminar mesa",
+    editAction: "Editar mesa",
     assignedCount: ({ count }) =>
       `${count} ${count === 1 ? "invitado asignado" : "invitados asignados"}`,
     seatEyebrow: ({ group, seat }) => `Asiento ${seat}${group ? ` - ${group}` : ""}`,
@@ -54,5 +58,9 @@ export const tableContent = {
   validation: {
     seatCountRange: ({ max, min }) =>
       `Selecciona entre ${min} y ${max} asientos.`,
+  },
+  csv: {
+    filename: "mesas.csv",
+    headers: ["mesa", "grupo", "forma", "notas", "asiento", "invitado", "menu"],
   },
 };

@@ -10,8 +10,8 @@ export default function CreateInvitationCard({
 }) {
   const textClassName =
     hideTextOnMobile || isMobileView
-      ? "hidden sm:block mt-3 text-sm leading-relaxed"
-      : " mt-3 text-sm leading-relaxed";
+      ? "hidden"
+      : "mt-3 text-sm leading-relaxed";
   return (
     <FormCard>
       <div className="mb-4">
@@ -26,7 +26,7 @@ export default function CreateInvitationCard({
         <p className={textClassName}>{rsvpContent.createInvitation.text}</p>
       </div>
 
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+      <div className="mt-4 flex flex-col gap-4">
         <IconButton
           className="flex-1"
           icon={<Plus size={16} strokeWidth={1.8} />}
@@ -35,7 +35,7 @@ export default function CreateInvitationCard({
           type="button"
           onClick={onCreateNew}
         >
-          Crear nueva
+          {rsvpContent.createInvitation.action}
         </IconButton>
       </div>
     </FormCard>

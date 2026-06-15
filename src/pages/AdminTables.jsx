@@ -8,17 +8,24 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { ADMIN_PASSWORD, ADMIN_SESSION_KEY } from "../constants/admin";
-import AdminTableSection from "../components/admin/AdminTableSection";
-import AdminEntityTabs from "../components/admin/AdminEntityTabs";
-import AdminPendingChangesActions from "../components/admin/AdminPendingChangesActions";
-import AdminPageShell from "../components/admin/AdminPageShell";
-import TableTotalsPanel from "../components/admin/TableTotalsPanel";
-import SelectableCardPage from "../components/admin/SelectableCardPage";
-import SeatOccupantSummary from "../components/admin/SeatOccupantSummary";
-import TableAnimatedInfoCard from "../components/admin/TableAnimatedInfoCard";
-import TableEditorDialog from "../components/admin/tables/TableEditorDialog";
-import UnsavedChangesDialog from "../components/admin/UnsavedChangesDialog";
+import { ADMIN_PASSWORD } from "../constants/admin";
+import {
+  AdminEntityTabs,
+  AdminPageShell,
+  AdminPendingChangesActions,
+  AdminTableSection,
+  SeatOccupantSummary,
+  SelectableCardFrame,
+  SelectableCardPage,
+  UnsavedChangesDialog,
+} from "../components/admin/common";
+import {
+  PendingGuestsFilters,
+  PendingGuestsList,
+  TableAnimatedInfoCard,
+  TableEditorDialog,
+  TableTotalsPanel,
+} from "../components/admin/tables";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import IconButton from "../components/ui/IconButton";
@@ -26,26 +33,28 @@ import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import DeleteDialog from "../components/ui/DeleteDialog";
 import SeatAssignmentModal from "../components/ui/SeatAssignmentModal";
-import PendingGuestsList, {
-  PendingGuestsFilters,
-} from "../components/admin/PendingGuestsList";
 import { Label, selectClassName } from "../components/rsvp/FormPrimitives";
 import { Guest, Table } from "../models";
 import {
   assignGuestToSeatLocal,
   assignPendingGuestToSeatLocal,
+  buildPendingTableChanges,
   buildTables,
   buildTableStats,
   createTableFormFromTable,
   getAssignableGuests,
+  getChangedConfirmations,
+  getGuestsUnassignedBySeatReduction,
   getPendingGuests,
+  getPendingGuestRowKey,
   persistAdminTables,
   unassignGuestFromSeatLocal,
+  unassignGuestsOutsideTableSize,
   upsertManualTable,
   getTableKey,
 } from "../services/tablesService";
 import { validateTableForm } from "../validators/tableValidators";
-import { saveAdminConfirmation } from "../api/confirmationsApi";
+import { confirmationRepository } from "../repositories/confirmationRepository";
 import {
   loadAdminDataOnce,
   markAdminDataSaved,
@@ -62,14 +71,13 @@ import { createEmptyTableForm } from "../constants/tables";
 import { getTableRenderKey } from "../utils/renderKeys";
 import { adminContent } from "../constants/adminContent";
 import { tableContent } from "../constants/tableContent";
-import { rsvpContent } from "../constants/rsvpContent";
 import { isMenuModuleEnabled } from "../config/features";
+import { storageKeys } from "../config/storageKeys";
+import { isAdminSessionAuthenticated } from "../utils/adminSession";
 
-const ADMIN_ACTIVE_TAB_KEY = "admin-tables-active-tab";
+const ADMIN_ACTIVE_TAB_KEY = storageKeys.adminActiveTabs.tables;
 const SECTION_TABS = adminContent.tables.tabs;
-const desktopPageSize = 4;
-const pendingGuestsDesktopPageSize = 8;
-const mobilePageSize = 1;
+const ADMIN_PAGE_SIZE = 1;
 const emptySavedSnapshot = {
   confirmations: [],
   manualTables: [],
@@ -89,8 +97,7 @@ export default function AdminTables() {
     once: true,
     amount: 0.1,
   });
-  const isAuthenticated =
-    window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  const isAuthenticated = isAdminSessionAuthenticated();
   const [state, setState] = useState(emptyState);
   const [manualTables, setManualTables] = useState([]);
   const [savedSnapshot, setSavedSnapshot] = useState(emptySavedSnapshot);
@@ -204,10 +211,9 @@ export default function AdminTables() {
     pagedItems: pagedTables,
     totalPages,
   } = usePagedData({
-    desktopPageSize,
     items: tables,
-    mobilePageSize,
     page,
+    pageSize: ADMIN_PAGE_SIZE,
   });
   const { handlePageChange, pageDirection } = usePageTransition({
     currentPage,
@@ -284,10 +290,9 @@ export default function AdminTables() {
     pagedItems: pagedPendingGuests,
     totalPages: pendingGuestsTotalPages,
   } = usePagedData({
-    desktopPageSize: pendingGuestsDesktopPageSize,
     items: filteredPendingGuests,
-    mobilePageSize,
     page: pendingGuestsPage,
+    pageSize: ADMIN_PAGE_SIZE,
   });
   const {
     handlePageChange: handlePendingGuestsPageChange,
@@ -438,7 +443,7 @@ export default function AdminTables() {
           tables: manualTables,
         }),
         ...changedConfirmations.map((group) =>
-          saveAdminConfirmation({
+          confirmationRepository.saveAdmin({
             confirmation: group,
             password: ADMIN_PASSWORD,
           }),
@@ -760,8 +765,8 @@ export default function AdminTables() {
           <AdminPendingChangesActions
             changes={pendingChanges}
             discardLabel={adminContent.tables.actions.discardChanges}
-            discardDialogText="Se desharan los cambios pendientes de mesas y asignaciones."
-            discardDialogTitle="Deshacer cambios de mesas"
+            discardDialogText={adminContent.tables.dialogs.discardPendingText}
+            discardDialogTitle={adminContent.tables.dialogs.discardPendingTitle}
             hasPendingChanges={hasPendingChanges}
             loading={state.loading}
             onDiscard={handleDiscardPendingChanges}
@@ -803,8 +808,8 @@ export default function AdminTables() {
                 pageSize={state.loading ? undefined : pageSize}
                 sectionRef={tablesCardRef}
                 skeletonConfig={{
+                  actionCount: 1,
                   content: {
-                    columnsClassName: "lg:grid-cols-2",
                     itemClassName: "min-h-40",
                     lines: 2,
                   },
@@ -905,8 +910,8 @@ export default function AdminTables() {
                 pageSize={state.loading ? undefined : pendingGuestsPageSize}
                 sectionRef={tablesCardRef}
                 skeletonConfig={{
+                  actionCount: 3,
                   content: {
-                    columnsClassName: "lg:grid-cols-2",
                     itemClassName: "min-h-40",
                     lines: 2,
                   },
@@ -1019,9 +1024,9 @@ function SeatAssignmentDialog({
       guest.table === tableKey && String(guest.seat) === String(seat.seat),
   );
   const currentGuestName = currentGuest
-    ? Guest.getFullName(currentGuest, "Invitado")
+    ? Guest.getFullName(currentGuest, adminContent.common.fallbacks.guest)
     : seat.guest
-      ? Guest.getFullName(seat.guest, "Invitado")
+      ? Guest.getFullName(seat.guest, adminContent.common.fallbacks.guest)
       : "";
   const currentGuestKey = currentGuest ? getPendingGuestRowKey(currentGuest) : "";
   const canRemoveGuest = Boolean(currentGuest);
@@ -1051,10 +1056,9 @@ function SeatAssignmentDialog({
   });
   const { currentPage, isMobileView, pageSize, pagedItems, totalPages } =
     usePagedData({
-      desktopPageSize: 4,
       items: filteredGuests,
-      mobilePageSize: 1,
       page,
+      pageSize: ADMIN_PAGE_SIZE,
     });
   const { handlePageChange, pageDirection } = usePageTransition({
     currentPage,
@@ -1082,7 +1086,10 @@ function SeatAssignmentDialog({
       guestId: selectedGuest.guestId || selectedGuest.id,
       guestconfirmationName: selectedGuest.confirmationName,
       guestIndex: selectedGuest.guestIndex,
-      guestName: Guest.getFullName(selectedGuest, "Invitado"),
+      guestName: Guest.getFullName(
+        selectedGuest,
+        adminContent.common.fallbacks.guest,
+      ),
     });
   };
 
@@ -1146,7 +1153,7 @@ function SeatAssignmentDialog({
               </IconButton>
             </div>
           }
-          className="p-4 shadow-none hover:translate-y-0 sm:p-5"
+          className="p-4 shadow-none hover:translate-y-0"
           contentRef={contentRef}
           eyebrow={seatLabel}
           filters={
@@ -1264,7 +1271,7 @@ function PendingGuestAssignmentActions({
   const canAssign = Boolean(!disabled && selectedTable && selectedSeat);
 
   return (
-    <div className="grid w-full gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+    <div className="grid w-full gap-3">
       <div>
         <Label>{adminContent.pendingGuests.tableLabel}</Label>
         <select
@@ -1349,13 +1356,10 @@ function TableCardWithActions({
   table,
 }) {
   return (
-    <div
-      className={`grid gap-3 rounded-[2rem] transition ${
-        selected
-          ? "ring-2 ring-[var(--color-accent-dark)] md:ring-offset-2 md:ring-offset-[var(--color-bg)]"
-          : "ring-0"
-      }`}
+    <SelectableCardFrame
+      className="grid gap-3"
       onClick={() => onSelect(table)}
+      selected={selected}
     >
       <TableAnimatedInfoCard
         index={index}
@@ -1366,7 +1370,7 @@ function TableCardWithActions({
         reveal={reveal}
         table={table}
       />
-    </div>
+    </SelectableCardFrame>
   );
 }
 
@@ -1391,18 +1395,6 @@ function TableCardsPage({
           onDelete={onDelete}
           onEdit={onEdit}
           onSeatClick={onSeatClick}
-          onSelect={onSelect}
-          onUnassignSeat={onUnassignSeat}
-          reveal={false}
-          selected={getTableKey(table) === selectedTableKey}
-          table={table}
-        />
-      )}
-      renderMobileCard={(table) => (
-        <TableCardWithActions
-          onSeatClick={onSeatClick}
-          onDelete={onDelete}
-          onEdit={onEdit}
           onSelect={onSelect}
           onUnassignSeat={onUnassignSeat}
           reveal={false}
@@ -1447,185 +1439,4 @@ function getSeatAssignmentEmptyState(sourceGuestCount) {
     text: adminContent.pendingGuests.emptyText,
     title: adminContent.pendingGuests.emptyTitle,
   };
-}
-
-function buildPendingTableChanges({
-  currentConfirmations,
-  currentManualTables,
-  savedConfirmations,
-  savedManualTables,
-}) {
-  const changes = [
-    ...buildManualTableChanges(savedManualTables, currentManualTables),
-    ...buildSeatAssignmentChanges(savedConfirmations, currentConfirmations),
-  ];
-
-  return changes.length ? changes : [];
-}
-
-function buildManualTableChanges(savedTables, currentTables) {
-  const savedByKey = new Map(
-    savedTables.map((table) => [getTableKey(table), table]),
-  );
-  const currentByKey = new Map(
-    currentTables.map((table) => [getTableKey(table), table]),
-  );
-  const changes = [];
-
-  currentByKey.forEach((table, tableKey) => {
-    if (!tableKey) return;
-
-    const savedTable = savedByKey.get(tableKey);
-
-    if (!savedTable) {
-      changes.push(adminContent.tables.changes.created(table.name));
-      return;
-    }
-
-    if (getStableJson(savedTable) !== getStableJson(table)) {
-      changes.push(adminContent.tables.changes.modified(table.name));
-    }
-  });
-
-  savedByKey.forEach((table, tableKey) => {
-    if (tableKey && !currentByKey.has(tableKey)) {
-      changes.push(adminContent.tables.changes.deleted(table.name));
-    }
-  });
-
-  return changes;
-}
-
-function buildSeatAssignmentChanges(savedConfirmations, currentConfirmations) {
-  const savedByConfirmationId = new Map(
-    savedConfirmations.map((group) => [getConfirmationKey(group), group]),
-  );
-  const seenChanges = new Set();
-  const changes = [];
-
-  currentConfirmations.forEach((group) => {
-    const savedGroup = savedByConfirmationId.get(getConfirmationKey(group));
-    const savedGuestsByKey = new Map(
-      (savedGroup?.guests || []).map((guest, index) => [
-        getGuestChangeKey(savedGroup, guest, index),
-        guest,
-      ]),
-    );
-
-    group.guests.forEach((guest, index) => {
-      const guestKey = getGuestChangeKey(group, guest, index);
-      const savedGuest = savedGuestsByKey.get(guestKey) || {};
-      const previousAssignment = getGuestAssignmentLabel(savedGuest);
-      const currentAssignment = getGuestAssignmentLabel(guest);
-
-      if (previousAssignment === currentAssignment) return;
-
-      const change = `${Guest.getFullName(
-        guest,
-        rsvpContent.guest.fallbackName(index + 1),
-      )}: ${previousAssignment} -> ${currentAssignment}`;
-
-      if (seenChanges.has(change)) return;
-
-      seenChanges.add(change);
-      changes.push(change);
-    });
-  });
-
-  return changes;
-}
-
-function getGuestChangeKey(group = {}, guest = {}, index = 0) {
-  return [
-    getConfirmationKey(group),
-    guest.guestId || guest.id || guest.email || "",
-    guest.guestId || guest.id
-      ? ""
-      : `${index}:${Guest.getFullName(
-          guest,
-          rsvpContent.guest.fallbackName(index + 1),
-        )}`,
-  ]
-    .filter(Boolean)
-    .join(":");
-}
-
-function getChangedConfirmations(savedConfirmations, currentConfirmations) {
-  const savedByConfirmationId = new Map(
-    savedConfirmations.map((group) => [
-      getConfirmationKey(group),
-      getStableJson(group),
-    ]),
-  );
-
-  return currentConfirmations.filter(
-    (group) =>
-      savedByConfirmationId.get(getConfirmationKey(group)) !==
-      getStableJson(group),
-  );
-}
-
-function getGuestAssignmentLabel(guest = {}) {
-  const table = String(guest.table || "").trim();
-  const seat = String(guest.seat || "").trim();
-
-  if (!table && !seat) return adminContent.tables.changes.noSeat;
-
-  return adminContent.tables.changes.assignmentLabel({ seat, table });
-}
-
-function getGuestsUnassignedBySeatReduction(table, seatCount) {
-  const nextSeatCount = Number(seatCount) || 0;
-
-  return table.seats
-    .filter((seat) => seat.guest && Number(seat.seat) > nextSeatCount)
-    .sort((left, right) => Number(left.seat) - Number(right.seat))
-    .map((seat) => ({
-      name: Guest.getFullName(seat.guest, "Invitado"),
-      seat: seat.seat,
-    }));
-}
-
-function unassignGuestsOutsideTableSize({ confirmations, seatCount, table }) {
-  const tableKey = getTableKey(table);
-  const nextSeatCount = Number(seatCount) || 0;
-
-  if (!tableKey || !nextSeatCount) return confirmations;
-
-  return confirmations.map((group) => {
-    let changed = false;
-    const guests = group.guests.map((guest) => {
-      const isRemovedSeat =
-        getTableKey({ name: guest.table }) === tableKey &&
-        Number(guest.seat) > nextSeatCount;
-
-      if (!isRemovedSeat) return guest;
-
-      changed = true;
-
-      return {
-        ...guest,
-        table: "",
-        seat: "",
-      };
-    });
-
-    return changed ? { ...group, guests } : group;
-  });
-}
-
-function getStableJson(value) {
-  return JSON.stringify(value);
-}
-
-function getPendingGuestRowKey(guest) {
-  return (
-    guest.guestId ||
-    guest.id ||
-    `${guest.confirmationId || ""}-${guest.guestIndex ?? ""}-${Guest.getFullName(guest)}`
-  );
-}
-
-function getConfirmationKey(group) {
-  return group.confirmationId || group.id;
 }

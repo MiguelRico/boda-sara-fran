@@ -4,12 +4,13 @@ import { AlertTriangle, Trash2, X } from "lucide-react";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
+import { uiContent } from "../../constants/uiContent";
 import IconButton from "./IconButton";
 
 export default function DeleteDialog({
-  cancelText = "Cancelar",
+  cancelText = uiContent.actions.cancel,
   children,
-  confirmText = "Eliminar",
+  confirmText = uiContent.actions.delete,
   message,
   onCancel,
   onConfirm,
@@ -49,7 +50,7 @@ export default function DeleteDialog({
         </p>
         {children}
         <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-3">
             <IconButton
               className="flex-1"
               icon={<Trash2 size={16} strokeWidth={1.8} />}

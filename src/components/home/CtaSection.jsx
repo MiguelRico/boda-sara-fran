@@ -3,7 +3,7 @@ import { useRef } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../cinematic/CinematicStaggeredRevealItem";
 import IconButton from "../ui/IconButton";
-import { siteContent } from "../../constants/siteContent";
+import { siteContent } from "../../config/siteContent";
 import { CalendarCheck, Home } from "lucide-react";
 
 export default function CtaSection() {
@@ -30,7 +30,7 @@ export default function CtaSection() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={ctaInView}>
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mt-8 flex flex-col items-center justify-center gap-4">
             <IconButton
               icon={<CalendarCheck size={16} strokeWidth={1.8} />}
               showText="always"
