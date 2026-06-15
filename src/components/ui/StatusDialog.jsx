@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
+import useDialogFocus from "../../hooks/useDialogFocus";
 import { uiContent } from "../../constants/uiContent";
 import IconButton from "./IconButton";
 
@@ -20,6 +21,10 @@ export default function StatusDialog({
   type = "success",
 }) {
   const navigate = useNavigate();
+  const dialogRef = useDialogFocus({
+    enabled: open,
+    onEscape: onClose,
+  });
 
   useViewportScrollLock(open);
   useCloseOnRouteAttempt(open && !closeTo, onClose);
@@ -43,6 +48,8 @@ export default function StatusDialog({
         aria-modal="true"
         aria-labelledby="status-dialog-title"
         aria-describedby="status-dialog-message"
+        ref={dialogRef}
+        tabIndex={-1}
       >
         <p className="section-eyebrow mb-3">
           {eyebrow ??
@@ -69,6 +76,7 @@ export default function StatusDialog({
 
         <IconButton
           className="mt-8"
+          data-autofocus="true"
           icon={<Check size={16} strokeWidth={1.8} />}
           onClick={handleClose}
           tone="primary"

@@ -3,6 +3,7 @@ import { Save, Trash2, X } from "lucide-react";
 
 import IconButton from "../../ui/IconButton";
 import useViewportScrollLock from "../../../hooks/useViewportScrollLock";
+import useDialogFocus from "../../../hooks/useDialogFocus";
 
 export default function UnsavedChangesDialog({
   actions,
@@ -14,6 +15,7 @@ export default function UnsavedChangesDialog({
   titleId = "unsaved-changes-title",
 }) {
   useViewportScrollLock(true);
+  const dialogRef = useDialogFocus({ onEscape: onCancel });
   const uniqueChanges = getUniqueChanges(changes);
 
   const dialog = (
@@ -22,7 +24,9 @@ export default function UnsavedChangesDialog({
         aria-labelledby={titleId}
         aria-modal="true"
         className="premium-card rsvp-dialog-card"
+        ref={dialogRef}
         role="alertdialog"
+        tabIndex={-1}
       >
         <p className="section-eyebrow mb-3">{labels.eyebrow}</p>
         <h2
@@ -102,6 +106,7 @@ function DialogActions({
       {dialogActions.map((action) => (
         <IconButton
           className="flex-1"
+          data-autofocus={action.tone === "terciary" ? "true" : undefined}
           disabled={action.disabled}
           icon={action.icon}
           key={action.label}

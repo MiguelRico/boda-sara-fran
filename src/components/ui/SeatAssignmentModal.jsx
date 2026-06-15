@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
+import useDialogFocus from "../../hooks/useDialogFocus";
 import { uiContent } from "../../constants/uiContent";
 import IconButton from "./IconButton";
 
@@ -16,6 +17,7 @@ export default function SeatAssignmentModal({
 }) {
   useViewportScrollLock(true);
   useCloseOnRouteAttempt(blockRouteChange, onClose);
+  const dialogRef = useDialogFocus({ onEscape: onClose });
 
   return createPortal(
     <div className="rsvp-dialog-overlay" onClick={onClose}>
@@ -24,7 +26,9 @@ export default function SeatAssignmentModal({
         aria-modal="true"
         className={`premium-card max-h-[calc(100dvh-2rem)] w-full ${maxWidthClassName} overflow-y-auto p-5 text-left`}
         onClick={(event) => event.stopPropagation()}
+        ref={dialogRef}
         role="dialog"
+        tabIndex={-1}
       >
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
@@ -37,7 +41,11 @@ export default function SeatAssignmentModal({
             </h2>
           </div>
 
-          <IconButton label={uiContent.actions.close} onClick={onClose}>
+          <IconButton
+            data-autofocus="true"
+            label={uiContent.actions.close}
+            onClick={onClose}
+          >
             <X size={17} strokeWidth={1.8} />
           </IconButton>
         </div>

@@ -1,5 +1,6 @@
-const STORAGE_PREFIX =
-  import.meta.env.VITE_APP_STORAGE_PREFIX || "wedding-template";
+import { appEnvironment } from "./environment";
+
+const STORAGE_PREFIX = appEnvironment.storagePrefix;
 
 const buildKey = (key) => `${STORAGE_PREFIX}:${key}`;
 

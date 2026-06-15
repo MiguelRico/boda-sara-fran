@@ -1,7 +1,6 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Plus, Search } from "lucide-react";
 
 import { ADMIN_PASSWORD } from "../constants/admin";
 import { isAdminSessionAuthenticated } from "../utils/adminSession";
@@ -16,18 +15,13 @@ import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import {
   NotificationCards,
+  NotificationFilters,
   NotificationForm,
+  NotificationTableActions,
   NotificationTotalsPanel,
 } from "../components/admin/notifications";
 import DeleteDialog from "../components/ui/DeleteDialog";
-import CollapsiblePanel from "../components/ui/CollapsiblePanel";
-import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
-import {
-  inputClassName,
-  Label,
-  selectClassName,
-} from "../components/rsvp/FormPrimitives";
 import { adminContent } from "../constants/adminContent";
 import { AdminNotification } from "../models";
 import {
@@ -46,15 +40,11 @@ import {
   updateNotificationRead,
 } from "../services/notificationsService";
 import useIsMobileView from "../hooks/useIsMobileView";
-import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
+import useAdminLocalChanges from "../hooks/useAdminLocalChanges";
+import { matchesNotificationFilters } from "../utils/notificationPageUtils";
+import { DEFAULT_TABLE_PAGE_SIZE } from "../utils/paginationState";
 
 const createEmptyForm = () => AdminNotification.create();
-const NOTIFICATIONS_PAGE_SIZE = 4;
-const READ_FILTERS = [
-  { value: "", label: adminContent.notifications.filters.allTypes },
-  { value: "unread", label: adminContent.notifications.overview.metrics.unread },
-  { value: "read", label: adminContent.notifications.overview.metrics.read },
-];
 
 export default function AdminNotifications() {
   const notificationsRef = useRef(null);
@@ -65,7 +55,7 @@ export default function AdminNotifications() {
   });
   const isAuthenticated = isAdminSessionAuthenticated();
   const isMobileView = useIsMobileView();
-  const pageSize = NOTIFICATIONS_PAGE_SIZE;
+  const pageSize = DEFAULT_TABLE_PAGE_SIZE;
   const [state, setState] = useState({
     error: "",
     loading: true,
@@ -89,7 +79,6 @@ export default function AdminNotifications() {
   const [saving, setSaving] = useState(false);
   const pendingChanges = getAdminNotificationChangesSummary();
   const hasPendingChanges = pendingChanges.length > 0;
-  const blocker = useUnsavedChangesNavigation(hasPendingChanges);
   const notificationStats = useMemo(
     () => buildNotificationStats(state.notifications),
     [state.notifications],
@@ -158,10 +147,6 @@ export default function AdminNotifications() {
 
     return () => window.clearInterval(intervalId);
   }, []);
-
-  if (!isAuthenticated) {
-    return <Navigate to="/admin" replace />;
-  }
 
   const handlePageChange = (nextPage) => {
     if (
@@ -284,20 +269,20 @@ export default function AdminNotifications() {
       setSaving(false);
     }
   };
-  const handleConfirmBlockedNavigation = () => {
-    handleDiscard();
-    blocker.proceed?.();
-  };
-  const handleSaveAndExitBlockedNavigation = async () => {
-    const saved = await handleSavePendingChanges();
+  const {
+    blocker,
+    cancelBlockedNavigation,
+    discardAndContinueNavigation,
+    saveAndContinueNavigation,
+  } = useAdminLocalChanges({
+    hasPendingChanges,
+    onDiscard: handleDiscard,
+    onSave: handleSavePendingChanges,
+  });
 
-    if (saved) {
-      blocker.proceed?.();
-      return;
-    }
-
-    blocker.reset?.();
-  };
+  if (!isAuthenticated) {
+    return <Navigate to="/admin" replace />;
+  }
 
   return (
     <CinematicPage>
@@ -447,9 +432,9 @@ export default function AdminNotifications() {
             text: adminContent.notifications.dialogs.unsavedText,
             title: adminContent.notifications.dialogs.unsavedTitle,
           }}
-          onCancel={() => blocker.reset?.()}
-          onConfirm={handleConfirmBlockedNavigation}
-          onSaveAndExit={handleSaveAndExitBlockedNavigation}
+          onCancel={cancelBlockedNavigation}
+          onConfirm={discardAndContinueNavigation}
+          onSaveAndExit={saveAndContinueNavigation}
           titleId="admin-notifications-unsaved-changes-title"
         />
       )}
@@ -474,139 +459,4 @@ export default function AdminNotifications() {
       />
     </CinematicPage>
   );
-}
-
-function NotificationTableActions({ loading, onCreate, showText = true }) {
-  return (
-    <IconButton
-      className="w-full"
-      disabled={loading}
-      icon={<Plus size={16} strokeWidth={1.8} />}
-      onClick={onCreate}
-      showText={showText ? "always" : undefined}
-      tone="primary"
-      type="button"
-    >
-      {showText ? adminContent.notifications.actions.create : undefined}
-    </IconButton>
-  );
-}
-
-function NotificationFilters({
-  onQueryChange,
-  onReadFilterChange,
-  onTypeFilterChange,
-  query,
-  readFilter,
-  typeFilter,
-}) {
-  const content = adminContent.notifications.filters;
-  const selectedType = AdminNotification.types.find(
-    (type) => type === typeFilter,
-  );
-  const selectedReadFilter = READ_FILTERS.find(
-    (filter) => filter.value === readFilter,
-  );
-  const activeFilters = [
-    query.trim()
-      ? {
-          key: "query",
-          label: query.trim(),
-          onRemove: () => onQueryChange(""),
-        }
-      : null,
-    selectedType
-      ? {
-          key: "type",
-          label: selectedType,
-          onRemove: () => onTypeFilterChange(""),
-        }
-      : null,
-    readFilter && selectedReadFilter
-      ? {
-          key: "read",
-          label: selectedReadFilter.label,
-          onRemove: () => onReadFilterChange(""),
-        }
-      : null,
-  ].filter(Boolean);
-
-  return (
-    <CollapsiblePanel activeFilters={activeFilters} title={content.eyebrow}>
-      <div className="grid gap-4">
-        <div>
-          <Label>{content.searchLabel}</Label>
-          <label className="relative block">
-            <Search
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
-              size={18}
-              strokeWidth={1.8}
-            />
-            <input
-              className={`${inputClassName} pl-12`}
-              onChange={(event) => onQueryChange(event.target.value)}
-              placeholder={content.searchPlaceholder}
-              type="search"
-              value={query}
-            />
-          </label>
-        </div>
-
-        <div>
-          <Label>{content.typeLabel}</Label>
-          <select
-            className={selectClassName}
-            onChange={(event) => onTypeFilterChange(event.target.value)}
-            value={typeFilter}
-          >
-            <option value="">{content.allTypes}</option>
-            {AdminNotification.types.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <Label>{content.readLabel}</Label>
-          <select
-            className={selectClassName}
-            onChange={(event) => onReadFilterChange(event.target.value)}
-            value={readFilter}
-          >
-            {READ_FILTERS.map((filter) => (
-              <option key={filter.value || "all"} value={filter.value}>
-                {filter.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-    </CollapsiblePanel>
-  );
-}
-
-function matchesNotificationFilters(
-  notification,
-  { query, readFilter, typeFilter },
-) {
-  const normalizedQuery = query.trim().toLowerCase();
-  const matchesQuery =
-    !normalizedQuery ||
-    [
-      notification.title,
-      notification.detail,
-      notification.type,
-      notification.date,
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(normalizedQuery);
-  const matchesType = !typeFilter || notification.type === typeFilter;
-  const matchesRead =
-    !readFilter ||
-    (readFilter === "read" ? notification.read : !notification.read);
-
-  return matchesQuery && matchesType && matchesRead;
 }

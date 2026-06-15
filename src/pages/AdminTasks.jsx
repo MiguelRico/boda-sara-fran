@@ -1,16 +1,11 @@
-﻿import { useInView } from "framer-motion";
+import { useInView } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Plus, Search } from "lucide-react";
 
 import { ADMIN_PASSWORD } from "../constants/admin";
 import { isAdminSessionAuthenticated } from "../utils/adminSession";
 import { adminContent } from "../constants/adminContent";
-import {
-  TASK_CATEGORIES,
-  TASK_PRIORITIES,
-  TASK_STATUSES,
-} from "../constants/tasks";
+import { TASK_CATEGORIES } from "../constants/tasks";
 import {
   buildTaskStats,
   createEmptyTask,
@@ -36,24 +31,20 @@ import {
 } from "../components/admin/common";
 import {
   TaskCategoryPanel,
+  TaskFilters,
   TaskForm,
+  TaskTableActions,
   TaskTotalsPanel,
 } from "../components/admin/tasks";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import DeleteDialog from "../components/ui/DeleteDialog";
-import CollapsiblePanel from "../components/ui/CollapsiblePanel";
-import IconButton from "../components/ui/IconButton";
 import Spinner from "../components/ui/Spinner";
 import StatusDialog from "../components/ui/StatusDialog";
-import {
-  inputClassName,
-  Label,
-  selectClassName,
-} from "../components/rsvp/FormPrimitives";
 import useIsMobileView from "../hooks/useIsMobileView";
 import useSpinner from "../hooks/useSpinner";
-import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
+import useAdminLocalChanges from "../hooks/useAdminLocalChanges";
+import { filterTasks } from "../utils/taskPageUtils";
 
 const getTaskKey = (task) => task.id;
 
@@ -84,7 +75,6 @@ export default function AdminTasks() {
   });
   const pendingChanges = getAdminTaskChangesSummary();
   const hasPendingChanges = pendingChanges.length > 0;
-  const blocker = useUnsavedChangesNavigation(hasPendingChanges);
   const stats = useMemo(() => buildTaskStats(tasks), [tasks]);
   const filteredTasks = useMemo(
     () =>
@@ -151,10 +141,6 @@ export default function AdminTasks() {
       cancelled = true;
     };
   }, [isAuthenticated]);
-
-  if (!isAuthenticated) {
-    return <Navigate to="/admin" replace />;
-  }
 
   const applyTasks = (nextTasks) => {
     const normalizedTasks = normalizeTasks(nextTasks);
@@ -252,20 +238,20 @@ export default function AdminTasks() {
       spinner.hide();
     }
   };
-  const handleConfirmBlockedNavigation = () => {
-    handleDiscard();
-    blocker.proceed?.();
-  };
-  const handleSaveAndExitBlockedNavigation = async () => {
-    const saved = await handleSavePendingChanges();
+  const {
+    blocker,
+    cancelBlockedNavigation,
+    discardAndContinueNavigation,
+    saveAndContinueNavigation,
+  } = useAdminLocalChanges({
+    hasPendingChanges,
+    onDiscard: handleDiscard,
+    onSave: handleSavePendingChanges,
+  });
 
-    if (saved) {
-      blocker.proceed?.();
-      return;
-    }
-
-    blocker.reset?.();
-  };
+  if (!isAuthenticated) {
+    return <Navigate to="/admin" replace />;
+  }
 
   return (
     <CinematicPage>
@@ -398,9 +384,9 @@ export default function AdminTasks() {
             text: adminContent.tasks.dialogs.unsavedText,
             title: adminContent.tasks.dialogs.unsavedTitle,
           }}
-          onCancel={() => blocker.reset?.()}
-          onConfirm={handleConfirmBlockedNavigation}
-          onSaveAndExit={handleSaveAndExitBlockedNavigation}
+          onCancel={cancelBlockedNavigation}
+          onConfirm={discardAndContinueNavigation}
+          onSaveAndExit={saveAndContinueNavigation}
           titleId="admin-tasks-unsaved-changes-title"
         />
       )}
@@ -415,172 +401,5 @@ export default function AdminTasks() {
       />
     </CinematicPage>
   );
-}
-
-function TaskTableActions({ loading, onCreate, showText = true }) {
-  return (
-    <IconButton
-      className="w-full"
-      disabled={loading}
-      icon={<Plus size={16} strokeWidth={1.8} />}
-      onClick={onCreate}
-      showText={showText ? "always" : undefined}
-      tone="primary"
-      type="button"
-    >
-      {showText ? adminContent.tasks.actions.add : undefined}
-    </IconButton>
-  );
-}
-
-function TaskFilters({
-  dateFrom,
-  dateTo,
-  onDateFromChange,
-  onDateToChange,
-  onPriorityChange,
-  onQueryChange,
-  onStatusChange,
-  priority,
-  query,
-  status,
-}) {
-  const content = adminContent.tasks.filters;
-  const selectedStatus = TASK_STATUSES.find((item) => item.value === status);
-  const selectedPriority = TASK_PRIORITIES.find(
-    (item) => item.value === priority,
-  );
-  const activeFilters = [
-    query.trim()
-      ? { key: "query", label: query.trim(), onRemove: () => onQueryChange("") }
-      : null,
-    selectedStatus
-      ? {
-          key: "status",
-          label: selectedStatus.label,
-          onRemove: () => onStatusChange(""),
-        }
-      : null,
-    selectedPriority
-      ? {
-          key: "priority",
-          label: selectedPriority.label,
-          onRemove: () => onPriorityChange(""),
-        }
-      : null,
-    dateFrom
-      ? {
-          key: "dateFrom",
-          label: dateFrom,
-          onRemove: () => onDateFromChange(""),
-        }
-      : null,
-    dateTo
-      ? { key: "dateTo", label: dateTo, onRemove: () => onDateToChange("") }
-      : null,
-  ].filter(Boolean);
-
-  return (
-    <CollapsiblePanel activeFilters={activeFilters} title={content.eyebrow}>
-      <div className="grid gap-4">
-        <div>
-          <Label>{content.searchLabel}</Label>
-          <label className="relative block">
-            <Search
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-accent)]"
-              size={18}
-              strokeWidth={1.8}
-            />
-            <input
-              className={`${inputClassName} pl-12`}
-              onChange={(event) => onQueryChange(event.target.value)}
-              placeholder={content.searchPlaceholder}
-              type="search"
-              value={query}
-            />
-          </label>
-        </div>
-
-        <div>
-          <Label>{content.statusLabel}</Label>
-          <select
-            className={selectClassName}
-            onChange={(event) => onStatusChange(event.target.value)}
-            value={status}
-          >
-            <option value="">{content.allStatuses}</option>
-            <option value="pending">{content.pending}</option>
-            <option value="completed">{content.completed}</option>
-          </select>
-        </div>
-
-        <div>
-          <Label>{content.priorityLabel}</Label>
-          <select
-            className={selectClassName}
-            onChange={(event) => onPriorityChange(event.target.value)}
-            value={priority}
-          >
-            <option value="">{content.allPriorities}</option>
-            {TASK_PRIORITIES.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <DateFilter
-          label={content.dateFromLabel}
-          onChange={onDateFromChange}
-          value={dateFrom}
-        />
-        <DateFilter
-          label={content.dateToLabel}
-          onChange={onDateToChange}
-          value={dateTo}
-        />
-      </div>
-    </CollapsiblePanel>
-  );
-}
-
-function DateFilter({ label, onChange, value }) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <input
-        className={inputClassName}
-        onChange={(event) => onChange(event.target.value)}
-        type="date"
-        value={value}
-      />
-    </div>
-  );
-}
-
-function filterTasks(tasks, { dateFrom, dateTo, priority, query, status }) {
-  const normalizedQuery = query.trim().toLowerCase();
-
-  return tasks.filter((task) => {
-    const searchableText = [task.title, task.description]
-      .join(" ")
-      .toLowerCase();
-    const matchesQuery =
-      !normalizedQuery || searchableText.includes(normalizedQuery);
-    const matchesStatus = !status || task.status === status;
-    const matchesPriority = !priority || task.priority === priority;
-    const matchesDateFrom =
-      !dateFrom || (task.maxDate && task.maxDate >= dateFrom);
-    const matchesDateTo = !dateTo || (task.maxDate && task.maxDate <= dateTo);
-
-    return (
-      matchesQuery &&
-      matchesStatus &&
-      matchesPriority &&
-      matchesDateFrom &&
-      matchesDateTo
-    );
-  });
 }
 

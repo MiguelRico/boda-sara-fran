@@ -1,71 +1,65 @@
 import { createBrowserRouter } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
-import Home from "../pages/Home";
-import Details from "../pages/Details";
-import Rsvp from "../pages/Rsvp";
-import RsvpCreate from "../pages/RsvpCreate";
-import RsvpEdit from "../pages/RsvpEdit";
-import Admin from "../pages/Admin";
-import AdminStats from "../pages/AdminStats";
-import AdminGuests from "../pages/AdminGuests";
-import AdminTables from "../pages/AdminTables";
-import AdminProviders from "../pages/AdminProviders";
-import AdminNotifications from "../pages/AdminNotifications";
-import AdminTasks from "../pages/AdminTasks";
+import RouteErrorBoundary from "./RouteErrorBoundary";
+
+const lazyPage = (loader) => async () => ({
+  Component: (await loader()).default,
+});
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <MainLayout />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         index: true,
-        element: <Home />,
+        lazy: lazyPage(() => import("../pages/Home")),
       },
       {
         path: "details",
-        element: <Details />,
+        lazy: lazyPage(() => import("../pages/Details")),
       },
       {
         path: "rsvp",
-        element: <Rsvp />,
+        lazy: lazyPage(() => import("../pages/Rsvp")),
       },
       {
         path: "rsvp/create",
-        element: <RsvpCreate />,
+        lazy: lazyPage(() => import("../pages/RsvpCreate")),
       },
       {
         path: "rsvp/edit",
-        element: <RsvpEdit />,
+        lazy: lazyPage(() => import("../pages/RsvpEdit")),
       },
       {
         path: "admin",
-        element: <Admin />,
+        lazy: lazyPage(() => import("../pages/Admin")),
       },
       {
         path: "admin/stats",
-        element: <AdminStats />,
+        lazy: lazyPage(() => import("../pages/AdminStats")),
       },
       {
         path: "admin/guests",
-        element: <AdminGuests />,
+        lazy: lazyPage(() => import("../pages/AdminGuests")),
       },
       {
         path: "admin/tables",
-        element: <AdminTables />,
+        lazy: lazyPage(() => import("../pages/AdminTables")),
       },
       {
         path: "admin/providers",
-        element: <AdminProviders />,
+        lazy: lazyPage(() => import("../pages/AdminProviders")),
       },
       {
         path: "admin/notifications",
-        element: <AdminNotifications />,
+        lazy: lazyPage(() => import("../pages/AdminNotifications")),
       },
       {
         path: "admin/tasks",
-        element: <AdminTasks />,
+        lazy: lazyPage(() => import("../pages/AdminTasks")),
       },
     ],
   },

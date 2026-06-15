@@ -1,12 +1,6 @@
 import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import {
-  Check,
-  Grid2X2,
-  Plus,
-  Trash2,
-} from "lucide-react";
 
 import { ADMIN_PASSWORD } from "../constants/admin";
 import {
@@ -14,27 +8,24 @@ import {
   AdminPageShell,
   AdminPendingChangesActions,
   AdminTableSection,
-  SeatOccupantSummary,
-  SelectableCardFrame,
-  SelectableCardPage,
   UnsavedChangesDialog,
 } from "../components/admin/common";
 import {
+  PendingGuestAssignmentActions,
   PendingGuestsFilters,
   PendingGuestsList,
-  TableAnimatedInfoCard,
+  SeatAssignmentDialog,
+  TableCardsPage,
   TableEditorDialog,
+  TableTabActions,
   TableTotalsPanel,
 } from "../components/admin/tables";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
-import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
 import Spinner from "../components/ui/Spinner";
 import DeleteDialog from "../components/ui/DeleteDialog";
-import SeatAssignmentModal from "../components/ui/SeatAssignmentModal";
-import { Label, selectClassName } from "../components/rsvp/FormPrimitives";
-import { Guest, Table } from "../models";
+import { Table } from "../models";
 import {
   assignGuestToSeatLocal,
   assignPendingGuestToSeatLocal,
@@ -66,7 +57,7 @@ import usePagedData from "../hooks/usePagedData";
 import usePageTransition from "../hooks/usePageTransition";
 import useEffectiveSelection from "../hooks/useEffectiveSelection";
 import useAdminActiveTab from "../hooks/useAdminActiveTab";
-import useUnsavedChangesNavigation from "../hooks/useUnsavedChangesNavigation";
+import useAdminLocalChanges from "../hooks/useAdminLocalChanges";
 import { createEmptyTableForm } from "../constants/tables";
 import { getTableRenderKey } from "../utils/renderKeys";
 import { adminContent } from "../constants/adminContent";
@@ -74,10 +65,10 @@ import { tableContent } from "../constants/tableContent";
 import { isMenuModuleEnabled } from "../config/features";
 import { storageKeys } from "../config/storageKeys";
 import { isAdminSessionAuthenticated } from "../utils/adminSession";
+import { DEFAULT_TABLE_PAGE_SIZE } from "../utils/paginationState";
 
 const ADMIN_ACTIVE_TAB_KEY = storageKeys.adminActiveTabs.tables;
 const SECTION_TABS = adminContent.tables.tabs;
-const ADMIN_PAGE_SIZE = 1;
 const emptySavedSnapshot = {
   confirmations: [],
   manualTables: [],
@@ -213,7 +204,7 @@ export default function AdminTables() {
   } = usePagedData({
     items: tables,
     page,
-    pageSize: ADMIN_PAGE_SIZE,
+    pageSize: DEFAULT_TABLE_PAGE_SIZE,
   });
   const { handlePageChange, pageDirection } = usePageTransition({
     currentPage,
@@ -247,8 +238,6 @@ export default function AdminTables() {
       getChangedConfirmations(savedSnapshot.confirmations, state.confirmations),
     [savedSnapshot.confirmations, state.confirmations],
   );
-
-  const blocker = useUnsavedChangesNavigation(hasPendingChanges);
 
   const pendingGuestConfirmations = useMemo(() => {
     const groupSet = new Set(
@@ -292,7 +281,7 @@ export default function AdminTables() {
   } = usePagedData({
     items: filteredPendingGuests,
     page: pendingGuestsPage,
-    pageSize: ADMIN_PAGE_SIZE,
+    pageSize: DEFAULT_TABLE_PAGE_SIZE,
   });
   const {
     handlePageChange: handlePendingGuestsPageChange,
@@ -701,25 +690,16 @@ export default function AdminTables() {
     handleCloseTableForm();
   };
 
-  const handleCancelBlockedNavigation = () => {
-    blocker.reset?.();
-  };
-
-  const handleConfirmBlockedNavigation = () => {
-    handleDiscardPendingChanges();
-    blocker.proceed?.();
-  };
-
-  const handleSaveAndExitBlockedNavigation = async () => {
-    const saved = await handleSavePendingChanges();
-
-    if (saved) {
-      blocker.proceed?.();
-      return;
-    }
-
-    blocker.reset?.();
-  };
+  const {
+    blocker,
+    cancelBlockedNavigation,
+    discardAndContinueNavigation,
+    saveAndContinueNavigation,
+  } = useAdminLocalChanges({
+    hasPendingChanges,
+    onDiscard: handleDiscardPendingChanges,
+    onSave: handleSavePendingChanges,
+  });
 
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
@@ -732,9 +712,9 @@ export default function AdminTables() {
       {blocker.state === "blocked" && (
         <UnsavedChangesDialog
           changes={pendingChanges}
-          onCancel={handleCancelBlockedNavigation}
-          onConfirm={handleConfirmBlockedNavigation}
-          onSaveAndExit={handleSaveAndExitBlockedNavigation}
+          onCancel={cancelBlockedNavigation}
+          onConfirm={discardAndContinueNavigation}
+          onSaveAndExit={saveAndContinueNavigation}
           labels={{
             eyebrow: adminContent.tables.dialogs.unsavedEyebrow,
             exitWithoutSaving: adminContent.tables.dialogs.exitWithoutSaving,
@@ -1000,412 +980,6 @@ export default function AdminTables() {
   );
 }
 
-function SeatAssignmentDialog({
-  assigning,
-  guests,
-  pendingGuests,
-  onAssign,
-  onCancel,
-  onRemove,
-  seat,
-  table,
-}) {
-  const tableKey = table.name;
-  const tableLabel = table.name;
-  const seatLabel = `Asiento ${seat.seat}`;
-  const contentRef = useRef(null);
-  const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState({
-    group: "",
-    menu: "",
-  });
-  const currentGuest = guests.find(
-    (guest) =>
-      guest.table === tableKey && String(guest.seat) === String(seat.seat),
-  );
-  const currentGuestName = currentGuest
-    ? Guest.getFullName(currentGuest, adminContent.common.fallbacks.guest)
-    : seat.guest
-      ? Guest.getFullName(seat.guest, adminContent.common.fallbacks.guest)
-      : "";
-  const currentGuestKey = currentGuest ? getPendingGuestRowKey(currentGuest) : "";
-  const canRemoveGuest = Boolean(currentGuest);
-  const [selectedGuestKey, setSelectedGuestKey] = useState("");
-  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
-  const assignableGuests = pendingGuests.filter(
-    (guest) => getPendingGuestRowKey(guest) !== currentGuestKey,
-  );
-  const availableConfirmations = Array.from(
-    new Set(
-      assignableGuests.map((guest) => guest.confirmationName).filter(Boolean),
-    ),
-  );
-  const availableMenus = Array.from(
-    new Set(assignableGuests.map((guest) => guest.menu).filter(Boolean)),
-  );
-  const filteredGuests = assignableGuests.filter((guest) => {
-    if (filters.group && guest.confirmationName !== filters.group) {
-      return false;
-    }
-
-    if (isMenuModuleEnabled && filters.menu && guest.menu !== filters.menu) {
-      return false;
-    }
-
-    return true;
-  });
-  const { currentPage, isMobileView, pageSize, pagedItems, totalPages } =
-    usePagedData({
-      items: filteredGuests,
-      page,
-      pageSize: ADMIN_PAGE_SIZE,
-    });
-  const { handlePageChange, pageDirection } = usePageTransition({
-    currentPage,
-    onPageChange: setPage,
-    totalPages,
-  });
-  const {
-    effectiveSelectedId: effectiveSelectedGuestKey,
-    selectedItem: selectedGuest,
-  } = useEffectiveSelection({
-    allItems: filteredGuests,
-    currentPage,
-    getId: getPendingGuestRowKey,
-    items: pagedItems,
-    onPageChange: setPage,
-    pageSize,
-    selectedId: selectedGuestKey,
-  });
-
-  const handleAssign = () => {
-    if (!selectedGuest) return;
-
-    onAssign({
-      confirmationId: selectedGuest.confirmationId,
-      guestId: selectedGuest.guestId || selectedGuest.id,
-      guestconfirmationName: selectedGuest.confirmationName,
-      guestIndex: selectedGuest.guestIndex,
-      guestName: Guest.getFullName(
-        selectedGuest,
-        adminContent.common.fallbacks.guest,
-      ),
-    });
-  };
-
-  const handleConfirmRemove = () => {
-    setShowRemoveConfirm(false);
-    onRemove();
-  };
-  const handleFilterChange = (filterKey, value) => {
-    setFilters((current) => ({
-      ...current,
-      [filterKey]: value,
-    }));
-  };
-
-  return (
-    <>
-      <SeatAssignmentModal
-        blockRouteChange={!showRemoveConfirm}
-        eyebrow={tableLabel}
-        maxWidthClassName="max-w-2xl"
-        onClose={onCancel}
-        title={tableLabel}
-      >
-        <AdminTableSection
-          actions={
-            <div
-              className={`grid w-full gap-3 ${
-                canRemoveGuest ? "grid-cols-2" : "grid-cols-1"
-              }`}
-            >
-              {canRemoveGuest && (
-                <IconButton
-                  className="w-full"
-                  disabled={assigning}
-                  icon={<Trash2 size={16} strokeWidth={1.8} />}
-                  label={adminContent.tables.dialogs.remove}
-                  onClick={() => setShowRemoveConfirm(true)}
-                  tone="danger"
-                  type="button"
-                >
-                  {adminContent.tables.dialogs.remove}
-                </IconButton>
-              )}
-
-              <IconButton
-                className="w-full"
-                disabled={!selectedGuest || assigning}
-                icon={<Check size={16} strokeWidth={1.8} />}
-                label={
-                  assigning
-                    ? adminContent.tables.dialogs.assigning
-                    : adminContent.tables.dialogs.assign
-                }
-                onClick={handleAssign}
-                tone="primary"
-                type="button"
-              >
-                {assigning
-                  ? adminContent.tables.dialogs.assigning
-                  : adminContent.tables.dialogs.assign}
-              </IconButton>
-            </div>
-          }
-          className="p-4 shadow-none hover:translate-y-0"
-          contentRef={contentRef}
-          eyebrow={seatLabel}
-          filters={
-            <PendingGuestsFilters
-              availableConfirmations={availableConfirmations}
-              availableMenus={availableMenus}
-              filters={filters}
-              onFilterChange={handleFilterChange}
-            />
-          }
-          getKey={getPendingGuestRowKey}
-          isMobileView={isMobileView}
-          items={filteredGuests}
-          lockPageHeight={false}
-          mobilePageLabel={adminContent.tables.dialogs.guestLabel}
-          onNextPage={() =>
-            handlePageChange(currentPage + 1, contentRef.current)
-          }
-          onPrevPage={() =>
-            handlePageChange(currentPage - 1, contentRef.current)
-          }
-          page={currentPage}
-          pageDirection={pageDirection}
-          pageLabel={adminContent.tables.header.pageLabel}
-          pageSize={pageSize}
-          summary={
-            <SeatOccupantSummary
-              guestName={currentGuestName}
-              seat={seat.seat}
-            />
-          }
-          renderMeasurePage={(items) => (
-            <PendingGuestsList
-              emptyText={getSeatAssignmentEmptyState(pendingGuests.length).text}
-              emptyTitle={
-                getSeatAssignmentEmptyState(pendingGuests.length).title
-              }
-              guests={items}
-              onSelect={() => {}}
-              selectedGuestKey={effectiveSelectedGuestKey}
-            />
-          )}
-          renderPage={(items) => (
-            <PendingGuestsList
-              emptyText={getSeatAssignmentEmptyState(pendingGuests.length).text}
-              emptyTitle={
-                getSeatAssignmentEmptyState(pendingGuests.length).title
-              }
-              guests={items}
-              onSelect={(guest) =>
-                setSelectedGuestKey(getPendingGuestRowKey(guest))
-              }
-              selectedGuestKey={effectiveSelectedGuestKey}
-            />
-          )}
-          sourceItemsCount={pendingGuests.length}
-          title={seatLabel}
-          totalPages={totalPages}
-        />
-      </SeatAssignmentModal>
-
-      {showRemoveConfirm && (
-        <DeleteDialog
-          confirmText={adminContent.tables.dialogs.unassignSeat}
-          message={adminContent.tables.dialogs.unassignSeatMessage(
-            currentGuestName,
-            tableLabel,
-            seat.seat,
-          )}
-          onCancel={() => setShowRemoveConfirm(false)}
-          onConfirm={handleConfirmRemove}
-          title={adminContent.tables.dialogs.unassignSeatTitle}
-        />
-      )}
-    </>
-  );
-}
-
-function TableTabActions({
-  loading,
-  onCreate,
-  showText = true,
-}) {
-  if (!onCreate) return null;
-
-  return (
-    <div className="grid w-full gap-3">
-      <IconButton
-        className="w-full"
-        disabled={loading}
-        icon={<Plus size={18} strokeWidth={2.4} />}
-        label={adminContent.tables.actions.addTable}
-        onClick={onCreate}
-        showText={showText ? "always" : undefined}
-        tone="primary"
-        type="button"
-      >
-        {showText ? adminContent.tables.actions.addTable : undefined}
-      </IconButton>
-    </div>
-  );
-}
-
-function PendingGuestAssignmentActions({
-  assigning,
-  availableSeats,
-  disabled,
-  onAssign,
-  onSeatChange,
-  onTableChange,
-  selectedSeat,
-  selectedTable,
-  tables,
-}) {
-  const canAssign = Boolean(!disabled && selectedTable && selectedSeat);
-
-  return (
-    <div className="grid w-full gap-3">
-      <div>
-        <Label>{adminContent.pendingGuests.tableLabel}</Label>
-        <select
-          className={`${selectClassName} text-sm`}
-          disabled={disabled || assigning}
-          onChange={(event) => onTableChange(event.target.value)}
-          value={selectedTable}
-        >
-          <option value="">
-            {adminContent.pendingGuests.tablePlaceholder}
-          </option>
-          {tables.map((table) => {
-            const emptySeats = Table.getEmptySeats(table);
-            const label = `${table.name} (${adminContent.pendingGuests.emptySeatsLabel(emptySeats.length)})`;
-
-            return (
-              <option key={table.name} value={table.name}>
-                {label}
-              </option>
-            );
-          })}
-        </select>
-      </div>
-
-      <div>
-        <Label>{adminContent.pendingGuests.seatLabel}</Label>
-        <select
-          className={`${selectClassName} text-sm`}
-          disabled={!selectedTable || disabled || assigning}
-          onChange={(event) => onSeatChange(event.target.value)}
-          value={selectedSeat}
-        >
-          <option value="">
-            {selectedTable
-              ? adminContent.pendingGuests.tablePlaceholder
-              : adminContent.pendingGuests.selectTableFirst}
-          </option>
-          {availableSeats.map((seatNum) => (
-            <option key={seatNum} value={seatNum}>
-              {adminContent.pendingGuests.seatOption(seatNum)}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <IconButton
-        className="w-full self-end"
-        disabled={!canAssign || assigning}
-        icon={
-          assigning ? (
-            <span className="inline-block animate-spin">...</span>
-          ) : (
-            <Check size={16} strokeWidth={2} />
-          )
-        }
-        label={
-          assigning
-            ? adminContent.pendingGuests.assigning
-            : adminContent.pendingGuests.assign
-        }
-        onClick={onAssign}
-        showText="always"
-        tone={canAssign ? "primary" : "default"}
-      >
-        {assigning
-          ? adminContent.pendingGuests.assigning
-          : adminContent.pendingGuests.assign}
-      </IconButton>
-    </div>
-  );
-}
-
-function TableCardWithActions({
-  index = 0,
-  onDelete,
-  onEdit,
-  onSeatClick,
-  onSelect,
-  onUnassignSeat,
-  reveal = true,
-  selected = false,
-  table,
-}) {
-  return (
-    <SelectableCardFrame
-      className="grid gap-3"
-      onClick={() => onSelect(table)}
-      selected={selected}
-    >
-      <TableAnimatedInfoCard
-        index={index}
-        onDelete={onDelete}
-        onEdit={onEdit}
-        onSeatClick={onSeatClick}
-        onUnassignSeat={onUnassignSeat}
-        reveal={reveal}
-        table={table}
-      />
-    </SelectableCardFrame>
-  );
-}
-
-function TableCardsPage({
-  items,
-  onDelete,
-  onEdit,
-  onSeatClick,
-  onSelect,
-  onUnassignSeat,
-  selectedTableKey,
-}) {
-  return (
-    <SelectableCardPage
-      emptyIcon={Grid2X2}
-      emptyState={adminContent.tables.empty}
-      getKey={getTableRenderKey}
-      items={items}
-      renderCard={(table, index) => (
-        <TableCardWithActions
-          index={index}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          onSeatClick={onSeatClick}
-          onSelect={onSelect}
-          onUnassignSeat={onUnassignSeat}
-          reveal={false}
-          selected={getTableKey(table) === selectedTableKey}
-          table={table}
-        />
-      )}
-    />
-  );
-}
-
 function getPendingGuestsEmptyState({ pendingCount, tableCount }) {
   if (tableCount === 0) {
     return {
@@ -1415,20 +989,6 @@ function getPendingGuestsEmptyState({ pendingCount, tableCount }) {
   }
 
   if (pendingCount > 0) {
-    return {
-      text: adminContent.pendingGuests.noFilterResults,
-      title: adminContent.pendingGuests.emptyTitle,
-    };
-  }
-
-  return {
-    text: adminContent.pendingGuests.emptyText,
-    title: adminContent.pendingGuests.emptyTitle,
-  };
-}
-
-function getSeatAssignmentEmptyState(sourceGuestCount) {
-  if (sourceGuestCount > 0) {
     return {
       text: adminContent.pendingGuests.noFilterResults,
       title: adminContent.pendingGuests.emptyTitle,

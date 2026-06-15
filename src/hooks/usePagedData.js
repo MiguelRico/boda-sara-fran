@@ -1,16 +1,17 @@
 import { useMemo } from "react";
 
 import useIsMobileView from "./useIsMobileView";
+import { DEFAULT_TABLE_PAGE_SIZE } from "../utils/paginationState";
 
 export default function usePagedData({
   items,
   page,
-  pageSize = 1,
+  pageSize = DEFAULT_TABLE_PAGE_SIZE,
 }) {
   const isMobileView = useIsMobileView();
 
   return useMemo(() => {
-    const effectivePageSize = pageSize || 1;
+    const effectivePageSize = pageSize || DEFAULT_TABLE_PAGE_SIZE;
     const totalPages = Math.max(
       Math.ceil(items.length / effectivePageSize),
       1,

@@ -1,11 +1,8 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { createPortal } from "react-dom";
 import { useState } from "react";
 import {
   ArrowLeft,
   Check,
-  MailCheck,
-  Pencil,
   Save,
   Trash2,
   UserPlus,
@@ -13,24 +10,20 @@ import {
 } from "lucide-react";
 
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
-import GuestCard from "../components/rsvp/GuestCard";
-import { AdminTableSection } from "../components/admin/common";
+import GuestPager from "../components/rsvp/GuestPager";
+import {
+  ContactSummaryCard,
+  MobileActionsPanel,
+  MobileGuestList,
+  MobileRsvpReview,
+} from "../components/rsvp/RsvpReview";
 import { FieldError, FormCard } from "../components/rsvp/FormPrimitives";
 import DeleteDialog from "../components/ui/DeleteDialog";
-import Chip from "../components/ui/Chip";
 import IconButton from "../components/ui/IconButton";
-import PaginatedContent from "../components/ui/PaginatedContent";
-import Pagination from "../components/ui/Pagination";
 import { MAX_GUESTS } from "../constants/rsvp";
-import { adminContent } from "../constants/adminContent";
 import { rsvpContent } from "../constants/rsvpContent";
 import { Guest } from "../models";
-import {
-  getGroupSummaryChips,
-  getGuestSummaryChips,
-} from "../utils/rsvpSummaryChips";
 import useIsMobileView from "../hooks/useIsMobileView";
-import useViewportScrollLock from "../hooks/useViewportScrollLock";
 
 const defaultRenderItem = (_index, children) => children;
 
@@ -68,7 +61,6 @@ export default function RsvpForm({
   const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
   const [guestPage, setGuestPage] = useState(1);
   const [guestPageDirection, setGuestPageDirection] = useState(1);
-  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const guestDeleteName = guestDeleteTarget
     ? Guest.getFullName(guestDeleteTarget.guest)
     : "";
@@ -121,28 +113,21 @@ export default function RsvpForm({
   const handleRemoveGuest = (guest, index) => {
     setGuestDeleteTarget({ guest, index });
   };
-  const openReviewDialog = () => {
-    const isValid = onValidateConfirmation
-      ? onValidateConfirmation()
-      : !hasInvalidGuest;
-
-    if (!isValid) return;
-
-    setReviewDialogOpen(true);
-  };
   const handleSubmit = (event) => {
     event.preventDefault();
 
     if (variant !== "admin") {
-      openReviewDialog();
+      const isValid = onValidateConfirmation
+        ? onValidateConfirmation()
+        : !hasInvalidGuest;
+
+      if (!isValid) return;
+
+      onSubmit(event);
       return;
     }
 
     onSubmit(event);
-  };
-  const handleConfirmSubmit = () => {
-    setReviewDialogOpen(false);
-    onSubmit({ preventDefault: () => {} });
   };
   const isMobilePublicFlow = variant !== "admin";
 
@@ -180,16 +165,6 @@ export default function RsvpForm({
           submitText={reviewSubmitText}
           totalGuestPages={totalGuestPages}
         />
-        {reviewDialogOpen && (
-          <RsvpConfirmationReviewDialog
-            contact={contact}
-            guests={guests}
-            loading={loading}
-            onCancel={() => setReviewDialogOpen(false)}
-            onConfirm={handleConfirmSubmit}
-            submitText="Enviar"
-          />
-        )}
       </>
     );
   }
@@ -312,21 +287,9 @@ export default function RsvpForm({
           title={rsvpContent.form.deleteGuestTitle}
         />
       )}
-
-      {reviewDialogOpen && (
-        <RsvpConfirmationReviewDialog
-          contact={contact}
-          guests={guests}
-          loading={loading}
-          onCancel={() => setReviewDialogOpen(false)}
-          onConfirm={handleConfirmSubmit}
-          submitText="Enviar"
-        />
-      )}
     </>
   );
 }
-
 function MobilePublicRsvpFlow({
   addIcon,
   addText,
@@ -515,39 +478,14 @@ function MobilePublicRsvpFlow({
 
                 <MobileActionsPanel>{guestActions}</MobileActionsPanel>
 
-                <AdminTableSection
-                  eyebrow={adminContent.guests.editor.guestListEyebrow}
-                  getKey={(_guest, { index }) => index}
+                <MobileGuestList
+                  currentGuestPage={currentGuestPage}
+                  errors={errors}
+                  guestPageDirection={guestPageDirection}
+                  guests={guests}
                   isMobileView={isMobileView}
-                  items={guests}
-                  lockPageHeight={false}
-                  mobilePageLabel={adminContent.guests.editor.guestListTitle}
-                  onNextPage={() => onGuestPageChange(currentGuestPage + 1)}
-                  onPrevPage={() => onGuestPageChange(currentGuestPage - 1)}
-                  page={currentGuestPage}
-                  pageDirection={guestPageDirection}
-                  paginationLabel={rsvpContent.form.guestPageLabel({
-                    page: currentGuestPage,
-                    total: totalGuestPages,
-                  })}
-                  pageSize={1}
-                  renderPage={(items, pageNumber) => (
-                    <div className="h-full rounded-[2rem] ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]">
-                      <GuestCard
-                        canRemove={false}
-                        card
-                        errors={errors}
-                        forceMobileLayout
-                        guest={items[0]}
-                        index={pageNumber - 1}
-                        onGuestChange={onGuestChange}
-                        onRemoveGuest={() => {}}
-                        showHeader={false}
-                        variant="public"
-                      />
-                    </div>
-                  )}
-                  title={adminContent.guests.editor.guestListTitle}
+                  onGuestChange={onGuestChange}
+                  onGuestPageChange={onGuestPageChange}
                   totalPages={totalGuestPages}
                 />
               </div>
@@ -582,391 +520,6 @@ function MobilePublicRsvpFlow({
           title={rsvpContent.form.deleteGuestTitle}
         />
       )}
-    </>
-  );
-}
-
-function ContactSummaryCard({ contact, guests, onEdit }) {
-  const chips = getGroupSummaryChips(contact, guests);
-
-  return (
-    <FormCard>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="section-eyebrow mb-2">
-            {rsvpContent.review.contactEyebrow}
-          </p>
-          <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-            {contact.confirmationName || adminContent.common.fallbacks.group}
-          </h2>
-        </div>
-        <IconButton
-          icon={<Pencil size={16} strokeWidth={1.8} />}
-          label={rsvpContent.review.editContact}
-          onClick={onEdit}
-          tone="secondary"
-          type="button"
-        />
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-        {chips.map((chip) => (
-          <Chip
-            className={chip.className}
-            href={chip.href}
-            icon={chip.icon}
-            key={chip.key}
-            strong={chip.strong}
-            tone={chip.tone}
-            value={chip.value}
-            valueClassName={chip.valueClassName}
-          />
-        ))}
-      </div>
-    </FormCard>
-  );
-}
-
-function MobileActionsPanel({ children }) {
-  return (
-    <div className="mt-0 mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-      {children}
-    </div>
-  );
-}
-
-function MobileRsvpReview({
-  contact,
-  guests,
-  loading,
-  onEditContact,
-  onEditGuests,
-  submitIcon,
-  submitText,
-}) {
-  return (
-    <div className="space-y-5">
-      <div className="relative mb-0 items-center justify-center text-center">
-        <p className="section-text">
-          {rsvpContent.review.intro}
-        </p>
-      </div>
-
-      <MobileActionsPanel>
-        <IconButton
-          className="w-full"
-          disabled={loading}
-          icon={submitIcon}
-          label={submitText}
-          showText="always"
-          tone="primary"
-          type="submit"
-        >
-          {submitText}
-        </IconButton>
-      </MobileActionsPanel>
-
-      <ContactSummaryCard
-        contact={contact}
-        guests={guests}
-        onEdit={onEditContact}
-      />
-
-      <FormCard>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="section-eyebrow mb-2">
-              {rsvpContent.review.guestsEyebrow}
-            </p>
-            <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-              {rsvpContent.review.guestCount(guests.length)}
-            </h2>
-          </div>
-          <IconButton
-            icon={<Pencil size={16} strokeWidth={1.8} />}
-            label={rsvpContent.review.editGuests}
-            onClick={onEditGuests}
-            tone="secondary"
-            type="button"
-          />
-        </div>
-
-        <div className="mt-4 grid gap-3">
-          {guests.map((guest, index) => (
-            <GuestSummaryCard guest={guest} index={index} key={index} />
-          ))}
-        </div>
-      </FormCard>
-    </div>
-  );
-}
-
-function RsvpConfirmationReviewDialog({
-  contact,
-  guests,
-  loading,
-  onCancel,
-  onConfirm,
-  submitText,
-}) {
-  const normalizedGuests = Guest.normalizeList(guests, { ensureOne: false });
-  const groupChips = getGroupSummaryChips(contact, normalizedGuests);
-
-  useViewportScrollLock(true);
-
-  const dialog = (
-    <div className="rsvp-dialog-overlay">
-      <div
-        aria-labelledby="rsvp-confirmation-review-title"
-        aria-modal="true"
-        className="premium-card rsvp-dialog-card"
-        role="alertdialog"
-      >
-        <p className="section-eyebrow mb-3">
-          {rsvpContent.review.dialogEyebrow}
-        </p>
-        <h2
-          className="font-serif text-3xl text-[var(--color-accent-dark)]"
-          id="rsvp-confirmation-review-title"
-        >
-          {rsvpContent.review.dialogTitle}
-        </h2>
-        <p className="mt-4 text-sm leading-relaxed text-[var(--color-accent)]">
-          {rsvpContent.review.dialogText}
-        </p>
-
-        <div className="mt-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-          <div className="flex flex-col gap-3">
-            <IconButton
-              className="flex-1"
-              disabled={loading}
-              icon={<MailCheck size={16} strokeWidth={1.8} />}
-              onClick={onConfirm}
-              showText="always"
-              tone="primary"
-              type="button"
-            >
-              {submitText}
-            </IconButton>
-            <IconButton
-              className="flex-1"
-              disabled={loading}
-              icon={<X size={16} strokeWidth={1.8} />}
-              onClick={onCancel}
-              showText="always"
-              tone="terciary"
-              type="button"
-            >
-              {rsvpContent.review.keepEditing}
-            </IconButton>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-3 text-left">
-          <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4">
-            <p className="section-eyebrow mb-2">
-              {rsvpContent.review.contactTitle}
-            </p>
-            <h3 className="break-words font-serif text-2xl leading-none text-[var(--color-accent-dark)]">
-              {contact.confirmationName || adminContent.common.fallbacks.group}
-            </h3>
-            <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-              {groupChips.map((chip) => (
-                <Chip
-                  className={chip.className}
-                  href={chip.href}
-                  icon={chip.icon}
-                  key={chip.key}
-                  strong={chip.strong}
-                  tone={chip.tone}
-                  value={chip.value}
-                  valueClassName={chip.valueClassName}
-                />
-              ))}
-            </div>
-          </div>
-
-          {normalizedGuests.map((guest, index) => (
-            <GuestSummaryCard
-              guest={guest}
-              index={index}
-              key={guest.id || guest.guestId || index}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  return createPortal(dialog, document.body);
-}
-
-function GuestSummaryCard({ guest, index }) {
-  const normalizedGuest = Guest.normalize(guest);
-  const fullName = Guest.getDisplayName(normalizedGuest, index);
-  const chips = getGuestSummaryChips(normalizedGuest);
-
-  return (
-    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4">
-      <p className="section-eyebrow mb-2">
-        {rsvpContent.guest.fallbackName(index + 1)}
-      </p>
-      <h3 className="font-serif text-2xl leading-none text-[var(--color-accent-dark)]">
-        {fullName}
-      </h3>
-
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-        {chips.map((chip) => (
-          <Chip
-            className={chip.className}
-            icon={chip.icon}
-            key={chip.key}
-            strong={chip.strong}
-            value={chip.value}
-            valueClassName={chip.valueClassName}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function GuestPager({
-  addText,
-  canAddGuests,
-  canRemove,
-  currentGuest,
-  currentGuestIndex,
-  currentGuestPage,
-  direction,
-  errors,
-  guests,
-  hasInvalidGuest,
-  isMobileView,
-  loading,
-  onAddGuest,
-  onGuestChange,
-  onGuestPageChange,
-  onRemoveGuest,
-  totalGuestPages,
-  variant,
-}) {
-  const isAdmin = variant === "admin";
-  const pageLabel = rsvpContent.form.guestPageLabel({
-    page: currentGuestPage,
-    total: totalGuestPages,
-  });
-  const removeButton = canRemove ? (
-    <IconButton
-      className="w-full"
-      icon={<Trash2 size={16} strokeWidth={1.8} />}
-      label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
-      onClick={() => onRemoveGuest(currentGuest, currentGuestIndex)}
-      tone="danger"
-    />
-  ) : null;
-  const renderGuestPage = (items, pageNumber, { card = false } = {}) => (
-    <GuestCard
-      canRemove={false}
-      card={card}
-      errors={errors}
-      forceMobileLayout={variant !== "admin"}
-      guest={items[0]}
-      index={pageNumber - 1}
-      onGuestChange={onGuestChange}
-      onRemoveGuest={() => {}}
-      showHeader={false}
-      variant={variant}
-    />
-  );
-  const renderAdminGuestPage = (items, pageNumber) => (
-    <div className="h-full rounded-[2rem] ring-2 ring-[var(--color-accent-dark)] ring-offset-2 ring-offset-[var(--color-bg)]">
-      {renderGuestPage(items, pageNumber, { card: true })}
-    </div>
-  );
-
-  if (isAdmin) {
-    const actionItems = [
-      removeButton,
-      canAddGuests && guests.length < MAX_GUESTS ? (
-        <IconButton
-          className="w-full"
-          disabled={loading || hasInvalidGuest}
-          icon={<UserPlus size={16} strokeWidth={1.8} />}
-          key="add"
-          label={addText}
-          onClick={onAddGuest}
-          tone="secondary"
-        >
-          {addText}
-        </IconButton>
-      ) : null,
-    ].filter(Boolean);
-
-    return (
-      <AdminTableSection
-        actions={
-          actionItems.length ? (
-            <div
-              className={`grid w-full gap-3 ${
-                actionItems.length > 1 ? "grid-cols-2" : "grid-cols-1"
-              }`}
-            >
-              {actionItems}
-            </div>
-          ) : null
-        }
-        eyebrow={adminContent.guests.editor.guestListEyebrow}
-        getKey={(_guest, { index }) => index}
-        isMobileView={isMobileView}
-        items={guests}
-        lockPageHeight={false}
-        onNextPage={() => onGuestPageChange(currentGuestPage + 1)}
-        onPrevPage={() => onGuestPageChange(currentGuestPage - 1)}
-        page={currentGuestPage}
-        pageDirection={direction}
-        paginationLabel={pageLabel}
-        pageSize={1}
-        renderPage={renderAdminGuestPage}
-        title={adminContent.guests.editor.guestListTitle}
-        totalPages={totalGuestPages}
-      />
-    );
-  }
-
-  return (
-    <>
-      <FormCard>
-        <div className="flex items-center justify-between gap-4">
-          <p className={`section-eyebrow ${canRemove ? "mb-0" : ""}`}>
-            {rsvpContent.form.guestLabel(currentGuestIndex + 1)}
-          </p>
-
-          {canRemove && removeButton}
-        </div>
-
-        <PaginatedContent
-          allItems={guests}
-          direction={direction}
-          getKey={(_guest, { index }) => index}
-          page={currentGuestPage}
-          pageSize={1}
-          totalPages={totalGuestPages}
-          renderPage={renderGuestPage}
-        />
-      </FormCard>
-
-      <Pagination
-        className="mt-4"
-        isMobileView={isMobileView}
-        label={pageLabel}
-        nextLabel={rsvpContent.form.next}
-        onNext={() => onGuestPageChange(currentGuestPage + 1)}
-        onPrev={() => onGuestPageChange(currentGuestPage - 1)}
-        page={currentGuestPage}
-        previousLabel={rsvpContent.form.previous}
-        totalPages={totalGuestPages}
-      />
     </>
   );
 }

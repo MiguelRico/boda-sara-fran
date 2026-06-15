@@ -4,6 +4,7 @@ import { AlertTriangle, Trash2, X } from "lucide-react";
 
 import useViewportScrollLock from "../../hooks/useViewportScrollLock";
 import useCloseOnRouteAttempt from "../../hooks/useCloseOnRouteAttempt";
+import useDialogFocus from "../../hooks/useDialogFocus";
 import { uiContent } from "../../constants/uiContent";
 import IconButton from "./IconButton";
 
@@ -18,6 +19,7 @@ export default function DeleteDialog({
 }) {
   const titleId = useId();
   const messageId = useId();
+  const dialogRef = useDialogFocus({ onEscape: onCancel });
 
   useViewportScrollLock(true);
   useCloseOnRouteAttempt(true, onCancel);
@@ -29,7 +31,9 @@ export default function DeleteDialog({
         aria-labelledby={titleId}
         aria-modal="true"
         className="premium-card rsvp-dialog-card"
+        ref={dialogRef}
         role="alertdialog"
+        tabIndex={-1}
       >
         <AlertTriangle
           className="mx-auto text-red-500"
@@ -64,6 +68,7 @@ export default function DeleteDialog({
             </IconButton>
             <IconButton
               className="flex-1"
+              data-autofocus="true"
               icon={<X size={16} strokeWidth={1.8} />}
               label={cancelText}
               onClick={onCancel}

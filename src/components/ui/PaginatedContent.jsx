@@ -1,6 +1,8 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
+import { getPaginationState } from "../../utils/paginationState";
+
 export default function PaginatedContent({
   allItems = [],
   className = "",
@@ -17,15 +19,24 @@ export default function PaginatedContent({
   const measureRefs = useRef([]);
   const visiblePageRef = useRef(null);
   const [height, setHeight] = useState(null);
+  const pagination = getPaginationState({
+    items: allItems,
+    page,
+    pageSize,
+    totalPages,
+  });
   const pageGroups = useMemo(
     () =>
-      Array.from({ length: totalPages }, (_, pageIndex) =>
-        allItems.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize),
+      Array.from({ length: pagination.totalPages }, (_, pageIndex) =>
+        allItems.slice(
+          pageIndex * pagination.pageSize,
+          (pageIndex + 1) * pagination.pageSize,
+        ),
       ),
-    [allItems, pageSize, totalPages],
+    [allItems, pagination.pageSize, pagination.totalPages],
   );
-  const currentItems = pageGroups[page - 1] || [];
-  const pageKey = `${page}-${currentItems
+  const currentItems = pageGroups[pagination.page - 1] || [];
+  const pageKey = `${pagination.page}-${currentItems
     .map((item, index) => getKey(item, { index }))
     .join("|")}`;
   const variants = reduceMotion
@@ -135,7 +146,9 @@ export default function PaginatedContent({
           }}
           variants={variants}
         >
-          <div ref={visiblePageRef}>{renderPage(currentItems, page)}</div>
+          <div ref={visiblePageRef}>
+            {renderPage(currentItems, pagination.page)}
+          </div>
         </motion.div>
       </AnimatePresence>
     </div>

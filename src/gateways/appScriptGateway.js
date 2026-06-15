@@ -1,77 +1,21 @@
-import { Confirmation } from "../models";
+import { Confirmation } from "@/models";
+import {
+  requestJsonp,
+  sendToRsvpApi,
+  verifyWrite,
+} from "./appScriptClient";
+import {
+  getConfirmationComparable,
+  getNotificationsComparable,
+  getProvidersComparable,
+  getTablesComparable,
+  getTasksComparable,
+  sameFingerprint,
+} from "./appScriptFingerprints";
 import {
   decodeConfirmationName,
   encodeConfirmationName,
-} from "../utils/confirmationNameCodec";
-
-const getRsvpApiUrl = () => import.meta.env.VITE_RSVP_API_URL;
-const inFlightJsonpRequests = new Map();
-
-const createRequestKey = (params) =>
-  JSON.stringify(
-    Object.entries(params)
-      .filter(([, value]) => value !== undefined && value !== null && value !== "")
-      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey)),
-  );
-
-const requestJsonp = (params) => {
-  const requestKey = createRequestKey(params);
-  const inFlightRequest = inFlightJsonpRequests.get(requestKey);
-
-  if (inFlightRequest) return inFlightRequest;
-
-  const request = new Promise((resolve, reject) => {
-    const callbackName = `rsvpCallback_${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2)}`;
-    const url = new URL(getRsvpApiUrl());
-    const script = document.createElement("script");
-    const timeoutId = window.setTimeout(() => {
-      cleanup();
-      reject(new Error("La peticion a Google Apps Script ha caducado."));
-    }, 15000);
-
-    const cleanup = () => {
-      window.clearTimeout(timeoutId);
-      script.remove();
-      delete window[callbackName];
-    };
-
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.set(key, value);
-      }
-    });
-
-    url.searchParams.set("callback", callbackName);
-
-    window[callbackName] = (data) => {
-      cleanup();
-      resolve(data);
-    };
-
-    script.onerror = () => {
-      cleanup();
-      reject(new Error("No se pudo conectar con Google Apps Script."));
-    };
-    script.src = url.toString();
-    document.body.appendChild(script);
-  }).finally(() => {
-    inFlightJsonpRequests.delete(requestKey);
-  });
-
-  inFlightJsonpRequests.set(requestKey, request);
-
-  return request;
-};
-
-const sendToRsvpApi = async (payload) => {
-  await fetch(getRsvpApiUrl(), {
-    method: "POST",
-    mode: "no-cors",
-    body: JSON.stringify(payload),
-  });
-};
+} from "@/utils/confirmationNameCodec";
 
 const decodeConfirmationPayload = (payload) => {
   if (!payload || typeof payload !== "object") return payload;
@@ -199,6 +143,7 @@ export const findAllTasks = async ({ password } = {}) => {
 
 export const savePublicConfirmation = async (payload, { method = "POST" } = {}) => {
   const confirmation = encodeConfirmationPayload(payload);
+  const expectedConfirmation = getConfirmationComparable(payload);
 
   await sendToRsvpApi({
     ...confirmation,
@@ -206,9 +151,36 @@ export const savePublicConfirmation = async (payload, { method = "POST" } = {}) 
     method,
   });
 
+  const verifiedResponse = await verifyWrite({
+    errorMessage: "No se pudo verificar el guardado de la confirmacion.",
+    isVerified: (response) =>
+      response?.found !== false &&
+      sameFingerprint(
+        getConfirmationComparable(response),
+        expectedConfirmation,
+      ),
+    read: () => {
+      const normalizedPayload = Confirmation.normalize(payload);
+
+      if (normalizedPayload.confirmationId || normalizedPayload.id) {
+        return findConfirmationById(
+          normalizedPayload.confirmationId || normalizedPayload.id,
+        );
+      }
+
+      if (normalizedPayload.email) {
+        return findConfirmationByEmail(normalizedPayload.email);
+      }
+
+      return findConfirmationByPhone(normalizedPayload.phone);
+    },
+  });
+
   return {
     success: true,
-    confirmationId: responsePlaceholderConfirmationId(payload),
+    confirmationId:
+      verifiedResponse?.confirmationId ||
+      responsePlaceholderConfirmationId(payload),
     confirmationName: Confirmation.normalize(payload).confirmationName,
   };
 };
@@ -219,6 +191,7 @@ export const saveAdminConfirmation = async ({
   password,
 }) => {
   const confirmation = encodeConfirmationPayload(confirmationInput);
+  const expectedConfirmation = getConfirmationComparable(confirmationInput);
   const payload = {
     ...confirmation,
     entity: "confirmations",
@@ -228,19 +201,55 @@ export const saveAdminConfirmation = async ({
 
   await sendToRsvpApi(payload);
 
+  const verifiedResponse = await verifyWrite({
+    errorMessage: "No se pudo verificar el guardado de la confirmacion.",
+    isVerified: (response) =>
+      response?.found !== false &&
+      sameFingerprint(
+        getConfirmationComparable(response),
+        expectedConfirmation,
+      ),
+    read: () => {
+      const normalizedConfirmation = Confirmation.normalize(confirmationInput);
+
+      if (normalizedConfirmation.confirmationId || normalizedConfirmation.id) {
+        return findConfirmationById(
+          normalizedConfirmation.confirmationId || normalizedConfirmation.id,
+        );
+      }
+
+      if (normalizedConfirmation.email) {
+        return findConfirmationByEmail(normalizedConfirmation.email);
+      }
+
+      return findConfirmationByPhone(normalizedConfirmation.phone);
+    },
+  });
+
   return {
     success: true,
-    confirmationId: responsePlaceholderConfirmationId(confirmationInput),
+    confirmationId:
+      verifiedResponse?.confirmationId ||
+      responsePlaceholderConfirmationId(confirmationInput),
     confirmationName: Confirmation.normalize(confirmationInput).confirmationName,
   };
 };
 
 export const saveAdminTables = async ({ password, tables }) => {
+  const expectedTables = getTablesComparable(tables);
+
   await sendToRsvpApi({
     entity: "tables",
     method: "PUT",
     password,
     tables,
+  });
+
+  await verifyWrite({
+    errorMessage: "No se pudo verificar el guardado de las mesas.",
+    isVerified: (response) =>
+      sameFingerprint(getTablesComparable(response?.tables || []), expectedTables),
+    read: () => findAllTables({ password }),
   });
 
   return {
@@ -257,6 +266,12 @@ export const deleteAdminConfirmation = async ({ confirmationId, password }) => {
     password,
   });
 
+  await verifyWrite({
+    errorMessage: "No se pudo verificar la eliminacion de la confirmacion.",
+    isVerified: (response) => response?.found === false,
+    read: () => findConfirmationById(confirmationId),
+  });
+
   return {
     success: true,
     confirmationId,
@@ -267,11 +282,23 @@ const responsePlaceholderConfirmationId = (confirmationInput) =>
   Confirmation.normalize(confirmationInput).confirmationId;
 
 export const saveAdminProviders = async ({ password, providers }) => {
+  const expectedProviders = getProvidersComparable(providers);
+
   await sendToRsvpApi({
     entity: "providers",
     method: "PUT",
     password,
     providers,
+  });
+
+  await verifyWrite({
+    errorMessage: "No se pudo verificar el guardado de proveedores.",
+    isVerified: (response) =>
+      sameFingerprint(
+        getProvidersComparable(response?.providers || []),
+        expectedProviders,
+      ),
+    read: () => findAllProviders({ password }),
   });
 
   return {
@@ -281,11 +308,23 @@ export const saveAdminProviders = async ({ password, providers }) => {
 };
 
 export const saveAdminNotifications = async ({ notifications, password }) => {
+  const expectedNotifications = getNotificationsComparable(notifications);
+
   await sendToRsvpApi({
     entity: "notifications",
     method: "PUT",
     notifications,
     password,
+  });
+
+  await verifyWrite({
+    errorMessage: "No se pudo verificar el guardado de notificaciones.",
+    isVerified: (response) =>
+      sameFingerprint(
+        getNotificationsComparable(response?.notifications || response || []),
+        expectedNotifications,
+      ),
+    read: () => findAllNotifications({ password }),
   });
 
   return {
@@ -295,11 +334,20 @@ export const saveAdminNotifications = async ({ notifications, password }) => {
 };
 
 export const saveAdminTasks = async ({ password, tasks }) => {
+  const expectedTasks = getTasksComparable(tasks);
+
   await sendToRsvpApi({
     entity: "tasks",
     method: "PUT",
     password,
     tasks,
+  });
+
+  await verifyWrite({
+    errorMessage: "No se pudo verificar el guardado de tareas.",
+    isVerified: (response) =>
+      sameFingerprint(getTasksComparable(response?.tasks || []), expectedTasks),
+    read: () => findAllTasks({ password }),
   });
 
   return {

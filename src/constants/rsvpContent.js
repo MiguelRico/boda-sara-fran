@@ -6,7 +6,7 @@ export const rsvpContent = {
     defaultSubmitText: "Confirmar",
     actionsEyebrow: "Acciones",
     addGuestText: "Invitado",
-    reviewSubmitText: "Guardar",
+    reviewSubmitText: "Enviar confirmación",
     saveGuests: "Guardar invitados",
     deleteGuestTitle: "Eliminar invitado",
     deleteGuestMessage: ({ context, guestName, guestNumber }) =>
@@ -124,10 +124,8 @@ export const rsvpContent = {
     validationMessage:
       "Hay campos obligatorios o con formato incorrecto. Corrígelos antes de enviar la confirmación.",
     submitSuccessTitle: "Confirmación recibida",
-    submitCreateSuccess:
-      "Hemos guardado correctamente vuestra confirmación.",
-    submitEditSuccess:
-      "Hemos actualizado correctamente vuestra confirmación.",
+    submitCreateSuccess: "Hemos guardado correctamente vuestra confirmación.",
+    submitEditSuccess: "Hemos actualizado correctamente vuestra confirmación.",
     submitError:
       "No hemos podido guardar vuestra confirmación. Por favor, intentadlo de nuevo en unos minutos.",
     loadMissing:
@@ -140,7 +138,8 @@ export const rsvpContent = {
     editContact: "Editar datos",
     editGuests: "Editar invitados",
     guestsEyebrow: "Invitados confirmados",
-    intro: "Revisa tus datos de contacto e invitados antes de confirmar",
+    intro:
+      "Revisa tus datos de contacto e invitados antes de enviar tu confirmación",
     guestCount: (count) => `${count} ${count === 1 ? "Invitado" : "Invitados"}`,
     dialogEyebrow: "Revisión",
     dialogTitle: "Revisa la confirmación",

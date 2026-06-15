@@ -1,16 +1,30 @@
-# React + Vite
+# Wedding Template
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicacion React + Vite para gestionar la parte publica y el panel de administracion de una boda.
 
-Currently, two official plugins are available:
+## Configuracion
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Copia `.env.example` a `.env` y ajusta los valores del despliegue:
 
-## React Compiler
+```env
+VITE_ADMIN_PASSWORD=change-me
+VITE_RSVP_API_URL=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
+VITE_APP_STORAGE_PREFIX=wedding-template
+VITE_ENABLE_MENU_MODULE=false
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `VITE_ADMIN_PASSWORD`: clave de acceso al panel de administracion.
+- `VITE_RSVP_API_URL`: URL publicada de Google Apps Script.
+- `VITE_APP_STORAGE_PREFIX`: prefijo para claves locales de navegador.
+- `VITE_ENABLE_MENU_MODULE`: activa o desactiva el modulo de menu.
 
-## Expanding the ESLint configuration
+En desarrollo, la app avisa por consola si falta configuracion critica. Las operaciones contra Apps Script fallan con un error explicito si la URL no esta configurada.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Comandos
+
+```bash
+npm run dev
+npm run lint
+npm run build
+npm run preview
+```

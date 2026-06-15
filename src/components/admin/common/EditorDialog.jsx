@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 
 import useViewportScrollLock from "../../../hooks/useViewportScrollLock";
 import useCloseOnRouteAttempt from "../../../hooks/useCloseOnRouteAttempt";
+import useDialogFocus from "../../../hooks/useDialogFocus";
 import { uiContent } from "../../../constants/uiContent";
 import IconButton from "../../ui/IconButton";
 
@@ -14,6 +15,7 @@ export default function EditorDialog({
 }) {
   useViewportScrollLock(true);
   useCloseOnRouteAttempt(true, onClose);
+  const dialogRef = useDialogFocus({ onEscape: onClose });
 
   return createPortal(
     <div className="rsvp-dialog-overlay">
@@ -21,7 +23,9 @@ export default function EditorDialog({
         aria-labelledby={titleId}
         aria-modal="true"
         className="premium-card max-h-[calc(100dvh-2rem)] w-full max-w-4xl overflow-y-auto p-5"
+        ref={dialogRef}
         role="dialog"
+        tabIndex={-1}
       >
         <div className="mb-6 flex items-start justify-between gap-4">
           <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -33,7 +37,11 @@ export default function EditorDialog({
             </h2>
           </div>
 
-          <IconButton label={uiContent.actions.close} onClick={onClose}>
+          <IconButton
+            data-autofocus="true"
+            label={uiContent.actions.close}
+            onClick={onClose}
+          >
             <X size={17} strokeWidth={1.8} />
           </IconButton>
         </div>

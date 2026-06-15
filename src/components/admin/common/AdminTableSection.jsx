@@ -1,6 +1,7 @@
 import PaginatedContent from "../../ui/PaginatedContent";
 import Pagination from "../../ui/Pagination";
 import TableSectionSkeleton from "../../ui/TableSectionSkeleton";
+import { getPaginationState } from "../../../utils/paginationState";
 
 export default function AdminTableSection({
   actions,
@@ -33,12 +34,18 @@ export default function AdminTableSection({
 }) {
   const hasResults = items.length > 0;
   const hasFilterSlot = Boolean(filters);
+  const pagination = getPaginationState({
+    items,
+    page,
+    pageSize,
+    totalPages,
+  });
   const hasPagination =
     !loading &&
     (hasResults || hasFilterSlot) &&
     page &&
     pageSize &&
-    totalPages > 1;
+    pagination.totalPages > 1;
   const hasPaginationSlot =
     skeletonConfig.pagination ??
     Boolean(
@@ -98,8 +105,8 @@ export default function AdminTableSection({
               mobileLabel={mobilePageLabel}
               onNext={onNextPage}
               onPrev={onPrevPage}
-              page={page}
-              totalPages={totalPages}
+              page={pagination.page}
+              totalPages={pagination.totalPages}
             />
           )}
 
@@ -110,11 +117,11 @@ export default function AdminTableSection({
                 direction={pageDirection}
                 getKey={getKey}
                 lockHeight={lockPageHeight}
-                page={page}
-                pageSize={pageSize}
+                page={pagination.page}
+                pageSize={pagination.pageSize}
                 renderMeasurePage={renderMeasurePage}
                 renderPage={renderPage}
-                totalPages={totalPages}
+                totalPages={pagination.totalPages}
               />
             ) : (
               children

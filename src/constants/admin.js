@@ -1,8 +1,3 @@
-import { storageEvents, storageKeys } from "../config/storageKeys";
+import { appEnvironment } from "../config/environment";
 
-export const ADMIN_PASSWORD =
-  import.meta.env.VITE_ADMIN_PASSWORD || "sara-fran-admin";
-
-export const ADMIN_SESSION_KEY = storageKeys.adminSession;
-
-export const ADMIN_AUTH_EVENT = storageEvents.adminAuthChange;
+export const ADMIN_PASSWORD = appEnvironment.adminPassword;
