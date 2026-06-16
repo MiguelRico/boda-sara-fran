@@ -111,8 +111,41 @@ export default function RsvpForm({
     );
     setGuestDeleteTarget(null);
   };
-  const handleRemoveGuest = (guest, index) => {
-    setGuestDeleteTarget({ guest, index });
+  const getGuestDeleteTarget = (guestOrIndex, index) => {
+    const rawIndex = index ?? guestOrIndex;
+    const resolvedIndex = Number(rawIndex);
+
+    if (
+      !Number.isInteger(resolvedIndex) ||
+      resolvedIndex < 0 ||
+      resolvedIndex >= guests.length
+    ) {
+      return null;
+    }
+
+    return {
+      guest:
+        index == null
+          ? guests[resolvedIndex]
+          : (guestOrIndex ?? guests[resolvedIndex]),
+      index: resolvedIndex,
+    };
+  };
+  const handleRemoveGuest = (guestOrIndex, index) => {
+    const target = getGuestDeleteTarget(guestOrIndex, index);
+
+    if (!target) return;
+
+    if (variant !== "admin" && Guest.isEmpty(target.guest)) {
+      onRemoveGuest(target.index);
+      setGuestPageDirection(-1);
+      setGuestPage((current) =>
+        Math.min(current, Math.max(guests.length - 1, 1)),
+      );
+      return;
+    }
+
+    setGuestDeleteTarget(target);
   };
   const handleSubmit = (event) => {
     event.preventDefault();

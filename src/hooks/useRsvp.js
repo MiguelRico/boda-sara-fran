@@ -22,6 +22,15 @@ const createInitialPopup = () => ({
 });
 
 const hasValidationErrors = (errors) => Object.keys(errors).length > 0;
+const removeEmptyExtraGuests = (guests) => {
+  const normalizedGuests = Guest.normalizeList(guests);
+
+  if (normalizedGuests.length <= 1) return normalizedGuests;
+
+  const guestsWithData = normalizedGuests.filter((guest) => !Guest.isEmpty(guest));
+
+  return guestsWithData.length ? guestsWithData : normalizedGuests;
+};
 
 export default function useRsvp(spinner, { mode = "search" } = {}) {
   const { hide, show } = spinner;
@@ -179,8 +188,15 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   };
 
   const validateConfirmationStep = () => {
-    const validationErrors = validateRsvpForm({ contact, guests });
+    const guestsToValidate = removeEmptyExtraGuests(guests);
+    const validationErrors = validateRsvpForm({
+      contact,
+      guests: guestsToValidate,
+    });
 
+    if (guestsToValidate.length !== guests.length) {
+      setGuests(guestsToValidate);
+    }
     setErrors(validationErrors);
 
     return !hasValidationErrors(validationErrors);
@@ -233,7 +249,16 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const validationErrors = validateRsvpForm({ contact, guests });
+    const guestsToSubmit = removeEmptyExtraGuests(guests);
+    const validationErrors = validateRsvpForm({
+      contact,
+      guests: guestsToSubmit,
+    });
+
+    if (guestsToSubmit.length !== guests.length) {
+      setGuests(guestsToSubmit);
+    }
+
     setErrors(validationErrors);
 
     if (hasValidationErrors(validationErrors)) {
@@ -255,7 +280,7 @@ export default function useRsvp(spinner, { mode = "search" } = {}) {
           confirmationId: currentConfirmationId,
           id: currentConfirmationId,
           confirmationName: currentConfirmationName || contact.confirmationName,
-          guests,
+          guests: guestsToSubmit,
         }),
       };
 

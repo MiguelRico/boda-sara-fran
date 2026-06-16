@@ -75,7 +75,7 @@ export function MobileRsvpReview({
     <div className="space-y-5">
       <MobileActionsPanel>
         <div className="relative items-center justify-center text-center">
-          <p className="section-text">{rsvpContent.review.intro}</p>
+          <p className="section-text mt-0">{rsvpContent.review.intro}</p>
         </div>
         <IconButton
           className="w-full"
