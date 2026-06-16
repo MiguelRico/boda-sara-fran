@@ -17,7 +17,13 @@ import {
   TASK_STATUSES,
 } from "../../../constants/tasks";
 
-export default function TaskForm({ errors = {}, form, onChange, onSubmit }) {
+export default function TaskForm({
+  errors = {},
+  form,
+  onChange,
+  onSubmit,
+  submitDisabled = false,
+}) {
   const content = adminContent.tasks.form;
 
   return (
@@ -25,6 +31,7 @@ export default function TaskForm({ errors = {}, form, onChange, onSubmit }) {
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
         <IconButton
           className="w-full"
+          disabled={submitDisabled}
           icon={<Save size={16} strokeWidth={1.8} />}
           keepTextOnAdminSubpages
           label={adminContent.tasks.actions.save}

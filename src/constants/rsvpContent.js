@@ -6,6 +6,7 @@ export const rsvpContent = {
     defaultSubmitText: "Confirmar",
     actionsEyebrow: "Acciones",
     addGuestText: "Invitado",
+    reviewAdminSubmitText: "Guardar",
     reviewSubmitText: "Enviar confirmación",
     saveGuests: "Guardar invitados",
     deleteGuestTitle: "Eliminar invitado",

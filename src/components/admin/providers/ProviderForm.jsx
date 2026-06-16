@@ -30,6 +30,7 @@ export default function ProviderForm({
   onSubmit,
   serviceIsEditing = false,
   selectedServiceId = "",
+  submitDisabled = false,
 }) {
   const reduceMotion = useReducedMotion();
   const paymentListHidden = reduceMotion
@@ -51,7 +52,7 @@ export default function ProviderForm({
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
         <IconButton
           className="w-full"
-          disabled={loading}
+          disabled={loading || submitDisabled}
           icon={<Save size={16} strokeWidth={1.8} />}
           keepTextOnAdminSubpages
           label={adminContent.providers.form.save}
@@ -358,14 +359,6 @@ function ProviderPaymentFields({
   paymentIndex,
   serviceIndex,
 }) {
-  const [amountValue, setAmountValue] = useState(payment.amount);
-
-  const commitAmount = () => {
-    if (amountValue === payment.amount) return;
-
-    onPaymentChange(serviceIndex, paymentIndex, "amount", amountValue);
-  };
-
   return (
     <div className="grid gap-3">
       <label className="mt-2 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 px-4 py-3 text-sm text-[var(--color-accent-dark)] transition hover:bg-white">
@@ -388,9 +381,10 @@ function ProviderPaymentFields({
       <TextField
         inputMode="decimal"
         label={adminContent.providers.form.fields.paymentAmount}
-        onBlur={commitAmount}
-        onChange={setAmountValue}
-        value={amountValue}
+        onChange={(value) =>
+          onPaymentChange(serviceIndex, paymentIndex, "amount", value)
+        }
+        value={payment.amount}
       />
       <TextField
         label={adminContent.providers.form.fields.paymentDate}

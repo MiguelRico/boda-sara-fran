@@ -10,6 +10,7 @@ export default function TableEditorDialog({
   onChange,
   onSubmit,
   seatReductionWarning = [],
+  submitDisabled = false,
   title = tableContent.form.title,
 }) {
   return (
@@ -26,6 +27,7 @@ export default function TableEditorDialog({
         onChange={onChange}
         onSubmit={onSubmit}
         seatReductionWarning={seatReductionWarning}
+        submitDisabled={submitDisabled}
       />
     </AdminEditorDialog>
   );

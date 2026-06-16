@@ -473,7 +473,7 @@ export const adminContent = {
       pendingTitle: "Cambios pendientes",
       pendingMessage:
         "Los cambios se han aplicado en memoria. Usa Guardar cambios para enviarlos.",
-      discardPendingTitle: "Deshacer cambios",
+      discardPendingTitle: "Deshacer cambios de proveedores",
       discardPendingText:
         "Se desharán los cambios pendientes de proveedores y servicios.",
       unsavedText:

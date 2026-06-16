@@ -37,6 +37,7 @@ export default function TableForm({
   onDelete,
   onSubmit,
   seatReductionWarning = [],
+  submitDisabled = false,
 }) {
   const shapeOption = getShapeOption(form.shape);
   const seatOptions = Array.from(
@@ -80,7 +81,7 @@ export default function TableForm({
 
           <IconButton
             className="w-full"
-            disabled={loading}
+            disabled={loading || submitDisabled}
             icon={<Save size={16} strokeWidth={1.8} />}
             keepTextOnAdminSubpages
             label={content.submitText}

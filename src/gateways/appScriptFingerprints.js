@@ -28,12 +28,15 @@ export const getConfirmationComparable = (confirmationInput) => {
       .map((guest) => ({
         allergies: (guest.allergies || []).map(normalizeString).sort(),
         comments: normalizeString(guest.comments),
-        firstName: normalizeString(guest.firstName),
-        lastName: normalizeString(guest.lastName),
+        firstName: normalizeString(guest.name || guest.firstName),
+        lastName: normalizeString(guest.lastname || guest.lastName),
         menu: normalizeString(guest.menu),
         otherAllergies: normalizeString(guest.otherAllergies),
         outboundBus: normalizeString(guest.outboundBus),
         returnBus: normalizeString(guest.returnBus),
+        seat: normalizeString(guest.seat),
+        table: normalizeString(guest.table),
+        tableId: normalizeString(guest.tableId),
       }))
       .sort(sortByStableJson),
     phone: normalizeString(confirmation.phone),

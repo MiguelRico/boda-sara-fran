@@ -17,6 +17,7 @@ export default function NotificationForm({
   form,
   onChange,
   onSubmit,
+  submitDisabled = false,
 }) {
   const content = adminContent.notifications.form;
 
@@ -25,6 +26,7 @@ export default function NotificationForm({
       <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
         <IconButton
           className="w-full"
+          disabled={submitDisabled}
           icon={<Save size={16} strokeWidth={1.8} />}
           keepTextOnAdminSubpages
           label={content.save}

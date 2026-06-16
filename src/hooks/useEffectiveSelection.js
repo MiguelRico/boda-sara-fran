@@ -16,21 +16,8 @@ export default function useEffectiveSelection({
 
     if (!sourceItems.length) {
       if (currentPage !== 1) onPageChange(1);
-      return;
     }
-
-    if (!selectedId) return;
-
-    const selectedIndex = sourceItems.findIndex(
-      (item) => getId(item) === selectedId,
-    );
-    const nextPage =
-      selectedIndex >= 0 ? Math.floor(selectedIndex / pageSize) + 1 : 1;
-
-    if (nextPage !== currentPage) {
-      onPageChange(nextPage);
-    }
-  }, [currentPage, getId, onPageChange, pageSize, selectedId, sourceItems]);
+  }, [currentPage, onPageChange, pageSize, sourceItems]);
 
   const effectiveSelectedId = useMemo(() => {
     if (sourceItems.some((item) => getId(item) === selectedId)) {

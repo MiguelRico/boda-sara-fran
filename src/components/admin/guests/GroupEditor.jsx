@@ -13,7 +13,10 @@ import { buildGroupEditorChanges } from "../../../services/guestsService";
 import { normalizeAdminGroupBeforeSave } from "../../../utils/drafts";
 import { getStableJson } from "../../../utils/objectSnapshot";
 import { mergeSingleGuestIntoGroup } from "../../../utils/guestPageUtils";
-import { validateRsvpContact, validateRsvpForm } from "../../../utils/rsvpValidation";
+import {
+  validateRsvpContact,
+  validateRsvpForm,
+} from "../../../utils/rsvpValidation";
 
 export default function GroupEditor({
   group,
@@ -115,6 +118,9 @@ export default function GroupEditor({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!hasUnsavedChanges) return;
+
     const groupDraft = isGroupMode
       ? {
           ...draft,
@@ -185,7 +191,8 @@ export default function GroupEditor({
         showEntityHeader={false}
         showContactDetails={!isGuestListMode}
         showGuestList={!isGroupMode}
-        submitText={rsvpContent.form.reviewSubmitText}
+        submitDisabled={!hasUnsavedChanges}
+        submitText={rsvpContent.form.reviewAdminSubmitText}
         variant="admin"
       />
 

@@ -11,6 +11,11 @@ const focusableSelector = [
 
 export default function useDialogFocus({ enabled = true, onEscape } = {}) {
   const dialogRef = useRef(null);
+  const onEscapeRef = useRef(onEscape);
+
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+  }, [onEscape]);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -38,7 +43,7 @@ export default function useDialogFocus({ enabled = true, onEscape } = {}) {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onEscape?.();
+        onEscapeRef.current?.();
         return;
       }
 
@@ -79,7 +84,7 @@ export default function useDialogFocus({ enabled = true, onEscape } = {}) {
         previousActiveElement.focus({ preventScroll: true });
       }
     };
-  }, [enabled, onEscape]);
+  }, [enabled]);
 
   return dialogRef;
 }

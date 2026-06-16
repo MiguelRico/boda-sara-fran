@@ -63,6 +63,7 @@ import {
   upsertProvider,
 } from "../utils/providerPageUtils";
 import { DEFAULT_TABLE_PAGE_SIZE } from "../utils/paginationState";
+import { getStableJson } from "../utils/objectSnapshot";
 
 const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = storageKeys.adminActiveTabs.providers;
 const getEntityId = (item) => item.id;
@@ -104,6 +105,7 @@ export default function AdminProviders() {
   const [selectedProviderId, setSelectedProviderId] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [editingProvider, setEditingProvider] = useState(null);
+  const [editingProviderSnapshot, setEditingProviderSnapshot] = useState("");
   const [editingProviderMode, setEditingProviderMode] = useState("provider");
   const [editingServiceId, setEditingServiceId] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -281,15 +283,19 @@ export default function AdminProviders() {
     setProviders(savedProviders);
     setAdminProviders(savedProviders);
     setEditingProvider(null);
+    setEditingProviderSnapshot("");
     setDeleteTarget(null);
   };
   const handleEditProvider = (provider) => {
     if (!provider) return;
 
+    const draft = createEmptyProvider(provider);
+
     setErrors({});
     setEditingProviderMode("provider");
     setEditingServiceId("");
-    setEditingProvider(createEmptyProvider(provider));
+    setEditingProvider(draft);
+    setEditingProviderSnapshot(getStableJson(withProviderPaymentTotals(draft)));
   };
   const handleEditService = (service) => {
     if (!service) return;
@@ -297,17 +303,23 @@ export default function AdminProviders() {
     const provider = providers.find((item) => item.id === service.providerId);
 
     if (provider) {
+      const draft = createEmptyProvider(provider);
+
       setErrors({});
       setEditingProviderMode("service");
       setEditingServiceId(service.id);
-      setEditingProvider(createEmptyProvider(provider));
+      setEditingProvider(draft);
+      setEditingProviderSnapshot(getStableJson(withProviderPaymentTotals(draft)));
     }
   };
   const handleCreateProvider = () => {
+    const draft = createEmptyProvider();
+
     setErrors({});
     setEditingProviderMode("provider");
     setEditingServiceId("");
-    setEditingProvider(createEmptyProvider());
+    setEditingProvider(draft);
+    setEditingProviderSnapshot(getStableJson(withProviderPaymentTotals(draft)));
   };
   const handleCreateService = () => {
     if (!selectedProvider) return;
@@ -317,12 +329,13 @@ export default function AdminProviders() {
 
     setEditingProviderMode("service");
     setEditingServiceId(nextService.id);
-    setEditingProvider(
-      createEmptyProvider({
-        ...selectedProvider,
-        services: [...selectedProvider.services, nextService],
-      }),
-    );
+    const draft = createEmptyProvider({
+      ...selectedProvider,
+      services: [...selectedProvider.services, nextService],
+    });
+
+    setEditingProvider(draft);
+    setEditingProviderSnapshot(getStableJson(withProviderPaymentTotals(draft)));
   };
   const handleDeleteTarget = () => {
     if (!deleteTarget) return;
@@ -371,6 +384,8 @@ export default function AdminProviders() {
     event.preventDefault();
     const providerToSave = withProviderPaymentTotals(editingProvider);
 
+    if (getStableJson(providerToSave) === editingProviderSnapshot) return;
+
     const validationErrors =
       editingProviderMode === "provider"
         ? validateProvider({ ...providerToSave, services: [] })
@@ -394,6 +409,7 @@ export default function AdminProviders() {
     }
 
     setEditingProvider(null);
+    setEditingProviderSnapshot("");
     showPendingPopup();
   };
   const handleProviderChange = (field, value) => {
@@ -683,7 +699,10 @@ export default function AdminProviders() {
 
       {editingProvider && (
         <AdminEditorDialog
-          onClose={() => setEditingProvider(null)}
+          onClose={() => {
+            setEditingProvider(null);
+            setEditingProviderSnapshot("");
+          }}
           title={getProviderEditorTitle({
             mode: editingProviderMode,
             provider: editingProvider,
@@ -710,6 +729,10 @@ export default function AdminProviders() {
                 .some((service) => service.id === editingServiceId)
             }
             selectedServiceId={editingServiceId}
+            submitDisabled={
+              getStableJson(withProviderPaymentTotals(editingProvider)) ===
+              editingProviderSnapshot
+            }
           />
         </AdminEditorDialog>
       )}

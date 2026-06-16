@@ -43,6 +43,7 @@ import useIsMobileView from "../hooks/useIsMobileView";
 import useAdminLocalChanges from "../hooks/useAdminLocalChanges";
 import { matchesNotificationFilters } from "../utils/notificationPageUtils";
 import { DEFAULT_TABLE_PAGE_SIZE } from "../utils/paginationState";
+import { getStableJson } from "../utils/objectSnapshot";
 
 const createEmptyForm = () => AdminNotification.create();
 
@@ -69,6 +70,7 @@ export default function AdminNotifications() {
   const [editingNotification, setEditingNotification] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState(createEmptyForm);
+  const [formSnapshot, setFormSnapshot] = useState("");
   const [errors, setErrors] = useState({});
   const [statusPopup, setStatusPopup] = useState({
     message: "",
@@ -167,19 +169,26 @@ export default function AdminNotifications() {
   };
 
   const openCreateEditor = () => {
+    const nextForm = createEmptyForm();
+
     setErrors({});
-    setForm(createEmptyForm());
+    setForm(nextForm);
+    setFormSnapshot(getStableJson(nextForm));
     setEditingNotification({ mode: "create" });
   };
 
   const openEditEditor = (notification) => {
+    const nextForm = AdminNotification.normalize(notification);
+
     setErrors({});
-    setForm(AdminNotification.normalize(notification));
+    setForm(nextForm);
+    setFormSnapshot(getStableJson(nextForm));
     setEditingNotification({ mode: "edit", notification });
   };
 
   const closeEditor = () => {
     setEditingNotification(null);
+    setFormSnapshot("");
     setErrors({});
   };
   const showPendingPopup = () => {
@@ -193,6 +202,8 @@ export default function AdminNotifications() {
 
   const handleSaveNotification = (event) => {
     event.preventDefault();
+
+    if (getStableJson(form) === formSnapshot) return;
 
     const validationErrors = AdminNotification.validate(form);
     setErrors(validationErrors);
@@ -409,6 +420,7 @@ export default function AdminNotifications() {
             form={form}
             onChange={handleFormChange}
             onSubmit={handleSaveNotification}
+            submitDisabled={getStableJson(form) === formSnapshot}
           />
         </AdminEditorDialog>
       )}

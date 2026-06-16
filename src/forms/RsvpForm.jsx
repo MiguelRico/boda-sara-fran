@@ -54,6 +54,7 @@ export default function RsvpForm({
   showEntityHeader = true,
   showGuestList = true,
   submitText = rsvpContent.form.defaultSubmitText,
+  submitDisabled = false,
   variant = "public",
 }) {
   const detectedIsMobileView = useIsMobileView();
@@ -210,7 +211,7 @@ export default function RsvpForm({
           <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
             <IconButton
               className="w-full"
-              disabled={loading}
+              disabled={loading || submitDisabled}
               icon={submitIcon}
               keepTextOnAdminSubpages
               label={submitText}

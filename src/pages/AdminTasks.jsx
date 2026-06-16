@@ -45,6 +45,7 @@ import useIsMobileView from "../hooks/useIsMobileView";
 import useSpinner from "../hooks/useSpinner";
 import useAdminLocalChanges from "../hooks/useAdminLocalChanges";
 import { filterTasks } from "../utils/taskPageUtils";
+import { getStableJson } from "../utils/objectSnapshot";
 
 const getTaskKey = (task) => task.id;
 
@@ -65,6 +66,7 @@ export default function AdminTasks() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [editingTask, setEditingTask] = useState(null);
+  const [editingTaskSnapshot, setEditingTaskSnapshot] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [errors, setErrors] = useState({});
   const [popup, setPopup] = useState({
@@ -157,12 +159,18 @@ export default function AdminTasks() {
     });
   };
   const handleCreateTask = () => {
+    const task = createEmptyTask();
+
     setErrors({});
-    setEditingTask(createEmptyTask());
+    setEditingTask(task);
+    setEditingTaskSnapshot(getStableJson(task));
   };
   const handleEditTask = (task) => {
+    const draft = createEmptyTask(task);
+
     setErrors({});
-    setEditingTask(createEmptyTask(task));
+    setEditingTask(draft);
+    setEditingTaskSnapshot(getStableJson(draft));
   };
   const handleChange = (field, value) => {
     setEditingTask((current) => ({
@@ -174,6 +182,8 @@ export default function AdminTasks() {
   const handleSubmit = (event) => {
     event.preventDefault();
 
+    if (getStableJson(editingTask) === editingTaskSnapshot) return;
+
     const validationErrors = validateTask(editingTask);
     setErrors(validationErrors);
 
@@ -181,6 +191,7 @@ export default function AdminTasks() {
 
     applyTasks(upsertAdminTask(editingTask));
     setEditingTask(null);
+    setEditingTaskSnapshot("");
     showPendingPopup();
   };
   const handleToggleStatus = (task) => {
@@ -208,6 +219,7 @@ export default function AdminTasks() {
 
     setTasks(restoredTasks);
     setEditingTask(null);
+    setEditingTaskSnapshot("");
     setDeleteTarget(null);
   };
   const handleSavePendingChanges = async () => {
@@ -349,7 +361,10 @@ export default function AdminTasks() {
 
       {editingTask && (
         <AdminEditorDialog
-          onClose={() => setEditingTask(null)}
+          onClose={() => {
+            setEditingTask(null);
+            setEditingTaskSnapshot("");
+          }}
           title={
             tasks.some((task) => task.id === editingTask.id)
               ? adminContent.tasks.dialogs.editTitle
@@ -362,6 +377,7 @@ export default function AdminTasks() {
             form={editingTask}
             onChange={handleChange}
             onSubmit={handleSubmit}
+            submitDisabled={getStableJson(editingTask) === editingTaskSnapshot}
           />
         </AdminEditorDialog>
       )}

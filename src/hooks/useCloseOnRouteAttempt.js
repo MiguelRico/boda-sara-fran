@@ -1,13 +1,25 @@
-import { useEffect } from "react";
-import { useBlocker } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function useCloseOnRouteAttempt(enabled, onClose) {
-  const blocker = useBlocker(Boolean(enabled));
+  const location = useLocation();
+  const initialLocationKeyRef = useRef(location.key);
+  const onCloseRef = useRef(onClose);
 
   useEffect(() => {
-    if (!enabled || blocker.state !== "blocked") return;
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
-    onClose?.();
-    blocker.reset?.();
-  }, [blocker, enabled, onClose]);
+  useEffect(() => {
+    if (!enabled) {
+      initialLocationKeyRef.current = location.key;
+    }
+  }, [enabled, location.key]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (location.key === initialLocationKeyRef.current) return;
+
+    onCloseRef.current?.();
+  }, [enabled, location.key]);
 }

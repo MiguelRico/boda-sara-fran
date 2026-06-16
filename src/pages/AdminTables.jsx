@@ -66,6 +66,7 @@ import { isMenuModuleEnabled } from "../config/features";
 import { storageKeys } from "../config/storageKeys";
 import { isAdminSessionAuthenticated } from "../utils/adminSession";
 import { DEFAULT_TABLE_PAGE_SIZE } from "../utils/paginationState";
+import { getStableJson } from "../utils/objectSnapshot";
 
 const ADMIN_ACTIVE_TAB_KEY = storageKeys.adminActiveTabs.tables;
 const SECTION_TABS = adminContent.tables.tabs;
@@ -93,6 +94,7 @@ export default function AdminTables() {
   const [manualTables, setManualTables] = useState([]);
   const [savedSnapshot, setSavedSnapshot] = useState(emptySavedSnapshot);
   const [tableForm, setTableForm] = useState(createEmptyTableForm);
+  const [tableFormSnapshot, setTableFormSnapshot] = useState("");
   const [tableFormErrors, setTableFormErrors] = useState({});
   const [editingTable, setEditingTable] = useState(null);
   const [showTableForm, setShowTableForm] = useState(false);
@@ -346,19 +348,26 @@ export default function AdminTables() {
     setShowTableForm(false);
     setEditingTable(null);
     setTableForm(createEmptyTableForm());
+    setTableFormSnapshot("");
     setTableFormErrors({});
   };
 
   const handleCreateTable = () => {
+    const nextForm = createEmptyTableForm();
+
     setEditingTable(null);
-    setTableForm(createEmptyTableForm());
+    setTableForm(nextForm);
+    setTableFormSnapshot(getStableJson(nextForm));
     setTableFormErrors({});
     setShowTableForm(true);
   };
 
   const handleEditTable = (table) => {
+    const nextForm = createTableFormFromTable(table);
+
     setEditingTable(table);
-    setTableForm(createTableFormFromTable(table));
+    setTableForm(nextForm);
+    setTableFormSnapshot(getStableJson(nextForm));
     setTableFormErrors({});
     setShowTableForm(true);
   };
@@ -442,20 +451,17 @@ export default function AdminTables() {
     try {
       spinner.show(adminContent.tables.spinner.save);
 
-      const persistencePromises = [
-        persistAdminTables({
-          password: ADMIN_PASSWORD,
-          tables: manualTables,
-        }),
-        ...changedConfirmations.map((group) =>
-          confirmationRepository.saveAdmin({
-            confirmation: group,
-            password: ADMIN_PASSWORD,
-          }),
-        ),
-      ];
+      await persistAdminTables({
+        password: ADMIN_PASSWORD,
+        tables: manualTables,
+      });
 
-      await Promise.all(persistencePromises);
+      for (const group of changedConfirmations) {
+        await confirmationRepository.saveAdmin({
+          confirmation: group,
+          password: ADMIN_PASSWORD,
+        });
+      }
 
       setAdminTables(manualTables);
       setAdminConfirmations(state.confirmations);
@@ -671,6 +677,8 @@ export default function AdminTables() {
 
   const handleTableSubmit = async (event) => {
     event.preventDefault();
+
+    if (getStableJson(tableForm) === tableFormSnapshot) return;
 
     const errors = validateTableForm(tableForm, tables, editingTable);
 
@@ -978,6 +986,7 @@ export default function AdminTables() {
           onCancel={handleCloseTableForm}
           onChange={handleTableFormChange}
           onSubmit={handleTableSubmit}
+          submitDisabled={getStableJson(tableForm) === tableFormSnapshot}
         />
       )}
 
