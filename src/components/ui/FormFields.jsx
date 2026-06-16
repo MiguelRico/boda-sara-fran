@@ -1,4 +1,5 @@
 import { CalendarDays } from "lucide-react";
+import { useRef } from "react";
 
 import {
   FieldError,
@@ -21,6 +22,20 @@ export function TextField({
   value,
 }) {
   const isDateField = type === "date";
+  const inputRef = useRef(null);
+  const openDatePicker = () => {
+    if (disabled) return;
+
+    const input = inputRef.current;
+
+    if (!input) return;
+
+    input.focus();
+
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+    }
+  };
 
   return (
     <div>
@@ -31,7 +46,7 @@ export function TextField({
           autoFocus={autoFocus}
           className={`${inputClassName} ${
             isDateField
-              ? "pr-11 [&::-webkit-calendar-picker-indicator]:opacity-0"
+              ? "appearance-none pr-11 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden [&::-webkit-clear-button]:hidden"
               : ""
           }`}
           disabled={disabled}
@@ -39,16 +54,20 @@ export function TextField({
           onBlur={onBlur}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
+          ref={inputRef}
           type={type}
           value={value}
         />
         {isDateField && (
-          <CalendarDays
-            aria-hidden="true"
-            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-accent-dark)]"
-            size={17}
-            strokeWidth={1.8}
-          />
+          <button
+            aria-label={label || "Abrir selector de fecha"}
+            className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--color-accent-dark)] transition hover:bg-[var(--color-bg-soft)] disabled:pointer-events-none disabled:text-gray-400"
+            disabled={disabled}
+            onClick={openDatePicker}
+            type="button"
+          >
+            <CalendarDays aria-hidden="true" size={17} strokeWidth={1.8} />
+          </button>
         )}
       </div>
       <FieldError>{error}</FieldError>
