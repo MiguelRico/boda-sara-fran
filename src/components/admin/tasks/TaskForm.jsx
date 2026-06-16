@@ -1,6 +1,7 @@
 import { Save } from "lucide-react";
 
 import IconButton from "../../ui/IconButton";
+import { TextField } from "../../ui/FormFields";
 import {
   FieldError,
   FormCard,
@@ -48,15 +49,12 @@ export default function TaskForm({ errors = {}, form, onChange, onSubmit }) {
             <FieldError>{errors.title}</FieldError>
           </div>
 
-          <div>
-            <Label>{content.fields.maxDate}</Label>
-            <input
-              className={inputClassName}
-              onChange={(event) => onChange("maxDate", event.target.value)}
-              type="date"
-              value={form.maxDate}
-            />
-          </div>
+          <TextField
+            label={content.fields.maxDate}
+            onChange={(value) => onChange("maxDate", value)}
+            type="date"
+            value={form.maxDate}
+          />
         </div>
 
         <div className="mt-5 grid gap-5">

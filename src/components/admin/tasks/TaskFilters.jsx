@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 
 import CollapsiblePanel from "@/components/ui/CollapsiblePanel";
+import { TextField } from "@/components/ui/FormFields";
 import {
   inputClassName,
   Label,
@@ -123,14 +124,6 @@ export default function TaskFilters({
 
 function DateFilter({ label, onChange, value }) {
   return (
-    <div>
-      <Label>{label}</Label>
-      <input
-        className={inputClassName}
-        onChange={(event) => onChange(event.target.value)}
-        type="date"
-        value={value}
-      />
-    </div>
+    <TextField label={label} onChange={onChange} type="date" value={value} />
   );
 }

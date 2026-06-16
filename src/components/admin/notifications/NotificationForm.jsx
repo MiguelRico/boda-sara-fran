@@ -1,6 +1,7 @@
 import { Save } from "lucide-react";
 
 import IconButton from "../../ui/IconButton";
+import { TextField } from "../../ui/FormFields";
 import {
   FieldError,
   FormCard,
@@ -48,16 +49,13 @@ export default function NotificationForm({
             <FieldError>{errors.title}</FieldError>
           </div>
 
-          <div>
-            <Label>{content.fields.date}</Label>
-            <input
-              className={inputClassName}
-              onChange={(event) => onChange("date", event.target.value)}
-              type="date"
-              value={form.date}
-            />
-            <FieldError>{errors.date}</FieldError>
-          </div>
+          <TextField
+            error={errors.date}
+            label={content.fields.date}
+            onChange={(value) => onChange("date", value)}
+            type="date"
+            value={form.date}
+          />
 
           <div>
             <Label>{content.fields.type}</Label>
