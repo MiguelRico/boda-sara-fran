@@ -10,6 +10,7 @@ export function TextField({
   autoFocus,
   disabled = false,
   error,
+  inputMode,
   label,
   onChange,
   placeholder,
@@ -24,6 +25,7 @@ export function TextField({
         autoFocus={autoFocus}
         className={inputClassName}
         disabled={disabled}
+        inputMode={inputMode}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         type={type}

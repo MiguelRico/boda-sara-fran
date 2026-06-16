@@ -1,5 +1,8 @@
 import { Provider } from "../models";
 
+const parseAmount = (value) =>
+  Number(String(value || "").replace(",", ".")) || 0;
+
 export const validateProvider = (provider) => {
   const normalizedProvider = Provider.normalize(provider);
   const errors = {};
@@ -24,10 +27,10 @@ export const validateProvider = (provider) => {
       errors[`service_${index}_price`] = "El precio es obligatorio";
     }
 
-    const price = Number(service.price) || 0;
+    const price = parseAmount(service.price);
     const paymentTotal = service.payments
       .slice(0, service.paymentCount)
-      .reduce((total, payment) => total + (Number(payment.amount) || 0), 0);
+      .reduce((total, payment) => total + parseAmount(payment.amount), 0);
 
     if (price > 0 && paymentTotal !== price) {
       errors[`service_${index}_payments`] =

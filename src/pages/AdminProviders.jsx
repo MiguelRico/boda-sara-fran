@@ -66,6 +66,20 @@ import { DEFAULT_TABLE_PAGE_SIZE } from "../utils/paginationState";
 
 const ADMIN_PROVIDERS_ACTIVE_TAB_KEY = storageKeys.adminActiveTabs.providers;
 const getEntityId = (item) => item.id;
+const parsePaymentAmount = (value) =>
+  Number(String(value || "").replace(",", ".")) || 0;
+const getServicePaymentTotal = (service) =>
+  service.payments
+    .slice(0, service.paymentCount)
+    .reduce((total, payment) => total + parsePaymentAmount(payment.amount), 0);
+const withServicePaymentTotal = (service) => ({
+  ...service,
+  price: getServicePaymentTotal(service).toFixed(2),
+});
+const withProviderPaymentTotals = (provider) => ({
+  ...provider,
+  services: provider.services.map(withServicePaymentTotal),
+});
 
 export default function AdminProviders() {
   const providersRef = useRef(null);
@@ -299,7 +313,7 @@ export default function AdminProviders() {
     if (!selectedProvider) return;
 
     setErrors({});
-    const nextService = createEmptyService();
+    const nextService = { ...createEmptyService(), price: "0.00" };
 
     setEditingProviderMode("service");
     setEditingServiceId(nextService.id);
@@ -355,20 +369,21 @@ export default function AdminProviders() {
   });
   const handleSubmitProvider = (event) => {
     event.preventDefault();
+    const providerToSave = withProviderPaymentTotals(editingProvider);
 
     const validationErrors =
       editingProviderMode === "provider"
-        ? validateProvider({ ...editingProvider, services: [] })
-        : validateProvider(editingProvider);
+        ? validateProvider({ ...providerToSave, services: [] })
+        : validateProvider(providerToSave);
 
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length) return;
 
-    const normalizedProviders = upsertProvider(providers, editingProvider);
+    const normalizedProviders = upsertProvider(providers, providerToSave);
 
     applyProviders(normalizedProviders);
-    setSelectedProviderId(editingProvider.id);
+    setSelectedProviderId(providerToSave.id);
 
     if (editingProviderMode === "service") {
       setSelectedServiceId(editingServiceId);
@@ -391,7 +406,9 @@ export default function AdminProviders() {
     setEditingProvider((current) => ({
       ...current,
       services: current.services.map((service, index) =>
-        index === serviceIndex ? { ...service, [field]: value } : service,
+        index === serviceIndex
+          ? withServicePaymentTotal({ ...service, [field]: value })
+          : service,
       ),
     }));
   };
@@ -400,14 +417,14 @@ export default function AdminProviders() {
       ...current,
       services: current.services.map((service, index) =>
         index === serviceIndex
-          ? {
+          ? withServicePaymentTotal({
               ...service,
               payments: service.payments.map((payment, itemIndex) =>
                 itemIndex === paymentIndex
                   ? { ...payment, [field]: value }
                   : payment,
               ),
-            }
+            })
           : service,
       ),
     }));
@@ -415,7 +432,7 @@ export default function AdminProviders() {
   const handleAddService = () => {
     setEditingProvider((current) => ({
       ...current,
-      services: [...current.services, createEmptyService()],
+      services: [...current.services, { ...createEmptyService(), price: "0.00" }],
     }));
   };
   const handleRemoveService = (serviceIndex) => {
@@ -686,6 +703,12 @@ export default function AdminProviders() {
             onRemoveService={handleRemoveService}
             onServiceChange={handleServiceChange}
             onSubmit={handleSubmitProvider}
+            serviceIsEditing={
+              editingProviderMode === "service" &&
+              providers
+                .flatMap((provider) => provider.services)
+                .some((service) => service.id === editingServiceId)
+            }
             selectedServiceId={editingServiceId}
           />
         </AdminEditorDialog>

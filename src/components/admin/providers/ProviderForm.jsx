@@ -1,5 +1,15 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { useState } from "react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  ChevronDown,
+  Clock3,
+  Euro,
+  Plus,
+  Save,
+  Trash2,
+} from "lucide-react";
 
 import { adminContent } from "../../../constants/adminContent";
 import { PROVIDER_CATEGORIES } from "../../../constants/providers";
@@ -7,6 +17,7 @@ import { FieldError, FormCard } from "../../rsvp/FormPrimitives";
 import CollapsiblePanel from "../../ui/CollapsiblePanel";
 import { SelectField, TextField } from "../../ui/FormFields";
 import IconButton from "../../ui/IconButton";
+import { formatDate } from "../../../utils/formatters";
 
 export default function ProviderForm({
   errors,
@@ -19,19 +30,9 @@ export default function ProviderForm({
   onRemoveService,
   onServiceChange,
   onSubmit,
+  serviceIsEditing = false,
   selectedServiceId = "",
 }) {
-  const reduceMotion = useReducedMotion();
-  const paymentTransition = { duration: reduceMotion ? 0.12 : 0.32 };
-  const paymentVariants = reduceMotion
-    ? {
-        hidden: { opacity: 0 },
-        visible: { opacity: 1 },
-      }
-    : {
-        hidden: { opacity: 0, y: -8, filter: "blur(4px)" },
-        visible: { opacity: 1, y: 0, filter: "blur(0px)" },
-      };
   const showProviderFields = mode !== "service";
   const showServiceFields = mode !== "provider";
   const serviceEntries = form.services
@@ -88,30 +89,28 @@ export default function ProviderForm({
                 value={form.email}
               />
             </div>
-          </FormCard>
 
-          <CollapsiblePanel title="Datos opcionales">
-            <div className="grid gap-5">
-              <TextField
-                label={adminContent.providers.form.fields.address}
-                onChange={(value) => onChange("address", value)}
-                value={form.address}
-              />
-              <TextField
-                label={adminContent.providers.form.fields.web}
-                onChange={(value) => onChange("web", value)}
-                type="url"
-                value={form.web}
-              />
-              <div>
+            <CollapsiblePanel className="mt-5" title="Datos opcionales">
+              <div className="grid gap-5">
+                <TextField
+                  label={adminContent.providers.form.fields.address}
+                  onChange={(value) => onChange("address", value)}
+                  value={form.address}
+                />
+                <TextField
+                  label={adminContent.providers.form.fields.web}
+                  onChange={(value) => onChange("web", value)}
+                  type="url"
+                  value={form.web}
+                />
                 <TextField
                   label={adminContent.providers.form.fields.accountNumber}
                   onChange={(value) => onChange("accountNumber", value)}
                   value={form.accountNumber}
                 />
               </div>
-            </div>
-          </CollapsiblePanel>
+            </CollapsiblePanel>
+          </FormCard>
         </>
       )}
 
@@ -149,13 +148,11 @@ export default function ProviderForm({
                   value={service.name}
                 />
                 <TextField
+                  disabled
                   error={errors[`service_${serviceIndex}_price`]}
                   label={adminContent.providers.form.fields.servicePrice}
-                  onChange={(value) =>
-                    onServiceChange(serviceIndex, "price", value)
-                  }
-                  type="number"
-                  value={service.price}
+                  onChange={() => {}}
+                  value={getServicePaymentDisplayTotal(service)}
                 />
                 <SelectField
                   label={adminContent.providers.form.fields.paymentCount}
@@ -185,52 +182,28 @@ export default function ProviderForm({
               </div>
 
               <div className="mt-4 grid gap-3">
-                <AnimatePresence initial={false}>
-                  {service.payments
-                    .slice(0, service.paymentCount)
-                    .map((payment, paymentIndex) => {
-                      const paymentTitle = adminContent.providers.form.payment(
-                        paymentIndex + 1,
-                      );
-                      const paymentFields = (
+                {service.payments
+                  .slice(0, service.paymentCount)
+                  .map((payment, paymentIndex) => {
+                    return (
+                      <PaymentPanel
+                        defaultOpen={
+                          mode === "service" && serviceIsEditing
+                            ? false
+                            : paymentIndex === 0
+                        }
+                        key={payment.id || payment.paymentId || paymentIndex}
+                        payment={payment}
+                      >
                         <ProviderPaymentFields
                           onPaymentChange={onPaymentChange}
                           payment={payment}
                           paymentIndex={paymentIndex}
                           serviceIndex={serviceIndex}
                         />
-                      );
-
-                      return (
-                        <motion.div
-                          animate="visible"
-                          exit="hidden"
-                          initial="hidden"
-                          key={paymentIndex}
-                          layout
-                          transition={paymentTransition}
-                          variants={paymentVariants}
-                        >
-                          {service.paymentCount > 1 ? (
-                            <CollapsiblePanel
-                              className="bg-white/50"
-                              defaultOpen={paymentIndex === 0}
-                              title={paymentTitle}
-                            >
-                              {paymentFields}
-                            </CollapsiblePanel>
-                          ) : (
-                            <div className="rounded-2xl border border-[var(--color-border)] bg-white/50 p-3">
-                              <p className="section-eyebrow mb-3">
-                                {paymentTitle}
-                              </p>
-                              {paymentFields}
-                            </div>
-                          )}
-                        </motion.div>
-                      );
-                    })}
-                </AnimatePresence>
+                      </PaymentPanel>
+                    );
+                  })}
               </div>
               <FieldError>
                 {errors[`service_${serviceIndex}_payments`]}
@@ -243,6 +216,129 @@ export default function ProviderForm({
   );
 }
 
+function PaymentPanel({ children, defaultOpen, payment }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const reduceMotion = useReducedMotion();
+  const panelHidden = reduceMotion
+    ? { opacity: 0, height: 0 }
+    : { opacity: 0, height: 0, y: -8, filter: "blur(6px)" };
+  const panelVisible = reduceMotion
+    ? { opacity: 1, height: "auto" }
+    : { opacity: 1, height: "auto", y: 0, filter: "blur(0px)" };
+
+  return (
+    <section className="rounded-[1rem] border border-[var(--color-border)] bg-white/35 p-2">
+      <button
+        className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-left"
+        onClick={() => setOpen((current) => !current)}
+        type="button"
+      >
+        <PaymentSummary payment={payment} />
+        <span className="flex h-[1.875rem] w-[1.875rem] items-center justify-center rounded-full bg-[var(--color-border-strong)] text-white transition">
+          <ChevronDown
+            className={`transition-transform ${open ? "rotate-180" : ""}`}
+            size={16}
+            strokeWidth={1.8}
+          />
+        </span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            animate={panelVisible}
+            className="overflow-hidden"
+            exit={panelHidden}
+            initial={panelHidden}
+            key="provider-payment-content"
+            transition={{
+              duration: reduceMotion ? 0.18 : 0.46,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            <div className="mt-3">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
+
+function PaymentSummary({ payment }) {
+  const statusLabel = payment.paid
+    ? adminContent.providers.overview.metrics.paid
+    : adminContent.providers.overview.metrics.pending;
+  const statusTone = payment.paid
+    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-[var(--shadow-button)]"
+    : "border-amber-200 bg-amber-100 text-amber-700";
+
+  return (
+    <div className="grid min-w-0 grid-cols-3 gap-1">
+      <SummaryPill
+        icon={
+          payment.paid ? (
+            <CheckCircle2 size={12} strokeWidth={2} />
+          ) : (
+            <Clock3 size={12} strokeWidth={2} />
+          )
+        }
+        label={statusLabel}
+        toneClassName={statusTone}
+      />
+      <SummaryPill
+        icon={<Euro size={12} strokeWidth={2} />}
+        label={adminContent.providers.form.fields.paymentAmount}
+        toneClassName="border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)]"
+        value={formatPaymentCurrency(payment.amount)}
+      />
+      <SummaryPill
+        icon={<CalendarDays size={12} strokeWidth={2} />}
+        label={adminContent.providers.form.fields.paymentDate}
+        toneClassName="border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)]"
+        value={formatDate(payment.date)}
+      />
+    </div>
+  );
+}
+
+function SummaryPill({ icon, label, toneClassName, value }) {
+  const hasValue = value != null && value !== "";
+
+  return (
+    <span
+      aria-label={hasValue ? `${label}: ${value}` : label}
+      className={`inline-flex min-h-7 min-w-0 max-w-full items-center justify-center gap-1 rounded-full border px-2 py-1 text-center text-[0.68rem] font-semibold leading-none ${toneClassName}`}
+      title={hasValue ? `${label}: ${value}` : label}
+    >
+      <span className="shrink-0">{icon}</span>
+      {hasValue && (
+        <span className="min-w-0 whitespace-normal break-words">{value}</span>
+      )}
+    </span>
+  );
+}
+
+function formatPaymentCurrency(value) {
+  return new Intl.NumberFormat("es-ES", {
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    style: "currency",
+  }).format(Number(String(value || "").replace(",", ".")) || 0);
+}
+
+function getServicePaymentDisplayTotal(service) {
+  const total = service.payments
+    .slice(0, service.paymentCount)
+    .reduce(
+      (sum, payment) =>
+        sum + (Number(String(payment.amount || "").replace(",", ".")) || 0),
+      0,
+    );
+
+  return total.toFixed(2);
+}
+
 function ProviderPaymentFields({
   onPaymentChange,
   payment,
@@ -251,23 +347,7 @@ function ProviderPaymentFields({
 }) {
   return (
     <div className="grid gap-3">
-      <TextField
-        label={adminContent.providers.form.fields.paymentAmount}
-        onChange={(value) =>
-          onPaymentChange(serviceIndex, paymentIndex, "amount", value)
-        }
-        type="number"
-        value={payment.amount}
-      />
-      <TextField
-        label={adminContent.providers.form.fields.paymentDate}
-        onChange={(value) =>
-          onPaymentChange(serviceIndex, paymentIndex, "date", value)
-        }
-        type="date"
-        value={payment.date}
-      />
-      <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 px-4 py-3 text-sm text-[var(--color-accent-dark)] transition hover:bg-white">
+      <label className="mb-2 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 px-4 py-3 text-sm text-[var(--color-accent-dark)] transition hover:bg-white">
         <span>{adminContent.providers.form.fields.paymentPaid}</span>
         <input
           checked={payment.paid}
@@ -284,6 +364,22 @@ function ProviderPaymentFields({
         />
         <span className="relative h-6 w-11 rounded-full bg-[var(--color-border-strong)] transition after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--color-accent-dark)] peer-checked:after:translate-x-full" />
       </label>
+      <TextField
+        inputMode="decimal"
+        label={adminContent.providers.form.fields.paymentAmount}
+        onChange={(value) =>
+          onPaymentChange(serviceIndex, paymentIndex, "amount", value)
+        }
+        value={payment.amount}
+      />
+      <TextField
+        label={adminContent.providers.form.fields.paymentDate}
+        onChange={(value) =>
+          onPaymentChange(serviceIndex, paymentIndex, "date", value)
+        }
+        type="date"
+        value={payment.date}
+      />
     </div>
   );
 }
