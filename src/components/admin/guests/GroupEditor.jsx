@@ -25,7 +25,8 @@ export default function GroupEditor({
   onSave,
   validateUniqueContact = () => ({}),
 }) {
-  const isSingleGuestMode = mode === "guest";
+  const isNewGuestMode = mode === "newGuest";
+  const isSingleGuestMode = mode === "guest" || isNewGuestMode;
   const initialDraft = useMemo(
     () =>
       isSingleGuestMode
@@ -65,7 +66,9 @@ export default function GroupEditor({
   const isGuestListMode = mode === "guests" || isSingleGuestMode;
   const isGroupMode = mode === "group";
   const dialogTitle = isSingleGuestMode
-    ? adminContent.guests.dialogs.guestEditorTitle
+    ? isNewGuestMode
+      ? adminContent.guests.dialogs.guestCreateTitle
+      : adminContent.guests.dialogs.guestEditorTitle
     : isGuestListMode
       ? adminContent.guests.dialogs.guestListEditorTitle
       : isCreation
@@ -179,6 +182,7 @@ export default function GroupEditor({
         onRemoveGuest={removeGuest}
         onSubmit={handleSubmit}
         renderItem={renderFormItem}
+        showEntityHeader={false}
         showContactDetails={!isGuestListMode}
         showGuestList={!isGroupMode}
         submitText={rsvpContent.form.reviewSubmitText}

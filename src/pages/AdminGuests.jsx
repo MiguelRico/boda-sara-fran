@@ -326,7 +326,7 @@ export default function AdminGuests() {
         ...group,
         guests: [...currentGuests, Guest.create()],
       },
-      "guest",
+      "newGuest",
       currentGuests.length,
     );
   };

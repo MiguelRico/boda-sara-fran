@@ -3,7 +3,7 @@ export const adminContent = {
     eyebrow: "Panel privado",
     headerText: "Acceso reservado para revisar y organizar las confirmaciones.",
     loginTitle: "Acceso admin",
-    loginText: "Introduce la contraseña para entrar al panel de gestión.",
+    loginText: "Acceder al panel de gestión.",
     passwordLabel: "Contraseña",
     passwordPlaceholder: "Contraseña privada",
     submit: "Entrar",
@@ -52,8 +52,7 @@ export const adminContent = {
       contact: (labels) => `Contacto: ${labels.join(", ")}`,
       guestsAdded: (labels) => `Invitados añadidos: ${labels.join(", ")}`,
       guestsRemoved: (labels) => `Invitados eliminados: ${labels.join(", ")}`,
-      guestsModified: (labels) =>
-        `Invitados modificados: ${labels.join(", ")}`,
+      guestsModified: (labels) => `Invitados modificados: ${labels.join(", ")}`,
       noUnsavedChanges: "Cambios sin guardar",
       contactFields: {
         confirmationName: "Nombre de confirmación",
@@ -200,6 +199,7 @@ export const adminContent = {
     dialogs: {
       groupCreateTitle: "Crear confirmación",
       groupEditorTitle: "Editar confirmación",
+      guestCreateTitle: "Crear invitado",
       guestEditorTitle: "Editar invitado",
       guestListEditorTitle: "Editar invitados",
       discardPendingTitle: "Deshacer cambios de invitados",
@@ -268,7 +268,7 @@ export const adminContent = {
   tables: {
     tabs: [
       { id: "tables", label: "Mesas" },
-      { id: "pending", label: "Pendientes" },
+      { id: "pending", label: "Sin asiento" },
     ],
     header: {
       adminEyebrow: "Panel privado",
@@ -309,6 +309,10 @@ export const adminContent = {
       guestPlaceholder: "Seleccionar invitado",
       currentGuest: (guestName) => `Asignado a ${guestName}.`,
       assignedTitle: "Asignados",
+      assignedTo: "Asignado a",
+      assignTo: "Asignar a",
+      noSelectedGuest: "Selecciona un invitado",
+      selectedGuestNoSeat: "Sin asiento asignado",
       unassignedTitle: "Sin asientos asignados",
       unassignedText: "No hay invitados asignados a esta mesa.",
       unassignSeat: "Liberar asiento",
@@ -320,6 +324,7 @@ export const adminContent = {
       assign: "Asignar asiento",
       assigning: "Asignando...",
       swapSeat: "Intercambiar asiento",
+      swapWith: "Intercambiar con",
       cancel: "Cancelar",
       close: "Cerrar",
       unsavedEyebrow: "Cambios sin guardar",
@@ -365,8 +370,7 @@ export const adminContent = {
       guestNotFound: "Invitado no encontrado en el grupo",
       tableNotFound: "Mesa no encontrada",
       seatUnavailable: "El asiento no está disponible",
-      noGuestAssignedToSeat:
-        "No hay ningún invitado asignado a este asiento",
+      noGuestAssignedToSeat: "No hay ningún invitado asignado a este asiento",
     },
     changes: {
       created: (name) => `Mesa creada: ${name}`,
@@ -469,7 +473,7 @@ export const adminContent = {
       pendingTitle: "Cambios pendientes",
       pendingMessage:
         "Los cambios se han aplicado en memoria. Usa Guardar cambios para enviarlos.",
-      discardPendingTitle: "Deshacer cambios de proveedores",
+      discardPendingTitle: "Deshacer cambios",
       discardPendingText:
         "Se desharán los cambios pendientes de proveedores y servicios.",
       unsavedText:
@@ -477,11 +481,10 @@ export const adminContent = {
       warningEyebrow: "Aviso",
     },
     form: {
-      contactTitle: "Datos del proveedor",
       servicesTitle: "Servicios",
-      addService: "Agregar servicio",
-      deleteService: "Eliminar servicio",
-      save: "Guardar proveedor",
+      addService: "Agregar",
+      deleteService: "Eliminar",
+      save: "Guardar",
       fields: {
         accountNumber: "Número de cuenta",
         address: "Dirección",
@@ -582,7 +585,7 @@ export const adminContent = {
       loadError: "No se pudieron cargar las notificaciones.",
       pendingTitle: "Cambios pendientes",
       pendingMessage:
-        "Los cambios se han aplicado en memoria. Usa Guardar cambios en /admin para enviarlos.",
+        "Los cambios se han aplicado en memoria. Usa guardar cambios para enviarlos.",
       problemTitle: "Ha ocurrido un problema",
       savedTitle: "Cambios guardados",
       savedMessage: "Las notificaciones se han guardado correctamente.",
@@ -660,7 +663,7 @@ export const adminContent = {
       loadError: "No se pudieron cargar las tareas.",
       pendingTitle: "Cambios pendientes",
       pendingMessage:
-        "Los cambios se han aplicado en memoria. Usa Guardar cambios en /admin para enviarlos.",
+        "Los cambios se han aplicado en memoria, usa guardar para enviarlos",
       problemTitle: "Ha ocurrido un problema",
       savedTitle: "Cambios guardados",
       savedMessage: "Las tareas se han guardado correctamente.",

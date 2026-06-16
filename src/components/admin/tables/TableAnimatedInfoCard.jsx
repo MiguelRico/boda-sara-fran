@@ -18,11 +18,12 @@ import { isMenuModuleEnabled } from "../../../config/features";
 import usePagedData from "../../../hooks/usePagedData";
 import usePageTransition from "../../../hooks/usePageTransition";
 import IconButton from "../../ui/IconButton";
+import PaginatedContent from "../../ui/PaginatedContent";
+import Pagination from "../../ui/Pagination";
 import RevealOnView from "../../ui/RevealOnView";
 import SeatAssignmentModal from "../../ui/SeatAssignmentModal";
 import DeleteDialog from "../../ui/DeleteDialog";
 import {
-  AdminTableSection,
   Card,
   CardActions,
   SelectableCardFrame,
@@ -153,7 +154,7 @@ function AssignmentModal({
   const [selectedSeatKey, setSelectedSeatKey] = useState("");
   const [removingSeat, setRemovingSeat] = useState("");
   const [seatToUnassign, setSeatToUnassign] = useState(null);
-  const { currentPage, isMobileView, pageSize, totalPages } = usePagedData({
+  const { currentPage, pageSize, totalPages } = usePagedData({
     items: assignedSeats,
     page,
     pageSize: 1,
@@ -199,9 +200,9 @@ function AssignmentModal({
         onClose={onClose}
         title={table.name}
       >
-        <AdminTableSection
-          actions={
-            onUnassignSeat && (
+        <div className="space-y-4">
+          {onUnassignSeat && (
+            <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
               <IconButton
                 className="w-full"
                 disabled={!selectedSeat || removingSeat === selectedSeat?.seat}
@@ -216,46 +217,53 @@ function AssignmentModal({
                   ? adminContent.tables.dialogs.unassigningSeat
                   : adminContent.tables.dialogs.unassignSeat}
               </IconButton>
-            )
-          }
-          className="p-4 shadow-none hover:translate-y-0"
-          contentRef={contentRef}
-          eyebrow={adminContent.tables.dialogs.assignedTitle}
-          getKey={getAssignedSeatKey}
-          isMobileView={isMobileView}
-          items={assignedSeats}
-          lockPageHeight={false}
-          mobilePageLabel={adminContent.tables.dialogs.guestLabel}
-          onNextPage={() =>
-            handlePageChange(currentPage + 1, contentRef.current)
-          }
-          onPrevPage={() =>
-            handlePageChange(currentPage - 1, contentRef.current)
-          }
-          page={currentPage}
-          pageDirection={pageDirection}
-          pageLabel={adminContent.tables.header.pageLabel}
-          pageSize={pageSize}
-          renderMeasurePage={(items) => (
-            <AssignedSeatsPage
-              emptyState={getAssignedSeatsEmptyState(assignedSeats.length)}
-              items={items}
-              onSelect={() => {}}
-              selectedSeatKey={effectiveSelectedSeatKey}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <Pagination
+              className="my-0"
+              onNext={() =>
+                handlePageChange(currentPage + 1, contentRef.current)
+              }
+              onPrev={() =>
+                handlePageChange(currentPage - 1, contentRef.current)
+              }
+              page={currentPage}
+              totalPages={totalPages}
             />
           )}
-          renderPage={(items) => (
-            <AssignedSeatsPage
-              emptyState={getAssignedSeatsEmptyState(assignedSeats.length)}
-              items={items}
-              onSelect={(seat) => setSelectedSeatKey(getAssignedSeatKey(seat))}
-              selectedSeatKey={effectiveSelectedSeatKey}
+
+          <div ref={contentRef}>
+            <PaginatedContent
+              allItems={assignedSeats}
+              direction={pageDirection}
+              getKey={getAssignedSeatKey}
+              lockHeight={false}
+              page={currentPage}
+              pageSize={pageSize}
+              renderMeasurePage={(items) => (
+                <AssignedSeatsPage
+                  emptyState={getAssignedSeatsEmptyState(assignedSeats.length)}
+                  items={items}
+                  onSelect={() => {}}
+                  selectedSeatKey={effectiveSelectedSeatKey}
+                />
+              )}
+              renderPage={(items) => (
+                <AssignedSeatsPage
+                  emptyState={getAssignedSeatsEmptyState(assignedSeats.length)}
+                  items={items}
+                  onSelect={(seat) =>
+                    setSelectedSeatKey(getAssignedSeatKey(seat))
+                  }
+                  selectedSeatKey={effectiveSelectedSeatKey}
+                />
+              )}
+              totalPages={totalPages}
             />
-          )}
-          sourceItemsCount={assignedSeats.length}
-          title={adminContent.tables.dialogs.assignedTitle}
-          totalPages={totalPages}
-        />
+          </div>
+        </div>
       </SeatAssignmentModal>
 
       {seatToUnassign && (

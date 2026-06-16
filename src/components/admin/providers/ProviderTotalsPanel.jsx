@@ -17,7 +17,7 @@ export default function ProviderTotalsPanel({ loading, stats }) {
   const metrics = adminContent.providers.overview.metrics;
 
   return (
-    <section className="premium-card">
+    <section className="premium-card mt-4">
       <p className="section-eyebrow mb-2">
         {adminContent.providers.overview.eyebrow}
       </p>

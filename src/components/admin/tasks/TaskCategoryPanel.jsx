@@ -1,3 +1,4 @@
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDown,
   CheckCircle2,
@@ -20,7 +21,14 @@ export default function TaskCategoryPanel({
   tasks,
 }) {
   const [open, setOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
   const summary = getCategorySummary(tasks);
+  const panelHidden = reduceMotion
+    ? { opacity: 0, height: 0 }
+    : { opacity: 0, height: 0, y: -8, filter: "blur(6px)" };
+  const panelVisible = reduceMotion
+    ? { opacity: 1, height: "auto" }
+    : { opacity: 1, height: "auto", y: 0, filter: "blur(0px)" };
 
   return (
     <section className="rounded-[1rem] border border-[var(--color-border)] bg-white/35 p-2">
@@ -44,18 +52,32 @@ export default function TaskCategoryPanel({
         </span>
       </button>
 
-      {open && (
-        <div className="mt-2">
-          <TaskCards
-            emptyText={emptyText}
-            emptyTitle={emptyTitle}
-            onDelete={onDelete}
-            onEdit={onEdit}
-            onToggleStatus={onToggleStatus}
-            tasks={tasks}
-          />
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            animate={panelVisible}
+            className="overflow-hidden"
+            exit={panelHidden}
+            initial={panelHidden}
+            key="task-category-content"
+            transition={{
+              duration: reduceMotion ? 0.18 : 0.46,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            <div className="mt-2">
+              <TaskCards
+                emptyText={emptyText}
+                emptyTitle={emptyTitle}
+                onDelete={onDelete}
+                onEdit={onEdit}
+                onToggleStatus={onToggleStatus}
+                tasks={tasks}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

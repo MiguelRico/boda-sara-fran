@@ -115,7 +115,7 @@ export function PendingGuestsFilters({
 
 function PendingGuestsPage({ guests, onSelect, selectedGuestKey }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 mt-4">
       {guests.map((guest) => (
         <GuestAssignmentRow
           guest={guest}

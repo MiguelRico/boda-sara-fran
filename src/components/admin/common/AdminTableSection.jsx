@@ -52,32 +52,37 @@ export default function AdminTableSection({
       pageLabel || paginationLabel || mobilePageLabel || page || totalPages,
     );
   const contentSkeletonConfig = skeletonConfig.content || {};
+  const hasHeaderContent = Boolean(eyebrow || title || count || actions);
 
   return (
     <section
       className={`premium-card admin-table-section pt-4 ${className}`}
       ref={sectionRef}
     >
-      <div className="mb-4">
-        <p className="section-eyebrow mb-2">{eyebrow}</p>
-        <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-          {title}
-        </h2>
+      {hasHeaderContent && (
+        <div className="mb-4">
+          {eyebrow && <p className="section-eyebrow mb-2">{eyebrow}</p>}
+          {title && (
+            <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
+              {title}
+            </h2>
+          )}
 
-        {!loading && (count || actions) && (
-          <div className="mt-4 flex flex-col gap-3">
-            {actions && (
-              <div
-                className={`rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4 ${
-                  actionsFullWidth ? "w-full" : ""
-                }`}
-              >
-                {actions}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+          {!loading && (count || actions) && (
+            <div className="mt-4 flex flex-col gap-3">
+              {actions && (
+                <div
+                  className={`rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4 ${
+                    actionsFullWidth ? "w-full" : ""
+                  }`}
+                >
+                  {actions}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <TableSectionSkeleton

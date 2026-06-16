@@ -51,6 +51,7 @@ export default function RsvpForm({
   onValidateContact,
   renderItem = defaultRenderItem,
   showContactDetails = true,
+  showEntityHeader = true,
   showGuestList = true,
   submitText = rsvpContent.form.defaultSubmitText,
   variant = "public",
@@ -197,6 +198,7 @@ export default function RsvpForm({
               disableFilledFields={disableContactFields}
               errors={errors}
               onContactChange={onContactChange}
+              showHeader={showEntityHeader}
             />,
           )}
 
@@ -221,6 +223,7 @@ export default function RsvpForm({
               onGuestChange={onGuestChange}
               onGuestPageChange={handleGuestPageChange}
               onRemoveGuest={handleRemoveGuest}
+              showHeader={showEntityHeader}
               totalGuestPages={totalGuestPages}
               variant={variant}
             />,

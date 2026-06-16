@@ -24,13 +24,13 @@ export default function SeatAssignmentModal({
       <div
         aria-labelledby="seat-assignment-modal-title"
         aria-modal="true"
-        className={`premium-card max-h-[calc(100dvh-2rem)] w-full ${maxWidthClassName} overflow-y-auto p-5 text-left`}
+        className={`mt-4 premium-card max-h-[calc(100dvh-2rem)] w-full ${maxWidthClassName} overflow-y-auto p-5 text-left`}
         onClick={(event) => event.stopPropagation()}
         ref={dialogRef}
         role="dialog"
         tabIndex={-1}
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             {eyebrow && <p className="section-eyebrow mb-2">{eyebrow}</p>}
             <h2

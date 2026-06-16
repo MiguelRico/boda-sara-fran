@@ -36,11 +36,6 @@ export default function TaskForm({ errors = {}, form, onChange, onSubmit }) {
       </div>
 
       <FormCard>
-        <p className="section-eyebrow mb-2">{content.eyebrow}</p>
-        <h2 className="mb-5 font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-          {content.title}
-        </h2>
-
         <div className="grid gap-5">
           <div>
             <Label>{content.fields.title}</Label>

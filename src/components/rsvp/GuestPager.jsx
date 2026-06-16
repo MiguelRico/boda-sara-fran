@@ -28,6 +28,7 @@ export default function GuestPager({
   onGuestChange,
   onGuestPageChange,
   onRemoveGuest,
+  showHeader = true,
   totalGuestPages,
   variant,
 }) {
@@ -96,7 +97,7 @@ export default function GuestPager({
             </div>
           ) : null
         }
-        eyebrow={adminContent.guests.editor.guestListEyebrow}
+        eyebrow={showHeader ? adminContent.guests.editor.guestListEyebrow : null}
         getKey={(_guest, { index }) => index}
         isMobileView={isMobileView}
         items={guests}
@@ -108,7 +109,7 @@ export default function GuestPager({
         paginationLabel={pageLabel}
         pageSize={1}
         renderPage={renderAdminGuestPage}
-        title={adminContent.guests.editor.guestListTitle}
+        title={showHeader ? adminContent.guests.editor.guestListTitle : null}
         totalPages={totalGuestPages}
       />
     );

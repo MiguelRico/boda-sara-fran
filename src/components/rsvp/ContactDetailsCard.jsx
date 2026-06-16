@@ -8,6 +8,7 @@ export default function ContactDetailsCard({
   disableFilledFields = true,
   errors,
   onContactChange,
+  showHeader = true,
 }) {
   const disabledFields =
     typeof disableFilledFields === "object"
@@ -20,13 +21,17 @@ export default function ContactDetailsCard({
 
   return (
     <FormCard>
-      <p className="section-eyebrow">{rsvpContent.contact.eyebrow}</p>
+      {showHeader && (
+        <>
+          <p className="section-eyebrow">{rsvpContent.contact.eyebrow}</p>
 
-      <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-        {rsvpContent.contact.title}
-      </h2>
+          <h2 className="font-serif text-3xl text-[var(--color-accent-dark)]">
+            {rsvpContent.contact.title}
+          </h2>
+        </>
+      )}
 
-      <div className="mt-4 grid gap-5">
+      <div className={`${showHeader ? "mt-4" : ""} grid gap-5`}>
         <div>
           <Label>{rsvpContent.contact.fields.confirmationName.label}</Label>
 

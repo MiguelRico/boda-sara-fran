@@ -14,9 +14,7 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  ADMIN_PASSWORD,
-} from "../constants/admin";
+import { ADMIN_PASSWORD } from "../constants/admin";
 import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
@@ -87,9 +85,7 @@ export default function Admin() {
 
   useEffect(() => {
     const syncAuthState = () => {
-      setIsAuthenticated(
-        isAdminSessionAuthenticated(),
-      );
+      setIsAuthenticated(isAdminSessionAuthenticated());
     };
 
     const unsubscribeAdminAuthChange = subscribeAdminAuthChange(syncAuthState);
@@ -171,17 +167,17 @@ function AdminLogin({
   return (
     <FormCard className="mx-auto w-full max-w-md">
       <form onSubmit={onSubmit}>
-        <div className="mb-6 flex items-start gap-4">
+        <div className="flex items-start gap-4 mb-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-white/60 text-[var(--color-accent-dark)]">
             <LockKeyhole size={20} strokeWidth={1.7} />
           </div>
 
-          <div>
+          <div className="min-w-0 flex-1 text-center">
             <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-              Acceso admin
+              {adminContent.auth.loginTitle}
             </h2>
 
-            <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
+            <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
               {adminContent.auth.loginText}
             </p>
           </div>
@@ -204,7 +200,7 @@ function AdminLogin({
 
         <FieldError>{error}</FieldError>
 
-        <div className="mt-6 flex flex-col gap-3">
+        <div className="mt-4 flex flex-col gap-3">
           <IconButton
             disabled={!canSubmit || loading}
             icon={<LogIn size={16} strokeWidth={1.8} />}

@@ -60,9 +60,6 @@ export default function ProviderForm({
       {showProviderFields && (
         <>
           <FormCard>
-            <p className="section-eyebrow mb-2">
-              {adminContent.providers.form.contactTitle}
-            </p>
             <div className="grid gap-5">
               <TextField
                 error={errors.name}
@@ -119,19 +116,9 @@ export default function ProviderForm({
       )}
 
       {showServiceFields && (
-        <FormCard>
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="section-eyebrow mb-2">
-                {adminContent.providers.form.servicesTitle}
-              </p>
-              <h3 className="font-serif text-3xl text-[var(--color-accent-dark)]">
-                {mode === "service"
-                  ? "1 servicio"
-                  : `${form.services.length} servicios`}
-              </h3>
-            </div>
-            {mode !== "service" && (
+        <div className="grid gap-4">
+          {mode !== "service" && (
+            <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
               <IconButton
                 className="w-full"
                 icon={<Plus size={16} strokeWidth={1.8} />}
@@ -144,113 +131,113 @@ export default function ProviderForm({
               >
                 {adminContent.providers.form.addService}
               </IconButton>
-            )}
-          </div>
+            </div>
+          )}
 
-          <div className="mt-5 grid gap-4">
-            {serviceEntries.map(({ service, serviceIndex }) => (
-              <div
-                className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/45 p-4"
-                key={service.id}
-              >
-                <div className="grid gap-4">
-                  <TextField
-                    error={errors[`service_${serviceIndex}_name`]}
-                    label={adminContent.providers.form.fields.serviceName}
-                    onChange={(value) =>
-                      onServiceChange(serviceIndex, "name", value)
-                    }
-                    value={service.name}
-                  />
-                  <TextField
-                    error={errors[`service_${serviceIndex}_price`]}
-                    label={adminContent.providers.form.fields.servicePrice}
-                    onChange={(value) =>
-                      onServiceChange(serviceIndex, "price", value)
-                    }
-                    type="number"
-                    value={service.price}
-                  />
-                  <SelectField
-                    label={adminContent.providers.form.fields.paymentCount}
-                    onChange={(value) =>
-                      onServiceChange(serviceIndex, "paymentCount", Number(value))
-                    }
-                    options={[1, 2, 3].map((count) => ({
-                      label: count,
-                      value: count,
-                    }))}
-                    value={service.paymentCount}
-                  />
-                  {mode !== "service" && (
-                    <IconButton
-                      className="w-full"
-                      icon={<Trash2 size={16} strokeWidth={1.8} />}
-                      keepTextOnAdminSubpages
-                      label={adminContent.providers.form.deleteService}
-                      onClick={() => onRemoveService(serviceIndex)}
-                      showText="always"
-                      tone="danger"
-                      type="button"
-                    >
-                      {adminContent.providers.form.deleteService}
-                    </IconButton>
-                  )}
-                </div>
-
-                <div className="mt-4 grid gap-3">
-                  <AnimatePresence initial={false}>
-                    {service.payments
-                      .slice(0, service.paymentCount)
-                      .map((payment, paymentIndex) => {
-                        const paymentTitle = adminContent.providers.form.payment(
-                          paymentIndex + 1,
-                        );
-                        const paymentFields = (
-                          <ProviderPaymentFields
-                            onPaymentChange={onPaymentChange}
-                            payment={payment}
-                            paymentIndex={paymentIndex}
-                            serviceIndex={serviceIndex}
-                          />
-                        );
-
-                        return (
-                          <motion.div
-                            animate="visible"
-                            exit="hidden"
-                            initial="hidden"
-                            key={paymentIndex}
-                            layout
-                            transition={paymentTransition}
-                            variants={paymentVariants}
-                          >
-                            {service.paymentCount > 1 ? (
-                              <CollapsiblePanel
-                                className="bg-white/50"
-                                defaultOpen={paymentIndex === 0}
-                                title={paymentTitle}
-                              >
-                                {paymentFields}
-                              </CollapsiblePanel>
-                            ) : (
-                              <div className="rounded-2xl border border-[var(--color-border)] bg-white/50 p-3">
-                                <p className="section-eyebrow mb-3">
-                                  {paymentTitle}
-                                </p>
-                                {paymentFields}
-                              </div>
-                            )}
-                          </motion.div>
-                        );
-                      })}
-                  </AnimatePresence>
-                </div>
-                <FieldError>{errors[`service_${serviceIndex}_payments`]}</FieldError>
+          {serviceEntries.map(({ service, serviceIndex }) => (
+            <FormCard
+              className="border border-[var(--color-border)]"
+              key={service.id}
+            >
+              <div className="grid gap-4">
+                <TextField
+                  error={errors[`service_${serviceIndex}_name`]}
+                  label={adminContent.providers.form.fields.serviceName}
+                  onChange={(value) =>
+                    onServiceChange(serviceIndex, "name", value)
+                  }
+                  value={service.name}
+                />
+                <TextField
+                  error={errors[`service_${serviceIndex}_price`]}
+                  label={adminContent.providers.form.fields.servicePrice}
+                  onChange={(value) =>
+                    onServiceChange(serviceIndex, "price", value)
+                  }
+                  type="number"
+                  value={service.price}
+                />
+                <SelectField
+                  label={adminContent.providers.form.fields.paymentCount}
+                  onChange={(value) =>
+                    onServiceChange(serviceIndex, "paymentCount", Number(value))
+                  }
+                  options={[1, 2, 3].map((count) => ({
+                    label: count,
+                    value: count,
+                  }))}
+                  value={service.paymentCount}
+                />
+                {mode !== "service" && (
+                  <IconButton
+                    className="w-full"
+                    icon={<Trash2 size={16} strokeWidth={1.8} />}
+                    keepTextOnAdminSubpages
+                    label={adminContent.providers.form.deleteService}
+                    onClick={() => onRemoveService(serviceIndex)}
+                    showText="always"
+                    tone="danger"
+                    type="button"
+                  >
+                    {adminContent.providers.form.deleteService}
+                  </IconButton>
+                )}
               </div>
-            ))}
-          </div>
-        </FormCard>
+
+              <div className="mt-4 grid gap-3">
+                <AnimatePresence initial={false}>
+                  {service.payments
+                    .slice(0, service.paymentCount)
+                    .map((payment, paymentIndex) => {
+                      const paymentTitle = adminContent.providers.form.payment(
+                        paymentIndex + 1,
+                      );
+                      const paymentFields = (
+                        <ProviderPaymentFields
+                          onPaymentChange={onPaymentChange}
+                          payment={payment}
+                          paymentIndex={paymentIndex}
+                          serviceIndex={serviceIndex}
+                        />
+                      );
+
+                      return (
+                        <motion.div
+                          animate="visible"
+                          exit="hidden"
+                          initial="hidden"
+                          key={paymentIndex}
+                          layout
+                          transition={paymentTransition}
+                          variants={paymentVariants}
+                        >
+                          {service.paymentCount > 1 ? (
+                            <CollapsiblePanel
+                              className="bg-white/50"
+                              defaultOpen={paymentIndex === 0}
+                              title={paymentTitle}
+                            >
+                              {paymentFields}
+                            </CollapsiblePanel>
+                          ) : (
+                            <div className="rounded-2xl border border-[var(--color-border)] bg-white/50 p-3">
+                              <p className="section-eyebrow mb-3">
+                                {paymentTitle}
+                              </p>
+                              {paymentFields}
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+                </AnimatePresence>
+              </div>
+              <FieldError>
+                {errors[`service_${serviceIndex}_payments`]}
+              </FieldError>
+            </FormCard>
+          ))}
+        </div>
       )}
     </form>
   );

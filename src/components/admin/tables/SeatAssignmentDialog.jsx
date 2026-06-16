@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import { Armchair, Shuffle, Unlink } from "lucide-react";
 
-import { AdminTableSection, SeatOccupantSummary } from "../common";
+import { SeatOccupantSummary } from "../common";
 import DeleteDialog from "../../ui/DeleteDialog";
 import IconButton from "../../ui/IconButton";
+import PaginatedContent from "../../ui/PaginatedContent";
+import Pagination from "../../ui/Pagination";
 import SeatAssignmentModal from "../../ui/SeatAssignmentModal";
 import { adminContent } from "../../../constants/adminContent";
 import { isMenuModuleEnabled } from "../../../config/features";
@@ -26,7 +28,6 @@ export default function SeatAssignmentDialog({
 }) {
   const tableKey = table.name;
   const tableLabel = table.name;
-  const seatLabel = `Asiento ${seat.seat}`;
   const contentRef = useRef(null);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
@@ -58,6 +59,10 @@ export default function SeatAssignmentDialog({
     new Set(assignableGuests.map((guest) => guest.menu).filter(Boolean)),
   );
   const filteredGuests = assignableGuests.filter((guest) => {
+    if (currentGuestKey && getPendingGuestRowKey(guest) === currentGuestKey) {
+      return false;
+    }
+
     if (filters.group && guest.confirmationName !== filters.group) {
       return false;
     }
@@ -68,7 +73,7 @@ export default function SeatAssignmentDialog({
 
     return true;
   });
-  const { currentPage, isMobileView, pageSize, pagedItems, totalPages } =
+  const { currentPage, pageSize, pagedItems, totalPages } =
     usePagedData({
       items: filteredGuests,
       page,
@@ -95,12 +100,39 @@ export default function SeatAssignmentDialog({
   const selectedGuestIsCurrent = Boolean(
     selectedGuest && getPendingGuestRowKey(selectedGuest) === currentGuestKey,
   );
+  const selectedGuestName = selectedGuest
+    ? Guest.getFullName(selectedGuest, adminContent.common.fallbacks.guest)
+    : "";
+  const selectedGuestAssignment = selectedGuestHasSeat
+    ? `Mesa ${selectedGuest.table}\nAsiento ${selectedGuest.seat}`
+    : "";
+  const seatHasGuest = Boolean(currentGuest);
   const assignLabel = assigning
     ? adminContent.tables.dialogs.assigning
-    : selectedGuestHasSeat
+    : seatHasGuest
       ? adminContent.tables.dialogs.swapSeat
       : adminContent.tables.dialogs.assign;
-  const AssignIcon = selectedGuestHasSeat ? Shuffle : Armchair;
+  const AssignIcon = seatHasGuest ? Shuffle : Armchair;
+  const selectedGuestDescription = selectedGuest
+    ? selectedGuestAssignment || adminContent.tables.dialogs.selectedGuestNoSeat
+    : adminContent.tables.dialogs.noSelectedGuest;
+  const selectedGuestSummary = {
+    description: selectedGuestDescription,
+    guestName: selectedGuestName,
+    title: seatHasGuest
+      ? adminContent.tables.dialogs.swapWith
+      : adminContent.tables.dialogs.assignTo,
+  };
+  const summaryItems = seatHasGuest
+    ? [
+        {
+          description: `Mesa ${tableLabel}\nAsiento ${seat.seat}`,
+          guestName: currentGuestName,
+          title: adminContent.tables.dialogs.assignedTo,
+        },
+        selectedGuestSummary,
+      ]
+    : [selectedGuestSummary];
 
   const handleAssign = () => {
     if (!selectedGuest) return;
@@ -138,8 +170,8 @@ export default function SeatAssignmentDialog({
         onClose={onCancel}
         title={tableLabel}
       >
-        <AdminTableSection
-          actions={
+        <div className="space-y-4">
+          <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
             <div className="grid w-full grid-cols-1 gap-3">
               {canRemoveGuest && (
                 <IconButton
@@ -171,64 +203,63 @@ export default function SeatAssignmentDialog({
                 {assignLabel}
               </IconButton>
             </div>
-          }
-          className="p-4 shadow-none hover:translate-y-0"
-          contentRef={contentRef}
-          eyebrow={seatLabel}
-          filters={
-            <PendingGuestsFilters
-              availableConfirmations={availableConfirmations}
-              availableMenus={availableMenus}
-              filters={filters}
-              onFilterChange={handleFilterChange}
-            />
-          }
-          getKey={getPendingGuestRowKey}
-          isMobileView={isMobileView}
-          items={filteredGuests}
-          lockPageHeight={false}
-          mobilePageLabel={adminContent.tables.dialogs.guestLabel}
-          onNextPage={() =>
-            handlePageChange(currentPage + 1, contentRef.current)
-          }
-          onPrevPage={() =>
-            handlePageChange(currentPage - 1, contentRef.current)
-          }
-          page={currentPage}
-          pageDirection={pageDirection}
-          pageLabel={adminContent.tables.header.pageLabel}
-          pageSize={pageSize}
-          renderMeasurePage={(items) => (
-            <PendingGuestsList
-              emptyText={seatAssignmentEmptyState.text}
-              emptyTitle={seatAssignmentEmptyState.title}
-              guests={items}
-              onSelect={() => {}}
-              selectedGuestKey={effectiveSelectedGuestKey}
-            />
-          )}
-          renderPage={(items) => (
-            <PendingGuestsList
-              emptyText={seatAssignmentEmptyState.text}
-              emptyTitle={seatAssignmentEmptyState.title}
-              guests={items}
-              onSelect={(guest) =>
-                setSelectedGuestKey(getPendingGuestRowKey(guest))
+          </div>
+
+          <SeatOccupantSummary items={summaryItems} seat={seat.seat} />
+
+          <PendingGuestsFilters
+            availableConfirmations={availableConfirmations}
+            availableMenus={availableMenus}
+            filters={filters}
+            onFilterChange={handleFilterChange}
+          />
+
+          {totalPages > 1 && (
+            <Pagination
+              className="my-0"
+              onNext={() =>
+                handlePageChange(currentPage + 1, contentRef.current)
               }
-              selectedGuestKey={effectiveSelectedGuestKey}
+              onPrev={() =>
+                handlePageChange(currentPage - 1, contentRef.current)
+              }
+              page={currentPage}
+              totalPages={totalPages}
             />
           )}
-          sourceItemsCount={guests.length}
-          summary={
-            <SeatOccupantSummary
-              guestName={currentGuestName}
-              seat={seat.seat}
-              title="Asignado a"
+
+          <div ref={contentRef}>
+            <PaginatedContent
+              allItems={filteredGuests}
+              direction={pageDirection}
+              getKey={getPendingGuestRowKey}
+              lockHeight={false}
+              page={currentPage}
+              pageSize={pageSize}
+              renderMeasurePage={(items) => (
+                <PendingGuestsList
+                  emptyText={seatAssignmentEmptyState.text}
+                  emptyTitle={seatAssignmentEmptyState.title}
+                  guests={items}
+                  onSelect={() => {}}
+                  selectedGuestKey={effectiveSelectedGuestKey}
+                />
+              )}
+              renderPage={(items) => (
+                <PendingGuestsList
+                  emptyText={seatAssignmentEmptyState.text}
+                  emptyTitle={seatAssignmentEmptyState.title}
+                  guests={items}
+                  onSelect={(guest) =>
+                    setSelectedGuestKey(getPendingGuestRowKey(guest))
+                  }
+                  selectedGuestKey={effectiveSelectedGuestKey}
+                />
+              )}
+              totalPages={totalPages}
             />
-          }
-          title={seatLabel}
-          totalPages={totalPages}
-        />
+          </div>
+        </div>
       </SeatAssignmentModal>
 
       {showRemoveConfirm && (

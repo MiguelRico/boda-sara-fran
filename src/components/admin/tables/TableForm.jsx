@@ -14,11 +14,7 @@ import {
   TABLE_SHAPE_OPTIONS,
 } from "../../../constants/tables";
 import { tableContent } from "../../../constants/tableContent";
-import {
-  FieldError,
-  FormCard,
-  Label,
-} from "../../rsvp/FormPrimitives";
+import { FieldError, FormCard, Label } from "../../rsvp/FormPrimitives";
 import { SelectField, TextareaField, TextField } from "../../ui/FormFields";
 import IconButton from "../../ui/IconButton";
 
@@ -65,9 +61,7 @@ export default function TableForm({
   return (
     <form className="mt-4" noValidate onSubmit={onSubmit}>
       <div className="mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
-        <div
-          className="grid w-full grid-cols-1 gap-3"
-        >
+        <div className="grid w-full grid-cols-1 gap-3">
           {onDelete && (
             <IconButton
               className="w-full"

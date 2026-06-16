@@ -134,7 +134,7 @@ export default function PaginatedContent({
           className={
             lockHeight
               ? "absolute inset-x-0 top-0"
-              : "col-start-1 row-start-1"
+              : "mt-0 col-start-1 row-start-1"
           }
           custom={direction}
           exit="exit"
