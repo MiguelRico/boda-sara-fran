@@ -1,3 +1,5 @@
+import { CalendarDays } from "lucide-react";
+
 import {
   FieldError,
   inputClassName,
@@ -18,21 +20,37 @@ export function TextField({
   type = "text",
   value,
 }) {
+  const isDateField = type === "date";
+
   return (
     <div>
       {label && <Label>{label}</Label>}
-      <input
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
-        className={inputClassName}
-        disabled={disabled}
-        inputMode={inputMode}
-        onBlur={onBlur}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        type={type}
-        value={value}
-      />
+      <div className="relative">
+        <input
+          autoComplete={autoComplete}
+          autoFocus={autoFocus}
+          className={`${inputClassName} ${
+            isDateField
+              ? "pr-11 [&::-webkit-calendar-picker-indicator]:opacity-0"
+              : ""
+          }`}
+          disabled={disabled}
+          inputMode={inputMode}
+          onBlur={onBlur}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          type={type}
+          value={value}
+        />
+        {isDateField && (
+          <CalendarDays
+            aria-hidden="true"
+            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-accent-dark)]"
+            size={17}
+            strokeWidth={1.8}
+          />
+        )}
+      </div>
       <FieldError>{error}</FieldError>
     </div>
   );

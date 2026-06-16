@@ -31,6 +31,13 @@ export default function ProviderForm({
   serviceIsEditing = false,
   selectedServiceId = "",
 }) {
+  const reduceMotion = useReducedMotion();
+  const paymentListHidden = reduceMotion
+    ? { opacity: 0, height: 0 }
+    : { opacity: 0, height: 0, y: -6, filter: "blur(4px)" };
+  const paymentListVisible = reduceMotion
+    ? { opacity: 1, height: "auto" }
+    : { opacity: 1, height: "auto", y: 0, filter: "blur(0px)" };
   const showProviderFields = mode !== "service";
   const showServiceFields = mode !== "provider";
   const serviceEntries = form.services
@@ -180,28 +187,41 @@ export default function ProviderForm({
               </div>
 
               <div className="mt-4 grid gap-3">
-                {service.payments
-                  .slice(0, service.paymentCount)
-                  .map((payment, paymentIndex) => {
-                    return (
-                      <PaymentPanel
-                        defaultOpen={
-                          mode === "service" && serviceIsEditing
-                            ? false
-                            : paymentIndex === 0
-                        }
-                        key={`${serviceIndex}-${paymentIndex}`}
-                        payment={payment}
-                      >
-                        <ProviderPaymentFields
-                          onPaymentChange={onPaymentChange}
-                          payment={payment}
-                          paymentIndex={paymentIndex}
-                          serviceIndex={serviceIndex}
-                        />
-                      </PaymentPanel>
-                    );
-                  })}
+                <AnimatePresence initial={false}>
+                  {service.payments
+                    .slice(0, service.paymentCount)
+                    .map((payment, paymentIndex) => {
+                      return (
+                        <motion.div
+                          animate={paymentListVisible}
+                          className="overflow-hidden"
+                          exit={paymentListHidden}
+                          initial={paymentListHidden}
+                          key={`${serviceIndex}-${paymentIndex}`}
+                          transition={{
+                            duration: reduceMotion ? 0.18 : 0.34,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                        >
+                          <PaymentPanel
+                            defaultOpen={
+                              mode === "service" && serviceIsEditing
+                                ? false
+                                : paymentIndex === 0
+                            }
+                            payment={payment}
+                          >
+                            <ProviderPaymentFields
+                              onPaymentChange={onPaymentChange}
+                              payment={payment}
+                              paymentIndex={paymentIndex}
+                              serviceIndex={serviceIndex}
+                            />
+                          </PaymentPanel>
+                        </motion.div>
+                      );
+                    })}
+                </AnimatePresence>
               </div>
               <FieldError>
                 {errors[`service_${serviceIndex}_payments`]}
