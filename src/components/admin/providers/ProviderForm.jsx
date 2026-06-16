@@ -1,7 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import {
-  CalendarDays,
   CheckCircle2,
   ChevronDown,
   Clock3,
@@ -17,7 +16,6 @@ import { FieldError, FormCard } from "../../rsvp/FormPrimitives";
 import CollapsiblePanel from "../../ui/CollapsiblePanel";
 import { SelectField, TextField } from "../../ui/FormFields";
 import IconButton from "../../ui/IconButton";
-import { formatDate } from "../../../utils/formatters";
 
 export default function ProviderForm({
   errors,
@@ -192,7 +190,7 @@ export default function ProviderForm({
                             ? false
                             : paymentIndex === 0
                         }
-                        key={payment.id || payment.paymentId || paymentIndex}
+                        key={`${serviceIndex}-${paymentIndex}`}
                         payment={payment}
                       >
                         <ProviderPaymentFields
@@ -273,7 +271,7 @@ function PaymentSummary({ payment }) {
     : "border-amber-200 bg-amber-100 text-amber-700";
 
   return (
-    <div className="grid min-w-0 grid-cols-3 gap-1">
+    <div className="grid min-w-0 grid-cols-2 gap-1">
       <SummaryPill
         icon={
           payment.paid ? (
@@ -284,18 +282,13 @@ function PaymentSummary({ payment }) {
         }
         label={statusLabel}
         toneClassName={statusTone}
+        value={statusLabel}
       />
       <SummaryPill
         icon={<Euro size={12} strokeWidth={2} />}
         label={adminContent.providers.form.fields.paymentAmount}
         toneClassName="border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)]"
         value={formatPaymentCurrency(payment.amount)}
-      />
-      <SummaryPill
-        icon={<CalendarDays size={12} strokeWidth={2} />}
-        label={adminContent.providers.form.fields.paymentDate}
-        toneClassName="border-[var(--color-border-strong)] bg-white/45 text-[var(--color-muted)]"
-        value={formatDate(payment.date)}
       />
     </div>
   );
@@ -345,9 +338,17 @@ function ProviderPaymentFields({
   paymentIndex,
   serviceIndex,
 }) {
+  const [amountValue, setAmountValue] = useState(payment.amount);
+
+  const commitAmount = () => {
+    if (amountValue === payment.amount) return;
+
+    onPaymentChange(serviceIndex, paymentIndex, "amount", amountValue);
+  };
+
   return (
     <div className="grid gap-3">
-      <label className="mb-2 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 px-4 py-3 text-sm text-[var(--color-accent-dark)] transition hover:bg-white">
+      <label className="mt-2 flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-soft)]/70 px-4 py-3 text-sm text-[var(--color-accent-dark)] transition hover:bg-white">
         <span>{adminContent.providers.form.fields.paymentPaid}</span>
         <input
           checked={payment.paid}
@@ -367,10 +368,9 @@ function ProviderPaymentFields({
       <TextField
         inputMode="decimal"
         label={adminContent.providers.form.fields.paymentAmount}
-        onChange={(value) =>
-          onPaymentChange(serviceIndex, paymentIndex, "amount", value)
-        }
-        value={payment.amount}
+        onBlur={commitAmount}
+        onChange={setAmountValue}
+        value={amountValue}
       />
       <TextField
         label={adminContent.providers.form.fields.paymentDate}

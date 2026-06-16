@@ -12,6 +12,7 @@ export function TextField({
   error,
   inputMode,
   label,
+  onBlur,
   onChange,
   placeholder,
   type = "text",
@@ -26,6 +27,7 @@ export function TextField({
         className={inputClassName}
         disabled={disabled}
         inputMode={inputMode}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         type={type}
