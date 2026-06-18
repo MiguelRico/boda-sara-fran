@@ -1,17 +1,1 @@
 serviceId,providerId,nombre,precio,numeroPlazos,notas,activo,createdAt,updatedAt
-serv_001,prov_001,Menu boda 50 invitados,5200,3,Incluye aperitivo cena pan bebidas y cafe,TRUE,2026-06-01T12:30:00.000Z,2026-06-01T12:30:00.000Z
-serv_002,prov_001,Recena de madrugada,650,2,Mini bocadillos churros y caldo,TRUE,2026-06-01T12:31:00.000Z,2026-06-01T12:31:00.000Z
-serv_003,prov_002,Musica ceremonia civil,450,2,Guitarra y voz durante ceremonia,TRUE,2026-06-01T12:32:00.000Z,2026-06-01T12:32:00.000Z
-serv_004,prov_002,Musica coctel,700,2,Formato trio flamenco pop,TRUE,2026-06-01T12:33:00.000Z,2026-06-01T12:33:00.000Z
-serv_005,prov_003,DJ barra libre 5 horas,1100,3,Incluye equipo basico y microfono,TRUE,2026-06-01T12:34:00.000Z,2026-06-01T12:34:00.000Z
-serv_006,prov_004,Iluminacion ambiente finca,850,2,Guirnaldas focos calidos y montaje,TRUE,2026-06-01T12:35:00.000Z,2026-06-01T12:35:00.000Z
-serv_007,prov_005,Ramo novia prendidos y centros,980,3,Ramo preservado prendidos y 8 centros,TRUE,2026-06-01T12:36:00.000Z,2026-06-01T12:36:00.000Z
-serv_008,prov_006,Decoracion ceremonia y seating plan,760,2,Arco telas cartel bienvenida y seating,TRUE,2026-06-01T12:37:00.000Z,2026-06-01T12:37:00.000Z
-serv_009,prov_007,Reportaje fotografia boda,1800,3,Cobertura completa dos fotografos,TRUE,2026-06-01T12:38:00.000Z,2026-06-01T12:38:00.000Z
-serv_010,prov_007,Sesion preboda,350,1,Sesion en exteriores con galeria digital,TRUE,2026-06-01T12:39:00.000Z,2026-06-01T12:39:00.000Z
-serv_011,prov_008,Video resumen y pelicula completa,1600,3,Dos operadores teaser y pelicula larga,TRUE,2026-06-01T12:40:00.000Z,2026-06-01T12:40:00.000Z
-serv_012,prov_009,Barra libre premium,2400,3,Primeras marcas hielo cristaleria y camareros,TRUE,2026-06-01T12:41:00.000Z,2026-06-01T12:41:00.000Z
-serv_013,prov_010,Detalles invitados,420,1,Abanicos y botellitas de aceite,TRUE,2026-06-01T12:42:00.000Z,2026-06-01T12:42:00.000Z
-serv_014,prov_011,Coordinacion integral dia B,1250,2,Timing proveedores montaje y protocolo,TRUE,2026-06-01T12:43:00.000Z,2026-06-01T12:43:00.000Z
-serv_015,prov_012,Bloque habitaciones familiares,900,2,Reserva de 6 habitaciones noche previa,TRUE,2026-06-01T12:44:00.000Z,2026-06-01T12:44:00.000Z
-serv_016,prov_013,Autobus ida y vuelta invitados,780,2,Ruta Huelva Corrales finca y vuelta,TRUE,2026-06-01T12:45:00.000Z,2026-06-01T12:45:00.000Z

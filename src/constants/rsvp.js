@@ -4,11 +4,9 @@ export const COMMON_ALLERGIES = [
   "Vegetariano",
   "Gluten",
   "Lactosa",
-  "Frutos secos",
   "Marisco",
   "Huevo",
-  "Soja",
-  "Pescado",
+  "Frutos Secos",
 ];
 
 export const GUEST_MENU_OPTIONS = ["Carne", "Pescado"];

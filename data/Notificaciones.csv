@@ -1,16 +1,1 @@
 notificationId,title,detail,date,type,read,createdAt,updatedAt
-notification_seed_1,Pago fotografo pendiente,Proveedor: Lucia Foto | Servicio: Reportaje boda | Importe: 900 | Plazo: 2,2026-06-20,Pago,false,2026-06-01T09:00:00.000Z,2026-06-01T09:00:00.000Z
-notification_seed_2,Confirmacion recibida: Familia Martin,Email: familia.martin@example.com | Telefono: 600123456 | Invitados: Carmen Martin y Jose Martin,2026-06-10,Invitados,false,2026-06-10T18:20:00.000Z,2026-06-10T18:20:00.000Z
-notification_seed_3,Revisar alergias del catering,Hay 6 invitados con alergias registradas | Confirmar menu especial con banquete,2026-06-14,Aviso,false,2026-06-11T10:15:00.000Z,2026-06-11T10:15:00.000Z
-notification_seed_4,Pago floristeria proximo,Proveedor: Floristeria Alba | Servicio: Centros de mesa | Importe: 450 | Plazo: 1,2026-06-25,Pago,false,2026-06-05T08:30:00.000Z,2026-06-05T08:30:00.000Z
-notification_seed_5,Confirmacion actualizada: Amigos universidad,Han actualizado transporte de vuelta | Revisar plazas de autobus,2026-06-12,Invitados,false,2026-06-12T21:05:00.000Z,2026-06-12T21:05:00.000Z
-notification_seed_6,Reservar prueba de sonido,Confirmar llegada de DJ e iluminacion antes de la ceremonia,2026-07-05,Aviso,false,2026-06-03T12:00:00.000Z,2026-06-03T12:00:00.000Z
-notification_seed_7,Pago senal autobuses,Proveedor: Transporte Costa | Servicio: Autobuses invitados | Importe: 300 | Plazo: 1,2026-07-01,Pago,true,2026-05-28T09:45:00.000Z,2026-06-02T17:10:00.000Z
-notification_seed_8,Confirmacion recibida: Mesa familia Sara,Email: sara.familia@example.com | Telefono: 611222333 | Invitados: Ana Rico y Miguel Rico,2026-06-08,Invitados,true,2026-06-08T19:35:00.000Z,2026-06-09T08:00:00.000Z
-notification_seed_9,Revisar seating plan,Hay invitados pendientes de mesa | Revisar incompatibilidades antes de imprimir,2026-07-28,Aviso,false,2026-06-09T11:30:00.000Z,2026-06-09T11:30:00.000Z
-notification_seed_10,Pago final catering,Proveedor: Aguas del Pino | Servicio: Banquete | Importe: 4200 | Plazo: 3,2026-08-10,Pago,false,2026-06-01T09:10:00.000Z,2026-06-01T09:10:00.000Z
-notification_seed_11,Confirmacion eliminada: Invitado duplicado,Se elimino una confirmacion duplicada tras revisar telefono y email,2026-06-07,Invitados,true,2026-06-07T16:45:00.000Z,2026-06-08T09:15:00.000Z
-notification_seed_12,Enviar recordatorio RSVP,Faltan grupos sin confirmar | Programar mensaje una semana antes del cierre,2026-07-10,Aviso,false,2026-06-06T10:00:00.000Z,2026-06-06T10:00:00.000Z
-notification_seed_13,Pago alianzas completado,Proveedor: Joyeria Centro | Servicio: Alianzas | Importe: 520 | Plazo: unico,2026-06-03,Pago,true,2026-06-03T13:25:00.000Z,2026-06-03T18:40:00.000Z
-notification_seed_14,Confirmar vegetarianos con banquete,Hay 3 menus vegetarianos detectados en confirmaciones,2026-08-01,Aviso,false,2026-06-12T09:00:00.000Z,2026-06-12T09:00:00.000Z
-notification_seed_15,Confirmacion recibida: Companeros Fran,Email: fran.trabajo@example.com | Telefono: 699888777 | Invitados: Pablo Gil y Laura Rey,2026-06-13,Invitados,false,2026-06-13T12:45:00.000Z,2026-06-13T12:45:00.000Z
