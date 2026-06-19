@@ -58,7 +58,6 @@ export default function RsvpEdit() {
           phone: false,
         }}
         errors={rsvp.errors}
-        flowMode="edit"
         guests={rsvp.guests}
         loading={spinner.loading}
         onAddGuest={rsvp.handleAddGuest}
@@ -69,7 +68,6 @@ export default function RsvpEdit() {
         onValidateConfirmation={rsvp.validateConfirmationStep}
         onValidateContact={rsvp.validateContactStep}
         renderItem={renderFormItem}
-        cancelTo="/rsvp"
       />
 
       <RsvpStatus closePopup={rsvp.closePopup} popup={rsvp.popup} />

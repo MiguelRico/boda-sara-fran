@@ -190,7 +190,6 @@ export function MobileGuestList({
             canRemove={false}
             card
             errors={errors}
-            forceMobileLayout
             guest={items[0] || Guest.create()}
             index={pageNumber - 1}
             onGuestChange={onGuestChange}

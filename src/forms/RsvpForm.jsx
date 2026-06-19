@@ -1,12 +1,10 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import {
-  ArrowLeft,
   Check,
   Save,
   Trash2,
   UserPlus,
-  X,
 } from "lucide-react";
 
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
@@ -29,19 +27,15 @@ const defaultRenderItem = (_index, children) => children;
 
 export default function RsvpForm({
   addText = rsvpContent.form.defaultAddText,
-  cancelText = rsvpContent.form.defaultCancelText,
-  cancelTo,
   canAddGuests = true,
   contact,
   deleteContextText = rsvpContent.form.defaultDeleteContext,
   disableContactFields = false,
   errors = {},
   formError = "",
-  flowMode = "create",
   guests,
   loading = false,
   onAddGuest,
-  onCancel,
   onContactChange,
   onGuestChange,
   onRemoveGuest,
@@ -77,12 +71,6 @@ export default function RsvpForm({
     );
   const reviewSubmitText =
     variant === "admin" ? submitText : rsvpContent.form.reviewSubmitText;
-  const cancelIcon =
-    variant === "admin" ? (
-      <X size={16} strokeWidth={1.8} />
-    ) : (
-      <ArrowLeft size={16} strokeWidth={1.8} />
-    );
 
   const handleGuestPageChange = (nextPage) => {
     const clampedPage = Math.min(Math.max(nextPage, 1), totalGuestPages);
@@ -161,9 +149,9 @@ export default function RsvpForm({
 
     onSubmit(event);
   };
-  const isMobilePublicFlow = variant !== "admin" && isMobileView;
+  const isPublicFlow = variant !== "admin";
 
-  if (isMobilePublicFlow) {
+  if (isPublicFlow) {
     return (
       <>
         <MobilePublicRsvpFlow
@@ -175,14 +163,13 @@ export default function RsvpForm({
           deleteContextText={deleteContextText}
           disableContactFields={disableContactFields}
           errors={errors}
-          flowMode={flowMode}
           formError={formError}
           guestDeleteName={guestDeleteName}
           guestDeleteTarget={guestDeleteTarget}
           guestPageDirection={guestPageDirection}
           guests={guests}
           hasInvalidGuest={hasInvalidGuest}
-          isMobileView={isMobileView}
+          isMobileView
           loading={loading}
           onAddGuest={handleAddGuest}
           onContactChange={onContactChange}
@@ -262,52 +249,6 @@ export default function RsvpForm({
 
         {formError && <FieldError>{formError}</FieldError>}
 
-        {variant !== "admin" &&
-          renderItem(
-            2 + guests.length,
-            <FormCard>
-              <p className="section-eyebrow mb-4">
-                {rsvpContent.form.actionsEyebrow}
-              </p>
-              <div className="grid w-full grid-cols-2 gap-3">
-                <IconButton
-                  className="w-full"
-                  disabled={loading}
-                  icon={cancelIcon}
-                  label={cancelText}
-                  onClick={onCancel}
-                  to={cancelTo}
-                  tone="terciary"
-                >
-                  {cancelText}
-                </IconButton>
-
-                {canAddGuests && guests.length < MAX_GUESTS && (
-                  <IconButton
-                    className="w-full"
-                    disabled={loading || hasInvalidGuest}
-                    icon={addIcon}
-                    label={addText}
-                    onClick={handleAddGuest}
-                    tone="secondary"
-                  >
-                    {addText}
-                  </IconButton>
-                )}
-
-                <IconButton
-                  className="w-full"
-                  disabled={loading}
-                  icon={submitIcon}
-                  label={reviewSubmitText}
-                  tone="primary"
-                  type="submit"
-                >
-                  {reviewSubmitText}
-                </IconButton>
-              </div>
-            </FormCard>,
-          )}
       </form>
 
       {guestDeleteTarget && (
@@ -334,7 +275,6 @@ function MobilePublicRsvpFlow({
   deleteContextText,
   disableContactFields,
   errors,
-  flowMode,
   formError,
   guestDeleteName,
   guestDeleteTarget,
@@ -357,7 +297,7 @@ function MobilePublicRsvpFlow({
   totalGuestPages,
 }) {
   const reduceMotion = useReducedMotion();
-  const [step, setStep] = useState(flowMode === "edit" ? "review" : "contact");
+  const [step, setStep] = useState("contact");
   const canRemove = guests.length > 1;
   const currentGuestIndex = currentGuestPage - 1;
   const currentGuest = guests[currentGuestIndex];
@@ -416,37 +356,32 @@ function MobilePublicRsvpFlow({
     );
     setGuestDeleteTarget(null);
   };
-  const guestActionsClassName = canRemove
-    ? "grid w-full grid-cols-3 gap-3"
-    : "grid w-full grid-cols-2 gap-3";
+  const canUseAddGuest = canAddGuests && guests.length < MAX_GUESTS;
   const guestActions = (
-    <div className={guestActionsClassName}>
-      {canRemove && (
-        <IconButton
-          className="w-full"
-          icon={<Trash2 size={16} strokeWidth={1.8} />}
-          label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
-          onClick={() =>
-            currentGuest && handleRemoveGuest(currentGuest, currentGuestIndex)
-          }
-          tone="danger"
-          type="button"
-        />
-      )}
+    <div className="grid w-full grid-cols-3 gap-3">
+      <IconButton
+        className="w-full"
+        disabled={!canRemove}
+        icon={<Trash2 size={16} strokeWidth={1.8} />}
+        label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
+        onClick={() =>
+          currentGuest && handleRemoveGuest(currentGuest, currentGuestIndex)
+        }
+        tone="danger"
+        type="button"
+      />
 
-      {canAddGuests && guests.length < MAX_GUESTS && (
-        <IconButton
-          className="w-full"
-          disabled={loading || hasInvalidGuest}
-          icon={addIcon}
-          label={addText}
-          onClick={onAddGuest}
-          tone="secondary"
-          type="button"
-        >
-          {addText}
-        </IconButton>
-      )}
+      <IconButton
+        className="w-full"
+        disabled={loading || hasInvalidGuest || !canUseAddGuest}
+        icon={addIcon}
+        label={addText}
+        onClick={onAddGuest}
+        tone="secondary"
+        type="button"
+      >
+        {addText}
+      </IconButton>
 
       <IconButton
         className="w-full"
@@ -497,7 +432,6 @@ function MobilePublicRsvpFlow({
                   contact={contact}
                   disableFilledFields={disableContactFields}
                   errors={errors}
-                  forceMobileLayout
                   onContactChange={onContactChange}
                 />
               </div>

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import useIsMobileView from "../../hooks/useIsMobileView";
 
 const toneClasses = {
   danger: "border-red-200 bg-red-50 text-red-500 hover:bg-red-100",
@@ -26,17 +27,21 @@ export default function IconButton({
   type = "button",
   ...props
 }) {
+  const isMobileView = useIsMobileView();
   const isAdminSubpage =
     typeof window !== "undefined" && window.location.pathname.startsWith("/admin/");
-  const effectiveShowText =
+  const mobileShowText =
     isAdminSubpage && !keepTextOnAdminSubpages ? false : showText;
+  const effectiveShowText = isMobileView ? mobileShowText : true;
   const accessibleLabel =
     label || (typeof children === "string" ? children : "");
-  const hasText = Boolean(
-    effectiveShowText &&
-      (typeof children === "string" || typeof children === "number"),
-  );
-  const textClass = effectiveShowText === "always" ? "inline" : "hidden";
+  const textValue =
+    typeof children === "string" || typeof children === "number"
+      ? children
+      : accessibleLabel;
+  const hasText = Boolean(effectiveShowText && textValue);
+  const textClass =
+    effectiveShowText === "always" || !isMobileView ? "inline" : "hidden";
   const content = (
     <>
       {(icon || !hasText) && (
@@ -48,14 +53,14 @@ export default function IconButton({
         <span
           className={`${textClass} min-w-0 truncate text-[0.68rem] uppercase tracking-[0.22em]`}
         >
-          {children}
+          {textValue}
         </span>
       )}
     </>
   );
   const toneClass = toneClasses[tone] ?? toneClasses.secondary;
   const sizeClass = hasText
-    ? effectiveShowText === "always"
+    ? effectiveShowText === "always" || !isMobileView
       ? "min-h-11 gap-2 px-5 py-3"
       : "h-10 w-10"
     : "h-10 w-10";
