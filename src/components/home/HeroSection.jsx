@@ -29,15 +29,15 @@ export default function HeroSection() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={2} isVisible={heroInView}>
-          <div className="mt-8 mb-2 h-px w-20 bg-[var(--color-accent-dark)]" />
+          <div className="mt-4 mb-4 h-px w-20 bg-[var(--color-accent-dark)]" />
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={heroInView}>
-          <p className="section-text">{home.hero.text}</p>
+          <p className="mt-0 section-text">{home.hero.text}</p>
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={4} isVisible={heroInView}>
-          <div className="mt-10 flex flex-col items-center justify-center gap-4">
+          <div className="flex flex-col items-center justify-center gap-4">
             <IconButton
               icon={<CalendarCheck size={16} strokeWidth={1.8} />}
               showText="always"

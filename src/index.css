@@ -74,7 +74,10 @@ body {
 
   .cinematic-container {
     @apply mx-auto w-full max-w-md;
-    max-width: 28rem !important;
+  }
+
+  .cinematic-container--browser {
+    max-width: min(100%, 72rem);
   }
 
   .section-eyebrow {
