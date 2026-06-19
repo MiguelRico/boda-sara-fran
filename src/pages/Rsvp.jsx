@@ -10,16 +10,21 @@ import SearchInvitationCard from "../components/rsvp/SearchInvitationCard";
 import Spinner from "../components/ui/Spinner";
 import { siteContent } from "../config/siteContent";
 import useRsvp from "../hooks/useRsvp";
+import useIsMobileView from "../hooks/useIsMobileView";
 import useSpinner from "../hooks/useSpinner.js";
 
 export default function Rsvp() {
   const spinner = useSpinner();
   const rsvp = useRsvp(spinner, { mode: "search" });
+  const isMobileView = useIsMobileView();
   const rsvpRef = useRef(null);
   const rsvpInView = useInView(rsvpRef, {
     once: true,
     amount: 0.35,
   });
+  const cardsGridClassName = isMobileView
+    ? "mt-4 grid grid-cols-1 gap-5"
+    : "mt-4 grid grid-cols-2 gap-5";
 
   return (
     <RsvpPageShell
@@ -38,12 +43,7 @@ export default function Rsvp() {
       </CinematicStaggeredRevealItem>
 
       <CinematicStaggeredRevealItem index={1} isVisible={rsvpInView}>
-        <div className="mt-4">
-          <CreateInvitationCard
-            hideTextOnMobile={true}
-            onCreateNew={rsvp.handleCreateNew}
-          />
-
+        <div className={cardsGridClassName}>
           <SearchInvitationCard
             hideTextOnMobile={true}
             email={rsvp.contact.email}
@@ -54,6 +54,11 @@ export default function Rsvp() {
             onSearchInvitation={rsvp.handleSearchInvitation}
             phone={rsvp.contact.phone}
             phoneError={rsvp.errors.phone}
+          />
+
+          <CreateInvitationCard
+            hideTextOnMobile={true}
+            onCreateNew={rsvp.handleCreateNew}
           />
         </div>
       </CinematicStaggeredRevealItem>
@@ -69,6 +74,11 @@ export function RsvpPageShell({
   spinner,
   wrapperRef,
 }) {
+  const isMobileView = useIsMobileView();
+  const effectiveInnerClassName = isMobileView
+    ? innerClassName
+    : "max-w-none py-6";
+
   return (
     <CinematicPage>
       {spinner.loading && <Spinner text={spinner.text} />}
@@ -76,7 +86,7 @@ export function RsvpPageShell({
       <CinematicSection
         id="search"
         className="surface-soft admin-section"
-        innerClassName={innerClassName}
+        innerClassName={effectiveInnerClassName}
         reveal={false}
       >
         <div ref={wrapperRef}>{children}</div>
