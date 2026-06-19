@@ -478,7 +478,6 @@ export default function AdminProviders() {
 
       <AdminPageShell
         header={adminContent.providers.header}
-        isMobileView={isMobileView}
         isVisible={providersInView}
         rootRef={providersRef}
       >

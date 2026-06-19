@@ -28,7 +28,6 @@ import { buildTables, buildTableStats } from "../services/tablesService";
 import { buildProviderStats } from "../services/providersService";
 import { buildNotificationStats } from "../services/notificationsService";
 import { buildTaskStats } from "../services/tasksService";
-import useIsMobileView from "../hooks/useIsMobileView";
 
 const ADMIN_OUTBOUND_BUS_OPTIONS = [
   { value: "No", label: "No" },
@@ -73,7 +72,6 @@ export default function AdminStats() {
     amount: 0.2,
   });
   const isAuthenticated = isAdminSessionAuthenticated();
-  const isMobileView = useIsMobileView();
   const [state, setState] = useState(emptyState);
 
   const loadStats = useCallback(async ({ showLoading = true } = {}) => {
@@ -166,7 +164,6 @@ export default function AdminStats() {
           <CinematicStaggeredRevealItem index={0} isVisible={statsInView}>
             <HeaderSection
               eyebrow={adminContent.stats.header.eyebrow}
-              isMobileView={isMobileView}
               title={adminContent.stats.header.title}
               titleAs="h1"
               text={adminContent.stats.header.text}

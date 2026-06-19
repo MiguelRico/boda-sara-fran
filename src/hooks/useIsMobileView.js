@@ -1,13 +1,21 @@
-const MOBILE_FIRST_VIEW = true;
+import { useEffect, useState } from "react";
 
-export function useViewportMode() {
-  return {
-    isBrowserView: !MOBILE_FIRST_VIEW,
-    isMobileView: MOBILE_FIRST_VIEW,
-    visualMode: MOBILE_FIRST_VIEW ? "mobile" : "browser",
-  };
-}
+const MOBILE_VIEW_QUERY = "(max-width: 767px)";
 
 export default function useIsMobileView() {
-  return useViewportMode().isMobileView;
+  const [isMobileView, setIsMobileView] = useState(true);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_VIEW_QUERY);
+    const syncMobileView = () => setIsMobileView(mediaQuery.matches);
+
+    syncMobileView();
+    mediaQuery.addEventListener("change", syncMobileView);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncMobileView);
+    };
+  }, []);
+
+  return isMobileView;
 }

@@ -8,6 +8,7 @@ import {
   Label,
 } from "./FormPrimitives";
 import { rsvpContent } from "../../constants/rsvpContent";
+import useIsMobileView from "../../hooks/useIsMobileView";
 
 const onlyDigits = (value) => String(value || "").replace(/\D/g, "");
 
@@ -21,10 +22,10 @@ export default function SearchInvitationCard({
   phoneError,
   onSearchInvitation,
   hideTextOnMobile = false,
-  isMobileView = false,
 }) {
+  const isMobileView = useIsMobileView();
   const textClassName =
-    hideTextOnMobile || isMobileView
+    hideTextOnMobile && isMobileView
       ? "sr-only"
       : "mt-3 text-sm leading-relaxed";
 

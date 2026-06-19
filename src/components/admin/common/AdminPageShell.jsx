@@ -6,7 +6,6 @@ export default function AdminPageShell({
   children,
   header,
   innerClassName = "max-w-6xl py-6",
-  isMobileView,
   isVisible,
   rootRef,
 }) {
@@ -20,7 +19,6 @@ export default function AdminPageShell({
         <CinematicStaggeredRevealItem index={0} isVisible={isVisible}>
           <HeaderSection
             eyebrow={header.eyebrow}
-            isMobileView={isMobileView}
             text={header.text}
             title={header.title}
             titleAs="h1"

@@ -39,7 +39,6 @@ export default function RsvpForm({
   formError = "",
   flowMode = "create",
   guests,
-  isMobileView: forcedIsMobileView,
   loading = false,
   onAddGuest,
   onCancel,
@@ -57,9 +56,7 @@ export default function RsvpForm({
   submitDisabled = false,
   variant = "public",
 }) {
-  const detectedIsMobileView = useIsMobileView();
-  const isMobileView = forcedIsMobileView ?? detectedIsMobileView;
-  const publicFlowIsMobileView = variant !== "admin" ? true : isMobileView;
+  const isMobileView = useIsMobileView();
   const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
   const [guestPage, setGuestPage] = useState(1);
   const [guestPageDirection, setGuestPageDirection] = useState(1);
@@ -164,7 +161,7 @@ export default function RsvpForm({
 
     onSubmit(event);
   };
-  const isMobilePublicFlow = variant !== "admin";
+  const isMobilePublicFlow = variant !== "admin" && isMobileView;
 
   if (isMobilePublicFlow) {
     return (
@@ -185,7 +182,7 @@ export default function RsvpForm({
           guestPageDirection={guestPageDirection}
           guests={guests}
           hasInvalidGuest={hasInvalidGuest}
-          isMobileView={publicFlowIsMobileView}
+          isMobileView={isMobileView}
           loading={loading}
           onAddGuest={handleAddGuest}
           onContactChange={onContactChange}

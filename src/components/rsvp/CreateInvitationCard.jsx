@@ -2,14 +2,15 @@ import { FormCard } from "./FormPrimitives";
 import { Plus } from "lucide-react";
 import IconButton from "../ui/IconButton";
 import { rsvpContent } from "../../constants/rsvpContent";
+import useIsMobileView from "../../hooks/useIsMobileView";
 
 export default function CreateInvitationCard({
   onCreateNew,
   hideTextOnMobile = false,
-  isMobileView = false,
 }) {
+  const isMobileView = useIsMobileView();
   const textClassName =
-    hideTextOnMobile || isMobileView
+    hideTextOnMobile && isMobileView
       ? "hidden"
       : "mt-3 text-sm leading-relaxed";
   return (

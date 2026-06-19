@@ -1,3 +1,5 @@
+import useIsMobileView from "../../hooks/useIsMobileView";
+
 export default function HeaderSection({
   eyebrow,
   title,
@@ -5,11 +7,12 @@ export default function HeaderSection({
   titleAs = "h2",
   className = "",
   hideTextOnMobile = false,
-  isMobileView = false,
   children,
 }) {
+  const isMobileView = useIsMobileView();
   const Title = titleAs;
-  const textClassName = hideTextOnMobile ? "hidden" : "section-text";
+  const textClassName =
+    hideTextOnMobile && isMobileView ? "hidden" : "section-text";
   const shouldShowTitleAndText = !isMobileView;
 
   return (

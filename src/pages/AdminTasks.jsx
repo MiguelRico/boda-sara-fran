@@ -277,7 +277,6 @@ export default function AdminTasks() {
       <AdminPageShell
         header={adminContent.tasks.header}
         innerClassName="max-w-7xl py-6"
-        isMobileView={isMobileView}
         isVisible={tasksInView}
         rootRef={tasksRef}
       >

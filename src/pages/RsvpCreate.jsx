@@ -37,7 +37,6 @@ export default function RsvpCreate() {
       <CinematicStaggeredRevealItem index={0} isVisible={rsvpInView}>
         <HeaderSection
           eyebrow={siteContent.rsvp.eyebrow}
-          isMobileView
           title={rsvpContent.createPage.title}
           titleAs="h1"
           text={siteContent.rsvp.text}

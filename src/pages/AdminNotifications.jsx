@@ -304,7 +304,6 @@ export default function AdminNotifications() {
       <AdminPageShell
         header={adminContent.notifications.header}
         innerClassName="max-w-7xl py-6"
-        isMobileView={isMobileView}
         isVisible={notificationsInView}
         rootRef={notificationsRef}
       >

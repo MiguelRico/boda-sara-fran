@@ -22,7 +22,6 @@ export default function GroupEditor({
   group,
   guestIndex = null,
   isCreation,
-  isMobileView = false,
   mode = "full",
   onClose,
   onSave,
@@ -179,7 +178,6 @@ export default function GroupEditor({
         disableContactFields={{ confirmationName: !isCreation }}
         errors={errors}
         guests={draft.guests}
-        isMobileView={isMobileView}
         loading={saving}
         onAddGuest={addGuest}
         onCancel={handleRequestClose}
