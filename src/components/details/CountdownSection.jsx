@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import CinematicSection from "../cinematic/CinematicSection";
 import HeaderSection from "../ui/HeaderSection";
 import { siteContent } from "../../config/siteContent";
+import useIsMobileView from "../../hooks/useIsMobileView";
 
 function getTimeLeft(targetDate) {
   const difference = targetDate.getTime() - new Date().getTime();
@@ -42,8 +43,15 @@ function CountdownCard({ label, value }) {
 
 export default function CountdownSection() {
   const { countdown } = siteContent.details;
+  const isMobileView = useIsMobileView();
   const targetDate = useMemo(() => new Date(siteContent.weddingDate.iso), []);
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));
+  const contentClassName = isMobileView
+    ? "mx-auto max-w-4xl text-center"
+    : "mx-auto flex min-h-[calc(100svh-3rem)] w-full max-w-6xl flex-col justify-center text-center";
+  const gridClassName = isMobileView
+    ? "mt-4 grid grid-cols-2 gap-4"
+    : "mt-6 grid grid-cols-4 gap-5";
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -62,14 +70,14 @@ export default function CountdownSection() {
 
   return (
     <CinematicSection id="countdown">
-      <div className="mx-auto max-w-4xl text-center">
+      <div className={contentClassName}>
         <HeaderSection
           eyebrow={countdown.eyebrow}
           title={countdown.title}
           text={countdown.text}
         />
 
-        <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className={gridClassName}>
           {items.map((item) => (
             <CountdownCard key={item.label} {...item} />
           ))}

@@ -5,6 +5,7 @@ import CinematicStaggeredRevealItem from "../cinematic/CinematicStaggeredRevealI
 import IconButton from "../ui/IconButton";
 import { siteContent } from "../../config/siteContent";
 import { CalendarCheck, Home } from "lucide-react";
+import useIsMobileView from "../../hooks/useIsMobileView";
 
 export default function CtaSection() {
   const ctaRef = useRef(null);
@@ -12,11 +13,18 @@ export default function CtaSection() {
     once: true,
     amount: 0.35,
   });
+  const isMobileView = useIsMobileView();
   const { cta } = siteContent.home;
+  const contentClassName = isMobileView
+    ? "mx-auto max-w-3xl text-center"
+    : "mx-auto flex min-h-[calc(100svh-3rem)] w-full max-w-5xl flex-col items-center justify-center text-center";
+  const actionsClassName = isMobileView
+    ? "mt-8 flex flex-col items-center justify-center gap-4"
+    : "mt-8 flex flex-row items-center justify-center gap-4";
 
   return (
     <CinematicSection className="surface-warm" reveal={false}>
-      <div ref={ctaRef} className="mx-auto max-w-3xl text-center">
+      <div ref={ctaRef} className={contentClassName}>
         <CinematicStaggeredRevealItem index={0} isVisible={ctaInView}>
           <p className="section-eyebrow">{cta.eyebrow}</p>
         </CinematicStaggeredRevealItem>
@@ -30,7 +38,7 @@ export default function CtaSection() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={3} isVisible={ctaInView}>
-          <div className="mt-8 flex flex-col items-center justify-center gap-4">
+          <div className={actionsClassName}>
             <IconButton
               icon={<CalendarCheck size={16} strokeWidth={1.8} />}
               showText="always"
