@@ -54,9 +54,11 @@ export function ContactSummaryCard({ contact, guests, onEdit }) {
   );
 }
 
-export function MobileActionsPanel({ children }) {
+export function MobileActionsPanel({ children, className = "" }) {
   return (
-    <div className="mt-0 mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4">
+    <div
+      className={`mt-0 mb-4 rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-4 ${className}`}
+    >
       {children}
     </div>
   );
@@ -160,6 +162,7 @@ export function MobileGuestList({
   errors,
   guestPageDirection,
   guests,
+  headerActions,
   isMobileView,
   onGuestChange,
   onGuestPageChange,
@@ -169,8 +172,9 @@ export function MobileGuestList({
 
   return (
     <AdminTableSection
-      eyebrow={adminContent.guests.editor.guestListEyebrow}
+      eyebrow={null}
       getKey={(_guest, { index }) => index}
+      headerActions={headerActions}
       isMobileView={isMobileView}
       items={guests}
       lockPageHeight={false}
@@ -179,6 +183,7 @@ export function MobileGuestList({
       onPrevPage={() => onGuestPageChange(currentGuestPage - 1)}
       page={currentGuestPage}
       pageDirection={guestPageDirection}
+      paginationInlineWithTitle={!isMobileView}
       paginationLabel={rsvpContent.form.guestPageLabel({
         page: currentGuestPage,
         total: safeTotalPages,
@@ -190,7 +195,6 @@ export function MobileGuestList({
             canRemove={false}
             card
             errors={errors}
-            forceMobileLayout
             guest={items[0] || Guest.create()}
             index={pageNumber - 1}
             onGuestChange={onGuestChange}

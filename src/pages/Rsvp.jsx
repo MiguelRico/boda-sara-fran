@@ -77,12 +77,13 @@ export default function Rsvp() {
 
 export function RsvpPageShell({
   children,
+  forceMobileInner = false,
   innerClassName = "max-w-4xl py-6",
   spinner,
   wrapperRef,
 }) {
   const isMobileView = useIsMobileView();
-  const effectiveInnerClassName = isMobileView
+  const effectiveInnerClassName = isMobileView || forceMobileInner
     ? innerClassName
     : "max-w-none py-6";
 

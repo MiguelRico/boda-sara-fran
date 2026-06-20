@@ -30,7 +30,8 @@ export default function RsvpCreate() {
 
   return (
     <RsvpPageShell
-      innerClassName="max-w-md py-6"
+      forceMobileInner
+      innerClassName="max-w-md md:max-w-none py-6"
       spinner={spinner}
       wrapperRef={rsvpRef}
     >
