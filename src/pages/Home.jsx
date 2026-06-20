@@ -30,24 +30,30 @@ export default function Home() {
   const cardsGridClassName = isMobileView
     ? "grid grid-cols-1 gap-5"
     : "grid grid-cols-3 gap-5";
+  const cards = siteContent.home.cards.map((card, index) => (
+    <AnimatedInfoCard
+      key={card.title}
+      card={{
+        ...getHomeCard(card),
+        showAction: isMobileView,
+      }}
+      index={index}
+    />
+  ));
 
   return (
     <CinematicPage>
-      <HeroSection />
+      <HeroSection cards={cards} />
 
-      <CinematicSection id="detalles">
-        <div>
-          <div className={cardsGridClassName}>
-            {siteContent.home.cards.map((card, index) => (
-              <AnimatedInfoCard
-                key={card.title}
-                card={getHomeCard(card)}
-                index={index}
-              />
-            ))}
+      {isMobileView && (
+        <CinematicSection id="detalles">
+          <div>
+            <div className={cardsGridClassName}>
+              {cards}
+            </div>
           </div>
-        </div>
-      </CinematicSection>
+        </CinematicSection>
+      )}
     </CinematicPage>
   );
 }

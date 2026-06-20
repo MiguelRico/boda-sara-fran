@@ -5,14 +5,19 @@ import CinematicStaggeredRevealItem from "../cinematic/CinematicStaggeredRevealI
 import IconButton from "../ui/IconButton";
 import { siteContent } from "../../config/siteContent";
 import { CalendarCheck, Map } from "lucide-react";
+import useIsMobileView from "../../hooks/useIsMobileView";
 
-export default function HeroSection() {
+export default function HeroSection({ cards }) {
+  const isMobileView = useIsMobileView();
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, {
     once: true,
     amount: 0.35,
   });
   const { coupleName, home, weddingDate } = siteContent;
+  const actionsClassName = isMobileView
+    ? "flex flex-col items-center justify-center gap-4"
+    : "flex flex-row items-center justify-center gap-4";
 
   return (
     <CinematicSection id="init" className="surface-soft" reveal={false}>
@@ -37,16 +42,7 @@ export default function HeroSection() {
         </CinematicStaggeredRevealItem>
 
         <CinematicStaggeredRevealItem index={4} isVisible={heroInView}>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <IconButton
-              icon={<CalendarCheck size={16} strokeWidth={1.8} />}
-              showText="always"
-              tone="primary"
-              to="/rsvp"
-            >
-              {home.hero.primaryAction}
-            </IconButton>
-
+          <div className={actionsClassName}>
             <IconButton
               icon={<Map size={16} strokeWidth={1.8} />}
               showText="always"
@@ -55,18 +51,33 @@ export default function HeroSection() {
             >
               {home.hero.secondaryAction}
             </IconButton>
+
+            <IconButton
+              icon={<CalendarCheck size={16} strokeWidth={1.8} />}
+              showText="always"
+              tone="primary"
+              to="/rsvp"
+            >
+              {home.hero.primaryAction}
+            </IconButton>
           </div>
         </CinematicStaggeredRevealItem>
 
-        <CinematicStaggeredRevealItem index={5} isVisible={heroInView}>
-          <div className="mt-14 flex flex-col items-center gap-3 text-[var(--color-accent-dark)]">
-            <span className="text-[0.65rem] uppercase tracking-[0.35em]">
-              {home.hero.scrollHint}
-            </span>
+        {isMobileView ? (
+          <CinematicStaggeredRevealItem index={5} isVisible={heroInView}>
+            <div className="mt-14 flex flex-col items-center gap-3 text-[var(--color-accent-dark)]">
+              <span className="text-[0.65rem] uppercase tracking-[0.35em]">
+                {home.hero.scrollHint}
+              </span>
 
-            <span className="h-10 w-px bg-[var(--color-accent-dark)]" />
-          </div>
-        </CinematicStaggeredRevealItem>
+              <span className="h-10 w-px bg-[var(--color-accent-dark)]" />
+            </div>
+          </CinematicStaggeredRevealItem>
+        ) : (
+          <CinematicStaggeredRevealItem index={5} isVisible={heroInView}>
+            <div className="mt-5 grid w-full grid-cols-3 gap-5">{cards}</div>
+          </CinematicStaggeredRevealItem>
+        )}
       </div>
     </CinematicSection>
   );
