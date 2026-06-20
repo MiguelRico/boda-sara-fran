@@ -80,7 +80,7 @@ export const rsvpContent = {
     },
   },
   createInvitation: {
-    eyebrow: "Confirma tu invitación",
+    eyebrow: "Confirmar",
     title: "Confirmar asistencia",
     text: "Confirma tu asistencia y la de tu familia.",
     action: "Crear nueva",
@@ -93,8 +93,8 @@ export const rsvpContent = {
     text: "Actualiza los invitados, alergias y transporte de vuestra confirmación.",
   },
   searchInvitation: {
-    eyebrow: "Buscar invitación",
-    title: "Modificar tu confirmación",
+    eyebrow: "Buscar confirmación",
+    title: "Modificar confirmación",
     text: "Busca por email o telefono asociado a tu confirmación.",
     emailLabel: "Email",
     emailPlaceholder: "Ej: ejemplo@email.com",

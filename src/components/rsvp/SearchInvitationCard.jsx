@@ -17,12 +17,17 @@ export default function SearchInvitationCard({
   phoneError,
   onSearchInvitation,
   hideTextOnMobile = false,
+  hideTextOnDesktop = false,
 }) {
   const isMobileView = useIsMobileView();
   const textClassName =
-    hideTextOnMobile && isMobileView
+    (hideTextOnMobile && isMobileView) || (hideTextOnDesktop && !isMobileView)
       ? "sr-only"
       : "mt-3 text-sm leading-relaxed";
+  const eyebrowText =
+    hideTextOnDesktop && !isMobileView
+      ? rsvpContent.searchInvitation.text
+      : rsvpContent.searchInvitation.eyebrow;
   const fieldsGridClassName = isMobileView
     ? "mb-4 grid gap-4"
     : "mb-4 grid grid-cols-2 gap-4";
@@ -37,7 +42,7 @@ export default function SearchInvitationCard({
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <p className="section-eyebrow mb-3">
-            {rsvpContent.searchInvitation.eyebrow}
+            {eyebrowText}
           </p>
 
           <h2 className="font-serif text-3xl">

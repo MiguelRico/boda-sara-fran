@@ -24,7 +24,8 @@ export default function Rsvp() {
   });
   const cardsGridClassName = isMobileView
     ? "mt-4 grid grid-cols-1 gap-5"
-    : "mt-4 grid grid-cols-2 gap-5";
+    : "mt-4 grid grid-cols-4 gap-5";
+  const cardSlotClassName = isMobileView ? "" : "col-span-2";
 
   return (
     <RsvpPageShell
@@ -44,22 +45,28 @@ export default function Rsvp() {
 
       <CinematicStaggeredRevealItem index={1} isVisible={rsvpInView}>
         <div className={cardsGridClassName}>
-          <SearchInvitationCard
-            hideTextOnMobile={true}
-            email={rsvp.contact.email}
-            emailError={rsvp.errors.email}
-            loading={spinner.loading}
-            onEmailChange={(value) => rsvp.handleContactChange("email", value)}
-            onPhoneChange={(value) => rsvp.handleContactChange("phone", value)}
-            onSearchInvitation={rsvp.handleSearchInvitation}
-            phone={rsvp.contact.phone}
-            phoneError={rsvp.errors.phone}
-          />
+          <div className={cardSlotClassName}>
+            <SearchInvitationCard
+              hideTextOnMobile={true}
+              hideTextOnDesktop={true}
+              email={rsvp.contact.email}
+              emailError={rsvp.errors.email}
+              loading={spinner.loading}
+              onEmailChange={(value) => rsvp.handleContactChange("email", value)}
+              onPhoneChange={(value) => rsvp.handleContactChange("phone", value)}
+              onSearchInvitation={rsvp.handleSearchInvitation}
+              phone={rsvp.contact.phone}
+              phoneError={rsvp.errors.phone}
+            />
+          </div>
 
-          <CreateInvitationCard
-            hideTextOnMobile={true}
-            onCreateNew={rsvp.handleCreateNew}
-          />
+          <div className={cardSlotClassName}>
+            <CreateInvitationCard
+              hideTextOnMobile={true}
+              hideTextOnDesktop={true}
+              onCreateNew={rsvp.handleCreateNew}
+            />
+          </div>
         </div>
       </CinematicStaggeredRevealItem>
 

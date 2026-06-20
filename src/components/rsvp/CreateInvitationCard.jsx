@@ -7,17 +7,22 @@ import useIsMobileView from "../../hooks/useIsMobileView";
 export default function CreateInvitationCard({
   onCreateNew,
   hideTextOnMobile = false,
+  hideTextOnDesktop = false,
 }) {
   const isMobileView = useIsMobileView();
   const textClassName =
-    hideTextOnMobile && isMobileView
+    (hideTextOnMobile && isMobileView) || (hideTextOnDesktop && !isMobileView)
       ? "hidden"
       : "mt-3 text-sm leading-relaxed";
+  const eyebrowText =
+    hideTextOnDesktop && !isMobileView
+      ? rsvpContent.createInvitation.text
+      : rsvpContent.createInvitation.eyebrow;
   return (
     <FormCard>
       <div className="mb-4">
         <p className="section-eyebrow mb-3">
-          {rsvpContent.createInvitation.eyebrow}
+          {eyebrowText}
         </p>
 
         <h2 className="font-serif text-3xl">
