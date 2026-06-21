@@ -12,6 +12,7 @@ export const TASK_CATEGORIES = [
   { value: "fiesta", label: "Fiesta" },
   { value: "decoracion", label: "Decoracion" },
   { value: "pagos", label: "Pagos" },
+  { value: "otros", label: "Otros" },
 ];
 
 export const TASK_CATEGORY_LABELS = Object.fromEntries(

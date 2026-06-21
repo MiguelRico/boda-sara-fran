@@ -340,7 +340,7 @@ export default function AdminTasks() {
             }}
             title={adminContent.tasks.list.title}
           >
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {groupedTasks.map(({ category, tasks: categoryTasks }) => (
                 <TaskCategoryPanel
                   category={category}

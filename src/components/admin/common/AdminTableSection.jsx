@@ -81,7 +81,10 @@ export default function AdminTableSection({
         page={pagination.page}
         totalPages={pagination.totalPages}
       />
-    ) : inlinePaginationPlaceholder;
+    ) : (
+      inlinePaginationPlaceholder
+    );
+  const hasInlineHeaderControls = Boolean(headerPagination || headerActions);
 
   return (
     <section
@@ -91,7 +94,7 @@ export default function AdminTableSection({
       {hasHeaderContent && (
         <div className="mb-4">
           {eyebrow && <p className="section-eyebrow mb-2">{eyebrow}</p>}
-          {(title || headerPagination) && (
+          {(title || hasInlineHeaderControls) && hasInlineHeaderControls && (
             <div className="grid gap-3 md:grid-cols-[minmax(10rem,0.9fr)_minmax(16rem,1fr)_minmax(14rem,1fr)] md:items-center">
               {title && (
                 <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)] md:min-w-0">
@@ -102,6 +105,11 @@ export default function AdminTableSection({
               {headerPagination}
               {headerActions}
             </div>
+          )}
+          {title && !hasInlineHeaderControls && (
+            <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
+              {title}
+            </h2>
           )}
 
           {!loading && (count || actions) && (
