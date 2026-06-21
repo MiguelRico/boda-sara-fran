@@ -31,6 +31,7 @@ import {
 import { siteContent } from "../config/siteContent";
 import { adminContent } from "../constants/adminContent";
 import { storageKeys } from "../config/storageKeys";
+import useIsMobileView from "../hooks/useIsMobileView";
 import { loadAdminDataOnce } from "../services/adminDataStore";
 import {
   isAdminSessionAuthenticated,
@@ -121,7 +122,7 @@ export default function Admin() {
       {loading && <Spinner text={adminContent.auth.loading} />}
       <CinematicSection
         className="surface-soft admin-section"
-        innerClassName="max-w-7xl py-6"
+        innerClassName="max-w-md md:max-w-none py-6"
         reveal={false}
       >
         <div ref={adminRef}>
@@ -130,6 +131,7 @@ export default function Admin() {
               eyebrow={adminContent.auth.eyebrow}
               text={adminContent.auth.headerText}
               title={siteContent.coupleName}
+              showTitleAndTextOnMobile
             />
           </CinematicStaggeredRevealItem>
 
@@ -224,14 +226,22 @@ function AdminLogin({
 }
 
 function AdminDashboard() {
+  const isMobileView = useIsMobileView();
+  const cardsGridClassName = isMobileView
+    ? "grid gap-4"
+    : "grid grid-cols-3 gap-5";
+
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-5">
+    <div className="mx-auto w-full max-w-none space-y-5">
       <AdminMemoryNotice />
-      <div className="grid gap-4">
+      <div className={cardsGridClassName}>
         {siteContent.admin.cards.map((card, index) => (
           <AnimatedInfoCard
             key={card.title}
-            card={getAdminCard(card)}
+            card={{
+              ...getAdminCard(card),
+              showAction: isMobileView,
+            }}
             index={Math.min(index, 2)}
           />
         ))}
