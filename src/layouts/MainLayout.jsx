@@ -1,19 +1,48 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import AdminAccessButton from "../components/admin/AdminAccessButton";
 import { NotificationsAccessButton } from "../components/admin/notifications";
 import HelpAccessButton from "../components/help/HelpAccessButton";
 import ScrollManager from "../components/ui/ScrollManager";
+import useIsMobileView from "../hooks/useIsMobileView";
 import {
   isAdminSessionAuthenticated,
   subscribeAdminAuthChange,
 } from "../utils/adminSession";
 
+const calmPublicPaths = new Set([
+  "/",
+  "/details",
+  "/rsvp",
+  "/rsvp/create",
+  "/rsvp/edit",
+]);
+
 export default function MainLayout() {
   const location = useLocation();
   const pageKey = location.pathname + location.search + location.hash;
-  const initialY = location.hash ? 0 : 24;
+  const reduceMotion = useReducedMotion();
+  const isMobileView = useIsMobileView();
+  const useCalmPublicTransition =
+    !isMobileView && calmPublicPaths.has(location.pathname);
+  const initialY = location.hash || useCalmPublicTransition ? 0 : 24;
+  const hiddenState =
+    reduceMotion || useCalmPublicTransition
+      ? { opacity: 0, y: 0, filter: "none" }
+      : { opacity: 0, y: initialY, filter: "blur(8px)" };
+  const visibleState =
+    reduceMotion || useCalmPublicTransition
+      ? { opacity: 1, y: 0, filter: "none" }
+      : { opacity: 1, y: 0, filter: "blur(0px)" };
+  const exitState =
+    reduceMotion || useCalmPublicTransition
+      ? { opacity: 0, y: 0, filter: "none" }
+      : { opacity: 0, y: -24, filter: "blur(8px)" };
+  const routeTransition = {
+    duration: useCalmPublicTransition ? 0.22 : reduceMotion ? 0.18 : 0.8,
+    ease: [0.22, 1, 0.36, 1],
+  };
   const [isAuthenticated, setIsAuthenticated] = useState(
     isAdminSessionAuthenticated,
   );
@@ -39,13 +68,10 @@ export default function MainLayout() {
       <AnimatePresence mode="wait">
         <motion.div
           key={pageKey}
-          initial={{ opacity: 0, y: initialY, filter: "blur(8px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          exit={{ opacity: 0, y: -24, filter: "blur(8px)" }}
-          transition={{
-            duration: 0.8,
-            ease: [0.22, 1, 0.36, 1],
-          }}
+          initial={hiddenState}
+          animate={visibleState}
+          exit={exitState}
+          transition={routeTransition}
         >
           <ScrollManager />
           <Outlet />

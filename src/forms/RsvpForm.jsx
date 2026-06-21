@@ -358,10 +358,10 @@ function MobilePublicRsvpFlow({
     contact.email,
     contact.phone,
   ].every((value) => String(value || "").trim());
-  const stepVariants = reduceMotion
+  const stepVariants = reduceMotion || !isActualMobileView
     ? {
-        hidden: { opacity: 0 },
-        visible: { opacity: 1 },
+        hidden: { opacity: 0, y: 0, filter: "none" },
+        visible: { opacity: 1, y: 0, filter: "none" },
       }
     : {
         hidden: { opacity: 0, y: 14, filter: "blur(6px)" },
@@ -561,7 +561,7 @@ function MobilePublicRsvpFlow({
             exit="hidden"
             initial="hidden"
             key={step}
-            transition={{ duration: reduceMotion ? 0.16 : 0.34 }}
+            transition={{ duration: reduceMotion || !isActualMobileView ? 0.16 : 0.34 }}
             variants={stepVariants}
           >
             {step === "contact" && (
