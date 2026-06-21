@@ -32,7 +32,6 @@ import { siteContent } from "../config/siteContent";
 import { adminContent } from "../constants/adminContent";
 import { storageKeys } from "../config/storageKeys";
 import { loadAdminDataOnce } from "../services/adminDataStore";
-import useIsMobileView from "../hooks/useIsMobileView";
 import {
   isAdminSessionAuthenticated,
   setAdminSessionAuthenticated,
@@ -73,7 +72,6 @@ export default function Admin() {
     once: true,
     amount: 0.12,
   });
-  const isMobileView = useIsMobileView();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -130,7 +128,6 @@ export default function Admin() {
           <CinematicStaggeredRevealItem index={0} isVisible={adminInView}>
             <HeaderSection
               eyebrow={adminContent.auth.eyebrow}
-              isMobileView={isMobileView}
               text={adminContent.auth.headerText}
               title={siteContent.coupleName}
             />

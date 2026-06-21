@@ -5,6 +5,7 @@ import CinematicSection from "../components/cinematic/CinematicSection";
 import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeroSection from "../components/home/HeroSection";
 import { siteContent } from "../config/siteContent";
+import useIsMobileView from "../hooks/useIsMobileView";
 
 const homeCardIcons = {
   "bus-front": BusFront,
@@ -25,23 +26,34 @@ const getHomeCard = (card) => {
 };
 
 export default function Home() {
+  const isMobileView = useIsMobileView();
+  const cardsGridClassName = isMobileView
+    ? "grid grid-cols-1 gap-5"
+    : "grid grid-cols-3 gap-5";
+  const cards = siteContent.home.cards.map((card, index) => (
+    <AnimatedInfoCard
+      key={card.title}
+      card={{
+        ...getHomeCard(card),
+        showAction: isMobileView,
+      }}
+      index={index}
+    />
+  ));
+
   return (
     <CinematicPage>
-      <HeroSection />
+      <HeroSection cards={cards} />
 
-      <CinematicSection id="detalles">
-        <div>
-          <div className="grid grid-cols-1 gap-5">
-            {siteContent.home.cards.map((card, index) => (
-              <AnimatedInfoCard
-                key={card.title}
-                card={getHomeCard(card)}
-                index={index}
-              />
-            ))}
+      {isMobileView && (
+        <CinematicSection id="detalles">
+          <div>
+            <div className={cardsGridClassName}>
+              {cards}
+            </div>
           </div>
-        </div>
-      </CinematicSection>
+        </CinematicSection>
+      )}
     </CinematicPage>
   );
 }

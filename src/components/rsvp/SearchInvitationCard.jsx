@@ -1,13 +1,9 @@
 import { Home, Search } from "lucide-react";
 
 import IconButton from "../ui/IconButton";
-import {
-  FieldError,
-  FormCard,
-  inputClassName,
-  Label,
-} from "./FormPrimitives";
+import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 import { rsvpContent } from "../../constants/rsvpContent";
+import useIsMobileView from "../../hooks/useIsMobileView";
 
 const onlyDigits = (value) => String(value || "").replace(/\D/g, "");
 
@@ -21,12 +17,20 @@ export default function SearchInvitationCard({
   phoneError,
   onSearchInvitation,
   hideTextOnMobile = false,
-  isMobileView = false,
+  hideTextOnDesktop = false,
 }) {
+  const isMobileView = useIsMobileView();
   const textClassName =
-    hideTextOnMobile || isMobileView
+    (hideTextOnMobile && isMobileView) || (hideTextOnDesktop && !isMobileView)
       ? "sr-only"
       : "mt-3 text-sm leading-relaxed";
+  const eyebrowText =
+    hideTextOnDesktop && !isMobileView
+      ? rsvpContent.searchInvitation.text
+      : rsvpContent.searchInvitation.eyebrow;
+  const fieldsGridClassName = isMobileView
+    ? "mb-4 grid gap-4"
+    : "mb-4 grid grid-cols-2 gap-4";
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -34,11 +38,11 @@ export default function SearchInvitationCard({
   };
 
   return (
-    <FormCard className="mt-6">
+    <FormCard>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <p className="section-eyebrow mb-3">
-            {rsvpContent.searchInvitation.eyebrow}
+            {eyebrowText}
           </p>
 
           <h2 className="font-serif text-3xl">
@@ -48,7 +52,7 @@ export default function SearchInvitationCard({
           <p className={textClassName}>{rsvpContent.searchInvitation.text}</p>
         </div>
 
-        <div className="mb-4 grid gap-4">
+        <div className={fieldsGridClassName}>
           <div>
             <Label>{rsvpContent.searchInvitation.emailLabel}</Label>
 
@@ -70,7 +74,9 @@ export default function SearchInvitationCard({
             <input
               className={inputClassName}
               inputMode="numeric"
-              onChange={(event) => onPhoneChange(onlyDigits(event.target.value))}
+              onChange={(event) =>
+                onPhoneChange(onlyDigits(event.target.value))
+              }
               pattern="[0-9]*"
               placeholder={rsvpContent.searchInvitation.phonePlaceholder}
               type="tel"
@@ -93,15 +99,17 @@ export default function SearchInvitationCard({
             {rsvpContent.searchInvitation.searchAction}
           </IconButton>
 
-          <IconButton
-            className="flex-1"
-            icon={<Home size={16} strokeWidth={1.8} />}
-            showText="always"
-            to="/"
-            tone="terciary"
-          >
-            {rsvpContent.searchInvitation.backHome}
-          </IconButton>
+          {isMobileView && (
+            <IconButton
+              className="flex-1"
+              icon={<Home size={16} strokeWidth={1.8} />}
+              showText="always"
+              to="/"
+              tone="terciary"
+            >
+              {rsvpContent.searchInvitation.backHome}
+            </IconButton>
+          )}
         </div>
       </form>
     </FormCard>

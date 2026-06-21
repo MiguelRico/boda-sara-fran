@@ -9,6 +9,7 @@ import {
 } from "../../constants/rsvp";
 import { rsvpContent } from "../../constants/rsvpContent";
 import { isMenuModuleEnabled } from "../../config/features";
+import useIsMobileView from "../../hooks/useIsMobileView";
 import {
   FieldError,
   FormCard,
@@ -28,11 +29,19 @@ export default function GuestCard({
   showHeader = true,
   variant = "public",
 }) {
+  const isMobileView = useIsMobileView();
   const isAdmin = variant === "admin";
+  const isPublicDesktop = variant === "public" && !isMobileView;
   const nameError = errors[`guest_name_${index}`];
   const lastnameError = errors[`guest_lastname_${index}`];
   const menuError = errors[`guest_menu_${index}`];
   const commentsError = errors[`guest_comments_${index}`];
+  const nameGridClassName = isPublicDesktop ? "grid grid-cols-2 gap-5" : "grid gap-5";
+  const detailsGridClassName = isPublicDesktop
+    ? "mt-4 grid grid-cols-2 items-start gap-5"
+    : "";
+  const commentsClassName = isPublicDesktop ? "" : "mt-4";
+  const guestOptionsClassName = isPublicDesktop ? "pt-7" : "";
   const content = (
     <>
       {showHeader && (
@@ -52,7 +61,7 @@ export default function GuestCard({
         </div>
       )}
 
-      <div className="grid gap-5">
+      <div className={nameGridClassName}>
         <div>
           <Label>{rsvpContent.guest.fields.name.label}</Label>
 
@@ -124,88 +133,92 @@ export default function GuestCard({
         </div>
       )}
 
-      <div className="mt-4">
-        <Label>{rsvpContent.guest.fields.comments.label}</Label>
-
-        <textarea
-          rows={2}
-          value={guest.comments}
-          onChange={(event) =>
-            onGuestChange(index, "comments", event.target.value)
-          }
-          className={`${inputClassName} resize-none`}
-          placeholder={rsvpContent.guest.fields.comments.placeholder}
-        />
-
-        <FieldError>{commentsError}</FieldError>
-      </div>
-
-      <CollapsiblePanel className="mt-2" title="Intolerancias">
-        <p className="text-xs leading-relaxed text-[var(--color-accent)]">
-          {rsvpContent.guest.panels.allergies.text}
-        </p>
-        <div className="mt-3">
-          <div className="grid grid-cols-2 gap-2">
-            {COMMON_ALLERGIES.map((allergy) => {
-              const checked = guest.allergies.includes(allergy);
-
-              return (
-                <label
-                  key={allergy}
-                  className={`
-                    flex cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-center text-xs transition-all duration-300
-                    ${
-                      checked
-                        ? "border-[var(--color-border-strong)] bg-[var(--color-accent-dark)] text-white"
-                        : "border-[var(--color-border)] bg-white/45 text-[var(--color-text)] hover:border-[var(--color-border-hover)] hover:bg-white"
-                    }
-                  `}
-                >
-                  <input
-                    checked={checked}
-                    className="hidden"
-                    onChange={() => onGuestChange(index, "allergies", allergy)}
-                    type="checkbox"
-                  />
-
-                  {allergy}
-                </label>
-              );
-            })}
-          </div>
+      <div className={detailsGridClassName}>
+        <div className={commentsClassName}>
+          <Label>{rsvpContent.guest.fields.comments.label}</Label>
 
           <textarea
-            className={`${inputClassName} mt-3 resize-none`}
-            onChange={(event) =>
-              onGuestChange(index, "otherAllergies", event.target.value)
-            }
-            placeholder={rsvpContent.guest.fields.otherAllergies.placeholder}
             rows={2}
-            value={guest.otherAllergies}
-          />
-        </div>
-      </CollapsiblePanel>
-
-      <CollapsiblePanel className="mt-3" title="Transporte">
-        <p className="text-xs leading-relaxed text-[var(--color-accent)]">
-          {rsvpContent.guest.panels.bus.text}
-        </p>
-        <div className="mt-3 grid gap-3">
-          <BusSelect
-            label={rsvpContent.guest.fields.outboundBus.label}
-            value={guest.outboundBus}
-            options={OUTBOUND_BUS_OPTIONS}
-            onChange={(value) => onGuestChange(index, "outboundBus", value)}
+            value={guest.comments}
+            onChange={(event) =>
+              onGuestChange(index, "comments", event.target.value)
+            }
+            className={`${inputClassName} resize-none`}
+            placeholder={rsvpContent.guest.fields.comments.placeholder}
           />
 
-          <BusSelect
-            label={rsvpContent.guest.fields.returnBus.label}
-            value={guest.returnBus}
-            options={RETURN_BUS_OPTIONS}
-            onChange={(value) => onGuestChange(index, "returnBus", value)}
-          />
+          <FieldError>{commentsError}</FieldError>
         </div>
-      </CollapsiblePanel>
+
+        <div className={guestOptionsClassName}>
+          <CollapsiblePanel className={isPublicDesktop ? "" : "mt-2"} title="Intolerancias">
+            <p className="text-xs leading-relaxed text-[var(--color-accent)]">
+              {rsvpContent.guest.panels.allergies.text}
+            </p>
+            <div className="mt-3">
+              <div className="grid grid-cols-2 gap-2">
+                {COMMON_ALLERGIES.map((allergy) => {
+                  const checked = guest.allergies.includes(allergy);
+
+                  return (
+                    <label
+                      key={allergy}
+                      className={`
+                        flex cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-center text-xs transition-all duration-300
+                        ${
+                          checked
+                            ? "border-[var(--color-border-strong)] bg-[var(--color-accent-dark)] text-white"
+                            : "border-[var(--color-border)] bg-white/45 text-[var(--color-text)] hover:border-[var(--color-border-hover)] hover:bg-white"
+                        }
+                      `}
+                    >
+                      <input
+                        checked={checked}
+                        className="hidden"
+                        onChange={() => onGuestChange(index, "allergies", allergy)}
+                        type="checkbox"
+                      />
+
+                      {allergy}
+                    </label>
+                  );
+                })}
+              </div>
+
+              <textarea
+                className={`${inputClassName} mt-3 resize-none`}
+                onChange={(event) =>
+                  onGuestChange(index, "otherAllergies", event.target.value)
+                }
+                placeholder={rsvpContent.guest.fields.otherAllergies.placeholder}
+                rows={2}
+                value={guest.otherAllergies}
+              />
+            </div>
+          </CollapsiblePanel>
+
+          <CollapsiblePanel className="mt-3" title="Transporte">
+            <p className="text-xs leading-relaxed text-[var(--color-accent)]">
+              {rsvpContent.guest.panels.bus.text}
+            </p>
+            <div className="mt-3 grid gap-3">
+              <BusSelect
+                label={rsvpContent.guest.fields.outboundBus.label}
+                value={guest.outboundBus}
+                options={OUTBOUND_BUS_OPTIONS}
+                onChange={(value) => onGuestChange(index, "outboundBus", value)}
+              />
+
+              <BusSelect
+                label={rsvpContent.guest.fields.returnBus.label}
+                value={guest.returnBus}
+                options={RETURN_BUS_OPTIONS}
+                onChange={(value) => onGuestChange(index, "returnBus", value)}
+              />
+            </div>
+          </CollapsiblePanel>
+        </div>
+      </div>
 
       {isAdmin && (
         <CollapsiblePanel className="mt-3" title="Mesa y asiento">

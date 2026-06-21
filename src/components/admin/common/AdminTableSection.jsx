@@ -13,6 +13,7 @@ export default function AdminTableSection({
   eyebrow,
   filters,
   getKey,
+  headerActions,
   loading = false,
   lockPageHeight = false,
   mobilePageLabel,
@@ -20,6 +21,7 @@ export default function AdminTableSection({
   onPrevPage,
   page,
   pageDirection = 1,
+  paginationInlineWithTitle = false,
   paginationLabel,
   pageLabel,
   pageSize,
@@ -53,6 +55,33 @@ export default function AdminTableSection({
     );
   const contentSkeletonConfig = skeletonConfig.content || {};
   const hasHeaderContent = Boolean(eyebrow || title || count || actions);
+  const inlinePaginationPlaceholder =
+    paginationInlineWithTitle && !hasPagination ? (
+      <div
+        aria-hidden="true"
+        className="invisible mt-0 w-full rounded-[1.5rem] border border-[var(--color-border)] bg-white/35 p-2"
+      >
+        <div className="grid w-full grid-cols-3 items-center gap-2 text-xs text-[var(--color-muted)]">
+          <span className="h-8 rounded-full" />
+          <span className="text-center">1 / 1</span>
+          <span className="h-8 rounded-full" />
+        </div>
+      </div>
+    ) : null;
+  const headerPagination =
+    hasPagination && paginationInlineWithTitle ? (
+      <Pagination
+        className="mt-0 w-full"
+        compact
+        currentLabel={pageLabel}
+        label={paginationLabel}
+        mobileLabel={mobilePageLabel}
+        onNext={onNextPage}
+        onPrev={onPrevPage}
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+      />
+    ) : inlinePaginationPlaceholder;
 
   return (
     <section
@@ -62,10 +91,17 @@ export default function AdminTableSection({
       {hasHeaderContent && (
         <div className="mb-4">
           {eyebrow && <p className="section-eyebrow mb-2">{eyebrow}</p>}
-          {title && (
-            <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)]">
-              {title}
-            </h2>
+          {(title || headerPagination) && (
+            <div className="grid gap-3 md:grid-cols-[minmax(10rem,0.9fr)_minmax(16rem,1fr)_minmax(14rem,1fr)] md:items-center">
+              {title && (
+                <h2 className="font-serif text-3xl leading-none text-[var(--color-accent-dark)] md:min-w-0">
+                  {title}
+                </h2>
+              )}
+
+              {headerPagination}
+              {headerActions}
+            </div>
           )}
 
           {!loading && (count || actions) && (
@@ -102,7 +138,7 @@ export default function AdminTableSection({
 
           {filters && hasFilterSlot && <div className="mb-4">{filters}</div>}
 
-          {hasPagination && (
+          {hasPagination && !paginationInlineWithTitle && (
             <Pagination
               className="mb-4"
               currentLabel={pageLabel}

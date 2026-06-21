@@ -510,7 +510,6 @@ export default function AdminGuests() {
       <AdminPageShell
         header={adminContent.guests.header}
         innerClassName="max-w-7xl py-6"
-        isMobileView={isMobileView}
         isVisible={guestsInView}
         rootRef={guestsRef}
       >
@@ -741,7 +740,6 @@ export default function AdminGuests() {
       {editingGroup && (
         <GroupEditor
           group={editingGroup}
-          isMobileView={isMobileView}
           isCreation={!editingGroup.confirmationName}
           mode={editingMode}
           guestIndex={editingGuestIndex}

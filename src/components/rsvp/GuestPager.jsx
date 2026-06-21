@@ -51,7 +51,6 @@ export default function GuestPager({
       canRemove={false}
       card={card}
       errors={errors}
-      forceMobileLayout={variant !== "admin"}
       guest={items[0] || Guest.create()}
       index={pageNumber - 1}
       onGuestChange={onGuestChange}

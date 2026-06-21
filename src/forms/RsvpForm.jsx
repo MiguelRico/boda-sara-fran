@@ -1,13 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
-import {
-  ArrowLeft,
-  Check,
-  Save,
-  Trash2,
-  UserPlus,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Check, Save, Trash2, UserPlus, X } from "lucide-react";
 
 import ContactDetailsCard from "../components/rsvp/ContactDetailsCard";
 import GuestPager from "../components/rsvp/GuestPager";
@@ -39,7 +32,6 @@ export default function RsvpForm({
   formError = "",
   flowMode = "create",
   guests,
-  isMobileView: forcedIsMobileView,
   loading = false,
   onAddGuest,
   onCancel,
@@ -57,9 +49,7 @@ export default function RsvpForm({
   submitDisabled = false,
   variant = "public",
 }) {
-  const detectedIsMobileView = useIsMobileView();
-  const isMobileView = forcedIsMobileView ?? detectedIsMobileView;
-  const publicFlowIsMobileView = variant !== "admin" ? true : isMobileView;
+  const isMobileView = useIsMobileView();
   const [guestDeleteTarget, setGuestDeleteTarget] = useState(null);
   const [guestPage, setGuestPage] = useState(1);
   const [guestPageDirection, setGuestPageDirection] = useState(1);
@@ -164,9 +154,9 @@ export default function RsvpForm({
 
     onSubmit(event);
   };
-  const isMobilePublicFlow = variant !== "admin";
+  const isPublicFlow = variant !== "admin";
 
-  if (isMobilePublicFlow) {
+  if (isPublicFlow) {
     return (
       <>
         <MobilePublicRsvpFlow
@@ -185,7 +175,6 @@ export default function RsvpForm({
           guestPageDirection={guestPageDirection}
           guests={guests}
           hasInvalidGuest={hasInvalidGuest}
-          isMobileView={publicFlowIsMobileView}
           loading={loading}
           onAddGuest={handleAddGuest}
           onContactChange={onContactChange}
@@ -344,7 +333,6 @@ function MobilePublicRsvpFlow({
   guestPageDirection,
   guests,
   hasInvalidGuest,
-  isMobileView,
   loading,
   onAddGuest,
   onContactChange,
@@ -359,15 +347,21 @@ function MobilePublicRsvpFlow({
   submitText,
   totalGuestPages,
 }) {
+  const isActualMobileView = useIsMobileView();
   const reduceMotion = useReducedMotion();
   const [step, setStep] = useState(flowMode === "edit" ? "review" : "contact");
   const canRemove = guests.length > 1;
   const currentGuestIndex = currentGuestPage - 1;
   const currentGuest = guests[currentGuestIndex];
-  const stepVariants = reduceMotion
+  const hasRequiredContactDetails = [
+    contact.confirmationName,
+    contact.email,
+    contact.phone,
+  ].every((value) => String(value || "").trim());
+  const stepVariants = reduceMotion || !isActualMobileView
     ? {
-        hidden: { opacity: 0 },
-        visible: { opacity: 1 },
+        hidden: { opacity: 0, y: 0, filter: "none" },
+        visible: { opacity: 1, y: 0, filter: "none" },
       }
     : {
         hidden: { opacity: 0, y: 14, filter: "blur(6px)" },
@@ -375,6 +369,7 @@ function MobilePublicRsvpFlow({
       };
 
   const handleContinueToGuests = () => {
+    if (!hasRequiredContactDetails) return;
     if (onValidateContact && !onValidateContact()) return;
 
     setStep("guests");
@@ -419,37 +414,66 @@ function MobilePublicRsvpFlow({
     );
     setGuestDeleteTarget(null);
   };
-  const guestActionsClassName = canRemove
-    ? "grid w-full grid-cols-3 gap-3"
-    : "grid w-full grid-cols-2 gap-3";
+  const canAddMoreGuests = canAddGuests && guests.length < MAX_GUESTS;
+  const disableAddGuests = loading || hasInvalidGuest || !canAddMoreGuests;
+  const guestHeaderActionsClassName = "grid w-full grid-cols-2 gap-2";
+  const guestHeaderActions = (
+    <div className={guestHeaderActionsClassName}>
+      <IconButton
+        className="w-full"
+        disabled={!canRemove}
+        icon={<Trash2 size={16} strokeWidth={1.8} />}
+        label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
+        onClick={() =>
+          currentGuest && handleRemoveGuest(currentGuest, currentGuestIndex)
+        }
+        showText="always"
+        tone="danger"
+        type="button"
+      >
+        {rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
+      </IconButton>
+
+      <IconButton
+        className="w-full"
+        disabled={disableAddGuests}
+        icon={addIcon}
+        label={addText}
+        onClick={onAddGuest}
+        showText="always"
+        tone="secondary"
+        type="button"
+      >
+        {addText}
+      </IconButton>
+    </div>
+  );
+  const guestActionsClassName = "grid w-full grid-cols-3 gap-3";
   const guestActions = (
     <div className={guestActionsClassName}>
-      {canRemove && (
-        <IconButton
-          className="w-full"
-          icon={<Trash2 size={16} strokeWidth={1.8} />}
-          label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
-          onClick={() =>
-            currentGuest && handleRemoveGuest(currentGuest, currentGuestIndex)
-          }
-          tone="danger"
-          type="button"
-        />
-      )}
+      <IconButton
+        className="w-full"
+        disabled={!canRemove}
+        icon={<Trash2 size={16} strokeWidth={1.8} />}
+        label={rsvpContent.form.removeGuestLabel(currentGuestIndex + 1)}
+        onClick={() =>
+          currentGuest && handleRemoveGuest(currentGuest, currentGuestIndex)
+        }
+        tone="danger"
+        type="button"
+      />
 
-      {canAddGuests && guests.length < MAX_GUESTS && (
-        <IconButton
-          className="w-full"
-          disabled={loading || hasInvalidGuest}
-          icon={addIcon}
-          label={addText}
-          onClick={onAddGuest}
-          tone="secondary"
-          type="button"
-        >
-          {addText}
-        </IconButton>
-      )}
+      <IconButton
+        className="w-full"
+        disabled={disableAddGuests}
+        icon={addIcon}
+        label={addText}
+        onClick={onAddGuest}
+        tone="secondary"
+        type="button"
+      >
+        {addText}
+      </IconButton>
 
       <IconButton
         className="w-full"
@@ -464,17 +488,80 @@ function MobilePublicRsvpFlow({
       </IconButton>
     </div>
   );
+  const saveGuestActions = (
+    <div className="grid w-full grid-cols-1 gap-3">
+      <IconButton
+        className="w-full"
+        disabled={loading}
+        icon={<Check size={16} strokeWidth={1.8} />}
+        label={rsvpContent.form.saveGuests}
+        onClick={handleReview}
+        tone="primary"
+        showText="always"
+        type="button"
+      >
+        {rsvpContent.form.saveGuests}
+      </IconButton>
+    </div>
+  );
+  const formClassName =
+    (step === "contact" || step === "guests") && !isActualMobileView
+      ? "mt-4 space-y-5"
+      : "mt-4 mx-auto max-w-md space-y-5";
+  const guestsStepClassName = isActualMobileView
+    ? "space-y-5"
+    : "grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.25fr)] items-start gap-5";
+  const guestsSummaryColumn = (
+    <div className={isActualMobileView ? "contents" : "space-y-5"}>
+      {isActualMobileView ? (
+        <>
+          <ContactSummaryCard
+            contact={contact}
+            guests={guests}
+            onEdit={() => setStep("contact")}
+          />
+
+          <MobileActionsPanel>{guestActions}</MobileActionsPanel>
+        </>
+      ) : (
+        <>
+          <MobileActionsPanel className="mb-0">
+            {saveGuestActions}
+          </MobileActionsPanel>
+
+          <ContactSummaryCard
+            contact={contact}
+            guests={guests}
+            onEdit={() => setStep("contact")}
+          />
+        </>
+      )}
+    </div>
+  );
+  const guestsEditorColumn = (
+    <MobileGuestList
+      currentGuestPage={currentGuestPage}
+      errors={errors}
+      guestPageDirection={guestPageDirection}
+      guests={guests}
+      headerActions={isActualMobileView ? null : guestHeaderActions}
+      isMobileView={isActualMobileView}
+      onGuestChange={onGuestChange}
+      onGuestPageChange={onGuestPageChange}
+      totalPages={totalGuestPages}
+    />
+  );
 
   return (
     <>
-      <form className="mt-4 space-y-5" noValidate onSubmit={handleMobileSubmit}>
+      <form className={formClassName} noValidate onSubmit={handleMobileSubmit}>
         <AnimatePresence mode="wait">
           <motion.div
             animate="visible"
             exit="hidden"
             initial="hidden"
             key={step}
-            transition={{ duration: reduceMotion ? 0.16 : 0.34 }}
+            transition={{ duration: reduceMotion || !isActualMobileView ? 0.16 : 0.34 }}
             variants={stepVariants}
           >
             {step === "contact" && (
@@ -483,7 +570,7 @@ function MobilePublicRsvpFlow({
                   <div className="grid grid-cols-1">
                     <IconButton
                       className="w-full"
-                      disabled={loading}
+                      disabled={loading || !hasRequiredContactDetails}
                       icon={<UserPlus size={16} strokeWidth={1.8} />}
                       label="Añadir invitados"
                       onClick={handleContinueToGuests}
@@ -498,34 +585,18 @@ function MobilePublicRsvpFlow({
 
                 <ContactDetailsCard
                   contact={contact}
+                  desktopSingleRow
                   disableFilledFields={disableContactFields}
                   errors={errors}
-                  forceMobileLayout
                   onContactChange={onContactChange}
                 />
               </div>
             )}
 
             {step === "guests" && (
-              <div className="space-y-5">
-                <ContactSummaryCard
-                  contact={contact}
-                  guests={guests}
-                  onEdit={() => setStep("contact")}
-                />
-
-                <MobileActionsPanel>{guestActions}</MobileActionsPanel>
-
-                <MobileGuestList
-                  currentGuestPage={currentGuestPage}
-                  errors={errors}
-                  guestPageDirection={guestPageDirection}
-                  guests={guests}
-                  isMobileView={isMobileView}
-                  onGuestChange={onGuestChange}
-                  onGuestPageChange={onGuestPageChange}
-                  totalPages={totalGuestPages}
-                />
+              <div className={guestsStepClassName}>
+                {guestsSummaryColumn}
+                {guestsEditorColumn}
               </div>
             )}
 

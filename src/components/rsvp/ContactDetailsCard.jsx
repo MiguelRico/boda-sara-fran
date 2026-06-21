@@ -1,15 +1,18 @@
 import { FieldError, FormCard, inputClassName, Label } from "./FormPrimitives";
 import { rsvpContent } from "../../constants/rsvpContent";
+import useIsMobileView from "../../hooks/useIsMobileView";
 
 const onlyDigits = (value) => String(value || "").replace(/\D/g, "");
 
 export default function ContactDetailsCard({
   contact,
+  desktopSingleRow = false,
   disableFilledFields = true,
   errors,
   onContactChange,
   showHeader = true,
 }) {
+  const isMobileView = useIsMobileView();
   const disabledFields =
     typeof disableFilledFields === "object"
       ? disableFilledFields
@@ -18,6 +21,10 @@ export default function ContactDetailsCard({
           confirmationName: disableFilledFields,
           phone: disableFilledFields,
         };
+  const fieldsClassName =
+    desktopSingleRow && !isMobileView
+      ? `${showHeader ? "mt-4" : ""} grid grid-cols-3 gap-5`
+      : `${showHeader ? "mt-4" : ""} grid gap-5`;
 
   return (
     <FormCard>
@@ -31,7 +38,7 @@ export default function ContactDetailsCard({
         </>
       )}
 
-      <div className={`${showHeader ? "mt-4" : ""} grid gap-5`}>
+      <div className={fieldsClassName}>
         <div>
           <Label>{rsvpContent.contact.fields.confirmationName.label}</Label>
 

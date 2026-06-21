@@ -761,7 +761,6 @@ export default function AdminTables() {
           text: adminContent.tables.header.text,
           title: adminContent.tables.header.title,
         }}
-        isMobileView={isMobileView}
         isVisible={tablesInView}
         rootRef={tablesRef}
       >
