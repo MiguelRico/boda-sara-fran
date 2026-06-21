@@ -25,6 +25,7 @@ export default function HistorySection() {
           title={history.title}
           titleAs="h1"
           text={history.text}
+          showTitleAndTextOnMobile
         />
 
         <ImageCarousel

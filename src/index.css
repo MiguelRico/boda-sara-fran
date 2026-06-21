@@ -3,7 +3,6 @@
 @theme {
   --font-serif: "Cormorant", ui-serif, Georgia, serif;
   --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
-
 }
 
 :root {
@@ -96,7 +95,7 @@ body {
   }
 
   .section-text {
-    @apply mx-auto mt-6 mb-4 max-w-2xl font-sans text-[0.95rem] leading-[1.9];
+    @apply mx-auto mt-4 mb-4 max-w-2xl font-sans text-[0.95rem] leading-[1.9];
     color: var(--color-muted);
   }
 

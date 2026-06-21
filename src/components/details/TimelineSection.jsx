@@ -21,6 +21,7 @@ export default function TimelineSection() {
           eyebrow={timeline.eyebrow}
           title={timeline.title}
           text={timeline.text}
+          showTitleAndTextOnMobile
         />
 
         <div className={timelineClassName}>

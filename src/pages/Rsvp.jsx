@@ -1,14 +1,17 @@
 import { useRef } from "react";
 import { useInView } from "framer-motion";
+import { Home, MapPinned } from "lucide-react";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicSection from "../components/cinematic/CinematicSection";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import HeaderSection from "../components/ui/HeaderSection";
 import CreateInvitationCard from "../components/rsvp/CreateInvitationCard";
+import IconButton from "../components/ui/IconButton";
 import StatusDialog from "../components/ui/StatusDialog";
 import SearchInvitationCard from "../components/rsvp/SearchInvitationCard";
 import Spinner from "../components/ui/Spinner";
 import { siteContent } from "../config/siteContent";
+import { rsvpContent } from "../constants/rsvpContent";
 import useRsvp from "../hooks/useRsvp";
 import useIsMobileView from "../hooks/useIsMobileView";
 import useSpinner from "../hooks/useSpinner.js";
@@ -52,8 +55,12 @@ export default function Rsvp() {
               email={rsvp.contact.email}
               emailError={rsvp.errors.email}
               loading={spinner.loading}
-              onEmailChange={(value) => rsvp.handleContactChange("email", value)}
-              onPhoneChange={(value) => rsvp.handleContactChange("phone", value)}
+              onEmailChange={(value) =>
+                rsvp.handleContactChange("email", value)
+              }
+              onPhoneChange={(value) =>
+                rsvp.handleContactChange("phone", value)
+              }
               onSearchInvitation={rsvp.handleSearchInvitation}
               phone={rsvp.contact.phone}
               phoneError={rsvp.errors.phone}
@@ -83,9 +90,8 @@ export function RsvpPageShell({
   wrapperRef,
 }) {
   const isMobileView = useIsMobileView();
-  const effectiveInnerClassName = isMobileView || forceMobileInner
-    ? innerClassName
-    : "max-w-none py-6";
+  const effectiveInnerClassName =
+    isMobileView || forceMobileInner ? innerClassName : "max-w-none py-6";
 
   return (
     <CinematicPage>
@@ -104,6 +110,14 @@ export function RsvpPageShell({
 }
 
 export function RsvpStatus({ closePopup, popup }) {
+  const isMobileView = useIsMobileView();
+  const showConfirmationActions =
+    popup.type === "success" &&
+    popup.title === rsvpContent.status.submitSuccessTitle;
+  const confirmationActionsClassName = isMobileView
+    ? "mt-5 grid grid-cols-1 gap-3"
+    : "mt-5 grid grid-cols-2 gap-3";
+
   return (
     <StatusDialog
       closeText={popup.closeText}
@@ -114,6 +128,30 @@ export function RsvpStatus({ closePopup, popup }) {
       open={popup.open}
       title={popup.title}
       type={popup.type}
-    />
+    >
+      {showConfirmationActions && (
+        <div className={confirmationActionsClassName}>
+          <IconButton
+            className="w-full"
+            icon={<Home size={16} strokeWidth={1.8} />}
+            showText="always"
+            to="/"
+            tone="terciary"
+          >
+            Inicio
+          </IconButton>
+
+          <IconButton
+            className="w-full"
+            icon={<MapPinned size={16} strokeWidth={1.8} />}
+            showText="always"
+            to="/details"
+            tone="primary"
+          >
+            Detalles
+          </IconButton>
+        </div>
+      )}
+    </StatusDialog>
   );
 }

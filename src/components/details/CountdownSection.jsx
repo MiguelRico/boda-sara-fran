@@ -32,9 +32,7 @@ function getTimeLeft(targetDate) {
 function CountdownCard({ label, value }) {
   return (
     <div className="premium-card px-4 py-8 text-center">
-      <span className="section-text block font-serif text-5xl">
-        {value}
-      </span>
+      <span className="section-text block font-serif text-5xl">{value}</span>
 
       <span className="section-eyebrow mt-4 block">{label}</span>
     </div>
@@ -51,7 +49,7 @@ export default function CountdownSection() {
     : "mx-auto flex min-h-[calc(100svh-3rem)] w-full max-w-6xl flex-col justify-center text-center";
   const gridClassName = isMobileView
     ? "mt-4 grid grid-cols-2 gap-4"
-    : "mt-6 grid grid-cols-4 gap-5";
+    : "grid grid-cols-4 gap-5";
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -75,6 +73,7 @@ export default function CountdownSection() {
           eyebrow={countdown.eyebrow}
           title={countdown.title}
           text={countdown.text}
+          showTitleAndTextOnMobile
         />
 
         <div className={gridClassName}>
@@ -90,4 +89,3 @@ export default function CountdownSection() {
     </CinematicSection>
   );
 }
-

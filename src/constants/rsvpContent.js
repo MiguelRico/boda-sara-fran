@@ -8,7 +8,7 @@ export const rsvpContent = {
     addGuestText: "Invitado",
     reviewAdminSubmitText: "Guardar",
     reviewSubmitText: "Enviar confirmación",
-    saveGuests: "Guardar invitados",
+    saveGuests: "Revisar confirmación",
     deleteGuestTitle: "Eliminar invitado",
     deleteGuestMessage: ({ context, guestName, guestNumber }) =>
       `Se eliminará ${
@@ -100,12 +100,12 @@ export const rsvpContent = {
     emailPlaceholder: "Ej: ejemplo@email.com",
     phoneLabel: "Telefono",
     phonePlaceholder: "Ej: 600123456",
-    searchAction: "Buscar mi confirmación",
-    backHome: "Volver al inicio",
+    searchAction: "Buscar confirmación",
+    backHome: "Inicio",
   },
   status: {
     close: "Cerrar",
-    backHome: "Volver al inicio",
+    backHome: "Inicio",
     problemTitle: "Ha ocurrido un problema",
     searchLoading: "Buscando confirmación...",
     submitLoading: "Enviando confirmación...",

@@ -7,13 +7,14 @@ export default function HeaderSection({
   titleAs = "h2",
   className = "",
   hideTextOnMobile = false,
+  showTitleAndTextOnMobile = false,
   children,
 }) {
   const isMobileView = useIsMobileView();
   const Title = titleAs;
   const textClassName =
     hideTextOnMobile && isMobileView ? "hidden" : "section-text";
-  const shouldShowTitleAndText = !isMobileView;
+  const shouldShowTitleAndText = !isMobileView || showTitleAndTextOnMobile;
 
   return (
     <div className={`mx-auto max-w-3xl text-center ${className}`}>

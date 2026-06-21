@@ -19,8 +19,8 @@ export default function CtaSection() {
     ? "mx-auto max-w-3xl text-center"
     : "mx-auto flex min-h-[calc(100svh-3rem)] w-full max-w-5xl flex-col items-center justify-center text-center";
   const actionsClassName = isMobileView
-    ? "mt-8 flex flex-col items-center justify-center gap-4"
-    : "mt-8 flex flex-row items-center justify-center gap-4";
+    ? "mt-4 flex flex-col items-center justify-center gap-4"
+    : "mt-4 flex flex-row items-center justify-center gap-4";
 
   return (
     <CinematicSection className="surface-warm" reveal={false}>

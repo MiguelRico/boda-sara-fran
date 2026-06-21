@@ -26,6 +26,7 @@ export default function CeremonySection() {
           eyebrow={ceremony.eyebrow}
           title={ceremony.title}
           text={ceremony.text}
+          showTitleAndTextOnMobile
         >
           <p className="text-eyebrow mt-4">{ceremony.address}</p>
 
