@@ -97,10 +97,12 @@ export default function Admin() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (password === ADMIN_PASSWORD) {
+    const normalizedPassword = password.trim();
+
+    if (normalizedPassword === ADMIN_PASSWORD) {
       try {
         setLoading(true);
-        await loadAdminDataOnce({ password: ADMIN_PASSWORD });
+        await loadAdminDataOnce({ password: normalizedPassword });
         setAdminSessionAuthenticated();
         setIsAuthenticated(true);
         setError("");

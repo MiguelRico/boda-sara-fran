@@ -336,6 +336,23 @@ function readParam(value) {
   return decodeURIComponent(value || "").trim();
 }
 
+function normalizeAdminPassword(value) {
+  return String(value || "").trim();
+}
+
+function getAdminPassword() {
+  const configuredPassword =
+    PropertiesService.getScriptProperties().getProperty("ADMIN_PASSWORD");
+  const normalizedConfiguredPassword =
+    normalizeAdminPassword(configuredPassword);
+
+  if (normalizedConfiguredPassword) {
+    return normalizedConfiguredPassword;
+  }
+
+  return normalizeAdminPassword(ADMIN_PASSWORD);
+}
+
 function createEntityId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -406,9 +423,11 @@ function encodeConfirmationForApi(confirmation) {
 }
 
 function validateAdmin(e) {
-  const password = readParam(e.parameter.password || "");
+  const password = normalizeAdminPassword(
+    readParam(e.parameter.password || ""),
+  );
 
-  if (password !== ADMIN_PASSWORD) {
+  if (password !== getAdminPassword()) {
     return jsonResponse(
       {
         success: false,
@@ -423,7 +442,7 @@ function validateAdmin(e) {
 }
 
 function isAdminPayload(data) {
-  return String(data.password || "").trim() === ADMIN_PASSWORD;
+  return normalizeAdminPassword(data.password) === getAdminPassword();
 }
 
 function normalizeAllergies(allergies) {

@@ -46,25 +46,29 @@ function saveConfirmation(data) {
   validateUniqueConfirmationContact(confirmation);
 
   const isAdmin = isAdminPayload(data);
-  const isExistingConfirmation = confirmationExists(confirmation.confirmationId);
+  const isExistingConfirmation = confirmationExists(
+    confirmation.confirmationId,
+  );
 
   deleteConfirmationRow(confirmationsSheet, confirmation);
   deleteGuestRows(guestsSheet, confirmation);
-  deleteAssignmentsByConfirmationId(assignmentsSheet, confirmation.confirmationId);
+  deleteAssignmentsByConfirmationId(
+    assignmentsSheet,
+    confirmation.confirmationId,
+  );
 
   confirmationsSheet.appendRow(buildConfirmationRow(confirmation));
 
   const guestsWithIds = confirmation.guests.map((guest) => ({
     ...guest,
-    guestId: String(guest.guestId || guest.id || "").trim() || createEntityId("guest"),
+    guestId:
+      String(guest.guestId || guest.id || "").trim() || createEntityId("guest"),
     confirmationId: confirmation.confirmationId,
     confirmationName: confirmation.confirmationName,
   }));
 
   guestsWithIds.forEach((guest) => {
-    guestsSheet.appendRow(
-      buildGuestRow(confirmation, guest),
-    );
+    guestsSheet.appendRow(buildGuestRow(confirmation, guest));
   });
   appendAssignmentRowsForGuests(assignmentsSheet, confirmation, guestsWithIds);
 
@@ -96,7 +100,7 @@ function saveConfirmation(data) {
 }
 
 function saveTables(data) {
-  if (data.password !== ADMIN_PASSWORD) {
+  if (normalizeAdminPassword(data.password) !== getAdminPassword()) {
     throw new Error("Unauthorized");
   }
 
@@ -113,14 +117,13 @@ function saveTables(data) {
   deleteDataRows(seatsSheet);
 
   tables.forEach((table) => {
-    const tableId = String(table.tableId || table.id || "").trim() || createEntityId("table");
+    const tableId =
+      String(table.tableId || table.id || "").trim() || createEntityId("table");
     const name = String(table.name || "").trim();
     const tag = String(table.tag || table.group || "").trim();
     const group = String(table.group || table.tag || "").trim();
     const seatCount = Math.max(
-      Number(table.seatCount) ||
-        Number(table.seats && table.seats.length) ||
-        0,
+      Number(table.seatCount) || Number(table.seats && table.seats.length) || 0,
       0,
     );
 
@@ -154,14 +157,22 @@ function saveTables(data) {
   });
 
   if (tableRows.length) {
-    sheet.getRange(2, 1, tableRows.length, TABLES_HEADERS.length).setValues(tableRows);
+    sheet
+      .getRange(2, 1, tableRows.length, TABLES_HEADERS.length)
+      .setValues(tableRows);
   }
 
   if (seatRows.length) {
-    seatsSheet.getRange(2, 1, seatRows.length, SEATS_HEADERS.length).setValues(seatRows);
+    seatsSheet
+      .getRange(2, 1, seatRows.length, SEATS_HEADERS.length)
+      .setValues(seatRows);
   }
 
-  cleanAssignmentsOutsideValidSeats(assignmentsSheet, validTableIds, validSeatIds);
+  cleanAssignmentsOutsideValidSeats(
+    assignmentsSheet,
+    validTableIds,
+    validSeatIds,
+  );
 
   return jsonResponse({
     success: true,
@@ -170,7 +181,7 @@ function saveTables(data) {
 }
 
 function saveProviders(data) {
-  if (data.password !== ADMIN_PASSWORD) {
+  if (normalizeAdminPassword(data.password) !== getAdminPassword()) {
     throw new Error("Unauthorized");
   }
 
@@ -202,56 +213,60 @@ function saveProviders(data) {
       now,
     ]);
 
-    (Array.isArray(provider.services) ? provider.services : []).forEach((service) => {
-      const serviceId = String(service.serviceId || service.id || "").trim();
+    (Array.isArray(provider.services) ? provider.services : []).forEach(
+      (service) => {
+        const serviceId = String(service.serviceId || service.id || "").trim();
 
-      if (!serviceId) return;
+        if (!serviceId) return;
 
-      const paymentCount = Math.min(
-        Math.max(Number(service.paymentCount) || 1, 1),
-        3,
-      );
-      const servicePayments = (Array.isArray(service.payments)
-        ? service.payments
-        : []
-      )
-        .slice(0, paymentCount)
-        .map((payment, index) => ({
-          amount: payment.amount || "",
-          createdAt: payment.createdAt || "",
-          date: payment.date || "",
-          notes: payment.notes || "",
-          paid: Boolean(payment.paid),
-          paymentId: payment.paymentId || payment.id || `${serviceId}-payment-${index + 1}`,
-        }));
+        const paymentCount = Math.min(
+          Math.max(Number(service.paymentCount) || 1, 1),
+          3,
+        );
+        const servicePayments = (
+          Array.isArray(service.payments) ? service.payments : []
+        )
+          .slice(0, paymentCount)
+          .map((payment, index) => ({
+            amount: payment.amount || "",
+            createdAt: payment.createdAt || "",
+            date: payment.date || "",
+            notes: payment.notes || "",
+            paid: Boolean(payment.paid),
+            paymentId:
+              payment.paymentId ||
+              payment.id ||
+              `${serviceId}-payment-${index + 1}`,
+          }));
 
-      serviceRows.push([
-        serviceId,
-        providerId,
-        service.name || "",
-        service.price || "",
-        paymentCount,
-        service.notes || "",
-        true,
-        getProviderTimestamp(service.createdAt, now),
-        now,
-      ]);
-
-      servicePayments.forEach((payment, index) => {
-        paymentRows.push([
-          payment.paymentId,
+        serviceRows.push([
           serviceId,
-          index + 1,
-          payment.amount || "",
-          payment.date || "",
-          payment.paid ? payment.date || "" : "",
-          Boolean(payment.paid),
-          payment.notes || "",
-          getProviderTimestamp(payment.createdAt, now),
+          providerId,
+          service.name || "",
+          service.price || "",
+          paymentCount,
+          service.notes || "",
+          true,
+          getProviderTimestamp(service.createdAt, now),
           now,
         ]);
-      });
-    });
+
+        servicePayments.forEach((payment, index) => {
+          paymentRows.push([
+            payment.paymentId,
+            serviceId,
+            index + 1,
+            payment.amount || "",
+            payment.date || "",
+            payment.paid ? payment.date || "" : "",
+            Boolean(payment.paid),
+            payment.notes || "",
+            getProviderTimestamp(payment.createdAt, now),
+            now,
+          ]);
+        });
+      },
+    );
   });
 
   deleteDataRows(providersSheet);
@@ -259,15 +274,21 @@ function saveProviders(data) {
   deleteDataRows(paymentsSheet);
 
   if (providerRows.length) {
-    providersSheet.getRange(2, 1, providerRows.length, PROVIDERS_HEADERS.length).setValues(providerRows);
+    providersSheet
+      .getRange(2, 1, providerRows.length, PROVIDERS_HEADERS.length)
+      .setValues(providerRows);
   }
 
   if (serviceRows.length) {
-    servicesSheet.getRange(2, 1, serviceRows.length, PROVIDER_SERVICES_HEADERS.length).setValues(serviceRows);
+    servicesSheet
+      .getRange(2, 1, serviceRows.length, PROVIDER_SERVICES_HEADERS.length)
+      .setValues(serviceRows);
   }
 
   if (paymentRows.length) {
-    paymentsSheet.getRange(2, 1, paymentRows.length, PROVIDER_PAYMENTS_HEADERS.length).setValues(paymentRows);
+    paymentsSheet
+      .getRange(2, 1, paymentRows.length, PROVIDER_PAYMENTS_HEADERS.length)
+      .setValues(paymentRows);
   }
 
   return jsonResponse({
@@ -279,7 +300,7 @@ function saveProviders(data) {
 }
 
 function saveNotifications(data) {
-  if (data.password !== ADMIN_PASSWORD) {
+  if (normalizeAdminPassword(data.password) !== getAdminPassword()) {
     throw new Error("Unauthorized");
   }
 
@@ -304,7 +325,7 @@ function saveNotifications(data) {
 }
 
 function saveTasks(data) {
-  if (data.password !== ADMIN_PASSWORD) {
+  if (normalizeAdminPassword(data.password) !== getAdminPassword()) {
     throw new Error("Unauthorized");
   }
 
@@ -315,9 +336,7 @@ function saveTasks(data) {
   deleteDataRows(sheet);
 
   if (rows.length) {
-    sheet
-      .getRange(2, 1, rows.length, TASKS_HEADERS.length)
-      .setValues(rows);
+    sheet.getRange(2, 1, rows.length, TASKS_HEADERS.length).setValues(rows);
   }
 
   return jsonResponse({
@@ -327,7 +346,7 @@ function saveTasks(data) {
 }
 
 function updateNotificationRead(data) {
-  if (data.password !== ADMIN_PASSWORD) {
+  if (normalizeAdminPassword(data.password) !== getAdminPassword()) {
     throw new Error("Unauthorized");
   }
 
@@ -347,9 +366,7 @@ function updateNotificationRead(data) {
 
     if (rowNotificationId !== notificationId) continue;
 
-    sheet
-      .getRange(i + 1, NOTIFICATIONS_COLUMNS.read + 1)
-      .setValue(read);
+    sheet.getRange(i + 1, NOTIFICATIONS_COLUMNS.read + 1).setValue(read);
     sheet
       .getRange(i + 1, NOTIFICATIONS_COLUMNS.updatedAt + 1)
       .setValue(getCurrentTimestamp());
@@ -373,7 +390,9 @@ function confirmationExists(confirmationId) {
   if (!normalizedConfirmationId) return false;
 
   for (let i = 1; i < rows.length; i++) {
-    const rowConfirmationId = String(rows[i][CONFIRMATIONS_COLUMNS.confirmationId] || "")
+    const rowConfirmationId = String(
+      rows[i][CONFIRMATIONS_COLUMNS.confirmationId] || "",
+    )
       .trim()
       .toLowerCase();
 

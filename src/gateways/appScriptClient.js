@@ -9,7 +9,9 @@ const getRsvpApiUrl = getRequiredRsvpApiUrl;
 const createRequestKey = (params) =>
   JSON.stringify(
     Object.entries(params)
-      .filter(([, value]) => value !== undefined && value !== null && value !== "")
+      .filter(
+        ([, value]) => value !== undefined && value !== null && value !== "",
+      )
       .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey)),
   );
 
@@ -27,13 +29,22 @@ export const requestJsonp = (params) => {
     const script = document.createElement("script");
     const timeoutId = window.setTimeout(() => {
       cleanup();
-      reject(new Error("La peticion a Google Apps Script ha caducado."));
+      reject(
+        new Error(
+          `No se pudo conectar con Google Apps Script. URL: ${url.toString()}`,
+        ),
+      );
     }, 15000);
 
     const cleanup = () => {
       window.clearTimeout(timeoutId);
       script.remove();
       delete window[callbackName];
+    };
+
+    const rejectWithRemoteError = (message) => {
+      cleanup();
+      reject(new Error(message));
     };
 
     Object.entries(params).forEach(([key, value]) => {
@@ -50,9 +61,21 @@ export const requestJsonp = (params) => {
     };
 
     script.onerror = () => {
-      cleanup();
-      reject(new Error("No se pudo conectar con Google Apps Script."));
+      rejectWithRemoteError(
+        `No se pudo cargar la URL de Apps Script. Revise la deployment o la URL configurada: ${url.toString()}`,
+      );
     };
+
+    script.onload = () => {
+      window.setTimeout(() => {
+        if (window[callbackName]) {
+          rejectWithRemoteError(
+            `Apps Script respondió pero no ejecutó el callback esperado. Revise la deployment y los permisos de ejecución del endpoint: ${url.toString()}`,
+          );
+        }
+      }, 250);
+    };
+
     script.src = url.toString();
     document.body.appendChild(script);
   }).finally(() => {

@@ -10,7 +10,7 @@ function routeDelete(data) {
 }
 
 function deleteConfirmation(data) {
-  if (data.password !== ADMIN_PASSWORD) {
+  if (normalizeAdminPassword(data.password) !== getAdminPassword()) {
     throw new Error("Unauthorized");
   }
 
