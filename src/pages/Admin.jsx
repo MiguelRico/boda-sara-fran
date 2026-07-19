@@ -14,7 +14,6 @@ import {
   X,
 } from "lucide-react";
 
-import { ADMIN_PASSWORD } from "../constants/admin";
 import AnimatedInfoCard from "../components/ui/AnimatedInfoCard";
 import HeaderSection from "../components/ui/HeaderSection";
 import IconButton from "../components/ui/IconButton";
@@ -99,24 +98,19 @@ export default function Admin() {
 
     const normalizedPassword = password.trim();
 
-    if (normalizedPassword === ADMIN_PASSWORD) {
-      try {
-        setLoading(true);
-        await loadAdminDataOnce({ password: normalizedPassword });
-        setAdminSessionAuthenticated();
-        setIsAuthenticated(true);
-        setError("");
-        setPassword("");
-      } catch (error) {
-        console.error(error);
-        setError(adminContent.auth.error);
-      } finally {
-        setLoading(false);
-      }
-      return;
+    try {
+      setLoading(true);
+      await loadAdminDataOnce({ password: normalizedPassword });
+      setAdminSessionAuthenticated(normalizedPassword);
+      setIsAuthenticated(true);
+      setError("");
+      setPassword("");
+    } catch (error) {
+      console.error(error);
+      setError(adminContent.auth.error);
+    } finally {
+      setLoading(false);
     }
-
-    setError(adminContent.auth.error);
   };
 
   return (

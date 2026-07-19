@@ -7,8 +7,8 @@ import {
   X,
 } from "lucide-react";
 
-import { ADMIN_PASSWORD } from "../constants/admin";
 import { adminContent } from "../constants/adminContent";
+import { getAdminSessionPassword } from "../utils/adminSession";
 import {
   buildProviderStats,
   buildPendingProviderChanges,
@@ -125,7 +125,9 @@ export default function AdminProviders() {
     setLoadingProviders(true);
 
     try {
-      const snapshot = await loadAdminDataOnce({ password: ADMIN_PASSWORD });
+      const snapshot = await loadAdminDataOnce({
+        password: getAdminSessionPassword(),
+      });
       const normalizedProviders = normalizeProviders(snapshot.providers || []);
 
       setSavedProviders(normalizedProviders);
@@ -257,7 +259,7 @@ export default function AdminProviders() {
     try {
       spinner.show(adminContent.providers.spinner.save);
       const normalizedProviders = await persistProviders({
-        password: ADMIN_PASSWORD,
+        password: getAdminSessionPassword(),
         providers,
       });
 

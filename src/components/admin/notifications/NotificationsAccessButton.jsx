@@ -3,9 +3,9 @@ import { Bell, Inbox } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import IconButton from "../../ui/IconButton";
-import { ADMIN_PASSWORD } from "../../../constants/admin";
 import { adminContent } from "../../../constants/adminContent";
 import {
+  getAdminSessionPassword,
   isAdminSessionAuthenticated,
   subscribeAdminAuthChange,
 } from "../../../utils/adminSession";
@@ -53,7 +53,7 @@ export default function NotificationsAccessButton() {
   useEffect(() => {
     if (!isAuthenticated) return undefined;
 
-    loadAdminDataOnce({ password: ADMIN_PASSWORD }).finally(
+    loadAdminDataOnce({ password: getAdminSessionPassword() }).finally(
       refreshNotifications,
     );
     const intervalId = window.setInterval(refreshNotifications, 500);
@@ -92,7 +92,7 @@ export default function NotificationsAccessButton() {
     refreshNotifications();
     void updateNotificationRead({
       notificationId,
-      password: ADMIN_PASSWORD,
+      password: getAdminSessionPassword(),
       read: true,
     }).catch((error) => {
       console.error("Error actualizando notificacion en segundo plano:", error);

@@ -2,8 +2,10 @@ import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-import { ADMIN_PASSWORD } from "../constants/admin";
-import { isAdminSessionAuthenticated } from "../utils/adminSession";
+import {
+  getAdminSessionPassword,
+  isAdminSessionAuthenticated,
+} from "../utils/adminSession";
 import {
   AdminPageShell,
   AdminPendingChangesActions,
@@ -124,7 +126,7 @@ export default function AdminNotifications() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    loadAdminDataOnce({ password: ADMIN_PASSWORD })
+    loadAdminDataOnce({ password: getAdminSessionPassword() })
       .then((snapshot) => {
         syncNotifications(snapshot.notifications);
       })
@@ -227,7 +229,7 @@ export default function AdminNotifications() {
     syncNotifications(nextNotifications);
     void updateNotificationRead({
       notificationId: notification.id,
-      password: ADMIN_PASSWORD,
+      password: getAdminSessionPassword(),
       read: nextRead,
     }).catch((error) => {
       console.error("Error actualizando notificacion en segundo plano:", error);
@@ -260,7 +262,7 @@ export default function AdminNotifications() {
 
       await persistNotifications({
         notifications: normalizedNotifications,
-        password: ADMIN_PASSWORD,
+        password: getAdminSessionPassword(),
       });
       markAdminDataSaved({ notifications: normalizedNotifications });
       syncNotifications(normalizedNotifications);

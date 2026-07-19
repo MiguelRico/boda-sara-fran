@@ -1,4 +1,4 @@
-import { ADMIN_PASSWORD } from "../constants/admin";
+import { getAdminSessionPassword } from "../utils/adminSession";
 import { adminContent } from "../constants/adminContent";
 import { AdminNotification, Table, Task } from "../models";
 import { mapAdminConfirmations } from "../mappers/confirmationMapper";
@@ -53,7 +53,9 @@ export const clearAdminDataStore = () => {
   store.tasks = [];
 };
 
-export const loadAdminDataOnce = async ({ password = ADMIN_PASSWORD } = {}) => {
+export const loadAdminDataOnce = async ({
+  password = getAdminSessionPassword(),
+} = {}) => {
   if (store.loaded) return getAdminDataSnapshot();
   if (store.loadingPromise) return store.loadingPromise;
 
@@ -244,7 +246,7 @@ export const discardAdminTaskChanges = () => {
 };
 
 export const saveAdminPendingChanges = async ({
-  password = ADMIN_PASSWORD,
+  password = getAdminSessionPassword(),
 } = {}) => {
   const savedById = new Map(
     store.savedConfirmations.map((confirmation) => [

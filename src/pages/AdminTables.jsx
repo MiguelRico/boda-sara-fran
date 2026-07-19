@@ -2,7 +2,6 @@ import { useInView } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-import { ADMIN_PASSWORD } from "../constants/admin";
 import {
   AdminEntityTabs,
   AdminPageShell,
@@ -64,7 +63,10 @@ import { adminContent } from "../constants/adminContent";
 import { tableContent } from "../constants/tableContent";
 import { isMenuModuleEnabled } from "../config/features";
 import { storageKeys } from "../config/storageKeys";
-import { isAdminSessionAuthenticated } from "../utils/adminSession";
+import {
+  getAdminSessionPassword,
+  isAdminSessionAuthenticated,
+} from "../utils/adminSession";
 import { DEFAULT_TABLE_PAGE_SIZE } from "../utils/paginationState";
 import { getStableJson } from "../utils/objectSnapshot";
 
@@ -134,7 +136,9 @@ export default function AdminTables() {
       }
 
       try {
-        const snapshot = await loadAdminDataOnce({ password: ADMIN_PASSWORD });
+        const snapshot = await loadAdminDataOnce({
+          password: getAdminSessionPassword(),
+        });
         const confirmations = snapshot.confirmations;
         const storedTables = includeStoredTables
           ? snapshot.tables
@@ -452,14 +456,14 @@ export default function AdminTables() {
       spinner.show(adminContent.tables.spinner.save);
 
       await persistAdminTables({
-        password: ADMIN_PASSWORD,
+        password: getAdminSessionPassword(),
         tables: manualTables,
       });
 
       for (const group of changedConfirmations) {
         await confirmationRepository.saveAdmin({
           confirmation: group,
-          password: ADMIN_PASSWORD,
+          password: getAdminSessionPassword(),
         });
       }
 

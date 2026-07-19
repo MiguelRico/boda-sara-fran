@@ -12,10 +12,10 @@ import { useNavigate } from "react-router-dom";
 
 import IconButton from "../ui/IconButton";
 import { UnsavedChangesDialog } from "./common";
-import { ADMIN_PASSWORD } from "../../constants/admin";
 import { adminContent } from "../../constants/adminContent";
 import {
   clearAdminSession,
+  getAdminSessionPassword,
   isAdminSessionAuthenticated,
   subscribeAdminAuthChange,
 } from "../../utils/adminSession";
@@ -111,7 +111,7 @@ export default function AdminAccessButton() {
     setSavingLogoutChanges(true);
 
     try {
-      await saveAdminPendingChanges({ password: ADMIN_PASSWORD });
+      await saveAdminPendingChanges({ password: getAdminSessionPassword() });
       completeLogout();
     } finally {
       setSavingLogoutChanges(false);

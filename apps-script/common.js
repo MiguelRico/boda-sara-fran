@@ -333,7 +333,9 @@ function jsonResponse(obj, e) {
 }
 
 function readParam(value) {
-  return decodeURIComponent(value || "").trim();
+  // Apps Script already decodes query parameters in e.parameter. Decoding a
+  // second time corrupts valid passwords containing characters such as "%".
+  return String(value || "").trim();
 }
 
 function normalizeAdminPassword(value) {

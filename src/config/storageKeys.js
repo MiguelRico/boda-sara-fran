@@ -11,6 +11,7 @@ export const storageKeys = {
     tables: buildKey("admin:tables:active-tab"),
   },
   adminMemoryNoticeDismissed: buildKey("admin:memory-notice-dismissed"),
+  adminPassword: buildKey("admin:password"),
   adminSession: buildKey("admin:auth"),
   adminTables: buildKey("admin:tables"),
 };

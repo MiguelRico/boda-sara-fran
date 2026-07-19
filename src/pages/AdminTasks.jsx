@@ -2,8 +2,10 @@ import { useInView } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-import { ADMIN_PASSWORD } from "../constants/admin";
-import { isAdminSessionAuthenticated } from "../utils/adminSession";
+import {
+  getAdminSessionPassword,
+  isAdminSessionAuthenticated,
+} from "../utils/adminSession";
 import { adminContent } from "../constants/adminContent";
 import { TASK_CATEGORIES } from "../constants/tasks";
 import {
@@ -113,7 +115,7 @@ export default function AdminTasks() {
 
     let cancelled = false;
 
-    loadAdminDataOnce({ password: ADMIN_PASSWORD })
+    loadAdminDataOnce({ password: getAdminSessionPassword() })
       .then((snapshot) => {
         if (cancelled) return;
 
@@ -228,7 +230,7 @@ export default function AdminTasks() {
     try {
       spinner.show(adminContent.tasks.spinner.save);
       const normalizedTasks = await persistTasks({
-        password: ADMIN_PASSWORD,
+        password: getAdminSessionPassword(),
         tasks,
       });
 

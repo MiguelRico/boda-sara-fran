@@ -3,15 +3,28 @@ import { storageEvents, storageKeys } from "../config/storageKeys";
 const TRUE_VALUE = "true";
 
 export function isAdminSessionAuthenticated() {
-  return getSessionValue(storageKeys.adminSession) === TRUE_VALUE;
+  return (
+    getSessionValue(storageKeys.adminSession) === TRUE_VALUE &&
+    Boolean(getAdminSessionPassword())
+  );
 }
 
-export function setAdminSessionAuthenticated() {
+export function getAdminSessionPassword() {
+  return getSessionValue(storageKeys.adminPassword);
+}
+
+export function setAdminSessionAuthenticated(password) {
+  const normalizedPassword = String(password || "").trim();
+
+  if (!normalizedPassword) return;
+
+  setSessionValue(storageKeys.adminPassword, normalizedPassword);
   setSessionValue(storageKeys.adminSession, TRUE_VALUE);
   dispatchAdminAuthChange();
 }
 
 export function clearAdminSession() {
+  removeSessionValue(storageKeys.adminPassword);
   removeSessionValue(storageKeys.adminSession);
   dispatchAdminAuthChange();
 }

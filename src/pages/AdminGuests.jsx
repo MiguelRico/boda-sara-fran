@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Save, Trash2, X } from "lucide-react";
 
-import { ADMIN_PASSWORD } from "../constants/admin";
 import CinematicPage from "../components/cinematic/CinematicPage";
 import CinematicStaggeredRevealItem from "../components/cinematic/CinematicStaggeredRevealItem";
 import DeleteDialog from "../components/ui/DeleteDialog";
@@ -45,7 +44,10 @@ import usePageTransition from "../hooks/usePageTransition";
 import useEffectiveSelection from "../hooks/useEffectiveSelection";
 import useAdminActiveTab from "../hooks/useAdminActiveTab";
 import useAdminLocalChanges from "../hooks/useAdminLocalChanges";
-import { isAdminSessionAuthenticated } from "../utils/adminSession";
+import {
+  getAdminSessionPassword,
+  isAdminSessionAuthenticated,
+} from "../utils/adminSession";
 import {
   createDraftGroup,
   normalizeAdminGroupBeforeSave,
@@ -143,7 +145,9 @@ export default function AdminGuests() {
     }
 
     try {
-      const response = await loadAdminDataOnce({ password: ADMIN_PASSWORD });
+      const response = await loadAdminDataOnce({
+        password: getAdminSessionPassword(),
+      });
 
       const confirmations = normalizeAdminConfirmations(response.confirmations);
 
@@ -413,7 +417,7 @@ export default function AdminGuests() {
 
       await persistGuestChanges({
         currentConfirmations: state.confirmations,
-        password: ADMIN_PASSWORD,
+        password: getAdminSessionPassword(),
         savedConfirmations,
       });
 
