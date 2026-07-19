@@ -1,6 +1,6 @@
 import { getRequiredRsvpApiUrl } from "@/config/environment";
 
-const inFlightJsonpRequests = new Map();
+const inFlightRequests = new Map();
 const WRITE_VERIFY_ATTEMPTS = 5;
 const WRITE_VERIFY_DELAY_MS = 700;
 
@@ -17,74 +17,43 @@ const createRequestKey = (params) =>
 
 export const requestJsonp = (params) => {
   const requestKey = createRequestKey(params);
-  const inFlightRequest = inFlightJsonpRequests.get(requestKey);
+  const inFlightRequest = inFlightRequests.get(requestKey);
 
   if (inFlightRequest) return inFlightRequest;
 
-  const request = new Promise((resolve, reject) => {
-    const url = new URL(getRsvpApiUrl());
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => {
-      controller.abort();
-      reject(
-        new Error(
-          `No se pudo conectar con Google Apps Script. URL: ${url.toString()}`,
-        ),
-      );
-    }, 15000);
+  const url = new URL(getRsvpApiUrl());
 
-    const cleanup = () => {
-      window.clearTimeout(timeoutId);
-    };
-
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.set(key, value);
-      }
-    });
-
-    fetch(url, {
-      headers: { Accept: "application/json" },
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`Apps Script devolvio HTTP ${response.status}.`);
-        }
-
-        return response.json();
-      })
-      .then((data) => {
-        cleanup();
-        resolve(data);
-      })
-      .catch((error) => {
-        cleanup();
-        reject(
-          new Error(
-            `No se pudo consultar Apps Script. Revise la deployment, sus permisos y la URL configurada: ${url.toString()}`,
-            { cause: error },
-          ),
-        );
-      });
-
-    script.onload = () => {
-      window.setTimeout(() => {
-        if (window[callbackName]) {
-          rejectWithRemoteError(
-            `Apps Script respondió pero no ejecutó el callback esperado. Revise la deployment y los permisos de ejecución del endpoint: ${url.toString()}`,
-          );
-        }
-      }, 250);
-    };
-
-    script.src = url.toString();
-    document.body.appendChild(script);
-  }).finally(() => {
-    inFlightJsonpRequests.delete(requestKey);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.set(key, value);
+    }
   });
 
-  inFlightJsonpRequests.set(requestKey, request);
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+  const request = fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: controller.signal,
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`Apps Script devolvio HTTP ${response.status}.`);
+      }
+
+      return response.json();
+    })
+    .catch((error) => {
+      throw new Error(
+        `No se pudo consultar Apps Script. Revise la deployment, sus permisos y la URL configurada: ${url.toString()}`,
+        { cause: error },
+      );
+    })
+    .finally(() => {
+      window.clearTimeout(timeoutId);
+      inFlightRequests.delete(requestKey);
+    });
+
+  inFlightRequests.set(requestKey, request);
 
   return request;
 };
