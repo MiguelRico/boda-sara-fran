@@ -22,13 +22,10 @@ export const requestJsonp = (params) => {
   if (inFlightRequest) return inFlightRequest;
 
   const request = new Promise((resolve, reject) => {
-    const callbackName = `rsvpCallback_${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2)}`;
     const url = new URL(getRsvpApiUrl());
-    const script = document.createElement("script");
+    const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
-      cleanup();
+      controller.abort();
       reject(
         new Error(
           `No se pudo conectar con Google Apps Script. URL: ${url.toString()}`,
@@ -38,13 +35,6 @@ export const requestJsonp = (params) => {
 
     const cleanup = () => {
       window.clearTimeout(timeoutId);
-      script.remove();
-      delete window[callbackName];
-    };
-
-    const rejectWithRemoteError = (message) => {
-      cleanup();
-      reject(new Error(message));
     };
 
     Object.entries(params).forEach(([key, value]) => {
@@ -53,18 +43,30 @@ export const requestJsonp = (params) => {
       }
     });
 
-    url.searchParams.set("callback", callbackName);
+    fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Apps Script devolvio HTTP ${response.status}.`);
+        }
 
-    window[callbackName] = (data) => {
-      cleanup();
-      resolve(data);
-    };
-
-    script.onerror = () => {
-      rejectWithRemoteError(
-        `No se pudo cargar la URL de Apps Script. Revise la deployment o la URL configurada: ${url.toString()}`,
-      );
-    };
+        return response.json();
+      })
+      .then((data) => {
+        cleanup();
+        resolve(data);
+      })
+      .catch((error) => {
+        cleanup();
+        reject(
+          new Error(
+            `No se pudo consultar Apps Script. Revise la deployment, sus permisos y la URL configurada: ${url.toString()}`,
+            { cause: error },
+          ),
+        );
+      });
 
     script.onload = () => {
       window.setTimeout(() => {
