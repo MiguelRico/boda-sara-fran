@@ -1,6 +1,7 @@
 import { getRequiredRsvpApiUrl } from "@/config/environment";
 
 const inFlightRequests = new Map();
+const READ_REQUEST_TIMEOUT_MS = 30000;
 const WRITE_VERIFY_ATTEMPTS = 5;
 const WRITE_VERIFY_DELAY_MS = 700;
 
@@ -30,7 +31,10 @@ export const requestJsonp = (params) => {
   });
 
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+  const timeoutId = window.setTimeout(
+    () => controller.abort(),
+    READ_REQUEST_TIMEOUT_MS,
+  );
   const request = fetch(url, {
     headers: { Accept: "application/json" },
     signal: controller.signal,
@@ -73,13 +77,20 @@ const wait = (milliseconds) =>
 
 export const verifyWrite = async ({ errorMessage, isVerified, read }) => {
   let lastResponse;
+  let lastReadError;
 
   for (let attempt = 1; attempt <= WRITE_VERIFY_ATTEMPTS; attempt += 1) {
     if (attempt > 1) {
       await wait(WRITE_VERIFY_DELAY_MS);
     }
 
-    lastResponse = await read();
+    try {
+      lastResponse = await read();
+      lastReadError = null;
+    } catch (error) {
+      lastReadError = error;
+      continue;
+    }
 
     if (lastResponse?.success === false) {
       throw new Error(lastResponse.error || errorMessage);
@@ -88,5 +99,5 @@ export const verifyWrite = async ({ errorMessage, isVerified, read }) => {
     if (isVerified(lastResponse)) return lastResponse;
   }
 
-  throw new Error(errorMessage);
+  throw new Error(errorMessage, { cause: lastReadError });
 };
