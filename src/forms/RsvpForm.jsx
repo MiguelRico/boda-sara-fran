@@ -122,7 +122,7 @@ export default function RsvpForm({
       index: resolvedIndex,
     };
   };
-  const handleRemoveGuest = (guestOrIndex, index) => {
+  const handleRequestGuestDelete = (guestOrIndex, index) => {
     const target = getGuestDeleteTarget(guestOrIndex, index);
 
     if (!target) return;
@@ -180,7 +180,7 @@ export default function RsvpForm({
           onContactChange={onContactChange}
           onGuestChange={onGuestChange}
           onGuestPageChange={handleGuestPageChange}
-          onRemoveGuest={handleRemoveGuest}
+          onRemoveGuest={onRemoveGuest}
           onSubmit={handleSubmit}
           onValidateConfirmation={onValidateConfirmation}
           onValidateContact={onValidateContact}
@@ -245,7 +245,7 @@ export default function RsvpForm({
               onAddGuest={handleAddGuest}
               onGuestChange={onGuestChange}
               onGuestPageChange={handleGuestPageChange}
-              onRemoveGuest={handleRemoveGuest}
+              onRemoveGuest={handleRequestGuestDelete}
               showHeader={showEntityHeader}
               totalGuestPages={totalGuestPages}
               variant={variant}
